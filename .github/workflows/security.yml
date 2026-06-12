@@ -64,7 +64,8 @@ jobs:
         with:
           languages: javascript-typescript
           queries: security-extended
-          ram: 1500
+          ram: 4096
+          threads: 2
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
