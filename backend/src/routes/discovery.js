@@ -35,6 +35,9 @@ const DEFAULT_PORTS = [
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function isPrivateIP(ip) {
+  if (typeof ip !== 'string' || !net.isIPv4(ip)) {
+    return false;
+  }
   const p = ip.split('.').map(Number);
   // RFC-1918 only. Loopback (127/8), link-local (169.254/16, incl. cloud
   // metadata) and all other ranges are intentionally excluded so the sweep
@@ -54,15 +57,18 @@ const MAX_PORTS_PER_SCAN = 50;
 const MAX_IMPORT_HOSTS   = 254;
 
 function cidrToIPs(cidr) {
+  if (typeof cidr !== 'string') {
+    throw new Error('Ungültiger CIDR-Block');
+  }
   const [base, prefix] = cidr.split('/');
   const plen = parseInt(prefix ?? '32', 10);
   if (isNaN(plen) || plen < 16 || plen > 32) {
     throw new Error('CIDR-Präfix muss /16 bis /32 sein');
   }
-  const parts = base.split('.').map(Number);
-  if (parts.length !== 4 || parts.some(n => isNaN(n) || n < 0 || n > 255)) {
+  if (!net.isIPv4(base)) {
     throw new Error('Ungültige IP-Adresse');
   }
+  const parts = base.split('.').map(Number);
   const baseInt = ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0;
   const mask    = plen === 32 ? 0xFFFFFFFF : (~(0xFFFFFFFF >>> plen)) >>> 0;
   const netInt  = (baseInt & mask) >>> 0;
@@ -76,28 +82,49 @@ function cidrToIPs(cidr) {
 }
 
 async function tcpProbe(host, port, ms = 800) {
+  if (typeof host !== 'string' || !net.isIPv4(host) || !isPrivateIP(host)) {
+    return false;
+  }
+  const parsedPort = Number(port);
+  if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+    return false;
+  }
+  const timeoutMs = Number(ms);
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 10000) {
+    return false;
+  }
   return new Promise(resolve => {
     const sock = new net.Socket();
     let done = false;
     const finish = (open) => { if (!done) { done = true; sock.destroy(); resolve(open); } };
-    sock.setTimeout(ms);
+    sock.setTimeout(timeoutMs);
     sock.once('connect', () => finish(true));
     sock.once('timeout',  () => finish(false));
     sock.once('error',    () => finish(false));
-    sock.connect(port, host);
+    sock.connect(parsedPort, host);
   });
 }
 
 async function reverseDNS(ip) {
+  if (typeof ip !== 'string' || !net.isIPv4(ip) || !isPrivateIP(ip)) {
+    return null;
+  }
   try { const [name] = await dns.reverse(ip); return name; } catch { return null; }
 }
 
 async function getHttpSignature(ip, port, useHttps = false) {
+  if (typeof ip !== 'string' || !net.isIPv4(ip) || !isPrivateIP(ip)) {
+    return null;
+  }
+  const parsedPort = Number(port);
+  if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+    return null;
+  }
   return new Promise(resolve => {
     const lib = useHttps ? https : http;
     const req = lib.request({
       host: ip,
-      port: port,
+      port: parsedPort,
       path: '/',
       method: 'GET',
       timeout: 600,
@@ -123,10 +150,17 @@ async function getHttpSignature(ip, port, useHttps = false) {
 }
 
 async function getSshBanner(ip, timeout = 600) {
+  if (typeof ip !== 'string' || !net.isIPv4(ip) || !isPrivateIP(ip)) {
+    return null;
+  }
+  const timeoutMs = Number(timeout);
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 10000) {
+    return null;
+  }
   return new Promise(resolve => {
     const client = new net.Socket();
     let resolved = false;
-    client.setTimeout(timeout);
+    client.setTimeout(timeoutMs);
     client.on('data', data => {
       if (!resolved) {
         resolved = true;
@@ -545,7 +579,9 @@ router.delete('/staged/:id', authenticate, requireRole('admin', 'it-staff'), req
 router.post('/network-scan', authenticate, requireRole('admin', 'it-staff'), async (req, res) => {
   try {
     const { cidr, ports: customPorts } = req.body;
-    if (!cidr) return res.status(400).json({ error: 'cidr erforderlich (z. B. 192.168.1.0/24)' });
+    if (typeof cidr !== 'string' || !/^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([1-2][0-9]|3[0-2]|[1-9]))?$/.test(cidr)) {
+      return res.status(400).json({ error: 'Ungültiges CIDR-Format (z. B. 192.168.1.0/24)' });
+    }
 
     const ips = cidrToIPs(cidr);
     if (ips.length > 254) {
