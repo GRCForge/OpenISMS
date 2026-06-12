@@ -5,14 +5,20 @@ name: Security & Quality
 # in a PR, not on every direct commit, to keep Actions minute usage minimal.
 #
 # Required GitHub Secrets:
-#   SNYK_TOKEN      — Snyk API token  (https://app.snyk.io/account)
-#   SONAR_TOKEN     — SonarQube project authentication token
-#   SONAR_HOST_URL  — URL of your SonarQube instance (e.g. https://sonar.example.com)
+#   SNYK_TOKEN        — Snyk API token  (https://app.snyk.io/account)
+#   SONAR_TOKEN       — SonarQube project authentication token
+#   SONAR_HOST_URL    — URL of your SonarQube instance (e.g. https://sonar.example.com)
+#   SONAR_PROJECT_KEY — SonarQube project key
 #
-# Division of labour: Snyk scans dependencies/licences, SonarQube owns code
-# quality + security (SAST). Both steps skip gracefully when their secret is
-# missing (e.g. on Dependabot PRs, which never receive repository secrets), so
-# the pipeline stays green instead of failing with a 401.
+# Division of labour:
+#   CodeQL    — GitHub-native SAST, uploads results to Security tab
+#   Snyk      — dependency vulnerability scanning + licence compliance
+#   SonarQube — code quality + SAST with custom quality gates
+#   Gitleaks  — secret scanning across full git history
+#   Trivy     — lockfile CVEs, Dockerfile misconfigurations, hardcoded secrets
+#
+# NOTE: If GitHub's default CodeQL auto-setup is enabled on this repo, disable
+# it to avoid duplicate scans (Settings → Code Security → CodeQL analysis).
 
 on:
   push:
@@ -31,7 +37,44 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+permissions:
+  contents: read
+  security-events: write  # required for CodeQL to upload SARIF results
+  actions: read
+
 jobs:
+  # ── CodeQL: GitHub-native SAST ────────────────────────────────────────────
+  # Results appear in the Security tab → Code scanning alerts.
+  # Runs on self-hosted to preserve cloud minutes.
+  codeql:
+    name: CodeQL — SAST
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+          ram: 3072
+          threads: 1
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:javascript-typescript
+
   # ── Frontend: TypeScript type-check + build ────────────────────────────────
   frontend-build:
     name: Frontend — TypeScript & Build
@@ -175,7 +218,63 @@ jobs:
         # transient upload failure must not red the job.
         run: snyk monitor --all-projects --org=${{ vars.SNYK_ORG }} || true
 
+  # ── Gitleaks: Secret & credential scanning ────────────────────────────────
+  # Installs gitleaks once on the runner (cached after first run).
+  # Scans the full git history — no API token required.
+  gitleaks:
+    name: Gitleaks — Secret Scanning
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install Gitleaks
+        run: |
+          if ! command -v gitleaks &>/dev/null; then
+            VERSION=$(curl -sSf https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
+              | grep '"tag_name"' | cut -d'"' -f4)
+            curl -sSfL \
+              "https://github.com/gitleaks/gitleaks/releases/download/${VERSION}/gitleaks_${VERSION#v}_linux_x64.tar.gz" \
+              | sudo tar xz -C /usr/local/bin gitleaks
+          fi
+          gitleaks version
+
+      - name: Run Gitleaks
+        run: gitleaks detect --source . --config .gitleaks.toml --verbose --redact
+
+  # ── Trivy: Vulnerability, secret & misconfiguration scan ──────────────────
+  # Installs Trivy once on the runner (cached after first run).
+  # Filesystem scan covers: package lockfile CVEs, Dockerfile misconfigurations,
+  # hardcoded secrets. Only fails on CRITICAL unfixed findings to avoid noise
+  # from transitive deps with no upstream patch.
+  trivy:
+    name: Trivy — Vulnerability & Misconfiguration
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Trivy
+        run: |
+          if ! command -v trivy &>/dev/null; then
+            curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+              | sudo sh -s -- -b /usr/local/bin
+          fi
+          trivy --version
+
+      - name: Run Trivy filesystem scan
+        run: |
+          trivy fs . \
+            --scanners vuln,secret,misconfig \
+            --severity CRITICAL \
+            --exit-code 1 \
+            --ignore-unfixed \
+            --skip-dirs node_modules \
+            --format table
+
   # ── SonarQube: Code quality & security (SAST) ──────────────────────────────
+  # All project config is passed as -D flags — no sonar-project.properties needed.
+  # Required GitHub Secrets: SONAR_TOKEN, SONAR_HOST_URL, SONAR_PROJECT_KEY
   sonarqube:
     name: SonarQube — Code Quality
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -189,13 +288,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Actual SonarQube Action
+      - name: SonarQube Scan
         if: env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != ''
-        # Static config (projectKey, sources, exclusions, …) lives in
-        # sonar-project.properties at the repo root. Only the dynamic version
-        # and the quality-gate flag are passed here.
         uses: SonarSource/sonarqube-scan-action@v8
         with:
           args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.projectName=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.projectVersion=${{ github.sha }}
+            -Dsonar.sources=backend/src,frontend/src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/openapi.json,**/*.test.*
+            -Dsonar.javascript.file.suffixes=.js,.jsx
+            -Dsonar.typescript.file.suffixes=.ts,.tsx
+            -Dsonar.sourceEncoding=UTF-8
             -Dsonar.qualitygate.wait=false
