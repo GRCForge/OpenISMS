@@ -3,9 +3,19 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { Op } = require('sequelize');
+const rateLimit = require('express-rate-limit');
 const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, PolicyAcknowledgment } = require('../models');
 const { authenticate, requireRole, isAssessor, isItStaff } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
+
+// Rate limiting for policy downloads to mitigate DoS (CWE-770)
+const downloadLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 60, // Limit each IP to 60 downloads per 5 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Download-Anfragen. Bitte warten Sie 5 Minuten.' }
+});
 
 const POLICIES_DIR = path.resolve('uploads/policies');
 const ALLOWED_MIME_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
@@ -174,7 +184,7 @@ const safeFilePath = (fileUrl) => {
 };
 
 // Download old version
-router.get('/:id/versions/:versionId/download', authenticate, async (req, res) => {
+router.get('/:id/versions/:versionId/download', authenticate, downloadLimiter, async (req, res) => {
   try {
     const version = await PolicyVersion.findOne({ where: { id: req.params.versionId, policy_id: req.params.id } });
     if (!version) return res.status(404).json({ error: 'Version nicht gefunden' });
@@ -191,7 +201,7 @@ router.get('/:id/versions/:versionId/download', authenticate, async (req, res) =
 });
 
 // Download policy file
-router.get('/:id/download', authenticate, async (req, res) => {
+router.get('/:id/download', authenticate, downloadLimiter, async (req, res) => {
   try {
     const policy = await Policy.findByPk(req.params.id);
     if (!policy || !policy.file_url) return res.status(404).json({ error: 'Datei nicht gefunden' });

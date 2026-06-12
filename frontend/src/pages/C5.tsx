@@ -125,7 +125,7 @@ export const C5: React.FC = () => {
     return map;
   }, [items, filterDomain, filterStatus]);
 
-  const domains = useMemo(() => [...new Set(items.map(i => i.domain))].sort(), [items]);
+  const domains = useMemo(() => [...new Set(items.map(i => i.domain))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })), [items]);
 
   const stats = useMemo(() => {
     const total = items.length;

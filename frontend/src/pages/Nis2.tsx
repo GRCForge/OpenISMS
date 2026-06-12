@@ -181,7 +181,7 @@ export const Nis2: React.FC = () => {
 
   const categories = useMemo(() => {
     const cats = new Set(measures.map(m => m.category));
-    return Array.from(cats).sort();
+    return Array.from(cats).sort((a, b) => a.localeCompare(b));
   }, [measures]);
 
   const today = new Date();
