@@ -4,9 +4,19 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
+const rateLimit = require('express-rate-limit');
 const { Document, User } = require('../models');
 const { authenticate, requireWriteAccess } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
+
+// Rate limiting for document download endpoint to mitigate DoS (CWE-770)
+const downloadLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 60, // Limit each IP to 60 downloads per 5 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Download-Anfragen. Bitte warten Sie 5 Minuten.' }
+});
 
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -157,7 +167,7 @@ router.post('/', authenticate, requireWriteAccess(), upload.single('file'), asyn
   }
 });
 
-router.get('/:docId/download', authenticate, async (req, res) => {
+router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.docId);
     if (!doc) return res.status(404).json({ error: 'Nicht gefunden' });
