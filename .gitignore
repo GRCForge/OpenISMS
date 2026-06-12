@@ -15,6 +15,7 @@ backend/policies/
 .claude/
 .gemini/
 tool-outputs/
+CLAUDE.md
 temp_asset.tsx
 *.log
 
