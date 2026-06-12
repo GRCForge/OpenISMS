@@ -18,6 +18,15 @@ const downloadLimiter = rateLimit({
   message: { error: 'Zu viele Download-Anfragen. Bitte warten Sie 5 Minuten.' }
 });
 
+// Rate limiting for document deletion endpoint to mitigate DoS (CWE-770)
+const deleteLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 30, // Limit each IP to 30 deletions per 5 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Lösch-Anfragen. Bitte warten Sie 5 Minuten.' }
+});
+
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -199,7 +208,7 @@ router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) =
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:docId', authenticate, requireWriteAccess(), async (req, res) => {
+router.delete('/:docId', authenticate, requireWriteAccess(), deleteLimiter, async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.docId);
     if (!doc) return res.status(404).json({ error: 'Nicht gefunden' });
