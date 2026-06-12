@@ -488,7 +488,7 @@ router.post('/trainings/bulk', authenticate, requireRole('admin', 'assessor', 'd
         row.eachCell((cell) => {
           const val = String(cell.value || '').trim();
           if (!val) return;
-          if (val.includes('@') && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(val)) {
+          if (val.includes('@') && val.length <= 254 && /^[a-zA-Z0-9_'+.\-]+@[a-zA-Z0-9\-.]+\.[a-zA-Z]{2,}$/.test(val)) {
             email = val.toLowerCase();
           } else {
             if (!name) name = val;
