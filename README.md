@@ -734,18 +734,6 @@ OpenISMS unterstützt Browser-Push-Benachrichtigungen und kann als Progressive W
 - **PWA-Installation**: Die Installation erfolgt einfach über die PWA-Installationsfunktion des Webbrowsers. Nach der Installation stehen praktische App-Shortcuts (z. B. direkter Einstieg ins Risikoregister oder Assets) zur Verfügung.
 
 ---
-
-## CI/CD und GitHub Secrets
-
-Für die automatisierte Pipeline (`.github/workflows/`) werden folgende GitHub Secrets und Variablen benötigt:
-
-- `SNYK_TOKEN` — Snyk-API-Token (Secret)
-- `SNYK_ORG` — Name der Snyk-Organisation (Repository-Variable)
-- `SONAR_TOKEN` — SonarQube-Projekt-Token (Secret)
-- `SONAR_HOST_URL` — URL der SonarQube-Instanz (Secret)
-
----
-
 ## Lizenz
 
 OpenISMS ist **Source-Available-Software**. Der Quellcode ist öffentlich einsehbar, die Nutzung ist für private und nicht-kommerzielle Zwecke kostenfrei. Jede kommerzielle bzw. Enterprise-Nutzung sowie jede Weiterverbreitung erfordert eine kommerzielle Lizenz. Details siehe [LICENSE](./LICENSE). Lizenzanfragen: maximilian@herz.dev
