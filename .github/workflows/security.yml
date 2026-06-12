@@ -176,8 +176,8 @@ jobs:
         run: snyk monitor --all-projects --org=${{ vars.SNYK_ORG }} || true
 
   # ── Gitleaks: Secret & credential scanning ────────────────────────────────
-  # Scans the full git history for accidentally committed secrets.
-  # No token required — runs entirely on the self-hosted runner.
+  # Installs gitleaks once on the runner (cached after first run).
+  # Scans the full git history — no API token required.
   gitleaks:
     name: Gitleaks — Secret Scanning
     runs-on: self-hosted
@@ -186,11 +186,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Gitleaks
+        run: |
+          if ! command -v gitleaks &>/dev/null; then
+            VERSION=$(curl -sSf https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
+              | grep '"tag_name"' | cut -d'"' -f4)
+            curl -sSfL \
+              "https://github.com/gitleaks/gitleaks/releases/download/${VERSION}/gitleaks_${VERSION#v}_linux_x64.tar.gz" \
+              | sudo tar xz -C /usr/local/bin gitleaks
+          fi
+          gitleaks version
+
+      - name: Run Gitleaks
+        run: gitleaks detect --source . --verbose --redact
 
   # ── Trivy: Vulnerability, secret & misconfiguration scan ──────────────────
+  # Installs Trivy once on the runner (cached after first run).
   # Filesystem scan covers: package lockfile CVEs, Dockerfile misconfigurations,
   # hardcoded secrets. Only fails on CRITICAL unfixed findings to avoid noise
   # from transitive deps with no upstream patch.
@@ -200,17 +211,23 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln,secret,misconfig
-          severity: CRITICAL
-          exit-code: '1'
-          ignore-unfixed: true
-          skip-dirs: node_modules
-          format: table
+      - name: Install Trivy
+        run: |
+          if ! command -v trivy &>/dev/null; then
+            curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+              | sudo sh -s -- -b /usr/local/bin
+          fi
+          trivy --version
+
+      - name: Run Trivy filesystem scan
+        run: |
+          trivy fs . \
+            --scanners vuln,secret,misconfig \
+            --severity CRITICAL \
+            --exit-code 1 \
+            --ignore-unfixed \
+            --skip-dirs node_modules \
+            --format table
 
   # ── SonarQube: Code quality & security (SAST) ──────────────────────────────
   sonarqube:
