@@ -175,6 +175,43 @@ jobs:
         # transient upload failure must not red the job.
         run: snyk monitor --all-projects --org=${{ vars.SNYK_ORG }} || true
 
+  # ── Gitleaks: Secret & credential scanning ────────────────────────────────
+  # Scans the full git history for accidentally committed secrets.
+  # No token required — runs entirely on the self-hosted runner.
+  gitleaks:
+    name: Gitleaks — Secret Scanning
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Trivy: Vulnerability, secret & misconfiguration scan ──────────────────
+  # Filesystem scan covers: package lockfile CVEs, Dockerfile misconfigurations,
+  # hardcoded secrets. Only fails on CRITICAL unfixed findings to avoid noise
+  # from transitive deps with no upstream patch.
+  trivy:
+    name: Trivy — Vulnerability & Misconfiguration
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+          skip-dirs: node_modules
+          format: table
+
   # ── SonarQube: Code quality & security (SAST) ──────────────────────────────
   sonarqube:
     name: SonarQube — Code Quality
