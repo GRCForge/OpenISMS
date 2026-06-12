@@ -16,9 +16,11 @@ Alle Änderungen am Code werden auf **versionierten Branches** entwickelt, niema
 ### Ablauf
 
 1. Vor jeder Änderung: aktuelle Version aus `VERSION`, `backend/package.json` und `frontend/package.json` prüfen.
-2. Passenden Branch nach obiger Tabelle benennen und anlegen (falls noch nicht vorhanden).
+2. Prüfen ob bereits ein Branch existiert, der neuere Commits als `main` hat:
+   - Falls ja: diesen Branch verwenden. Passt der Name nicht zum Schema der geplanten Änderung, den Branch lokal und remote umbenennen.
+   - Falls nein: neuen Branch nach obiger Tabelle anlegen.
 3. Änderungen committen und Branch pushen.
-4. Pull Request gegen `main` als Draft erstellen.
+4. **Keinen Pull Request erstellen** – das übernimmt der Repository-Owner zentral.
 5. Die Versionsnummer in `VERSION`, `backend/package.json` und `frontend/package.json` wird erst beim Merge in `main` angehoben (oder explizit angewiesen).
 
 ### Aktuelle Version
