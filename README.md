@@ -9,6 +9,7 @@
 ![ISO 27001](https://img.shields.io/badge/ISO%2027001-konform-4CAF50)
 ![NIS-2](https://img.shields.io/badge/NIS--2-unterst%C3%BCtzt-orange)
 ![DSGVO](https://img.shields.io/badge/DSGVO%2FGDPR-unterst%C3%BCtzt-purple)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FGRCForge%2FOpenISMS.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FGRCForge%2FOpenISMS?ref=badge_shield)
 
 OpenISMS ist ein vollständiges, praxisorientiertes Information Security Management System (ISMS) auf Basis von Node.js, React und MySQL – ein Projekt von GRCForge, entwickelt zur Unterstützung von **ISO 27001**, **NIS-2**, **DSGVO/GDPR**, **EU AI Act**, **TISAX**, **DORA** und **BSI C5**.
 
@@ -739,3 +740,7 @@ OpenISMS unterstützt Browser-Push-Benachrichtigungen und kann als Progressive W
 OpenISMS ist **Source-Available-Software**. Der Quellcode ist öffentlich einsehbar, die Nutzung ist für private und nicht-kommerzielle Zwecke kostenfrei. Jede kommerzielle bzw. Enterprise-Nutzung sowie jede Weiterverbreitung erfordert eine kommerzielle Lizenz. Details siehe [LICENSE](./LICENSE). Lizenzanfragen: maximilian@herz.dev
 
 © 2026 Maximilian Herz. Alle Rechte vorbehalten.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FGRCForge%2FOpenISMS.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FGRCForge%2FOpenISMS?ref=badge_large)
