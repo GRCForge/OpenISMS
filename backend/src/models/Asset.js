@@ -61,6 +61,7 @@ const Asset = sequelize.define('Asset', {
   vvt_status: { type: DataTypes.ENUM('none', 'pending', 'complete'), defaultValue: 'none' },
   dsfa_required: { type: DataTypes.BOOLEAN, defaultValue: false },
   data_category: { type: DataTypes.ENUM('none', 'normal', 'special'), defaultValue: 'none' }, // Special = Art. 9 DSGVO
+  last_reviewed_at: { type: DataTypes.DATE, allowNull: true },
 }, { tableName: 'assets', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
 module.exports = Asset;

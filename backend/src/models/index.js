@@ -204,6 +204,8 @@ TisaxAssessment.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });
 
 // AiSystem associations
 AiSystem.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });
+AiSystem.belongsTo(Vendor, { as: 'vendor', foreignKey: 'vendor_id' });
+
 
 // BcmProcess associations
 BcmProcess.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });

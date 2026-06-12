@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { 
-  Asset, User, Assessment, Reminder, Vendor, VendorContact, 
+  sequelize, Asset, User, Assessment, Reminder, Vendor, VendorContact, 
   Policy, PolicyVersion, VvtEntry, Incident, Risk 
 } = require('../models');
 const { authenticate, requireRole, requireWriteAccess, isAssessor, isItStaff, isAdmin } = require('../middleware/auth');
