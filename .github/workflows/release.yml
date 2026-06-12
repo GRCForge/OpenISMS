@@ -1,0 +1,160 @@
+name: Release
+
+# Creates a GitHub Release (and matching git tag) whenever the VERSION file on
+# main changes. Builds a release package (tar.gz + zip) with pre-compiled
+# frontend and attaches it to the release alongside the Docker image reference.
+#
+# Trigger: path-filtered to VERSION only — does NOT run on normal code commits,
+# keeping Actions minute usage minimal.
+on:
+  push:
+    branches: [main]
+    paths: ['VERSION']
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  prepare:
+    runs-on: self-hosted
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read version
+        id: v
+        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+      - name: Check if tag already exists
+        id: check
+        run: |
+          if git ls-remote --tags origin "refs/tags/v${{ steps.v.outputs.version }}" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Build release packages (tar.gz + zip) ────────────────────────────────────
+  # Produces two downloadable artifacts for bare-metal (systemd) installs:
+  #   isms-vX.Y.Z.tar.gz / .zip
+  # Contents: backend source (no node_modules) + pre-built frontend dist +
+  #           docker-compose files + .env.example + install.sh + Dockerfile
+  build-package:
+    name: Build Release Package
+    needs: prepare
+    if: needs.prepare.outputs.exists == 'false'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Ensure zip is available
+        run: command -v zip || sudo apt-get install -y zip
+
+      - name: Create release packages
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          PKG="openisms-v${VERSION}"
+          mkdir -p "${PKG}/frontend"
+
+          # Backend source — node_modules excluded (install.sh runs npm ci)
+          cp -r backend "${PKG}/"
+          rm -rf "${PKG}/backend/node_modules"
+
+          # Pre-built frontend (no build tools needed on target host)
+          cp -r frontend/dist "${PKG}/frontend/dist"
+
+          # Root deployment files
+          for f in docker-compose*.yml .env.example install.sh VERSION Dockerfile README.md; do
+            [[ -f "$f" ]] && cp "$f" "${PKG}/"
+          done
+
+          tar czf "${PKG}.tar.gz" "${PKG}/"
+          zip -r  "${PKG}.zip"    "${PKG}/"
+
+          echo "Package contents:"
+          tar tzf "${PKG}.tar.gz" | head -30
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-packages
+          path: |
+            openisms-v${{ needs.prepare.outputs.version }}.tar.gz
+            openisms-v${{ needs.prepare.outputs.version }}.zip
+          retention-days: 1
+
+  # ── Create GitHub Release with packages attached ──────────────────────────────
+  release:
+    needs: [prepare, build-package]
+    if: needs.prepare.outputs.exists == 'false'
+    runs-on: self-hosted
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release packages
+        uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+
+      - name: Compute image namespace (lowercase)
+        id: ns
+        run: echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ needs.prepare.outputs.version }}
+          name: OpenISMS v${{ needs.prepare.outputs.version }}
+          generate_release_notes: true
+          files: |
+            openisms-v${{ needs.prepare.outputs.version }}.tar.gz
+            openisms-v${{ needs.prepare.outputs.version }}.zip
+          body: |
+            ## OpenISMS v${{ needs.prepare.outputs.version }}
+
+            Vollständiges Information Security Management System (ISO 27001 · NIS-2 · DSGVO).
+
+            ### Docker Image (GHCR) – All-in-One (Backend + Frontend)
+            ```
+            ghcr.io/${{ steps.ns.outputs.repo }}-app:v${{ needs.prepare.outputs.version }}
+            ghcr.io/${{ steps.ns.outputs.repo }}-app:latest
+            ```
+
+            ### Schnellstart Docker (externe DB)
+            ```bash
+            export ISMS_VERSION=v${{ needs.prepare.outputs.version }}
+            cp .env.example .env   # DATABASE_URL, JWT_SECRET, SESSION_SECRET, ENCRYPTION_KEY, APP_URL setzen
+            docker compose -f docker-compose.ghcr.single.yml up -d
+            ```
+
+            ### Schnellstart Bare-Metal (systemd + nginx)
+            ```bash
+            # Release-Paket herunterladen und entpacken:
+            tar xzf openisms-v${{ needs.prepare.outputs.version }}.tar.gz
+            cd openisms-v${{ needs.prepare.outputs.version }}
+            sudo bash install.sh   # → Option 2 (Systemd-Installation)
+            ```
+
+            > Secrets sind Pflicht – ohne `JWT_SECRET`, `SESSION_SECRET` und `ENCRYPTION_KEY`
+            > startet die App nicht. Erzeugen z.B. mit `openssl rand -hex 32`.
+            > Passkeys: in Produktion `WEBAUTHN_RP_ID` / `WEBAUTHN_ORIGIN` setzen.
+
+            Standard-Login: `admin@isms.local` / `Admin1234!`
+            SSO/OIDC wird nach dem Login unter **Administration → Single Sign-On** konfiguriert.

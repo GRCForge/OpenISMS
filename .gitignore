@@ -1,0 +1,46 @@
+node_modules/
+.env
+*.env.local
+.env.*.local
+dist/
+build/
+.DS_Store
+Thumbs.db
+
+# Backend Storage
+backend/uploads/
+backend/policies/
+
+# Temporary and AI assistant directories
+.claude/
+.gemini/
+tool-outputs/
+temp_asset.tsx
+*.log
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Backup & temp files
+*.bak
+*.orig
+*.tmp
+
+# Build artifacts
+.vite/
+coverage/
+
+# Database dumps & backups
+*.sql
+*.sql.gz
+*.db
+
+# OS
+.AppleDouble
+.LSOverride

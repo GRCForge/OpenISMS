@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="OpenISMS" />
+    <meta name="description" content="Informationssicherheits-Management-System" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><defs><linearGradient id=%22b%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22><stop offset=%220%25%22 stop-color=%22%231e3a8a%22/><stop offset=%22100%25%22 stop-color=%22%230c1445%22/></linearGradient><linearGradient id=%22s%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22><stop offset=%220%25%22 stop-color=%22%2393c5fd%22/><stop offset=%22100%25%22 stop-color=%22%231d4ed8%22/></linearGradient></defs><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22url(%23b)%22/><path d=%22M10.5 5.5H21.5Q26 5.5 26 10V17.5C26 24 21 27 16 27.5 11 27 6 24 6 17.5V10Q6 5.5 10.5 5.5Z%22 fill=%22url(%23s)%22/><path d=%22M12 18.5L12 15.5A4 4 0 0 1 20 15.5L20 18.5%22 fill=%22none%22 stroke=%22white%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/><rect x=%2210.5%22 y=%2218%22 width=%2211%22 height=%227.5%22 rx=%221.5%22 fill=%22white%22/><circle cx=%2216%22 cy=%2221%22 r=%221.5%22 fill=%22%232563eb%22/><rect x=%2215.25%22 y=%2222.2%22 width=%221.5%22 height=%222%22 rx=%220.75%22 fill=%22%232563eb%22/></svg>">
+    <title>OpenISMS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+# Single-Container-Deployment mit VORGEBAUTEM GHCR-Image und EXTERNER Datenbank.
+# Ideal fuer Unraid o.ae. – kein lokaler Build noetig.
+#
+#   export ISMS_VERSION=latest   # oder ein Release-Tag wie v1.0.0
+#   cp .env.example .env         # DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY, APP_URL setzen
+#   docker compose -f docker-compose.ghcr.single.yml up -d
+services:
+  isms:
+    image: ghcr.io/p3rf3ction/isms-app:${ISMS_VERSION:-latest}
+    container_name: isms
+    restart: unless-stopped
+    environment:
+      # Externe DB als ein String (alternativ DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD)
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL muss gesetzt sein}
+      # Secrets sind PFLICHT: die App startet seit v1.8.1 ohne sie nicht. Kein
+      # unsicheres Default mehr — compose bricht mit Fehler ab, wenn nicht gesetzt.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET muss gesetzt sein (>= 32 zufaellige Zeichen)}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET muss gesetzt sein}
+      # Schluessel zum Verschluesseln sensibler Settings (z.B. OIDC-Secret) in der DB:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY muss gesetzt sein}
+      PORT: 3001
+      UPLOAD_DIR: /app/uploads
+      # Hinter HTTPS-Reverse-Proxy auf "true" setzen:
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+      # Oeffentliche URL der App (fuer den OIDC-Callback zwingend korrekt setzen):
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      # Passkeys/WebAuthn: in Produktion auf die Domain setzen
+      # (RP_ID = Hostname ohne Schema/Port, ORIGIN = volle URL inkl. Schema).
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
+      WEBAUTHN_ORIGIN: ${WEBAUTHN_ORIGIN:-}
+    ports:
+      - "8080:3001"
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  uploads_data:

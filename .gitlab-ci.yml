@@ -1,0 +1,137 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/IaC-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+
+stages:
+  - test
+  - build
+  - security
+
+# Cache node_modules across jobs to speed up builds
+cache:
+  key:
+    files:
+      - backend/package-lock.json
+      - frontend/package-lock.json
+  paths:
+    - backend/node_modules/
+    - frontend/node_modules/
+
+# ── Test / Verification ──────────────────────────────────────────────────────────
+
+frontend-check:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - npx tsc --noEmit
+    - npm run build
+
+backend-check:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd backend
+    - npm ci
+    - find src -name '*.js' -print0 | xargs -0 -n1 node --check
+    - |
+      node -e "
+        require('./src/models');
+        require('./src/services/cryptoService');
+        require('./src/services/oidcService');
+        require('./src/services/cveService');
+        require('./src/routes/passkey');
+        require('./src/routes/authOidc');
+        require('./src/routes/discovery');
+        require('./src/middleware/auth');
+        require('helmet'); require('express-rate-limit'); require('express-session');
+        console.log('Backend modules loaded successfully');
+        process.exit(0);
+      "
+  variables:
+    JWT_SECRET: ci-dummy-secret-for-module-load-only
+    ENCRYPTION_KEY: ci-dummy-encryption-key-for-ci-only
+
+npm-audit:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd backend && npm ci && npm audit --audit-level=high
+    - cd ../frontend && npm ci && npm audit --audit-level=high
+  allow_failure: true
+
+# ── Security Scanning ─────────────────────────────────────────────────────────────
+# SAST, IaC Scanning und Secret Detection laufen bei jedem Push (via Template-Defaults).
+# Ergebnisse erscheinen unter Security & Compliance → Vulnerability Report.
+
+# SAST: Node.js-spezifische Analyzer explizit aktivieren
+sast:
+  variables:
+    SAST_EXCLUDED_PATHS: "node_modules, frontend/node_modules, backend/node_modules, dist, build"
+
+# Secret Detection: Git-History ebenfalls scannen
+secret_detection:
+  variables:
+    SECRET_DETECTION_HISTORIC_SCAN: "true"
+
+# IaC Scanning: Dockerfile, docker-compose.*.yml, .github/workflows prüfen
+kics-iac-sast:
+  variables:
+    SAST_EXCLUDED_PATHS: "node_modules"
+
+# Container Scanning: läuft nur nach erfolgreichem Docker-Build auf main
+container_scanning:
+  stage: security
+  variables:
+    CS_IMAGE: $CI_REGISTRY_IMAGE:latest
+    CS_SEVERITY_THRESHOLD: HIGH
+  needs:
+    - docker-build
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - VERSION
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "api"
+
+# ── Docker Build & Publish ───────────────────────────────────────────────────────
+
+docker-build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.1-debug
+    entrypoint: [""]
+  script:
+    # Read version from VERSION file
+    - VERSION=$(tr -d '[:space:]' < VERSION)
+    - echo "Building ISMS version ${VERSION}..."
+    - mkdir -p /kaniko/.docker
+    # Use GitLab CI registry authentication
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    # Build and push with tags:
+    # - Tag with v[VERSION], [VERSION], and latest (if on the default branch)
+    # - Tag with commit branch slug on non-default branches
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+        /kaniko/executor \
+          --context "${CI_PROJECT_DIR}" \
+          --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+          --destination "${CI_REGISTRY_IMAGE}:v${VERSION}" \
+          --destination "${CI_REGISTRY_IMAGE}:${VERSION}" \
+          --destination "${CI_REGISTRY_IMAGE}:latest"
+      else
+        /kaniko/executor \
+          --context "${CI_PROJECT_DIR}" \
+          --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+          --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
+      fi
+  rules:
+    # Build docker image on changes to VERSION or if run manually (web/api) or on main branch pushes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - VERSION
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "api"

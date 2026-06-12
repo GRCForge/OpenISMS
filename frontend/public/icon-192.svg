@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg192" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0c1445"/>
+    </linearGradient>
+    <linearGradient id="sh192" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="45%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App background -->
+  <rect width="192" height="192" rx="38" fill="url(#bg192)"/>
+
+  <!-- Shield drop shadow -->
+  <path d="M63 35H129Q149 35 149 55V102C149 144 119 163 96 165C73 163 43 144 43 102V55Q43 35 63 35Z"
+        fill="#1d4ed8" opacity="0.35" transform="translate(0,4)"/>
+
+  <!-- Shield body -->
+  <path d="M63 33H129Q148 33 148 53V100C148 142 118 161 96 163C74 161 44 142 44 100V53Q44 33 63 33Z"
+        fill="url(#sh192)"/>
+
+  <!-- Shield inner highlight -->
+  <path d="M68 41H124Q141 41 141 58V100C141 138 114 154 96 158"
+        fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.2" stroke-linecap="round"/>
+
+  <!-- Padlock shackle -->
+  <path d="M71 101L71 88A25 25 0 0 1 121 88L121 101"
+        fill="none" stroke="white" stroke-width="10.5" stroke-linecap="round"/>
+
+  <!-- Padlock body -->
+  <rect x="63" y="98" width="66" height="44" rx="8" fill="white"/>
+
+  <!-- Keyhole circle -->
+  <circle cx="96" cy="114" r="8.5" fill="#2563eb"/>
+
+  <!-- Keyhole stem -->
+  <rect x="92.5" y="120" width="7" height="11" rx="2.5" fill="#2563eb"/>
+</svg>

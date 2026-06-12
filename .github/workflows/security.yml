@@ -1,0 +1,199 @@
+name: Security & Quality
+
+# Runs on PRs against main and can be triggered manually.
+# Push-on-main is intentionally disabled — checks run when code is reviewed
+# in a PR, not on every direct commit, to keep Actions minute usage minimal.
+#
+# Required GitHub Secrets:
+#   SNYK_TOKEN      — Snyk API token  (https://app.snyk.io/account)
+#   SONAR_TOKEN     — SonarQube project authentication token
+#   SONAR_HOST_URL  — URL of your SonarQube instance (e.g. https://sonar.example.com)
+#
+# Division of labour: Snyk scans dependencies/licences, SonarQube owns code
+# quality + security (SAST). Both steps skip gracefully when their secret is
+# missing (e.g. on Dependabot PRs, which never receive repository secrets), so
+# the pipeline stays green instead of failing with a 401.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref to keep the queue clean.
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Opt into Node.js 24 for JavaScript actions ahead of GitHub's forced switch
+# (2026-06-16). Silences the "Node.js 20 actions are deprecated" warning.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  # ── Frontend: TypeScript type-check + build ────────────────────────────────
+  frontend-build:
+    name: Frontend — TypeScript & Build
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+        working-directory: frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+
+  # ── Backend: install, syntax check + module-load smoke test ────────────────
+  # The backend has no unit tests, but installing the (possibly Dependabot-
+  # bumped) dependencies and requiring the route/model modules catches broken
+  # lockfiles and breaking API changes (e.g. a major @simplewebauthn/server or
+  # openid-client bump) at import time — before they reach production.
+  backend-check:
+    name: Backend — Install & Smoke Test
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Syntax check all source files
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+        working-directory: backend
+
+      - name: Module-load smoke test
+        # Loads models, services and the route modules that pull in the major
+        # third-party deps (passkey → @simplewebauthn/server, oidc →
+        # openid-client). A breaking dep upgrade throws here. No DB connection
+        # is opened — Sequelize only connects on the first query.
+        run: |
+          node -e "
+            require('./src/models');
+            require('./src/services/cryptoService');
+            require('./src/services/oidcService');
+            require('./src/services/cveService');
+            require('./src/routes/passkey');
+            require('./src/routes/authOidc');
+            require('./src/routes/discovery');
+            require('./src/middleware/auth');
+            require('helmet'); require('express-rate-limit'); require('express-session');
+            console.log('Backend modules loaded successfully');
+            process.exit(0);
+          "
+        working-directory: backend
+        env:
+          JWT_SECRET: ci-dummy-secret-for-module-load-only
+          ENCRYPTION_KEY: ci-dummy-encryption-key-for-ci-only
+
+  # ── npm audit: vulnerability check on every push ──────────────────────────
+  npm-audit:
+    name: npm audit — Dependency Vulnerabilities
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: npm audit — Backend
+        # --audit-level=high: fail only on high/critical vulnerabilities with available fixes
+        run: npm audit --audit-level=high
+        working-directory: backend
+
+      - name: npm audit — Frontend
+        run: npm audit --audit-level=high
+        working-directory: frontend
+
+  # ── Snyk: Monorepo dependency scan ────────────────────────────────────────
+  snyk-dependencies:
+    name: Snyk — Dependency Scan
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: self-hosted
+    continue-on-error: true
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          cd backend && npm ci && cd ..
+          cd frontend && npm ci && cd ..
+
+      - name: Snyk Setup
+        uses: snyk/actions/setup@master
+
+      - name: Snyk Test
+        if: env.SNYK_TOKEN != '' && vars.SNYK_ORG != ''
+        # --fail-on=upgradable: only fail when a fix is actually available.
+        # Unpatchable high-severity findings (e.g. the xlsx ReDoS, which has no
+        # upstream patch) are reported but don't red the build.
+        run: snyk test --all-projects --severity-threshold=high --fail-on=upgradable --org=${{ vars.SNYK_ORG }}
+
+      - name: Snyk Monitor
+        if: github.ref == 'refs/heads/main' && env.SNYK_TOKEN != '' && vars.SNYK_ORG != ''
+        # --project-name is not allowed together with --all-projects (Snyk
+        # auto-names each detected project). Monitoring is advisory, so a
+        # transient upload failure must not red the job.
+        run: snyk monitor --all-projects --org=${{ vars.SNYK_ORG }} || true
+
+  # ── SonarQube: Code quality & security (SAST) ──────────────────────────────
+  sonarqube:
+    name: SonarQube — Code Quality
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: self-hosted
+    continue-on-error: true
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Actual SonarQube Action
+        if: env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != ''
+        # Static config (projectKey, sources, exclusions, …) lives in
+        # sonar-project.properties at the repo root. Only the dynamic version
+        # and the quality-gate flag are passed here.
+        uses: SonarSource/sonarqube-scan-action@v8
+        with:
+          args: >
+            -Dsonar.projectVersion=${{ github.sha }}
+            -Dsonar.qualitygate.wait=false

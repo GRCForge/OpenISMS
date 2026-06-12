@@ -1,0 +1,59 @@
+# Full-Stack-Deployment: App + Database + (optional) phpMyAdmin
+#
+#   docker compose up -d --build
+#
+# Environment variables are taken from .env (see .env.example)
+services:
+  isms-db:
+    image: mysql:8.0
+    container_name: isms-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-isms}
+      MYSQL_USER: ${MYSQL_USER:-isms_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-isms_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  openisms-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: isms:latest
+    container_name: openisms-app
+    restart: unless-stopped
+    depends_on:
+      isms-db:
+        condition: service_healthy
+    environment:
+      # Use DATABASE_URL if provided, else construct from individual vars
+      # Note: isms-db is the hostname of the database container
+      DATABASE_URL: ${DATABASE_URL:-mysql://${MYSQL_USER:-isms_user}:${MYSQL_PASSWORD:-isms_password}@isms-db:3306/${MYSQL_DATABASE:-isms}}
+      # Secrets sind PFLICHT: die App startet seit v1.8.1 ohne sie nicht. Kein
+      # unsicheres Default mehr — compose bricht mit Fehler ab, wenn nicht gesetzt.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET muss gesetzt sein (>= 32 zufaellige Zeichen)}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET muss gesetzt sein}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY muss gesetzt sein}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      PORT: 3001
+      UPLOAD_DIR: /app/uploads
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+      # Passkeys/WebAuthn: in Produktion auf die Domain setzen
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
+      WEBAUTHN_ORIGIN: ${WEBAUTHN_ORIGIN:-}
+    ports:
+      - "8080:3001"
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  mysql_data:
+  uploads_data:

@@ -1,0 +1,45 @@
+OpenISMS Source-Available License v1.0
+
+Copyright (c) 2026 Maximilian Herz. All rights reserved.
+
+1. DEFINITIONS
+   "Software" means the OpenISMS software and associated documentation files.
+   "Commercial Use" means any use of the Software by or for a company,
+   organization, or government entity, or any use intended for or directed
+   toward commercial advantage or monetary compensation.
+   "Licensor" means Maximilian Herz.
+
+2. GRANT OF RIGHTS
+   Subject to the terms of this license, the Licensor grants you a limited,
+   non-exclusive, non-transferable, royalty-free right to:
+   a) view and study the source code of the Software;
+   b) use the Software for personal, non-commercial purposes;
+   c) use the Software for evaluation purposes for a period of up to 30 days;
+   d) submit contributions (e.g. pull requests) to the official repository.
+
+3. RESTRICTIONS
+   Except as expressly permitted in Section 2, you may NOT:
+   a) copy, redistribute, sublicense, sell, rent, lease, or otherwise make
+      the Software or any derivative work available to any third party;
+   b) use the Software, in whole or in part, for Commercial Use without a
+      separate commercial license agreement with the Licensor;
+   c) offer the Software as a hosted or managed service to third parties;
+   d) remove or alter any copyright, license, or attribution notices.
+
+4. COMMERCIAL LICENSING
+   Commercial and enterprise use requires a commercial license.
+   Contact: maximilian@herz.dev
+
+5. CONTRIBUTIONS
+   By submitting a contribution, you grant the Licensor a perpetual,
+   worldwide, irrevocable, royalty-free license to use, modify, and
+   distribute your contribution as part of the Software under this license
+   and under any commercial license offered by the Licensor.
+
+6. TERMINATION
+   This license terminates automatically if you violate any of its terms.
+
+7. DISCLAIMER
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM,
+   DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
