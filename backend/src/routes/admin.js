@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const client = require('openid-client');
+const rateLimit = require('express-rate-limit');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { getGeneral, setGeneral, getOidcRaw, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting } = require('../services/settingsService');
 const { sendEmail, testSmtp, getSmtpConfig } = require('../services/emailService');
@@ -8,6 +9,15 @@ const { encrypt: encryptValue } = require('../services/cryptoService');
 const { invalidate, getCallbackUrl } = require('../services/oidcService');
 const { auditFromReq } = require('../services/auditService');
 const { AuditLog, CustomRole, OidcClaimMapping, User } = require('../models');
+
+// Rate limiting for expensive system logs retrieval
+const logsLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 30, // limit each IP to 30 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Anfragen auf diesen Endpunkt. Bitte warten Sie 5 Minuten.' }
+});
 
 // Gesamter Admin-Bereich nur fuer Administratoren
 router.use(authenticate, requireRole('admin'));
@@ -339,7 +349,7 @@ router.post('/smtp/send-test', async (req, res) => {
 });
 
 // --- Application Logs ---
-router.get('/logs', async (req, res) => {
+router.get('/logs', logsLimiter, async (req, res) => {
   try {
     const fs = require('fs');
     const { logFilePath } = require('../services/logger');
