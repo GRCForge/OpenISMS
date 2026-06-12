@@ -1,0 +1,58 @@
+# Security Policy
+
+## Supported Versions
+
+| Version | Supported |
+|---|---|
+| 2.2.x (latest) | ✅ |
+| < 2.2 | ❌ |
+
+Only the latest minor release receives security patches.
+
+## Reporting a Vulnerability
+
+**Please do not report security vulnerabilities via GitHub Issues.**
+
+Report vulnerabilities via one of the following channels:
+
+- **GitHub Private Vulnerability Reporting**: [Security → Report a vulnerability](../../security/advisories/new)
+- **E-Mail**: maximilian@herz.dev
+
+### What to include
+
+- Affected version(s)
+- Description of the vulnerability and potential impact
+- Steps to reproduce or proof-of-concept (if available)
+- Suggested fix (optional)
+
+### Response timeline
+
+| Milestone | Target |
+|---|---|
+| Initial acknowledgement | within 48 hours |
+| Severity assessment | within 5 business days |
+| Patch release (critical/high) | within 14 days |
+| Public disclosure | after patch is available |
+
+## Security Measures
+
+This repository uses an automated security pipeline on every pull request:
+
+| Tool | Purpose |
+|---|---|
+| **CodeQL** | Static application security testing (SAST) |
+| **Snyk** | Dependency vulnerability scanning |
+| **Trivy** | Lockfile CVEs, Dockerfile misconfigurations, hardcoded secrets |
+| **Gitleaks** | Secret scanning across full git history |
+| **npm audit** | Known vulnerabilities in direct dependencies |
+| **SonarQube** | Code quality & additional SAST rules |
+
+## Scope
+
+This project is an Information Security Management System (ISMS) tool aligned with ISO 27001. The following are considered in scope for vulnerability reports:
+
+- Authentication and session management
+- Authorization and access control
+- Data encryption and key management
+- API endpoints and input validation
+- Dependency vulnerabilities with a known exploit
