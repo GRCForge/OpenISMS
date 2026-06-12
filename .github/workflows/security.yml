@@ -231,8 +231,7 @@ jobs:
 
   # ── SonarQube: Code quality & security (SAST) ──────────────────────────────
   # All project config is passed as -D flags — no sonar-project.properties needed.
-  # Required GitHub Variable: SONAR_PROJECT_KEY (Settings → Variables → Actions)
-  # Required GitHub Secrets:  SONAR_TOKEN, SONAR_HOST_URL
+  # Required GitHub Secrets: SONAR_TOKEN, SONAR_HOST_URL, SONAR_PROJECT_KEY
   sonarqube:
     name: SonarQube — Code Quality
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -251,8 +250,8 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v8
         with:
           args: >
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-            -Dsonar.projectName=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.projectName=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.projectVersion=${{ github.sha }}
             -Dsonar.sources=backend/src,frontend/src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/openapi.json,**/*.test.*
