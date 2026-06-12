@@ -230,6 +230,9 @@ jobs:
             --format table
 
   # ── SonarQube: Code quality & security (SAST) ──────────────────────────────
+  # All project config is passed as -D flags — no sonar-project.properties needed.
+  # Required GitHub Variable: SONAR_PROJECT_KEY (Settings → Variables → Actions)
+  # Required GitHub Secrets:  SONAR_TOKEN, SONAR_HOST_URL
   sonarqube:
     name: SonarQube — Code Quality
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -243,13 +246,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Actual SonarQube Action
+      - name: SonarQube Scan
         if: env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != ''
-        # Static config (projectKey, sources, exclusions, …) lives in
-        # sonar-project.properties at the repo root. Only the dynamic version
-        # and the quality-gate flag are passed here.
         uses: SonarSource/sonarqube-scan-action@v8
         with:
           args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.projectName=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.projectVersion=${{ github.sha }}
+            -Dsonar.sources=backend/src,frontend/src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/openapi.json,**/*.test.*
+            -Dsonar.javascript.file.suffixes=.js,.jsx
+            -Dsonar.typescript.file.suffixes=.ts,.tsx
+            -Dsonar.sourceEncoding=UTF-8
             -Dsonar.qualitygate.wait=false
