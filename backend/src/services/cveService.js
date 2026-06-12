@@ -229,7 +229,8 @@ async function suggestCPEsForAsset(asset) {
     const titles = p.cpe?.titles || [];
     const enTitle = titles.find(t => t.lang === 'en')?.title || titles[0]?.title;
     const rawTitle = enTitle || parts[4].replace(/[-_]/g, ' ');
-    const title = rawTitle.replace(/\s+\d[\d.]+\s*$/, '').trim() || rawTitle;
+    const cleanTitle = rawTitle.length <= 254 ? rawTitle.replace(/\s+\d+(?:\.\d+)*\s*$/, '') : rawTitle;
+    const title = cleanTitle.trim() || rawTitle;
     return { cpe: baseCpe, title, score };
   }).filter(Boolean);
 
