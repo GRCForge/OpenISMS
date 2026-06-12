@@ -234,7 +234,7 @@ jobs:
           gitleaks version
 
       - name: Run Gitleaks
-        run: gitleaks detect --source . --verbose --redact
+        run: gitleaks detect --source . --config .gitleaks.toml --verbose --redact
 
   # ── Trivy: Vulnerability, secret & misconfiguration scan ──────────────────
   # Installs Trivy once on the runner (cached after first run).

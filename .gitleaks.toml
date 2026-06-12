@@ -1,0 +1,10 @@
+title = "OpenISMS Gitleaks Configuration"
+
+[allowlist]
+  description = "False positives — UI object properties named 'key' paired with 'label'"
+  regexes = [
+    # Matches JavaScript/TypeScript object literals like:
+    #   { key: 'iso27001_certified', label: '...' }
+    # These are UI column/filter definitions, not API keys.
+    '''key:\s*['"][a-z0-9_]+['"],\s*label:''',
+  ]
