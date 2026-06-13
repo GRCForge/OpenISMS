@@ -4,6 +4,7 @@ const { Incident, Asset, User, Risk, Vendor, VvtEntry } = require('../models');
 const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
+const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
 
@@ -47,7 +48,7 @@ router.get('/', authenticate, async (req, res) => {
     const where = { ...getAccessWhere(req.user) };
     if (status) where.status = status;
     if (severity) where.severity = severity;
-    if (search) where.title = { [Op.like]: `%${search}%` };
+    if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
     const incidents = await Incident.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(incidents);
   } catch (e) { res.status(500).json({ error: e.message }); }

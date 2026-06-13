@@ -6,6 +6,7 @@ const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { computeLevel, scaleInfo } = require('../services/riskScale');
 const { computeResidual } = require('../services/residual');
+const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.get('/', authenticate, async (req, res) => {
     if (status) where.status = status;
     if (treatment) where.treatment = treatment;
     if (level) where.inherent_level = level;
-    if (search) where.title = { [Op.like]: `%${search}%` };
+    if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
     const risks = await Risk.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(risks);
   } catch (e) { res.status(500).json({ error: e.message }); }

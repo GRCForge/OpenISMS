@@ -10,6 +10,7 @@ const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 const { fetchCVEsForAsset, resolveCPEForAsset, suggestCPEsForAsset } = require('../services/cveService');
+const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.get('/', authenticate, async (req, res) => {
     } else {
       where.status = { [Op.ne]: 'decommissioned' };
     }
-    if (search) where.name = { [Op.like]: `%${search}%` };
+    if (search) where.name = { [Op.like]: `%${escapeLike(search)}%` };
 
     const assets = await Asset.findAll({
       where,

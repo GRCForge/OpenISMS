@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { Threat } = require('../models');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
+const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.get('/', authenticate, async (req, res) => {
     const { source, search } = req.query;
     const where = {};
     if (source) where.source = source;
-    if (search) where[Op.or] = [{ code: { [Op.like]: `%${search}%` } }, { title: { [Op.like]: `%${search}%` } }];
+    if (search) where[Op.or] = [{ code: { [Op.like]: `%${escapeLike(search)}%` } }, { title: { [Op.like]: `%${escapeLike(search)}%` } }];
     const threats = await Threat.findAll({ where, order: [['source', 'ASC'], ['code', 'ASC'], ['title', 'ASC']] });
     res.json(threats);
   } catch (e) { res.status(500).json({ error: e.message }); }

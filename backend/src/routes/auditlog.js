@@ -2,6 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { AuditLog } = require('../models');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ router.get('/', authenticate, requireRole('admin', 'assessor'), async (req, res)
     if (entity_type) where.entity_type = entity_type;
     if (action) where.action = action;
     if (actor_id) where.actor_id = actor_id;
-    if (search) where.entity_name = { [Op.like]: `%${search}%` };
+    if (search) where.entity_name = { [Op.like]: `%${escapeLike(search)}%` };
     if (from || to) {
       where.created_at = {};
       if (from) where.created_at[Op.gte] = new Date(from);
