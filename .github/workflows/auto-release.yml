@@ -68,13 +68,10 @@ jobs:
           # VERSION is the only file the release and docker-publish workflows
           # read. The package.json files are kept in sync as a convention.
           echo "$V" > VERSION
+          # Bump the top-level "version" field in each package.json using sed
+          # (only the FIRST match per file — that is the package's own version).
           for pkg in backend/package.json frontend/package.json; do
-            node -e "
-              const fs = require('fs');
-              const p = JSON.parse(fs.readFileSync('${pkg}', 'utf8'));
-              p.version = '${V}';
-              fs.writeFileSync('${pkg}', JSON.stringify(p, null, 2) + '\n');
-            "
+            sed -i -E "0,/\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/s//\"version\": \"${V}\"/" "$pkg"
           done
           echo "Version files updated to $V"
 
