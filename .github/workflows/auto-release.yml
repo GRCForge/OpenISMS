@@ -65,6 +65,8 @@ jobs:
         if: steps.ver.outputs.skip == 'false'
         run: |
           V="${{ steps.ver.outputs.version }}"
+          # VERSION is the only file the release and docker-publish workflows
+          # read. The package.json files are kept in sync as a convention.
           echo "$V" > VERSION
           for pkg in backend/package.json frontend/package.json; do
             node -e "
