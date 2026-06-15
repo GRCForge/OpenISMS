@@ -1,0 +1,75 @@
+{
+  "name": "Branch Naming – Semver",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [
+        "refs/heads/main"
+      ],
+      "include": [
+        "~ALL"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "branch_name_pattern",
+      "parameters": {
+        "name": "vX.Y.Z oder dev-vX.Y.Z",
+        "negate": false,
+        "operator": "regex",
+        "pattern": "^(dev-)?v[0-9]+\\.[0-9]+\\.[0-9]+$"
+      }
+    },
+    {
+      "type": "commit_author_email_pattern",
+      "parameters": {
+        "name": "Nur bekannte Autor-Domains",
+        "negate": false,
+        "operator": "regex",
+        "pattern": "^.+@(herz\\.dev|users\\.noreply\\.github\\.com)$"
+      }
+    },
+    {
+      "type": "committer_email_pattern",
+      "parameters": {
+        "name": "Nur bekannte Committer-Domains",
+        "negate": false,
+        "operator": "regex",
+        "pattern": "^.+@(herz\\.dev|users\\.noreply\\.github\\.com)$"
+      }
+    },
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Aussagekräftige Commit-Message (min. 10 Zeichen)",
+        "negate": false,
+        "operator": "regex",
+        "pattern": "^.{10,}"
+      }
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": null,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    },
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "always"
+    },
+    {
+      "actor_id": 29110,
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    },
+    {
+      "actor_id": 946600,
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    }
+  ]
+}
