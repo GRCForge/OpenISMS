@@ -142,6 +142,12 @@ const ENTITY_CONFIGS = {
   }
 };
 
+// Prevent prototype pollution: block __proto__, constructor, prototype as property names
+const safeHeader = (h) => {
+  const k = String(h).trim();
+  return (k === '__proto__' || k === 'constructor' || k === 'prototype') ? `_${k}` : k;
+};
+
 const readRows = async (file) => {
   const rows = [];
   if (file.originalname.endsWith('.csv')) {
@@ -149,10 +155,10 @@ const readRows = async (file) => {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     if (lines.length === 0) return [];
     const sep = lines[0].includes(';') ? ';' : ',';
-    const headers = lines[0].split(sep).map(h => h.replace(/^"|"$/g, '').trim());
+    const headers = lines[0].split(sep).map(h => safeHeader(h.replace(/^"|"$/g, '').trim()));
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(sep).map(v => v.replace(/^"|"$/g, '').trim());
-      const row = {};
+      const row = Object.create(null);
       headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
       rows.push(row);
     }
@@ -162,11 +168,11 @@ const readRows = async (file) => {
     const worksheet = workbook.getWorksheet(1);
     const headers = [];
     worksheet.getRow(1).eachCell((cell, colNumber) => {
-      headers[colNumber] = cell.text.trim();
+      headers[colNumber] = safeHeader(cell.text.trim());
     });
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return;
-      const dataRow = {};
+      const dataRow = Object.create(null);
       row.eachCell((cell, colNumber) => {
         dataRow[headers[colNumber]] = cell.text.trim();
       });

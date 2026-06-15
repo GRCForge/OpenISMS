@@ -194,7 +194,6 @@ router.post('/login-verify', async (req, res) => {
 
     if (!verification.verified) return res.status(401).json({ error: 'Passkey-Verifizierung fehlgeschlagen.' });
 
-    delete req.session.passkey_auth_challenge;
     pkCred.counter = verification.authenticationInfo.newCounter;
     await pkCred.save();
 
@@ -203,7 +202,12 @@ router.post('/login-verify', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, jwtSecret, { expiresIn: '24h' });
     await auditFromReq({ ...req, user }, 'login', 'auth', user.id, user.name, { method: 'passkey' });
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, department: user.department } });
+
+    // Regenerate session to prevent session fixation after successful authentication
+    req.session.regenerate((err) => {
+      if (err) console.error('[Passkey] session regenerate error:', err.message);
+      res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, department: user.department } });
+    });
   } catch (e) {
     console.error('[Passkey login-verify]', e);
     res.status(400).json({ error: e.message });

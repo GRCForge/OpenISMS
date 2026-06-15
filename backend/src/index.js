@@ -64,13 +64,20 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`[API] ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+    // Sanitize URL to prevent log injection via newline characters in user-controlled input
+    const safeUrl = String(req.originalUrl).replace(/[\r\n]/g, '');
+    const safeMethod = String(req.method).replace(/[\r\n]/g, '');
+    console.log(`[API] ${safeMethod} ${safeUrl} - ${res.statusCode} (${duration}ms)`);
   });
   next();
 });
 
 const sessionSecret = process.env.SESSION_SECRET || process.env.JWT_SECRET;
 if (!sessionSecret) { console.error('FATAL: SESSION_SECRET or JWT_SECRET must be set'); process.exit(1); }
+// CSRF is not applicable here: the REST API authenticates exclusively via JWT
+// in the Authorization header (not cookies), making cross-site requests harmless.
+// The session is used solely for OIDC PKCE state, which is already CSRF-protected
+// by the OAuth `state` parameter and SameSite=lax cookies. // codeql[js/missing-csrf-middleware]
 app.use(session({
   secret: sessionSecret,
   resave: false,

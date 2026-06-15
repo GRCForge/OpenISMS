@@ -26,19 +26,23 @@ try {
   console.error('[Logger] Failed to create write stream for log file:', e.message);
 }
 
+// Strip CR/LF from each token to prevent log injection (CWE-117) when
+// user-controlled values (e.g. URLs, error messages) reach the log file.
+const sanitize = (s) => String(s).replace(/[\r\n]/g, ' ');
+
 const formatMessage = (level, args) => {
   const timestamp = new Date().toISOString();
   const message = args.map(arg => {
     if (arg instanceof Error) {
-      return arg.stack;
+      return sanitize(arg.stack || arg.message);
     } else if (typeof arg === 'object') {
       try {
-        return JSON.stringify(arg);
+        return sanitize(JSON.stringify(arg));
       } catch (e) {
-        return String(arg);
+        return sanitize(String(arg));
       }
     } else {
-      return String(arg);
+      return sanitize(arg);
     }
   }).join(' ');
   return `[${timestamp}] [${level}] ${message}\n`;

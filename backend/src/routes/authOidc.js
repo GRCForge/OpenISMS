@@ -47,7 +47,6 @@ router.get('/login', async (req, res) => {
     const code_verifier = client.randomPKCECodeVerifier();
     const code_challenge = await client.calculatePKCECodeChallenge(code_verifier);
     const state = client.randomState();
-    req.session.oidc = { code_verifier, state };
     const url = client.buildAuthorizationUrl(config, {
       redirect_uri: getCallbackUrl(),
       scope: cfg.scopes || 'openid profile email',
@@ -55,7 +54,15 @@ router.get('/login', async (req, res) => {
       code_challenge_method: 'S256',
       state,
     });
-    res.redirect(url.href);
+    // Regenerate session before storing OIDC state to prevent session fixation
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('[OIDC] session regeneration failed:', err.message);
+        return res.redirect(`${frontendBase(req)}/login?error=sso`);
+      }
+      req.session.oidc = { code_verifier, state };
+      res.redirect(url.href);
+    });
   } catch (e) {
     console.error('[OIDC] login error:', e.message);
     res.redirect(`${frontendBase(req)}/login?error=sso`);

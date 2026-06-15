@@ -1553,7 +1553,9 @@ server.tool(
 const sessions = new Map(); // sessionId → StreamableHTTPServerTransport
 
 function createMcpRouter() {
+  const { apiLimiter } = require('../middleware/rateLimiter');
   const router = express.Router();
+  router.use(apiLimiter);
   router.use(express.json());
   router.use(mcpAuth);
 
