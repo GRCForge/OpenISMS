@@ -1,4 +1,6 @@
-import ExcelJS from 'exceljs';
+import writeXlsxFile, { type Cell, type SheetData } from 'write-excel-file';
+
+type Row = Record<string, unknown>;
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
@@ -9,7 +11,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-export const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
+export const exportToCSV = (data: Row[], filename: string) => {
   if (!data.length) return;
   const headers = Object.keys(data[0]);
   const escape = (v: unknown) => {
@@ -23,34 +25,52 @@ export const exportToCSV = (data: Record<string, unknown>[], filename: string) =
   downloadBlob(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), `${filename}.csv`);
 };
 
-const buildSheet = (ws: ExcelJS.Worksheet, data: Record<string, unknown>[]) => {
-  const headers = Object.keys(data[0]);
-  ws.columns = headers.map(key => ({
-    header: key,
-    key,
-    width: Math.max(key.length, ...data.slice(0, 200).map(r => String(r[key] ?? '').length)) + 2,
-  }));
-  ws.addRows(data);
-  ws.getRow(1).font = { bold: true };
+// Map an arbitrary value to a write-excel-file cell, preserving numeric/boolean
+// types where possible and falling back to a string for everything else.
+// Empty values become a null cell (an empty cell in the sheet).
+const toCell = (v: unknown): Cell => {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') return { value: v, type: Number };
+  if (typeof v === 'boolean') return { value: v, type: Boolean };
+  if (v instanceof Date) return { value: v, type: Date, format: 'dd.mm.yyyy' };
+  return { value: String(v), type: String };
 };
 
-export const exportToExcel = async (data: Record<string, unknown>[], filename: string, sheetName = 'Export') => {
+const buildRows = (data: Row[]): SheetData => {
+  const headers = Object.keys(data[0]);
+  const headerRow: Cell[] = headers.map(h => ({ value: h, fontWeight: 'bold' }));
+  const dataRows: Cell[][] = data.map(row => headers.map(h => toCell(row[h])));
+  return [headerRow, ...dataRows];
+};
+
+const buildColumns = (data: Row[]) => {
+  const headers = Object.keys(data[0]);
+  return headers.map(key => ({
+    width: Math.max(key.length, ...data.slice(0, 200).map(r => String(r[key] ?? '').length)) + 2,
+  }));
+};
+
+export const exportToExcel = async (data: Row[], filename: string, sheetName = 'Export') => {
   if (!data.length) return;
-  const wb = new ExcelJS.Workbook();
-  buildSheet(wb.addWorksheet(sheetName.slice(0, 31)), data);
-  const buffer = await wb.xlsx.writeBuffer();
-  downloadBlob(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${filename}.xlsx`);
+  await writeXlsxFile(buildRows(data), {
+    columns: buildColumns(data),
+    sheet: sheetName.slice(0, 31),
+    fileName: `${filename}.xlsx`,
+  });
 };
 
 export const exportToMultiSheetExcel = async (
-  sheets: { name: string; data: Record<string, unknown>[] }[],
+  sheets: { name: string; data: Row[] }[],
   filename: string,
 ) => {
-  const wb = new ExcelJS.Workbook();
-  for (const { name, data } of sheets) {
-    if (!data.length) continue;
-    buildSheet(wb.addWorksheet(name.slice(0, 31)), data);
-  }
-  const buffer = await wb.xlsx.writeBuffer();
-  downloadBlob(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${filename}.xlsx`);
+  const filled = sheets.filter(s => s.data.length);
+  if (!filled.length) return;
+  await writeXlsxFile(
+    filled.map(s => buildRows(s.data)),
+    {
+      columns: filled.map(s => buildColumns(s.data)),
+      sheets: filled.map(s => s.name.slice(0, 31)),
+      fileName: `${filename}.xlsx`,
+    },
+  );
 };
