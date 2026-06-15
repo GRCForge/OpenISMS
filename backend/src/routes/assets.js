@@ -10,6 +10,10 @@ const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 const { fetchCVEsForAsset, resolveCPEForAsset, suggestCPEsForAsset } = require('../services/cveService');
+
+function sanitizeForLog(value) {
+  return String(value).replace(/[\r\n]/g, '');
+}
 const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
@@ -302,7 +306,7 @@ router.post('/:id/cpe-suggestions', authenticate, requireModule('discovery'), re
     }
     res.json({ suggestions });
   } catch (e) {
-    console.error('[CVE] CPE suggestions failed for asset', req.params.id + ':', e.message);
+    console.error('[CVE] CPE suggestions failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -365,7 +369,7 @@ router.post('/:id/refresh-cves', authenticate, requireModule('discovery'), requi
     await auditFromReq(req, 'update', 'asset', asset.id, asset.name, { cve_refresh: { source: result.source, total: result.total, query: result.query } });
     res.json({ counts: result.counts, cveList: result.cveList, total: result.total, source: result.source, query: result.query });
   } catch (e) {
-    console.error('[CVE] Refresh failed for asset', req.params.id + ':', e.message);
+    console.error('[CVE] Refresh failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
     res.status(500).json({ error: e.message });
   }
 });
