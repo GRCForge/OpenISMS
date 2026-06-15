@@ -54,7 +54,7 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 ![Incident Management](docs/screenshots/incidents.png)
 
 ### Administration
-![Administration](docs/screenshots/admin.png)
+![Administration](docs/screenshots/administration.png)
 
 ---
 
