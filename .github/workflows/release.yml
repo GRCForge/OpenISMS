@@ -18,6 +18,8 @@ env:
 jobs:
   prepare:
     runs-on: self-hosted
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.v.outputs.version }}
       exists: ${{ steps.check.outputs.exists }}
@@ -45,6 +47,8 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.exists == 'false'
     runs-on: self-hosted
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 

@@ -33,6 +33,8 @@ jobs:
   gate:
     name: Decide whether to publish
     runs-on: self-hosted
+    permissions:
+      contents: read
     outputs:
       publish: ${{ steps.decide.outputs.publish }}
       version: ${{ steps.decide.outputs.version }}
