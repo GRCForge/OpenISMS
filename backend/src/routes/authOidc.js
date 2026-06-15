@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { User, OidcClaimMapping, CustomRole } = require('../models');

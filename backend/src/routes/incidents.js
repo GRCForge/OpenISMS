@@ -7,6 +7,8 @@ const { notify } = require('../services/notifyService');
 const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 const notifyAssignee = async (incident, actorId) => notify({
   userId: incident.assignee_id, actorId, type: 'assignment',

@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const webpush = require('web-push');
 const { authenticate } = require('../middleware/auth');
 const { PushSubscription } = require('../models');

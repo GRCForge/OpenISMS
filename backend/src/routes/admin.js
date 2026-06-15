@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const { Op } = require('sequelize');
 const client = require('openid-client');
 const rateLimit = require('express-rate-limit');

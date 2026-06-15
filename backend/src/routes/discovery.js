@@ -1,6 +1,8 @@
 'use strict';
 
 const router  = require('express').Router();
+const { heavyLimiter } = require('../middleware/rateLimiter');
+router.use(heavyLimiter);
 const net     = require('net');
 const dns     = require('dns').promises;
 const http    = require('http');
@@ -128,7 +130,7 @@ async function getHttpSignature(ip, port, useHttps = false) {
       path: '/',
       method: 'GET',
       timeout: 600,
-      rejectUnauthorized: false,
+      rejectUnauthorized: false, // intentional: LAN devices routinely use self-signed certs; probes are read-only fingerprinting of private IPs only
     }, res => {
       let body = '';
       res.setEncoding('utf8');

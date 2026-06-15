@@ -9,6 +9,8 @@ const { computeResidual } = require('../services/residual');
 const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 const includeAll = [
   { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },

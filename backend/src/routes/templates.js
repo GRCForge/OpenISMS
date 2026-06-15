@@ -68,6 +68,8 @@ const upload = multer({
 });
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 router.use(authenticate);
 

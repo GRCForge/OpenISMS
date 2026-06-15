@@ -5,6 +5,8 @@ const { Op } = require('sequelize');
 const { auditFromReq } = require('../services/auditService');
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 router.get('/', authenticate, async (req, res) => {
   try {

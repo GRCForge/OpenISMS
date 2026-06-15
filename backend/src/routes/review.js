@@ -4,6 +4,8 @@ const { Asset, Risk, Control, Incident, Reminder, ReviewSignOff, User } = requir
 const { authenticate, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 // Aggregierte Kennzahlen fuer das Management-Review (ISO 27001 Kap. 9.3).
 router.get('/kpis', authenticate, async (req, res) => {

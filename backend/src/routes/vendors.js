@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const { Vendor, VendorContact, Asset, User, Incident, VvtEntry } = require('../models');
 const { authenticate, isItStaff, isAdmin, isDpo } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');

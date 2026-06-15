@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { heavyLimiter } = require('../middleware/rateLimiter');
+router.use(heavyLimiter);
 const path = require('path');
 const fs = require('fs');
 const archiver = require('archiver');

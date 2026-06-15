@@ -13,6 +13,8 @@ const SOA_TO_ISO = {
 };
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 const includeAll = [
   { model: Policy, as: 'policies', through: { attributes: [] } },
