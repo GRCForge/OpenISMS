@@ -1,14 +1,22 @@
 # OpenISMS – Information Security Management System
 
-![Build & Publish](https://github.com/grcforge/openisms/actions/workflows/docker-publish.yml/badge.svg)
+![Build & Publish](https://github.com/grcforge/openisms/actions/workflows/release.yml/badge.svg)
 ![Security & Quality](https://github.com/grcforge/openisms/actions/workflows/security.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/release/grcforge/openisms?label=version&color=blue)
 ![License](https://img.shields.io/badge/license-Source--Available-red)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)
+![API](https://img.shields.io/badge/API-available-green)
+![MCP](https://img.shields.io/badge/MCP-available-blue%3Flogo%3Dmcp)
+
+
 ![ISO 27001](https://img.shields.io/badge/ISO%2027001-compliant-4CAF50)
+![EU AI ACT](https://img.shields.io/badge/EU%20AI%20ACT-supported-lightblue)
 ![NIS-2](https://img.shields.io/badge/NIS--2-supported-orange)
 ![GDPR](https://img.shields.io/badge/GDPR-supported-purple)
+![TISAX](https://img.shields.io/badge/TISAX-supported-blue)
+![BSI C5:2026](https://img.shields.io/badge/BSI%20C5%3A2026-supported-yellow
+)
 
 OpenISMS is a complete, practice-oriented Information Security Management System (ISMS) built on Node.js, React and MySQL — a GRCForge project designed to support **ISO 27001**, **NIS-2**, **GDPR**, **EU AI Act**, **TISAX**, **DORA** and **BSI C5**.
 
