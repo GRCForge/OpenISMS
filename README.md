@@ -9,7 +9,7 @@
 ![API](https://img.shields.io/badge/API-available-green)
 ![MCP](https://img.shields.io/badge/MCP-available-blue%3Flogo%3Dmcp)
 
-
+## Supported Framworks
 ![ISO 27001](https://img.shields.io/badge/ISO%2027001-compliant-4CAF50)
 ![EU AI ACT](https://img.shields.io/badge/EU%20AI%20ACT-supported-lightblue)
 ![NIS-2](https://img.shields.io/badge/NIS--2-supported-orange)
@@ -18,6 +18,7 @@
 ![BSI C5:2026](https://img.shields.io/badge/BSI%20C5%3A2026-supported-yellow
 )
 
+## Description
 OpenISMS is a complete, practice-oriented Information Security Management System (ISMS) built on Node.js, React and MySQL — a GRCForge project designed to support **ISO 27001**, **NIS-2**, **GDPR**, **EU AI Act**, **TISAX**, **DORA** and **BSI C5**.
 
 > **Default login after initial setup:** `admin@isms.local` / `Admin1234!` — change immediately.
