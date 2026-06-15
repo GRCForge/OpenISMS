@@ -1,54 +1,137 @@
-name: Release
+name: Release & Publish
 
-# Creates a GitHub Release (and matching git tag) whenever the VERSION file on
-# main changes. Builds a release package (tar.gz + zip) with pre-compiled
-# frontend and attaches it to the release alongside the Docker image reference.
+# Single consolidated release pipeline. Runs on every push to main — which,
+# with the branch protection ruleset, only happens when a dev-/vX.Y.Z branch is
+# merged via PR. Code-quality/security checks for the PR live in security.yml
+# and are intentionally NOT part of this workflow.
 #
-# Trigger: path-filtered to VERSION only — does NOT run on normal code commits,
-# keeping Actions minute usage minimal.
+# Behaviour is driven entirely by the VERSION file (single source of truth):
+#
+#   • tag vX.Y.Z does NOT yet exist  → NEW RELEASE
+#        - build & push GHCR image  (:vX.Y.Z :X.Y.Z :latest)
+#        - create GitHub Release + git tag + tar.gz/zip package
+#
+#   • tag vX.Y.Z already exists       → UPDATE ONLY
+#        - rebuild & push GHCR image (:vX.Y.Z :X.Y.Z :latest, overwriting)
+#        - NO new Release / tag / package
+#
+# Set the version by editing VERSION in your dev-/vX.Y.Z branch before merging.
+
 on:
   push:
     branches: [main]
-    paths: ['VERSION']
   workflow_dispatch:
 
+# Least privilege by default; jobs widen as needed.
+permissions:
+  contents: read
+
 env:
+  REGISTRY: ghcr.io
+  PACKAGE_NAME: openisms-app
+  # Opt into Node.js 24 for JavaScript actions ahead of GitHub's forced switch.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  # ── Decide: read VERSION, is this a new release (tag missing) or an update? ──
   prepare:
+    name: Determine version & release type
     runs-on: self-hosted
     permissions:
       contents: read
     outputs:
       version: ${{ steps.v.outputs.version }}
-      exists: ${{ steps.check.outputs.exists }}
+      new_release: ${{ steps.check.outputs.new_release }}
     steps:
       - uses: actions/checkout@v6
-      - name: Read version
+        with:
+          fetch-depth: 0
+
+      - name: Read version from VERSION file
         id: v
-        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
-      - name: Check if tag already exists
+        run: |
+          version=$(tr -d '[:space:]' < VERSION)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "VERSION file → $version"
+
+      - name: Check whether tag v$version already exists
         id: check
         run: |
           if git ls-remote --tags origin "refs/tags/v${{ steps.v.outputs.version }}" | grep -q .; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "new_release=false" >> "$GITHUB_OUTPUT"
+            echo "Tag v${{ steps.v.outputs.version }} exists → UPDATE existing image only."
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "new_release=true" >> "$GITHUB_OUTPUT"
+            echo "Tag v${{ steps.v.outputs.version }} missing → NEW release."
           fi
 
-  # ── Build release packages (tar.gz + zip) ────────────────────────────────────
-  # Produces two downloadable artifacts for bare-metal (systemd) installs:
-  #   isms-vX.Y.Z.tar.gz / .zip
-  # Contents: backend source (no node_modules) + pre-built frontend dist +
-  #           docker-compose files + .env.example + install.sh + Dockerfile
-  build-package:
-    name: Build Release Package
+  # ── Docker: always build & push the All-in-One image to GHCR ────────────────
+  # Runs for both new releases and updates — every merge refreshes :latest.
+  docker:
+    name: Build & Push GHCR image
     needs: prepare
-    if: needs.prepare.outputs.exists == 'false'
     runs-on: self-hosted
     permissions:
       contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image name (lowercase)
+        id: info
+        run: |
+          echo "image=${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_OUTPUT"
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.info.outputs.image }}
+          # vX.Y.Z + X.Y.Z + latest on the All-in-One image. On an update merge
+          # these tags are overwritten (= "update existing package").
+          tags: |
+            type=raw,value=v${{ needs.prepare.outputs.version }}
+            type=raw,value=${{ needs.prepare.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Prune local build cache (keep last 7 days)
+        if: always()
+        run: |
+          docker buildx prune --force --filter "until=168h" || true
+          docker image prune --force || true
+
+  # ── Release: only on a NEW version — GitHub Release + git tag + tar.gz/zip ───
+  release:
+    name: Create GitHub Release
+    needs: [prepare, docker]
+    if: needs.prepare.outputs.new_release == 'true'
+    runs-on: self-hosted
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
 
@@ -69,7 +152,7 @@ jobs:
       - name: Ensure zip is available
         run: command -v zip || sudo apt-get install -y zip
 
-      - name: Create release packages
+      - name: Create release packages (tar.gz + zip)
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           PKG="openisms-v${VERSION}"
@@ -92,30 +175,6 @@ jobs:
 
           echo "Package contents:"
           tar tzf "${PKG}.tar.gz" | head -30
-
-      - name: Upload package artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-packages
-          path: |
-            openisms-v${{ needs.prepare.outputs.version }}.tar.gz
-            openisms-v${{ needs.prepare.outputs.version }}.zip
-          retention-days: 1
-
-  # ── Create GitHub Release with packages attached ──────────────────────────────
-  release:
-    needs: [prepare, build-package]
-    if: needs.prepare.outputs.exists == 'false'
-    runs-on: self-hosted
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Download release packages
-        uses: actions/download-artifact@v8
-        with:
-          name: release-packages
 
       - name: Compute image namespace (lowercase)
         id: ns
@@ -162,3 +221,59 @@ jobs:
 
             Standard-Login: `admin@isms.local` / `Admin1234!`
             SSO/OIDC wird nach dem Login unter **Administration → Single Sign-On** konfiguriert.
+
+  # ── Cleanup: prune untagged digests & keep the newest 10 tagged versions ────
+  cleanup:
+    name: Cleanup old packages
+    needs: docker
+    runs-on: self-hosted
+    permissions:
+      packages: write
+    steps:
+      - name: Prune untagged and stale package versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          PACKAGE: ${{ env.PACKAGE_NAME }}
+        run: |
+          set -uo pipefail
+          # User- and org-owned packages use different REST base paths.
+          OWNER_TYPE=$(gh api "users/${OWNER}" --jq .type 2>/dev/null || echo User)
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            BASE="orgs/${OWNER}/packages/container/${PACKAGE}/versions"
+          else
+            BASE="users/${OWNER}/packages/container/${PACKAGE}/versions"
+          fi
+
+          versions=$(gh api --paginate "${BASE}?per_page=100" 2>/dev/null || echo '[]')
+          count=$(echo "$versions" | jq 'length')
+          echo "Found ${count} version(s) for ${PACKAGE} (${OWNER_TYPE})"
+
+          # 1) Delete untagged versions
+          echo "$versions" \
+            | jq -r '.[] | select((.metadata.container.tags // []) | length == 0) | .id' \
+            | while read -r id; do
+                [ -n "$id" ] || continue
+                if gh api -X DELETE "${BASE}/${id}" >/dev/null 2>&1; then
+                  echo "  deleted untagged ${id}"
+                else
+                  echo "  skip untagged ${id} (no permission or already gone)"
+                fi
+              done
+
+          # 2) Keep the newest 10 tagged versions; never touch one tagged 'latest'
+          echo "$versions" \
+            | jq -r '[.[]
+                | select((.metadata.container.tags // []) | length > 0)
+                | select((.metadata.container.tags // []) | index("latest") | not)]
+                | sort_by(.created_at) | reverse | .[10:][] | .id' \
+            | while read -r id; do
+                [ -n "$id" ] || continue
+                if gh api -X DELETE "${BASE}/${id}" >/dev/null 2>&1; then
+                  echo "  deleted stale tagged ${id}"
+                else
+                  echo "  skip stale tagged ${id} (no permission or already gone)"
+                fi
+              done
+
+          echo "Cleanup finished"
