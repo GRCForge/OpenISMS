@@ -337,7 +337,8 @@ router.post('/:id/resolve-cpe', authenticate, requireModule('discovery'), requir
     await asset.update({ cpe: result.cpe, cpe_title: result.title, cpe_resolved_at: new Date() });
     res.json({ found: true, cpe: result.cpe, title: result.title });
   } catch (e) {
-    console.error('[CVE] CPE resolve failed for asset', req.params.id + ':', e.message);
+    const safeAssetId = String(req.params.id).replace(/[\r\n]/g, '');
+    console.error('[CVE] CPE resolve failed for asset', safeAssetId + ':', e.message);
     res.status(500).json({ error: e.message });
   }
 });
