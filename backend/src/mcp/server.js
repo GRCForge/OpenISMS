@@ -2,7 +2,7 @@
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
-const { randomUUID } = require('crypto');
+const { randomUUID, timingSafeEqual } = require('crypto');
 const { z } = require('zod');
 const { Op } = require('sequelize');
 const express = require('express');
@@ -18,15 +18,23 @@ async function mcpAuth(req, res, next) {
     return res.status(401).json({ error: 'MCP: Authorization header required' });
   }
 
-  // Option A: static MCP_SECRET
+  // Option A: static MCP_SECRET (timing-safe comparison to prevent timing attacks)
   const secret = process.env.MCP_SECRET;
-  if (secret && token === secret) {
-    req.mcpUser = { id: 0, name: 'MCP Client', role: 'admin' };
-    return next();
+  if (secret) {
+    const tokenBuf  = Buffer.from(token,  'utf8');
+    const secretBuf = Buffer.from(secret, 'utf8');
+    if (tokenBuf.length === secretBuf.length && timingSafeEqual(tokenBuf, secretBuf)) {
+      req.mcpUser = { id: 0, name: 'MCP Client', role: 'admin' };
+      return next();
+    }
   }
 
   // Option B: regular API Token (isms_api_...)
+  // Validate format before DB lookup: prefix + 64 lowercase hex chars
   if (token.startsWith('isms_api_')) {
+    if (!/^isms_api_[0-9a-f]{64}$/.test(token)) {
+      return res.status(401).json({ error: 'MCP: Invalid token' });
+    }
     try {
       const { ApiToken, User } = getModels();
       const dbToken = await ApiToken.findOne({ where: { token } });
@@ -63,7 +71,7 @@ async function mcpAuth(req, res, next) {
 
   // Option C: regular JWT issued by /api/auth/login
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     req.mcpUser = payload;
     return next();
   } catch {

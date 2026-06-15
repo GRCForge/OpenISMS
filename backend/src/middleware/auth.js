@@ -9,6 +9,10 @@ const authenticate = async (req, res, next) => {
     const token = header.split(' ')[1];
 
     if (token.startsWith('isms_api_')) {
+      // Validate format before DB lookup: prefix + 64 lowercase hex chars
+      if (!/^isms_api_[0-9a-f]{64}$/.test(token)) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
       const dbToken = await ApiToken.findOne({ where: { token } });
       if (!dbToken) return res.status(401).json({ error: 'Invalid token' });
 
