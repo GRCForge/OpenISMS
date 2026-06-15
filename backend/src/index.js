@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { apiLimiter, heavyLimiter: sharedHeavyLimiter } = require('./middleware/rateLimiter');
 const session = require('express-session');
 const passport = require('passport');
 const { sequelize } = require('./models');
@@ -103,11 +104,19 @@ const emailOrIpKey = (req) => {
 };
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, keyGenerator: emailOrIpKey, message: { error: 'Zu viele Anmeldeversuche. Bitte warte 15 Minuten.' } });
 const strictLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Zu viele Versuche. Bitte warte 15 Minuten.' } });
-
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/login/totp', strictLimiter);
 app.use('/api/auth/passkey/login-verify', strictLimiter);
 app.use('/api/auth/2fa', strictLimiter);
+
+// Belt-and-suspenders: heavy paths also guarded at the app level.
+// Each router file applies its own limiter directly for CodeQL compliance (CWE-770).
+app.use('/api/admin/backup', sharedHeavyLimiter);
+app.use('/api/import', sharedHeavyLimiter);
+app.use('/api/report', sharedHeavyLimiter);
+app.use('/api/discovery', sharedHeavyLimiter);
+app.use('/api/dashboard', sharedHeavyLimiter);
+app.use('/api', apiLimiter);
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/auth/oidc', require('./routes/authOidc'));

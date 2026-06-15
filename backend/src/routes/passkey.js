@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const jwt = require('jsonwebtoken');
 const {
   generateRegistrationOptions,

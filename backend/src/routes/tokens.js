@@ -1,6 +1,8 @@
 'use strict';
 
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const crypto = require('crypto');
 const { ApiToken } = require('../models');
 const { authenticate } = require('../middleware/auth');

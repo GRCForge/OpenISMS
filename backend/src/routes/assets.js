@@ -11,7 +11,14 @@ const { notify } = require('../services/notifyService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 const { fetchCVEsForAsset, resolveCPEForAsset, suggestCPEsForAsset } = require('../services/cveService');
 
+function sanitizeForLog(value) {
+  return String(value).replace(/[\r\n]/g, '');
+}
+const { escapeLike } = require('../utils/sqlUtils');
+
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 // Inform active DPOs about DPIA requirements
 const notifyDpos = async (asset, actorId) => {
@@ -38,7 +45,7 @@ router.get('/', authenticate, async (req, res) => {
     } else {
       where.status = { [Op.ne]: 'decommissioned' };
     }
-    if (search) where.name = { [Op.like]: `%${search}%` };
+    if (search) where.name = { [Op.like]: `%${escapeLike(search)}%` };
 
     const assets = await Asset.findAll({
       where,
@@ -299,7 +306,7 @@ router.post('/:id/cpe-suggestions', authenticate, requireModule('discovery'), re
     }
     res.json({ suggestions });
   } catch (e) {
-    console.error(`[CVE] CPE suggestions failed for asset ${req.params.id}:`, e.message);
+    console.error('[CVE] CPE suggestions failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -330,7 +337,8 @@ router.post('/:id/resolve-cpe', authenticate, requireModule('discovery'), requir
     await asset.update({ cpe: result.cpe, cpe_title: result.title, cpe_resolved_at: new Date() });
     res.json({ found: true, cpe: result.cpe, title: result.title });
   } catch (e) {
-    console.error(`[CVE] CPE resolve failed for asset ${req.params.id}:`, e.message);
+    const safeAssetId = String(req.params.id).replace(/[\r\n]/g, '');
+    console.error('[CVE] CPE resolve failed for asset', safeAssetId + ':', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -362,7 +370,7 @@ router.post('/:id/refresh-cves', authenticate, requireModule('discovery'), requi
     await auditFromReq(req, 'update', 'asset', asset.id, asset.name, { cve_refresh: { source: result.source, total: result.total, query: result.query } });
     res.json({ counts: result.counts, cveList: result.cveList, total: result.total, source: result.source, query: result.query });
   } catch (e) {
-    console.error(`[CVE] Refresh failed for asset ${req.params.id}:`, e.message);
+    console.error('[CVE] Refresh failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
     res.status(500).json({ error: e.message });
   }
 });

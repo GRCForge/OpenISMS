@@ -16,6 +16,8 @@ const authenticator = new TOTP({
 });
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 const getClientIp = (req) => {
   return req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;

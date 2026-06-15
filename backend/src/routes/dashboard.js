@@ -4,6 +4,8 @@ const { Asset, Assessment, Reminder, User, AuditLog } = require('../models');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
+const { heavyLimiter } = require('../middleware/rateLimiter');
+router.use(heavyLimiter);
 
 router.get('/', authenticate, async (req, res) => {
   try {

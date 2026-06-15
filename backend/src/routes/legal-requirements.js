@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const { LegalRequirement, User } = require('../models');
 const { authenticate, requireWriteAccess, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');

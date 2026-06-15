@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const { authenticate, requireRole } = require('../middleware/auth');
 const { invalidateModulesCache, MODULE_DEFAULTS } = require('../middleware/modules');
 const { setSetting, getSetting } = require('../services/settingsService');

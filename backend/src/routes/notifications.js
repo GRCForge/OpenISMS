@@ -4,6 +4,8 @@ const { Asset, Assessment, Reminder, Notification, User } = require('../models')
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 // Get all notifications (structured)
 router.get('/', authenticate, async (req, res) => {

@@ -6,6 +6,8 @@ const multer = require('multer');
 const upload = multer();
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 router.get('/stats', authenticate, async (req, res) => {
   try {

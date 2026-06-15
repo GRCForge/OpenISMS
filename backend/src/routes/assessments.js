@@ -5,6 +5,8 @@ const { auditFromReq } = require('../services/auditService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 router.get('/', authenticate, async (req, res) => {
   try {

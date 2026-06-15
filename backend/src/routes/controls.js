@@ -3,6 +3,7 @@ const { Op, fn, col } = require('sequelize');
 const { Control, Policy, Iso27001Control } = require('../models');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
+const { escapeLike } = require('../utils/sqlUtils');
 
 // Maps controls.status → iso27001_controls.implementation_status
 const SOA_TO_ISO = {
@@ -12,6 +13,8 @@ const SOA_TO_ISO = {
 };
 
 const router = express.Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 
 const includeAll = [
   { model: Policy, as: 'policies', through: { attributes: [] } },
@@ -33,7 +36,7 @@ router.get('/', authenticate, async (req, res) => {
     if (framework) where.framework = framework;
     if (status) where.status = status;
     if (type) where.type = type;
-    if (search) where[Op.or] = [{ code: { [Op.like]: `%${search}%` } }, { title: { [Op.like]: `%${search}%` } }];
+    if (search) where[Op.or] = [{ code: { [Op.like]: `%${escapeLike(search)}%` } }, { title: { [Op.like]: `%${escapeLike(search)}%` } }];
     const controls = await Control.findAll({ where, include: includeAll, order: [['framework', 'ASC'], ['code', 'ASC']] });
     res.json(controls);
   } catch (e) { res.status(500).json({ error: e.message }); }

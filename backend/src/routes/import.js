@@ -7,6 +7,8 @@ const { auditFromReq } = require('../services/auditService');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 const router = express.Router();
+const { heavyLimiter } = require('../middleware/rateLimiter');
+router.use(heavyLimiter);
 
 const TYPE_MAP = {
   anwendung: 'application', application: 'application',

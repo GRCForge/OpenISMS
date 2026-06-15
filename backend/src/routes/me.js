@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const { Op } = require('sequelize');
 const { authenticate } = require('../middleware/auth');
 const { Asset, Assessment, Risk, VvtEntry, Vendor, Incident, Task, PasskeyCredential, User } = require('../models');

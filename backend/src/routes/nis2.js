@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const { Nis2Measure, User } = require('../models');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');

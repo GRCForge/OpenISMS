@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { apiLimiter } = require('../middleware/rateLimiter');
+router.use(apiLimiter);
 const { authenticate } = require('../middleware/auth');
 const { Iso27001Control, Nis2Measure, BsiRequirement, C5Criterion } = require('../models');
 

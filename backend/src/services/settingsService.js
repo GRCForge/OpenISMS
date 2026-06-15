@@ -21,6 +21,7 @@ const DEFAULTS = {
     reviewIntervalMonths: 12,
     ssoAutoProvision: true,
     ssoDefaultRole: 'viewer',
+    ssoAllowedDomains: '',
     auditLogRetentionMonths: 15,
     passwordPolicy: {
       minLength: 10,
