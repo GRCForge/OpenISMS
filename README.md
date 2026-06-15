@@ -6,247 +6,270 @@
 ![License](https://img.shields.io/badge/license-Source--Available-red)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)
-![ISO 27001](https://img.shields.io/badge/ISO%2027001-konform-4CAF50)
-![NIS-2](https://img.shields.io/badge/NIS--2-unterst%C3%BCtzt-orange)
-![DSGVO](https://img.shields.io/badge/DSGVO%2FGDPR-unterst%C3%BCtzt-purple)
+![ISO 27001](https://img.shields.io/badge/ISO%2027001-compliant-4CAF50)
+![NIS-2](https://img.shields.io/badge/NIS--2-supported-orange)
+![GDPR](https://img.shields.io/badge/GDPR-supported-purple)
 
-OpenISMS ist ein vollständiges, praxisorientiertes Information Security Management System (ISMS) auf Basis von Node.js, React und MySQL – ein Projekt von GRCForge, entwickelt zur Unterstützung von **ISO 27001**, **NIS-2**, **DSGVO/GDPR**, **EU AI Act**, **TISAX**, **DORA** und **BSI C5**.
+OpenISMS is a complete, practice-oriented Information Security Management System (ISMS) built on Node.js, React and MySQL — a GRCForge project designed to support **ISO 27001**, **NIS-2**, **GDPR**, **EU AI Act**, **TISAX**, **DORA** and **BSI C5**.
 
-> **Standard-Login nach Erstinstallation:** `admin@isms.local` / `Admin1234!` — bitte sofort ändern.  
-> Der Benutzername und das Passwort befinden sich **nur** in dieser README. Aus Sicherheitsgründen sind sie **nicht** auf dem Login-Bildschirm der Anwendung vorausgefüllt.
+> **Default login after initial setup:** `admin@isms.local` / `Admin1234!` — change immediately.
+> These credentials appear **only** in this README. For security reasons they are **not** pre-filled on the application login screen.
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 
-1. [Features](#features)
-2. [Tech Stack](#tech-stack)
-3. [Installation](#installation)
-4. [Umgebungsvariablen](#umgebungsvariablen)
-5. [Single Sign-On (OIDC)](#single-sign-on-oidc)
-6. [Rollen & Berechtigungen](#rollen--berechtigungen)
-7. [API-Dokumentation](#api-dokumentation)
-8. [MCP Server (KI-Integration)](#mcp-server-ki-integration)
-9. [Datenbankschema](#datenbankschema)
-10. [Verzeichnisstruktur](#verzeichnisstruktur)
-11. [Compliance-Module](#compliance-module)
-12. [Compliance-Unterstützung](#compliance-unterstützung)
-13. [Sicherheitshinweise](#sicherheitshinweise)
+1. [Screenshots](#screenshots)
+2. [Features](#features)
+3. [Tech Stack](#tech-stack)
+4. [Installation](#installation)
+5. [Environment Variables](#environment-variables)
+6. [Single Sign-On (OIDC)](#single-sign-on-oidc)
+7. [Roles & Permissions](#roles--permissions)
+8. [API Documentation](#api-documentation)
+9. [MCP Server (AI Integration)](#mcp-server-ai-integration)
+10. [Database Schema](#database-schema)
+11. [Directory Structure](#directory-structure)
+12. [Compliance Modules](#compliance-modules)
+13. [Compliance Coverage](#compliance-coverage)
+14. [Security Notes](#security-notes)
+
+---
+
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Asset Management
+![Asset Management](docs/screenshots/assets.png)
+
+### Risk Register & Risk Matrix
+![Risk Register](docs/screenshots/risks.png)
+
+### Compliance Overview
+![Compliance Overview](docs/screenshots/compliance.png)
+
+### Incident Management
+![Incident Management](docs/screenshots/incidents.png)
+
+### Administration
+![Administration](docs/screenshots/admin.png)
 
 ---
 
 ## Features
 
 ### Dashboard & Onboarding
-- Kennzahlen-Karten: Assets gesamt/aktiv, Hoch/Kritisch-Risiken, überfällige Reviews, Compliance-Abdeckung
-- Risikoverteilung und Klassifizierungsverteilung als Balkendiagramme
-- Compliance-Framework-Abdeckung (ISO 27001, NIS-2, DSGVO) mit Fortschrittsbalken
-- Live-Aktivitätsfeed aus dem Audit Log
-- **„Erste Schritte"-Karte** für neue Nutzer mit geführtem 4-Schritt-Workflow
-- Alle leeren Zustände mit erklärenden Hilfetexten und direkten Einstiegs-Buttons
+- KPI cards: total/active assets, high/critical risks, overdue reviews, compliance coverage
+- Risk distribution and classification charts as bar graphs
+- Compliance framework coverage (ISO 27001, NIS-2, GDPR) with progress bars
+- Live activity feed from the audit log
+- **"Getting Started" card** for new users with a guided 4-step workflow
+- All empty states include explanatory help texts and direct entry buttons
 
-### Asset-Management
-- Vollständiges Asset-Register nach ISO 27001 Annex A.8
-- **Asset-Typen:** Hardware · Software · Anwendung · Dienst · Information/Daten · Prozess · Personal · **KI-Anwendung (AI Act)** · **KI-Agent** · Sonstiges
-- **Klassifizierung:** Öffentlich · Intern · Vertraulich · Geheim
-- **Hosting-Typ:** On-Premise · Public Cloud · Private Cloud · Hybrid
-- **Lifecycle-Status:** Evaluation · Produktion · Wartung · Archiviert
-- Patch-Status, CVE-Zähler (kritisch/hoch/mittel/gering), EOL-Datum, Härtungsstatus
-- Backup-Plan, letzter Wiederherstellungstest
-- RTO (Wiederanlaufzeit) und RPO (Datenverlust-Toleranz) pro Asset
-- NIS-2-Relevanz-Kennzeichnung
-- Parent/Child-Abhängigkeitsstruktur (hierarchische Beziehungen)
-- Business Owner und Assessor zuweisbar; externer Dienstleister verknüpfbar
-- Compliance-Frameworks und Tags pro Asset
-- **Tab-kontextueller Bearbeitungsmodus**: Bearbeiten-Button öffnet je nach aktivem Tab den passenden Teilbereich (Stammdaten / Compliance / Security) mit granularen Rollenberechtigungen
-- Filter nach Typ, Klassifizierung, Hosting, Status, Lifecycle, Freitext
+### Asset Management
+- Complete asset register per ISO 27001 Annex A.8
+- **Asset types:** Hardware · Software · Application · Service · Information/Data · Process · Personnel · **AI Application (AI Act)** · **AI Agent** · Other
+- **Classification:** Public · Internal · Confidential · Secret
+- **Hosting type:** On-Premise · Public Cloud · Private Cloud · Hybrid
+- **Lifecycle status:** Evaluation · Production · Maintenance · Archived
+- Patch status, CVE counters (critical/high/medium/low), EOL date, hardening status
+- Backup plan, last restore test
+- RTO (Recovery Time Objective) and RPO (Recovery Point Objective) per asset
+- NIS-2 relevance tagging
+- Parent/child dependency structure (hierarchical relationships)
+- Business owner and assessor assignable; external vendor linkable
+- Compliance frameworks and tags per asset
+- **Tab-contextual edit mode**: Edit button opens the matching sub-section depending on the active tab (Master data / Compliance / Security) with granular role permissions
+- Filter by type, classification, hosting, status, lifecycle, free text
 
-### Asset-Topologie
-- Interaktiver Abhängigkeitsgraph aller Assets (Mermaid-basiert)
-- **Typenspezifische Knotenformen**: Hardware=Rechteck, Software/App=Abgerundet, Daten=Zylinder, Dienst=Raute, KI=Kreis, Prozess=Schräg
-- **Subgraph-Clustering**: Parent und Kind-Assets werden visuell als Gruppe dargestellt
-- Risiko-Farbcodierung; KI-Assets lila hervorgehoben
-- **Klickbare Knoten** (direkter Sprung zum Asset via SVG-Post-Processing), Typ-Filter, horizontal/vertikal
-- Pro Asset: eigener Abhängigkeitsgraph (Großeltern → Eltern → Aktuell → Kinder → Enkel) mit farbcodierten Ebenen und Legende
-- **Reverse-Verbindungen**: Liste aller abhängigen Assets (Child-Assets) direkt im Topologie-Tab sichtbar und klickbar
+### Asset Topology
+- Interactive dependency graph of all assets (Mermaid-based)
+- **Type-specific node shapes**: Hardware=Rectangle, Software/App=Rounded, Data=Cylinder, Service=Diamond, AI=Circle, Process=Slanted
+- **Subgraph clustering**: parent and child assets are visually grouped
+- Risk colour coding; AI assets highlighted in purple
+- **Clickable nodes** (direct jump to asset via SVG post-processing), type filter, horizontal/vertical layout
+- Per asset: own dependency graph (grandparents → parents → current → children → grandchildren) with colour-coded levels and legend
+- **Reverse links**: list of all dependent assets (child assets) visible and clickable in the Topology tab
 
-### Risikobewertung (CIA-Triad)
-- Bewertung nach **Vertraulichkeit (C)**, **Integrität (I)**, **Verfügbarkeit (A)** auf Skala 1–5
-- Automatische Risikoberechnung: Score + Level (Gering / Mittel / Hoch / Kritisch)
-- Vollständiger Bewertungsverlauf pro Asset mit Trend-Indikatoren (↑ ↓ =)
-- Notizen, Maßnahmen, Risk Treatment Workflow (Reduzieren / Akzeptieren / Übertragen / Vermeiden)
-- Nächste Bewertung automatisch vorberechnet; Erinnerung wird automatisch erstellt
+### Risk Assessment (CIA Triad)
+- Assessment based on **Confidentiality (C)**, **Integrity (I)**, **Availability (A)** on a scale of 1–5
+- Automatic risk calculation: score + level (Low / Medium / High / Critical)
+- Full assessment history per asset with trend indicators (↑ ↓ =)
+- Notes, measures, risk treatment workflow (Reduce / Accept / Transfer / Avoid)
+- Next review automatically pre-calculated; reminder created automatically
 
-### Risikoregister (ISO 27005)
-- Vollständiges Risikoregister mit 5×5-Risikomatrix (Wahrscheinlichkeit × Auswirkung)
-- Inhärentes Risiko und Restrisiko separat bewertet
-- **Risk Acceptance Tracking**: Freigabe durch Management mit Ablaufdatum, Frühwarnung bei ≤ 30 Tagen, roter Hinweis bei abgelaufener Akzeptanz
-- Risikobehandlungsplan, zugewiesener Risiko-Owner
-- Verknüpfung mit Assets, Bedrohungen und Maßnahmen (Controls)
-- Interaktive Risikomatrix als Klick-Filter
-- CSV- und Excel-Export
+### Risk Register (ISO 27005)
+- Complete risk register with a 5×5 risk matrix (likelihood × impact)
+- Inherent risk and residual risk assessed separately
+- **Risk acceptance tracking**: management sign-off with expiry date, early warning at ≤ 30 days, red indicator for expired acceptances
+- Risk treatment plan, assigned risk owner
+- Linked to assets, threats and controls
+- Interactive risk matrix as a click filter
+- CSV and Excel export
 
-### Vorfallsmanagement
-- Vollständige Vorfall-Dokumentation nach NIS-2 Art. 23
-- **Kategorien**: Schadsoftware · Phishing · Datenschutzverletzung · DoS/DDoS · Unbefugter Zugriff · Fehlkonfiguration · Verlust/Diebstahl · Social Engineering
-- Schweregrad (Gering bis Kritisch) und Statusverlauf (Gemeldet → In Untersuchung → Eingedämmt → Behoben → Geschlossen)
-- **NIS-2-Meldefristen**: automatische Berechnung 24h-Frühwarnung und 72h-Vollmeldung ab Erkennung, Fristanzeige mit Überfälligkeitswarnung
-- Zusatzfelder: Auswirkung, Ursachenanalyse, Korrekturmaßnahmen, **Lessons Learned**, Anzahl betroffener Systeme
-- **Datenschutzverletzungs-Details** (sichtbar bei Kategorie „Datenpanne" oder NIS-2-Meldepflicht)
-- **Externes Aktenzeichen** für Behördenmeldungen (BSI, LfDI etc.)
-- Verknüpfung mit betroffenen Assets und Risiken
-- Severity-Statistikkarten, CSV/Excel-Export
+### Incident Management
+- Complete incident documentation per NIS-2 Art. 23
+- **Categories**: Malware · Phishing · Data Breach · DoS/DDoS · Unauthorised Access · Misconfiguration · Loss/Theft · Social Engineering
+- Severity (Low to Critical) and status history (Reported → Under Investigation → Contained → Resolved → Closed)
+- **NIS-2 reporting deadlines**: automatic calculation of 24h early warning and 72h full notification from detection time, with overdue warning
+- Additional fields: impact, root cause analysis, corrective measures, **lessons learned**, number of affected systems
+- **Data breach details** (visible when category is "Data Breach" or NIS-2 reporting obligation applies)
+- **External reference number** for authority notifications (BSI, supervisory authority etc.)
+- Linked to affected assets and risks
+- Severity statistics cards, CSV/Excel export
 
-### Maßnahmen & Statement of Applicability (SoA)
-- Vollständige Kontrolldatenbank: ISO 27001 (Annex A), NIS-2, BSI-Grundschutz, eigene Maßnahmen
-- **Maßnahmentypen**: Organisatorisch · Personell · Physisch · Technisch
-- Status: Umgesetzt · Geplant · Nicht anwendbar (mit Begründung)
-- Verknüpfung mit Risiken inkl. Effektivitätsbewertung (1–5)
-- SoA-Übersicht nach Framework gefiltert
+### Controls & Statement of Applicability (SoA)
+- Complete controls database: ISO 27001 (Annex A), NIS-2, BSI Grundschutz, custom controls
+- **Control types**: Organisational · Personnel · Physical · Technical
+- Status: Implemented · Planned · Not applicable (with justification)
+- Linked to risks with effectiveness rating (1–5)
+- SoA overview filtered by framework
 
-### Richtlinien-Bibliothek
-- Zentrale Verwaltung von Policies, Leitlinien, Verfahrensanweisungen, Verträgen
-- Versionierung mit Verlauf (jede gespeicherte Version downloadbar)
-- Gültigkeitszeitraum (`valid_from` / `valid_until`), Status (Entwurf / Aktiv / Zurückgezogen)
-- Verknüpfung mit Assets
-- Datei-Upload (PDF, Word, etc.)
+### Policy Library
+- Central management of policies, guidelines, procedures, contracts
+- Versioning with history (every saved version downloadable)
+- Validity period (`valid_from` / `valid_until`), status (Draft / Active / Withdrawn)
+- Linked to assets
+- File upload (PDF, Word, etc.)
 
-### Compliance-Übersicht
-- Detailseite pro Framework (ISO 27001 · NIS-2 · DSGVO) mit Coverage-Ring
-- Liste zugeordneter und nicht zugeordneter Assets
-- Warnung bei Assets ohne Framework-Zuordnung
-- Schnellzuordnung direkt aus der Übersicht
-- **DSGVO-Lückenanzeige**: Automatische Erkennung und Auflistung aller Assets, die personenbezogene Daten verarbeiten (Art. 6/9), aber keinen vollständigen VVT-Eintrag haben
+### Compliance Overview
+- Detail page per framework (ISO 27001 · NIS-2 · GDPR) with coverage ring
+- List of assigned and unassigned assets
+- Warning for assets without framework assignment
+- Quick assignment directly from the overview
+- **GDPR gap detection**: automatic identification and listing of all assets processing personal data (Art. 6/9) without a complete VVT entry
 
-### Management Report & KPI-Dashboards
-- Konsolidierter Bericht für die Geschäftsführung (druckoptimiert / PDF-Export)
-- **ISMS Health Score** (0–100): Gauge-Diagramm aus Maßnahmen-Abdeckung, Bewertungsgrad, überfälligen Reviews und kritischen Risiken
-- **9 Auto-KPI-Karten** mit Sparklines und Trend-Pfeilen (↑/↓/→): Health Score, Control-Coverage, Bewertungs-Coverage, offene Hoch-Risiken, überfällige Erinnerungen, Aufgaben-Abschlussrate, MTTR (90-Tage), Gesamtassets, offene Incidents
-- **Drei Tabs:**
-  - *Übersicht*: KPI-Karten, Donut-Charts (Risikoverteilung, Control-Status, Aufgaben-Status), Alert-Zeilen, manuelle KPIs
-  - *Entwicklung*: 12-Monats-Verlaufscharts (Vorfälle, Risiken, Assets, Aufgaben) mit recharts; KPI-Ziellinien
-  - *Details*: NIS-2-Assets, DSGVO-Übersicht, Risikoakzeptanzen, überfällige Reviews
-- **Manuelle KPIs** (Name, Zielwert, Einheit, Messfrequenz) mit Messwert-Verlauf und Ziel-Referenzlinie
-- Ablaufende Akzeptanzen (≤ 60 Tage), kritische/hohe Risiken, offene Vorfälle
-- Excel-Export inkl. VVT-Register (Art. 30)
+### Management Report & KPI Dashboards
+- Consolidated report for management (print-optimised / PDF export)
+- **ISMS Health Score** (0–100): gauge chart from control coverage, assessment grade, overdue reviews and critical risks
+- **9 auto KPI cards** with sparklines and trend arrows (↑/↓/→): health score, control coverage, assessment coverage, open high risks, overdue reminders, task completion rate, MTTR (90 days), total assets, open incidents
+- **Three tabs:**
+  - *Overview*: KPI cards, donut charts (risk distribution, control status, task status), alert rows, manual KPIs
+  - *Trends*: 12-month history charts (incidents, risks, assets, tasks) with recharts; KPI target lines
+  - *Details*: NIS-2 assets, GDPR overview, risk acceptances, overdue reviews
+- **Manual KPIs** (name, target value, unit, measurement frequency) with measurement history and target reference line
+- Expiring acceptances (≤ 60 days), critical/high risks, open incidents
+- Excel export including VVT register (Art. 30)
 
-### Jährliche Review-Erinnerungen
-- Automatischer Reminder 1 Jahr nach jeder Bewertung
-- Täglicher Cron-Job markiert überfällige Reviews als `overdue`
-- Rotes Badge in der Navigation, Glocken-Menü mit Detailübersicht
-- Bestätigung mit Zeitstempel
+### Annual Review Reminders
+- Automatic reminder 1 year after each assessment
+- Daily cron job marks overdue reviews as `overdue`
+- Red badge in navigation, bell menu with detail overview
+- Acknowledgement with timestamp
 
-### Dokumente pro Asset
-- Datei-Upload (Drag & Drop): PDF, Word, Excel, PowerPoint, Bilder – max. 25 MB
-- **Kategorien**: Vertrag · AVV/DPA · Richtlinie · Zertifikat · Risikobericht · Risikoakzeptanz · Sonstiges
-- Download, Löschen, Anzeige von Uploader und Datum
+### Asset Documents
+- File upload (drag & drop): PDF, Word, Excel, PowerPoint, images – max. 25 MB
+- **Categories**: Contract · DPA · Policy · Certificate · Risk Report · Risk Acceptance · Other
+- Download, delete, display of uploader and date
 
-### Kommentarfunktion
-- Kommentare/Meeting-Notizen pro Asset mit optionalem Terminbezug
-- Markdown-Formatierung (Fett, Kursiv, Links, Dateilinks)
-- Nur Autor oder Administrator kann eigene Kommentare löschen
+### Comments
+- Comments/meeting notes per asset with optional date reference
+- Markdown formatting (bold, italic, links, file links)
+- Only the author or an administrator can delete their own comments
 
-### Externe Dienstleister & Lieferkette
-- Verwaltung externer Unternehmen (IT-Dienstleister, Cloud-Anbieter, Softwarehersteller, Support, Berater)
-- Mehrere Ansprechpartner pro Unternehmen (Name, E-Mail, Telefon, Funktion)
-- Asset → Dienstleister-Verknüpfung für NIS-2 Supply-Chain-Dokumentation
-- Klappbare Listenansicht mit Direktlink (mailto:)
+### External Vendors & Supply Chain
+- Management of external companies (IT service providers, cloud vendors, software vendors, support, consultants)
+- Multiple contacts per company (name, email, phone, function)
+- Asset → vendor link for NIS-2 supply chain documentation
+- Collapsible list view with direct mailto: link
 
 ### Export & Import
-- **Export**: CSV (UTF-8/BOM, Excel-kompatibel) und Excel (`.xlsx`) auf allen Listenseiten
-- **Import**: CSV- und **Excel-Import** (`.xlsx`) für Assets, Benutzer, Dienstleister, Risiken und eine kombinierte „Firmen + Kontakte"-Ansicht
-- Microsoft 365 Quickstart: typische M365-Dienste als vorgefertigte Importvorlage
+- **Export**: CSV (UTF-8/BOM, Excel-compatible) and Excel (`.xlsx`) on all list pages
+- **Import**: CSV and **Excel import** (`.xlsx`) for assets, users, vendors, risks, and a combined "Companies + Contacts" view
+- Microsoft 365 Quickstart: typical M365 services as a pre-built import template
 
-### Netzwerk-Discovery & Staging
-- **Netzwerk-Scan-Import**: Erkannte Hosts landen zunächst in einer **Freigabe-Queue** (Staging) statt direkt als Asset
-- **Agent-Discovery**: Lokal installierter Agent meldet installierte Software → ebenfalls Staging
-- Übersichtstabelle mit Quelle-Badge (Netzwerk-Scan / Agent), Typ (Hardware/Software), offene Ports
-- Pro Eintrag: **Freigeben** (Asset wird erstellt), **Ignorieren** oder ablehnen
-- Deduplizierung: bereits bekannte IPs werden nicht erneut gestagt
+### Network Discovery & Staging
+- **Network scan import**: discovered hosts land in an **approval queue** (staging) rather than being created as assets directly
+- **Agent discovery**: locally installed agent reports installed software → also goes to staging
+- Overview table with source badge (Network Scan / Agent), type (Hardware/Software), open ports
+- Per entry: **Approve** (asset is created), **Ignore** or reject
+- Deduplication: already known IPs are not staged again
 
-### VVT – Verarbeitungsverzeichnis (Art. 30 DSGVO)
-- Vollständiges VVT-Register mit allen Art.-30-Pflichtfeldern
-- **DSFA-Pflicht-Kennzeichnung** (Art. 35) mit Warnbanner im Formular und violettem Badge in der Liste
-- **Letzte Überprüfung** (Datum) pro Eintrag mit Chip in der Liste
-- 8 vorgefertigte Vorlagen (inkl. CCTV, Zugangskontrolle, Mitarbeitermonitoring)
-- Statistik-Karten: Gesamt, Aktiv, Entwurf, Art.-9-Verarbeitungen, DSFA-pflichtig
+### VVT – Processing Register (Art. 30 GDPR)
+- Complete processing register with all Art. 30 mandatory fields
+- **DPIA obligation indicator** (Art. 35) with warning banner in the form and purple badge in the list
+- **Last review** date per entry with chip in the list
+- 8 pre-built templates (incl. CCTV, access control, employee monitoring)
+- Statistics cards: Total, Active, Draft, Art. 9 processing activities, DPIA-required
 
-### Benachrichtigungen
-- Glocken-Menü: überfällige, bald fällige und noch nie bewertete Assets
-- Optionale native Browser-Benachrichtigungen (Web Notifications API)
+### Notifications
+- Bell menu: overdue, soon-due and never-assessed assets
+- Optional native browser notifications (Web Notifications API)
 
 ### Audit Log
-- Lückenlose Protokollierung: Assets, Bewertungen, Risiken, Controls, Incidents, Benutzer, Dienstleister, Dokumente, Einstellungen, Logins
-- Filter nach Entitätstyp, Aktion, Datum, Name; Pagination; aufklappbare Before/After-Details
-- Konfigurierbare Aufbewahrungsdauer (automatische Bereinigung via Cron)
-- CSV/Excel-Export
+- Comprehensive logging: assets, assessments, risks, controls, incidents, users, vendors, documents, settings, logins
+- Filter by entity type, action, date, name; pagination; expandable before/after details
+- Configurable retention period (automatic cleanup via cron)
+- CSV/Excel export
 
-### Benutzerverwaltung & Authentifizierung
-- **Rollen (8)**: Administrator · Assessor · IT-Mitarbeiter · DPO · Asset Owner · Management · Mitarbeiter · Gast (Viewer)
-- **Custom Roles**: eigene Rollen anlegen (Name, Beschreibung, Basisrolle) und direkt Benutzern zuweisen — zusätzlich zum OIDC-Gruppen-Mapping
-- Benutzer anlegen, bearbeiten, deaktivieren (kein hartes Löschen)
-- Lokales Login (E-Mail + Passwort, JWT 24 h) mit Passwortrichtlinien-Enforcement
-- **Zwei-Faktor-Authentifizierung (TOTP)**: TOTP-Authenticator-App (RFC 6238) mit Replay-Schutz
-- **Passkeys (WebAuthn)**: Hardware-Keys, Touch ID, Face ID; FIDO2 / WebAuthn Level 2
-- **SSO (OIDC)**: generisch für jeden OIDC-Provider (Authentik, Keycloak, Entra, Google, Zitadel …)
-  - Konfiguration in der App unter *Administration → Single Sign-On* (kein Neustart)
-  - Authorization Code Flow mit PKCE; Client-Secret AES-256-GCM verschlüsselt in DB
-  - **Profilbild** aus dem `picture`-Claim wird automatisch übernommen und bei jedem Login aktualisiert
-  - Auto-Provisioning mit konfigurierbarer Standardrolle; OIDC-Gruppen → Rollen-Mapping
-- Brute-Force-Schutz: IP-Rate-Limiting + konto-basierte Sperrung nach konfigurierbaren Fehlversuchen
-- SSO-Exklusivität: SSO-Konten sperren lokale Anmeldewege (Passkey, TOTP) automatisch aus
+### User Management & Authentication
+- **Roles (8)**: Administrator · Assessor · IT Staff · DPO · Asset Owner · Management · Employee · Guest (Viewer)
+- **Custom Roles**: create custom roles (name, description, base role) and assign them directly to users — in addition to OIDC group mapping
+- Create, edit, deactivate users (no hard delete)
+- Local login (email + password, JWT 24 h) with password policy enforcement
+- **Two-factor authentication (TOTP)**: TOTP authenticator app (RFC 6238) with replay protection
+- **Passkeys (WebAuthn)**: hardware keys, Touch ID, Face ID; FIDO2 / WebAuthn Level 2
+- **SSO (OIDC)**: generic for any OIDC provider (Authentik, Keycloak, Entra, Google, Zitadel …)
+  - Configuration in the app under *Administration → Single Sign-On* (no restart required)
+  - Authorization Code Flow with PKCE; client secret AES-256-GCM encrypted in DB
+  - **Profile picture** from the `picture` claim is automatically synced on every login
+  - Auto-provisioning with configurable default role; OIDC groups → role mapping
+- Brute-force protection: IP rate limiting + account-based lockout after configurable failed attempts
+- SSO exclusivity: SSO accounts automatically disable local authentication paths (passkey, TOTP)
 
-### RBAC – Rollen- & Rechte-Editor
-- Konfigurierbares Berechtigungsmatrix pro Modul und Aktion (z. B. `assets.edit_security` nur für Assessor und IT-Mitarbeiter)
-- **Module**: Assets (Stammdaten/Compliance/Security getrennt), Risiken, Incidents, Bewertungen, Controls, Richtlinien, Erinnerungen, Dienstleister, Import, Reports, Administration
-- Änderungen direkt in der App unter *Administration → Rollen & Rechte*
-- Reset auf Werkseinstellungen jederzeit möglich
+### RBAC – Role & Permission Editor
+- Configurable permission matrix per module and action (e.g. `assets.edit_security` only for Assessor and IT Staff)
+- **Modules**: Assets (master data/compliance/security separate), Risks, Incidents, Assessments, Controls, Policies, Reminders, Vendors, Import, Reports, Administration
+- Changes directly in the app under *Administration → Roles & Permissions*
+- Reset to factory defaults at any time
 
-### Gruppen & Teams
-- **Gruppen anlegen** (Name, Beschreibung, Farbe) und Benutzer zuordnen
-- **Gruppen-Aufgaben**: Aufgabe wird einer Gruppe statt einem einzelnen Benutzer zugewiesen; sobald ein Mitglied die Aufgabe abschließt, gilt sie für alle als erledigt (**„First-to-complete"**-Semantik)
-- Wer eine Gruppenaufgabe abgeschlossen hat, wird in der Aufgabe angezeigt
-- **@Gruppen-Erwähnungen** in Kommentaren: alle Mitglieder der Gruppe erhalten eine Benachrichtigung
-- Gruppen-Verwaltung unter *Gruppen* (nur Administratoren)
+### Groups & Teams
+- **Create groups** (name, description, colour) and assign users
+- **Group tasks**: task assigned to a group instead of an individual; as soon as one member completes the task it is marked as done for everyone (**"first-to-complete"** semantics)
+- Who completed a group task is displayed on the task
+- **@group mentions** in comments: all members of the group receive a notification
+- Group management under *Groups* (administrators only)
 
-### API-Dokumentation
-- **OpenAPI 3.0 Spezifikation** unter `/api/openapi.json`
-- **Swagger UI** unter `/api/docs` – interaktiv mit JWT-Authentifizierung aus dem Browser
-- Alle Endpunkte dokumentiert: Assets, Risiken, Incidents, Bewertungen, Controls, Richtlinien, Benutzer, Admin, Dashboard, Audit Log, Dienstleister, Import, System
+### API Documentation
+- **OpenAPI 3.0 specification** at `/api/openapi.json`
+- **Swagger UI** at `/api/docs` — interactive with JWT authentication in the browser
+- All endpoints documented: assets, risks, incidents, assessments, controls, policies, users, admin, dashboard, audit log, vendors, import, system
 
 ### Administration
-- Konsolidierter Admin-Bereich (`/admin`, nur Administratoren):
-  - **Benutzer** – anlegen, Rollen vergeben, deaktivieren, letzte Aktivität
-  - **Audit Log** – gefiltert mit konfigurierbarer Aufbewahrungsdauer
-  - **Single Sign-On** – OIDC-Konfiguration mit Verbindungstest
-  - **Einstellungen** – App-Name, Review-Intervall, Passwortrichtlinien, SSO-Optionen
-  - **Security** – Passwort-Policy, Session-Konfiguration
-  - **Rollen & Rechte** – RBAC-Matrix-Editor
-  - **API-Dokumentation** – Links + Auth-Anleitung
+- Consolidated admin area (`/admin`, administrators only):
+  - **Users** – create, assign roles, deactivate, last activity
+  - **Audit Log** – filtered with configurable retention period
+  - **Single Sign-On** – OIDC configuration with connection test
+  - **Settings** – app name, review interval, password policies, SSO options
+  - **Security** – password policy, session configuration
+  - **Roles & Permissions** – RBAC matrix editor
+  - **API Documentation** – links + authentication guide
 
 ---
 
 ## Tech Stack
 
-| Komponente | Technologie |
+| Component | Technology |
 |---|---|
 | Backend | Node.js 22 · Express 5 · Sequelize ORM |
-| Datenbank | MySQL 8.0 |
+| Database | MySQL 8.0 |
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS 4 |
-| Authentifizierung | JWT (24 h) · OIDC SSO (openid-client, PKCE) |
-| Sicherheit | helmet · rate-limit · CORS · AES-256-GCM |
-| Datei-Upload | multer (Disk Storage, max. 25 MB) |
-| Visualisierung | Mermaid.js (Topologie) · recharts (KPI-Charts, Trend-Verläufe) |
-| Scheduling | node-cron (Overdue-Job, Audit-Retention) |
+| Authentication | JWT (24 h) · OIDC SSO (openid-client, PKCE) |
+| Security | helmet · rate-limit · CORS · AES-256-GCM |
+| File Upload | multer (Disk Storage, max. 25 MB) |
+| Visualisation | Mermaid.js (Topology) · recharts (KPI charts, trend history) |
+| Scheduling | node-cron (overdue job, audit retention) |
 | Export | SheetJS (xlsx) · CSV |
-| API-Docs | OpenAPI 3.0 · Swagger UI (CDN) |
-| Deployment | Docker (Single-Container, GHCR) · systemd · install.sh |
+| API Docs | OpenAPI 3.0 · Swagger UI (CDN) |
+| Deployment | Docker (single container, GHCR) · systemd · install.sh |
 
 ---
 
 ## Installation
 
-### Option A: Install-Script (empfohlen)
+### Option A: Install Script (recommended)
 
 ```bash
 git clone https://github.com/grcforge/openisms.git
@@ -254,23 +277,23 @@ cd openisms
 sudo bash install.sh
 ```
 
-Interaktiver Dialog wählt zwischen:
-- **Docker Compose** – alles als Container (empfohlen)
-- **Systemd** – Backend als `openisms.service`, Frontend via nginx
+Interactive dialog lets you choose between:
+- **Docker Compose** – everything as containers (recommended)
+- **Systemd** – backend as `openisms.service`, frontend via nginx
 
-### Option B: Vorgefertigtes GHCR-Image (kein lokaler Build)
+### Option B: Pre-built GHCR image (no local build)
 
 ```bash
 cp .env.example .env
-# DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY, APP_URL setzen
+# Set DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY, APP_URL
 
-export ISMS_VERSION=latest   # oder z. B. v1.6.0
+export ISMS_VERSION=latest   # or e.g. v1.6.0
 docker compose -f docker-compose.ghcr.single.yml up -d
 ```
 
-Verfügbare Image-Tags: `latest` (main) · semantische Versionen (`v1.6.0`, `1.6`, `1`)
+Available image tags: `latest` (main) · semantic versions (`v1.6.0`, `1.6`, `1`)
 
-### Option C: Selbst bauen (aus Quellcode)
+### Option C: Build from source
 
 ```bash
 git clone https://github.com/grcforge/openisms.git
@@ -279,187 +302,187 @@ cp .env.example .env
 docker compose -f docker-compose.single.yml up -d --build
 ```
 
-### Option D: `docker run` direkt (z. B. Unraid)
+### Option D: `docker run` directly (e.g. Unraid)
 
 ```bash
 docker run -d --name isms --restart unless-stopped \
   -p 8080:3001 \
   -e DATABASE_URL="mysql://isms_user:PASS@192.168.1.100:3306/isms" \
-  -e JWT_SECRET="<min-32-zeichen-zufallswert>" \
-  -e ENCRYPTION_KEY="<min-32-zeichen-zufallswert>" \
+  -e JWT_SECRET="<min-32-char-random-value>" \
+  -e ENCRYPTION_KEY="<min-32-char-random-value>" \
   -e APP_URL="http://192.168.1.50:8080" \
   -v /mnt/user/appdata/isms/uploads:/app/uploads \
   ghcr.io/grcforge/openisms-app:latest
 ```
 
-| URL | Beschreibung |
+| URL | Description |
 |---|---|
-| `http://localhost:8080` | Web-UI und REST-API (gleiche Origin) |
-| `http://localhost:8080/api/health` | Health Check |
-| `http://localhost:8080/api/docs` | Swagger UI (API-Dokumentation) |
+| `http://localhost:8080` | Web UI and REST API (same origin) |
+| `http://localhost:8080/api/health` | Health check |
+| `http://localhost:8080/api/docs` | Swagger UI (API documentation) |
 
-**Beim ersten Start** legt die App alle Tabellen an, befüllt den ISO-27001/NIS-2/BSI-Controls-Katalog und erstellt einen Standard-Administrator.
+**On first start** the app creates all tables, seeds the ISO 27001/NIS-2/BSI controls catalogue and creates a default administrator.
 
-#### Unraid (Schritt für Schritt)
+#### Unraid (step by step)
 
 1. Docker → **Add Container** → Repository: `ghcr.io/grcforge/openisms-app:latest`
 2. Network Type: `bridge` · Port: Host `8080` → Container `3001`
 3. Path: Container `/app/uploads` → Host `/mnt/user/appdata/isms/uploads`
-4. Variablen hinzufügen:
+4. Add variables:
 
-| Key | Beispiel |
+| Key | Example |
 |---|---|
 | `DATABASE_URL` | `mysql://isms_user:PASS@192.168.1.100:3306/isms` |
-| `JWT_SECRET` | langer Zufallswert |
-| `ENCRYPTION_KEY` | langer Zufallswert |
+| `JWT_SECRET` | long random value |
+| `ENCRYPTION_KEY` | long random value |
 | `APP_URL` | `http://<UNRAID-IP>:8080` |
-| `SECURE_COOKIES` | `true` nur hinter HTTPS-Proxy |
+| `SECURE_COOKIES` | `true` only behind HTTPS proxy |
 
-5. **Apply** → `http://<UNRAID-IP>:8080` aufrufen.
+5. **Apply** → open `http://<UNRAID-IP>:8080`.
 
 ---
 
-## Umgebungsvariablen
+## Environment Variables
 
-| Variable | Pflicht | Beschreibung |
+| Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | ✓¹ | `mysql://user:pass@host:3306/isms` |
-| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | ✓¹ | Alternativ zu `DATABASE_URL` |
-| `JWT_SECRET` | ✓ | Token-Signatur (≥ 32 Zeichen) |
-| `ENCRYPTION_KEY` | empfohlen | AES-256-Schlüssel für OIDC-Secret-Verschlüsselung |
-| `SESSION_SECRET` | empfohlen | Express-Session (OIDC-Flow) |
-| `APP_URL` | ✓² | Öffentliche URL (für OIDC-Callback und CORS) |
-| `SECURE_COOKIES` | – | `true` hinter HTTPS-Reverse-Proxy |
-| `PORT` | – | Standard: `3001` |
-| `UPLOAD_DIR` | – | Standard: `/app/uploads` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Überschreiben des Seed-Administrators |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | ✓¹ | Alternative to `DATABASE_URL` |
+| `JWT_SECRET` | ✓ | Token signing key (≥ 32 characters) |
+| `ENCRYPTION_KEY` | recommended | AES-256 key for OIDC secret encryption |
+| `SESSION_SECRET` | recommended | Express session (OIDC flow) |
+| `APP_URL` | ✓² | Public URL (for OIDC callback and CORS) |
+| `SECURE_COOKIES` | – | `true` behind an HTTPS reverse proxy |
+| `PORT` | – | Default: `3001` |
+| `UPLOAD_DIR` | – | Default: `/app/uploads` |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Override the seed administrator credentials |
 
-¹ Eines von beiden. ² Für lokales Login optional, für OIDC zwingend.
+¹ One of the two. ² Optional for local login, required for OIDC.
 
 ---
 
 ## Single Sign-On (OIDC)
 
-SSO wird **in der App** konfiguriert — kein Neustart, keine `.env`-Änderung.
+SSO is configured **inside the app** — no restart, no `.env` change required.
 
-Unterstützte Provider (generisch OIDC): Authentik · Keycloak · Microsoft Entra · Google · Zitadel · Okta · Auth0 · beliebige OIDC-kompatible IdPs.
+Supported providers (generic OIDC): Authentik · Keycloak · Microsoft Entra · Google · Zitadel · Okta · Auth0 · any OIDC-compatible IdP.
 
-**Einrichtung:**
-1. Als Administrator: *Administration → Single Sign-On*
-2. Die **Redirect-URI** (`<APP_URL>/api/auth/oidc/callback`) im IdP eintragen
-3. Issuer-URL, Client-ID, Client-Secret und Scopes (`openid profile email`) eintragen
-4. *Verbindung testen* → **SSO aktivieren**
+**Setup:**
+1. As administrator: *Administration → Single Sign-On*
+2. Enter the **redirect URI** (`<APP_URL>/api/auth/oidc/callback`) in the IdP
+3. Enter the issuer URL, client ID, client secret and scopes (`openid profile email`)
+4. *Test connection* → **Enable SSO**
 
-**Funktionsweise:**
-- Authorization Code Flow mit PKCE
-- Client-Secret wird AES-256-GCM-verschlüsselt in der DB gespeichert
-- Beim ersten SSO-Login wird automatisch ein lokaler Benutzer angelegt (Standardrolle konfigurierbar, Auto-Provisioning abschaltbar)
-- **Profilbild** aus dem `picture`-Claim wird automatisch gespeichert und bei jedem Login aktualisiert
-- Lokales Login bleibt immer verfügbar
-
----
-
-## Rollen & Berechtigungen
-
-| Rolle | Beschreibung |
-|---|---|
-| `admin` | Vollzugriff; Benutzerverwaltung, RBAC-Editor, Systemeinstellungen |
-| `assessor` | Bewertungen, Risiken, Incidents, Controls, Richtlinien erstellen und bearbeiten |
-| `it-staff` | Assets und Security-Felder bearbeiten; keine Compliance-/Klassifizierungsänderungen |
-| `dpo` | Compliance- und Datenschutzfelder (VVT, DSFA, Klassifizierung) bearbeiten |
-| `owner` | Eigene Assets einsehen; Berichte lesen |
-| `management` | Nur-Lesen auf alle freigegebenen Bereiche (Management-Ebene) |
-| `employee` | Schulungs-Tab und eigene Trainingsübersicht; keine Schreibrechte |
-| `viewer` | Nur-Lesen auf alle freigegebenen Bereiche |
-
-**Custom Roles**: Unter *Administration → Custom Roles* können eigene Rollen mit Name, Beschreibung und einer Basisrolle angelegt und direkt Benutzern zugewiesen werden. Die effektiven Berechtigungen entsprechen der Basisrolle. Custom Roles können auch über OIDC-Gruppen-Mapping automatisch zugewiesen werden.
-
-Die **Berechtigungsmatrix** ist pro Modul und Aktion frei konfigurierbar unter *Administration → Rollen & Rechte* — ohne Neustart der Anwendung.
+**How it works:**
+- Authorization Code Flow with PKCE
+- Client secret is stored AES-256-GCM encrypted in the database
+- On the first SSO login a local user is created automatically (default role configurable, auto-provisioning can be disabled)
+- **Profile picture** from the `picture` claim is automatically saved and updated on every login
+- Local login always remains available
 
 ---
 
-## API-Dokumentation
+## Roles & Permissions
 
-Die REST-API ist vollständig nach **OpenAPI 3.0** dokumentiert.
-
-| Endpunkt | Beschreibung |
+| Role | Description |
 |---|---|
-| `GET /api/docs` | Swagger UI (interaktiv, JWT-Authentifizierung im Browser) |
-| `GET /api/openapi.json` | OpenAPI 3.0 Spezifikation (JSON) |
+| `admin` | Full access; user management, RBAC editor, system settings |
+| `assessor` | Create and edit assessments, risks, incidents, controls, policies |
+| `it-staff` | Edit assets and security fields; no compliance/classification changes |
+| `dpo` | Edit compliance and data protection fields (VVT, DPIA, classification) |
+| `owner` | View own assets; read reports |
+| `management` | Read-only on all released areas (management level) |
+| `employee` | Training tab and own training overview; no write access |
+| `viewer` | Read-only on all released areas |
 
-**Authentifizierung:**
+**Custom Roles**: Under *Administration → Custom Roles* you can create custom roles with a name, description and a base role, and assign them directly to users. Effective permissions match the base role. Custom roles can also be assigned automatically via OIDC group mapping.
+
+The **permission matrix** is freely configurable per module and action under *Administration → Roles & Permissions* — without restarting the application.
+
+---
+
+## API Documentation
+
+The REST API is fully documented using **OpenAPI 3.0**.
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/docs` | Swagger UI (interactive, JWT authentication in the browser) |
+| `GET /api/openapi.json` | OpenAPI 3.0 specification (JSON) |
+
+**Authentication:**
 ```bash
-# Token holen
+# Get token
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@isms.local","password":"Admin1234!"}' | jq -r .token)
 
-# Token verwenden
+# Use token
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/assets
 ```
 
-In der Swagger UI wird der Token nach dem Login automatisch aus dem Browser-LocalStorage injiziert.
+In the Swagger UI the token is automatically injected from the browser's local storage after login.
 
 ---
 
-## MCP Server (KI-Integration)
+## MCP Server (AI Integration)
 
-Das ISMS stellt einen **Model Context Protocol (MCP) Server** bereit, über den KI-Assistenten wie Claude direkt mit dem System interagieren können — Assets abfragen, Risiken anlegen, Vorfälle melden und Reports abrufen, ohne den Browser zu öffnen.
+OpenISMS provides a **Model Context Protocol (MCP) server** through which AI assistants like Claude can interact directly with the system — query assets, create risks, report incidents and retrieve reports without opening a browser.
 
 ### Endpoint
 
 ```
-POST   <APP_URL>/mcp    ← Anfragen senden (JSON-RPC, auch SSE-Upgrade)
-GET    <APP_URL>/mcp    ← SSE-Eventstream (Server → Client)
-DELETE <APP_URL>/mcp    ← Session beenden
+POST   <APP_URL>/mcp    ← send requests (JSON-RPC, also SSE upgrade)
+GET    <APP_URL>/mcp    ← SSE event stream (server → client)
+DELETE <APP_URL>/mcp    ← end session
 ```
 
-Transport: **Streamable HTTP/SSE** (MCP Spec 2025-03-26), kompatibel mit Claude Desktop, Claude Code CLI und allen MCP-fähigen Clients.
+Transport: **Streamable HTTP/SSE** (MCP Spec 2025-03-26), compatible with Claude Desktop, Claude Code CLI and all MCP-capable clients.
 
-### Authentifizierung
+### Authentication
 
-Drei Optionen (alle über `Authorization: Bearer <token>`):
+Three options (all via `Authorization: Bearer <token>`):
 
-| Option | Konfiguration | Einsatz |
+| Option | Configuration | Use case |
 |---|---|---|
-| **API-Token** ⭐ | Im App-Profil generieren → „API-Tokens" | Empfohlen: langlebig, benutzerspezifisch, widerrufbar |
-| **MCP_SECRET** | `MCP_SECRET=<geheim>` in `.env` | Statischer Admin-Schlüssel für Automatisierungen/CI |
-| **JWT-Token** | Token aus `POST /api/auth/login` | Kurzlebig (24 h) — nur für Tests geeignet |
+| **API Token** ⭐ | Generate in the app profile → "API Tokens" | Recommended: long-lived, user-specific, revocable |
+| **MCP_SECRET** | `MCP_SECRET=<secret>` in `.env` | Static admin key for automations/CI |
+| **JWT Token** | Token from `POST /api/auth/login` | Short-lived (24 h) — for testing only |
 
-#### API-Token erstellen (empfohlen)
+#### Create an API token (recommended)
 
-1. Im ISMS einloggen → Profilbild (rechts oben) → **„API-Tokens"**
-2. **„Neuen Token erstellen"** → Name vergeben (z. B. `Claude Desktop`) → optional Ablaufdatum setzen
-3. Token einmalig kopieren — er wird nur einmal vollständig angezeigt
-4. Token hat das Format `isms_api_<64-Hex-Zeichen>`
+1. Log into the ISMS → profile picture (top right) → **"API Tokens"**
+2. **"Create new token"** → enter a name (e.g. `Claude Desktop`) → optionally set an expiry date
+3. Copy the token once — it is only displayed in full once
+4. Token format: `isms_api_<64-hex-chars>`
 
-Der Token ist dem angemeldeten Benutzer zugeordnet — Berechtigungen richten sich nach dessen Rolle. Tokens können jederzeit in der Oberfläche widerrufen werden.
+The token is tied to the logged-in user — permissions follow that user's role. Tokens can be revoked at any time in the UI.
 
-### Verfügbare Tools (18)
+### Available Tools (18)
 
-| Kategorie | Tool | Beschreibung |
+| Category | Tool | Description |
 |---|---|---|
-| **Assets** | `isms_list_assets` | Assets mit Filtern abrufen (Typ, Status, Klassifizierung, Freitext) |
-| | `isms_get_asset` | Asset-Details inkl. letzter CIA-Bewertung und verknüpfter Risiken |
-| | `isms_create_asset` | Neues Asset anlegen |
-| **Risiken** | `isms_list_risks` | Risikoregister abfragen (Status, Level, Freitext) |
-| | `isms_create_risk` | Risiko mit Likelihood × Impact anlegen (Level wird automatisch berechnet) |
-| **Vorfälle** | `isms_list_incidents` | Vorfälle abfragen (Status, Schweregrad) |
-| | `isms_create_incident` | Sicherheitsvorfall melden |
-| | `isms_update_incident_status` | Status, Resolution und Lessons Learned setzen |
-| **Aufgaben** | `isms_list_tasks` | Aufgaben abfragen inkl. Gruppen-Aufgaben |
-| | `isms_create_task` | Aufgabe erstellen — Zuweisung an Benutzer oder Gruppe |
-| | `isms_complete_task` | Aufgabe als erledigt markieren |
-| **Controls** | `isms_list_controls` | SoA-Controls nach Framework und Status filtern |
-| | `isms_update_control_status` | Umsetzungsstatus einer Maßnahme setzen |
-| **Reports** | `isms_get_dashboard` | Dashboard-KPIs: Assets, Risiken, Incidents, Reviews, Coverage |
-| | `isms_get_management_report` | Management-Report: Health Score, MTTR, KPIs |
-| | `isms_get_compliance_overview` | Abdeckungsgrad je Compliance-Framework |
-| **Admin** | `isms_list_users` | Benutzerliste mit Rollen |
-| | `isms_list_groups` | Gruppen mit Mitgliedern |
-| **Suche** | `isms_search` | Übergreifende Suche in Assets, Risiken, Vorfällen und Aufgaben |
+| **Assets** | `isms_list_assets` | Retrieve assets with filters (type, status, classification, free text) |
+| | `isms_get_asset` | Asset details including latest CIA assessment and linked risks |
+| | `isms_create_asset` | Create a new asset |
+| **Risks** | `isms_list_risks` | Query risk register (status, level, free text) |
+| | `isms_create_risk` | Create a risk with likelihood × impact (level calculated automatically) |
+| **Incidents** | `isms_list_incidents` | Query incidents (status, severity) |
+| | `isms_create_incident` | Report a security incident |
+| | `isms_update_incident_status` | Set status, resolution and lessons learned |
+| **Tasks** | `isms_list_tasks` | Query tasks including group tasks |
+| | `isms_create_task` | Create a task — assign to user or group |
+| | `isms_complete_task` | Mark a task as completed |
+| **Controls** | `isms_list_controls` | Filter SoA controls by framework and status |
+| | `isms_update_control_status` | Set implementation status of a control |
+| **Reports** | `isms_get_dashboard` | Dashboard KPIs: assets, risks, incidents, reviews, coverage |
+| | `isms_get_management_report` | Management report: health score, MTTR, KPIs |
+| | `isms_get_compliance_overview` | Coverage rate per compliance framework |
+| **Admin** | `isms_list_users` | User list with roles |
+| | `isms_list_groups` | Groups with members |
+| **Search** | `isms_search` | Cross-entity search across assets, risks, incidents and tasks |
 
-### Einbindung in Claude Desktop
+### Integration with Claude Desktop
 
 `~/.config/claude/claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`):
 
@@ -470,16 +493,16 @@ Der Token ist dem angemeldeten Benutzer zugeordnet — Berechtigungen richten si
       "type": "http",
       "url": "https://isms.example.com/mcp",
       "headers": {
-        "Authorization": "Bearer isms_api_<dein-token>"
+        "Authorization": "Bearer isms_api_<your-token>"
       }
     }
   }
 }
 ```
 
-### Einbindung in Claude Code CLI
+### Integration with Claude Code CLI
 
-`.claude/settings.json` im Projektverzeichnis oder `~/.claude/settings.json` global:
+`.claude/settings.json` in the project directory or `~/.claude/settings.json` globally:
 
 ```json
 {
@@ -488,32 +511,32 @@ Der Token ist dem angemeldeten Benutzer zugeordnet — Berechtigungen richten si
       "type": "http",
       "url": "https://isms.example.com/mcp",
       "headers": {
-        "Authorization": "Bearer isms_api_<dein-token>"
+        "Authorization": "Bearer isms_api_<your-token>"
       }
     }
   }
 }
 ```
 
-### Verbindung testen
+### Test the connection
 
 ```bash
-# API-Token testen
+# Test API token
 curl -X POST https://isms.example.com/mcp \
-  -H "Authorization: Bearer isms_api_<dein-token>" \
+  -H "Authorization: Bearer isms_api_<your-token>" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Die Antwort listet alle 18 verfügbaren Tools auf.
+The response lists all 18 available tools.
 
-### MCP_SECRET (für Automatisierungen / CI)
+### MCP_SECRET (for automations / CI)
 
-Statischer Admin-Schlüssel ohne Ablaufzeit — sinnvoll für Server-zu-Server-Automatisierungen:
+Static admin key without expiry — useful for server-to-server automations:
 
 ```env
-# In .env (oder Docker-Compose-Umgebungsvariablen):
-MCP_SECRET=<min-32-zufällige-Zeichen>   # openssl rand -hex 32
+# In .env (or Docker Compose environment variables):
+MCP_SECRET=<min-32-random-chars>   # openssl rand -hex 32
 ```
 
 ```json
@@ -523,75 +546,75 @@ MCP_SECRET=<min-32-zufällige-Zeichen>   # openssl rand -hex 32
       "type": "http",
       "url": "https://isms.example.com/mcp",
       "headers": {
-        "Authorization": "Bearer <MCP_SECRET-Wert>"
+        "Authorization": "Bearer <MCP_SECRET-value>"
       }
     }
   }
 }
 ```
 
-Wird weder `MCP_SECRET` gesetzt noch ein gültiger API-Token oder JWT verwendet, lehnt der Server alle Anfragen mit `401` ab.
+If neither `MCP_SECRET` nor a valid API token or JWT is provided, the server rejects all requests with `401`.
 
 ---
 
-## Datenbankschema
+## Database Schema
 
-| Tabelle | Beschreibung |
+| Table | Description |
 |---|---|
-| `users` | Benutzer mit 6 Rollen, avatar_url, last_seen_at |
-| `assets` | Asset-Register (Typ, Klassifizierung, Hosting, Lifecycle, CVE, RTO/RPO, NIS-2, VVT, DSFA, Parent/Child) |
-| `assessments` | CIA-Bewertungen pro Asset (Verlauf, is_current, Risk Treatment, Akzeptanz-Dokument) |
-| `risks` | Risikoregister (Wahrscheinlichkeit × Auswirkung, inhärent/residual, Treatment, Acceptance mit Ablaufdatum) |
-| `risk_assets` | N:M-Verknüpfung Risiken ↔ Assets |
-| `risk_threats` | N:M-Verknüpfung Risiken ↔ Bedrohungen |
-| `risk_controls` | N:M-Verknüpfung Risiken ↔ Controls (mit Effektivität) |
-| `controls` | Maßnahmen-Katalog (ISO 27001, NIS-2, BSI, Custom) mit Status und SoA |
-| `threats` | Bedrohungskatalog (BSI-Elementargefahren, Common, Custom) |
-| `incidents` | Vorfälle (Kategorie, Schweregrad, NIS-2-Fristen, Lessons Learned, Aktenzeichen) |
-| `incident_assets` | N:M-Verknüpfung Incidents ↔ Assets |
-| `incident_risks` | N:M-Verknüpfung Incidents ↔ Risiken |
-| `reminders` | Jährliche Review-Erinnerungen (auto-overdue via Cron) |
-| `documents` | Datei-Anhänge pro Asset (Disk via Docker Volume) |
-| `comments` | Kommentare/Notizen pro Asset |
-| `policies` | Richtlinien (Titel, Kategorie, Version, Gültigkeit, Datei-Upload) |
-| `policy_versions` | Versionsverlauf pro Richtlinie |
-| `policy_assets` | N:M-Verknüpfung Richtlinien ↔ Assets |
-| `vendors` | Externe Dienstleister (Typ, Website, NIS-2 Supply Chain) |
-| `vendor_contacts` | Ansprechpartner pro Dienstleister |
-| `audit_logs` | Lückenloses Änderungsprotokoll aller Aktionen |
-| `settings` | Systemeinstellungen, OIDC-Konfiguration (Secret verschlüsselt), RBAC-Matrix |
-| `tasks` | Aufgaben (Status, Priorität, Fälligkeitsdatum, related_type/related_id, assigned_to_group_id, completed_by_id) |
-| `groups` | Gruppen/Teams (Name, Beschreibung, Farbe) |
-| `group_members` | N:M-Verknüpfung Gruppen ↔ Benutzer |
-| `notifications` | In-App-Benachrichtigungen (Typ, gelesen, Entity-Ref, Link) |
-| `vvt_entries` | VVT-Einträge (Art. 30 DSGVO) mit DSFA-Pflicht und Überprüfungsdatum |
-| `subject_requests` | Betroffenenrechte-Anfragen (Art. 15–22 DSGVO) mit Frist und Statusverlauf |
-| `discovered_softwares` | Discovery-Staging: erkannte Netzwerk-Hosts und Agenten-Software vor der Freigabe |
-| `custom_roles` | Benutzerdefinierte Rollen mit Basisrolle und Beschreibung |
-| `training_sessions` | Schulungen/Trainings mit Titel, Datum, Typ und Teilnehmerliste |
-| `training_participants` | N:M-Verknüpfung Trainings ↔ Benutzer/Mitarbeiter |
-| `passkey_credentials` | WebAuthn-/Passkey-Credentials pro Benutzer |
+| `users` | Users with 8 roles, avatar_url, last_seen_at |
+| `assets` | Asset register (type, classification, hosting, lifecycle, CVE, RTO/RPO, NIS-2, VVT, DPIA, parent/child) |
+| `assessments` | CIA assessments per asset (history, is_current, risk treatment, acceptance document) |
+| `risks` | Risk register (likelihood × impact, inherent/residual, treatment, acceptance with expiry date) |
+| `risk_assets` | N:M link risks ↔ assets |
+| `risk_threats` | N:M link risks ↔ threats |
+| `risk_controls` | N:M link risks ↔ controls (with effectiveness) |
+| `controls` | Controls catalogue (ISO 27001, NIS-2, BSI, custom) with status and SoA |
+| `threats` | Threat catalogue (BSI elementary hazards, common, custom) |
+| `incidents` | Incidents (category, severity, NIS-2 deadlines, lessons learned, reference number) |
+| `incident_assets` | N:M link incidents ↔ assets |
+| `incident_risks` | N:M link incidents ↔ risks |
+| `reminders` | Annual review reminders (auto-overdue via cron) |
+| `documents` | File attachments per asset (disk via Docker volume) |
+| `comments` | Comments/notes per asset |
+| `policies` | Policies (title, category, version, validity, file upload) |
+| `policy_versions` | Version history per policy |
+| `policy_assets` | N:M link policies ↔ assets |
+| `vendors` | External vendors (type, website, NIS-2 supply chain) |
+| `vendor_contacts` | Contacts per vendor |
+| `audit_logs` | Comprehensive change log of all actions |
+| `settings` | System settings, OIDC configuration (secret encrypted), RBAC matrix |
+| `tasks` | Tasks (status, priority, due date, related_type/related_id, assigned_to_group_id, completed_by_id) |
+| `groups` | Groups/teams (name, description, colour) |
+| `group_members` | N:M link groups ↔ users |
+| `notifications` | In-app notifications (type, read, entity ref, link) |
+| `vvt_entries` | Processing register entries (Art. 30 GDPR) with DPIA obligation and review date |
+| `subject_requests` | Data subject requests (Art. 15–22 GDPR) with deadline and status history |
+| `discovered_softwares` | Discovery staging: detected network hosts and agent software before approval |
+| `custom_roles` | Custom roles with base role and description |
+| `training_sessions` | Training sessions with title, date, type and participant list |
+| `training_participants` | N:M link training sessions ↔ users/employees |
+| `passkey_credentials` | WebAuthn/passkey credentials per user |
 
 ---
 
-## Verzeichnisstruktur
+## Directory Structure
 
 ```
 ISMS/
-├── install.sh                          # Interaktives Install-Script (Docker/systemd)
-├── VERSION                             # Aktuelle Versionsnummer (triggert CI-Release)
-├── Dockerfile                          # Single-Container (Backend liefert Frontend mit aus)
-├── docker-compose.single.yml           # Single-Container (lokaler Build), externe DB
-├── docker-compose.ghcr.single.yml      # Single-Container (GHCR-Image), externe DB
+├── install.sh                          # Interactive install script (Docker/systemd)
+├── VERSION                             # Current version number (triggers CI release)
+├── Dockerfile                          # Single container (backend also serves frontend)
+├── docker-compose.single.yml           # Single container (local build), external DB
+├── docker-compose.ghcr.single.yml      # Single container (GHCR image), external DB
 ├── .env.example
 ├── .github/workflows/
-│   ├── release.yml                     # Erstellt GitHub Release + Tag bei VERSION-Änderung
-│   └── docker-publish.yml              # Baut und pusht GHCR-Image bei neuem Tag
+│   ├── release.yml                     # Creates GitHub release + tag on VERSION change
+│   └── docker-publish.yml              # Builds and pushes GHCR image on new tag
 ├── backend/
 │   └── src/
-│       ├── index.js                    # App-Einstieg, DB-Sync, Static-Serving, Swagger
-│       ├── openapi.json                # OpenAPI 3.0 Spezifikation
-│       ├── config/database.js          # Sequelize (DATABASE_URL oder DB_* vars)
+│       ├── index.js                    # App entry point, DB sync, static serving, Swagger
+│       ├── openapi.json                # OpenAPI 3.0 specification
+│       ├── config/database.js          # Sequelize (DATABASE_URL or DB_* vars)
 │       ├── models/                     # User, Asset, Assessment, Risk, Control, Threat,
 │       │                               #   Incident, Reminder, Document, Comment,
 │       │                               #   AuditLog, Vendor, VendorContact, Policy,
@@ -605,21 +628,23 @@ ISMS/
 │       │                               #   report, groups, import, auditlog, vendors,
 │       │                               #   policies, vvt, subject-requests, tasks,
 │       │                               #   tisax, dora, ai-act, bcm, pentests
-│       ├── middleware/auth.js           # JWT authenticate + requireRole
+│       ├── middleware/
+│       │   ├── auth.js                 # JWT authenticate + requireRole
+│       │   └── rateLimiter.js          # Shared rate limiter instances (CWE-770)
 │       └── services/
-│           ├── reminderService.js      # node-cron: Overdue-Job + Audit-Retention
-│           ├── auditService.js         # Audit-Log-Helper
-│           ├── settingsService.js      # Settings, OIDC-Config, RBAC-Permissions (DB)
-│           ├── cryptoService.js        # AES-256-GCM für sensible Settings
-│           ├── oidcService.js          # openid-client Discovery + Client-Cache
-│           └── catalogSeed.js          # ISO/NIS-2/BSI Controls + Bedrohungskatalog
+│           ├── reminderService.js      # node-cron: overdue job + audit retention
+│           ├── auditService.js         # Audit log helper
+│           ├── settingsService.js      # Settings, OIDC config, RBAC permissions (DB)
+│           ├── cryptoService.js        # AES-256-GCM for sensitive settings
+│           ├── oidcService.js          # openid-client discovery + client cache
+│           └── catalogSeed.js          # ISO/NIS-2/BSI controls + threat catalogue
 └── frontend/
     └── src/
-        ├── App.tsx                     # Router, Auth-Guard
+        ├── App.tsx                     # Router, auth guard
         ├── components/
-        │   ├── Layout.tsx              # Sidebar-Navigation mit Beschreibungen
-        │   ├── BottomNav.tsx           # Mobile Bottom Tab Bar
-        │   ├── CommandPalette.tsx      # ⌘K Schnellsuche
+        │   ├── Layout.tsx              # Sidebar navigation with descriptions
+        │   ├── BottomNav.tsx           # Mobile bottom tab bar
+        │   ├── CommandPalette.tsx      # ⌘K quick search
         │   ├── NotificationBell.tsx
         │   └── ui/                     # Card, Button, Input, Select, Modal, Badge,
         │                               #   Table, FilterBar, Mermaid, InfoTooltip
@@ -633,109 +658,110 @@ ISMS/
         │                               #   Login, AuthCallback
         ├── contexts/AuthContext.tsx
         ├── lib/api.ts
-        ├── lib/export.ts               # CSV + Excel Export
+        ├── lib/export.ts               # CSV + Excel export
         └── types/index.ts
 ```
 
 ---
 
-## Compliance-Module
+## Compliance Modules
 
-Module werden im Admin-Bereich unter *Administration → Module* aktiviert/deaktiviert — ohne Neustart. DSGVO ist standardmäßig aktiv, alle anderen Module sind optional.
+Modules are enabled/disabled in the admin area under *Administration → Modules* — without restarting. GDPR is active by default; all other modules are optional.
 
-| Modul-Key | Name | Inhalt |
+| Module key | Name | Content |
 |---|---|---|
-| `dsgvo` | DSGVO/GDPR | VVT (Art. 30), DSFA, Betroffenenrechte (Art. 15–22), Datenpannen |
-| `iso27001` | ISO 27001:2022 | Controls Annex A, SoA, Bewertungen, Konformitätsstatus |
-| `nis2` | NIS-2 | Risikomanagement Art. 21, Meldepflichten Art. 23, Management-Haftung |
-| `bsi_grundschutz` | BSI IT-Grundschutz | Grundschutz-Maßnahmen-Katalog, Umsetzungsstatus |
-| `c5` | BSI C5:2026 | Cloud-Criteria-Katalog für Cloud-Dienstleister |
-| `tisax` | TISAX (VDA ISA 6) | Anforderungskatalog, Bewertungen, Reifegradmessung |
-| `dora` | DORA | IKT-Vorfälle, Resilienztests, Drittanbieter-Risiko |
-| `ai_act` | EU AI Act | KI-Inventar, Risikoeinstufung, Verbotene Praktiken, Konformitätsbewertung |
-| `bcm` | BCM | Business-Continuity-Pläne, BIA, Übungsprotokoll |
-| `pentest` | Penetration Testing | Pentest-Berichte, Findings, Maßnahmen-Tracking |
-| `discovery` | Netzwerk-Discovery | Netzwerk-Scan-Import, Agent-Discovery, Staging-Queue |
+| `dsgvo` | GDPR | Processing register (Art. 30), DPIA, data subject rights (Art. 15–22), data breaches |
+| `iso27001` | ISO 27001:2022 | Controls Annex A, SoA, assessments, conformance status |
+| `nis2` | NIS-2 | Risk management Art. 21, reporting obligations Art. 23, management liability |
+| `bsi_grundschutz` | BSI IT-Grundschutz | Grundschutz controls catalogue, implementation status |
+| `c5` | BSI C5:2026 | Cloud criteria catalogue for cloud service providers |
+| `tisax` | TISAX (VDA ISA 6) | Requirements catalogue, assessments, maturity level measurement |
+| `dora` | DORA | ICT incidents, resilience tests, third-party risk |
+| `ai_act` | EU AI Act | AI inventory, risk classification, prohibited practices, conformity assessment |
+| `bcm` | BCM | Business continuity plans, BIA, exercise log |
+| `pentest` | Penetration Testing | Pentest reports, findings, remediation tracking |
+| `discovery` | Network Discovery | Network scan import, agent discovery, staging queue |
 
 ---
 
-## Compliance-Unterstützung
+## Compliance Coverage
 
-| Framework | Abgedeckte Anforderungen |
+| Framework | Covered requirements |
 |---|---|
-| **ISO 27001:2022** | Asset-Register (A.8), CIA-Bewertung & Risikoregister (ISO 27005), Statement of Applicability (SoA), Maßnahmen-Katalog (Annex A), jährliche Reviews, Klassifizierung, Dokumentenmanagement, Richtlinien-Bibliothek, Audit Log, Cross-Framework Control Mapping |
-| **NIS-2** | Risikomanagement (Art. 21), Meldepflichten (Art. 23, 24h/72h-Fristen), Lieferkettensicherheit via Dienstleister-Modul, Incident-Dokumentation mit Aktenzeichen, Management-Haftungsnachweis (Report), NIS-2-Asset-Kennzeichnung |
-| **DSGVO / GDPR** | Verarbeitungsverzeichnis (Art. 30), DSFA-Workflow (Art. 35), Betroffenenrechte-Tracker (Art. 15–22) mit Fristberechnung, Datenkategorie (Art. 9), AVV-Dokumente (Art. 28), Datenpannen-Dokumentation mit Behörden-Aktenzeichen |
-| **EU AI Act** | Asset-Typen „KI-Anwendung" und „KI-Agent"; Risikoeinstufung (verboten/hoch/niedrig/minimal), Governance-Felder, technische Dokumentation, Konformitätsbewertungs-Workflow |
-| **TISAX** | VDA ISA 6 Anforderungskatalog, Bewertungen mit Reifegrad (0–3), Maßnahmen-Tracking |
-| **DORA** | IKT-Vorfallsklassifikation und -meldung, Resilienztests (TLPT), IKT-Drittanbieter-Register |
-| **BSI IT-Grundschutz** | Grundschutz-Maßnahmen-Katalog, Umsetzungsstatus, Verknüpfung mit Assets |
-| **BSI C5:2026** | Cloud-Criteria-Katalog, Konformitätsstatus pro Kriterium |
-| **BCM** | Business-Continuity-Pläne, Business-Impact-Analyse (BIA), Übungsprotokoll, Wiederanlaufzeiten (RTO/RPO) direkt aus Asset-Register |
-| **Pentest** | Pentest-Berichte hochladen, Findings dokumentieren (CVSS, Status), Maßnahmen-Tracking bis zur Behebung |
+| **ISO 27001:2022** | Asset register (A.8), CIA assessment & risk register (ISO 27005), Statement of Applicability (SoA), controls catalogue (Annex A), annual reviews, classification, document management, policy library, audit log, cross-framework control mapping |
+| **NIS-2** | Risk management (Art. 21), reporting obligations (Art. 23, 24h/72h deadlines), supply chain security via vendor module, incident documentation with reference numbers, management liability evidence (report), NIS-2 asset tagging |
+| **GDPR** | Processing register (Art. 30), DPIA workflow (Art. 35), data subject rights tracker (Art. 15–22) with deadline calculation, data category (Art. 9), DPA documents (Art. 28), data breach documentation with authority reference numbers |
+| **EU AI Act** | Asset types "AI Application" and "AI Agent"; risk classification (prohibited/high/low/minimal), governance fields, technical documentation, conformity assessment workflow |
+| **TISAX** | VDA ISA 6 requirements catalogue, assessments with maturity level (0–3), remediation tracking |
+| **DORA** | ICT incident classification and reporting, resilience tests (TLPT), ICT third-party register |
+| **BSI IT-Grundschutz** | Grundschutz controls catalogue, implementation status, linked to assets |
+| **BSI C5:2026** | Cloud criteria catalogue, conformance status per criterion |
+| **BCM** | Business continuity plans, business impact analysis (BIA), exercise log, recovery times (RTO/RPO) directly from asset register |
+| **Pentest** | Upload pentest reports, document findings (CVSS, status), remediation tracking through to closure |
 
 ---
 
-### Schulungen & Sicherheitsbewusstsein
-- Schulungen anlegen (Titel, Typ, Datum, Beschreibung, Pflichtschulung-Kennzeichnung)
-- **Teilnehmerlisten-Upload** per CSV oder Excel (`.xlsx`): Spalten `name`, `email`, `department`, `completed` (true/false)
-- Mitarbeiter-Rolle hat eigenen Schulungs-Tab mit Übersicht eigener Schulungen
-- Verknüpfung mit Compliance-Anforderungen (ISO 27001 A.6.3, NIS-2 Art. 20)
+### Training & Security Awareness
+- Create training sessions (title, type, date, description, mandatory training flag)
+- **Participant list upload** via CSV or Excel (`.xlsx`): columns `name`, `email`, `department`, `completed` (true/false)
+- Employee role has its own training tab with an overview of own training sessions
+- Linked to compliance requirements (ISO 27001 A.6.3, NIS-2 Art. 20)
 
-### Betroffenenrechte (Art. 15–22 DSGVO)
-- Anfragen anlegen und verwalten (Auskunft, Löschung, Berichtigung, Einschränkung, Portabilität, Widerspruch)
-- Automatische Fristberechnung (30 Tage, verlängerbar auf 60 Tage) mit Überfälligkeitswarnung
-- Statusverlauf (Offen → In Bearbeitung → Abgeschlossen / Abgelehnt) mit Audit-Trail
+### Data Subject Rights (Art. 15–22 GDPR)
+- Create and manage requests (access, erasure, rectification, restriction, portability, objection)
+- Automatic deadline calculation (30 days, extendable to 60 days) with overdue warning
+- Status history (Open → In Progress → Completed / Rejected) with audit trail
 
 ### Mobile & UX
-- **Progressive Web App (PWA)**: installierbar als Home-Screen-App (Android/iOS/Desktop), `manifest.webmanifest` + Apple-Meta-Tags
-- **Bottom Navigation**: feste Tab-Leiste auf Mobile mit den 5 meistgenutzten Bereichen (Dashboard, Assets, Risiken, Aufgaben, Reports)
-- **Command Palette** (`Strg+K` / `⌘K`): Schnellsuche über Assets, Risiken, Aufgaben und Dokumente mit Tastaturnavigation
-- **Keyboard Shortcuts**: `N` = neuer Eintrag, `/` = Suche fokussieren, `ESC` = Modal schließen
-- **Mobile Card Layout**: Tabellen (Assets, Risiken) wechseln auf kleinen Bildschirmen automatisch zu gestapelten Karten
-- Leere Zustände mit kontextuellen Einstiegs-CTAs auf allen wichtigen Seiten
+- **Progressive Web App (PWA)**: installable as a home screen app (Android/iOS/Desktop), `manifest.webmanifest` + Apple meta tags
+- **Bottom navigation**: fixed tab bar on mobile with the 5 most-used areas (Dashboard, Assets, Risks, Tasks, Reports)
+- **Command Palette** (`Ctrl+K` / `⌘K`): quick search across assets, risks, tasks and documents with keyboard navigation
+- **Keyboard shortcuts**: `N` = new entry, `/` = focus search, `ESC` = close modal
+- **Mobile card layout**: tables (assets, risks) automatically switch to stacked cards on small screens
+- Empty states with contextual entry CTAs on all key pages
 
-## Lokale Entwicklung
+## Local Development
 
-Voraussetzungen: Node.js 22+, MySQL 8.0
+Requirements: Node.js 22+, MySQL 8.0
 
 ```bash
 # Backend
 cd backend && cp .env.example .env
 npm install && npm run dev    # Port 3001
 
-# Frontend (neues Terminal)
+# Frontend (new terminal)
 cd frontend
-npm install && npm run dev    # Vite Dev-Server: http://localhost:5173
+npm install && npm run dev    # Vite dev server: http://localhost:5173
 ```
 
 ---
 
-## Sicherheitshinweise für den Produktionsbetrieb
+## Security Notes for Production
 
-- `JWT_SECRET` auf mindestens 32 zufällige Zeichen setzen
-- `ENCRYPTION_KEY` setzen (AES-256-GCM für OIDC-Secret) — bei Änderung muss das Secret neu hinterlegt werden
-- Alle Datenbankpasswörter in `.env` ändern
-- HTTPS via Reverse-Proxy vorschalten (nginx, Traefik, Caddy) und `SECURE_COOKIES=true` setzen
-- Docker Volume `uploads` in Backup-Strategie einschließen
-- **Standard-Admin-Passwort sofort nach dem ersten Login ändern**
-- Regelmäßige MySQL-Backups des `isms`-Schemas einrichten
-- Rate-Limiting auf Login-Endpoint aktiv (20 Versuche / 15 min pro IP)
-- **Brute-Force-Schutz:** Lokale Benutzerkonten werden nach konfigurierbarer Anzahl von Fehlversuchen vorübergehend gesperrt (einstellbar im Admin-Bereich).
-- **SSO-Login-Exklusivität:** Accounts, die über Single Sign-On (SSO) angemeldet wurden, sperren lokale Anmeldeversuche (Passwort, Passkey) und lokale Zwei-Faktor-Authentifizierungen (TOTP) automatisch aus.
-- Security-Header via `helmet` aktiv (XSS, Clickjacking, MIME-Sniff)
-- CORS auf `APP_URL` eingeschränkt
+- Set `JWT_SECRET` to at least 32 random characters
+- Set `ENCRYPTION_KEY` (AES-256-GCM for OIDC secret) — if changed, the secret must be re-entered
+- Change all database passwords in `.env`
+- Put HTTPS via a reverse proxy in front (nginx, Traefik, Caddy) and set `SECURE_COOKIES=true`
+- Include the Docker volume `uploads` in your backup strategy
+- **Change the default admin password immediately after first login**
+- Set up regular MySQL backups of the `isms` schema
+- Rate limiting active on login endpoint (20 attempts / 15 min per IP)
+- **Brute-force protection:** Local user accounts are temporarily locked after a configurable number of failed attempts (configurable in the admin area)
+- **SSO login exclusivity:** Accounts logged in via Single Sign-On (SSO) automatically disable local authentication (password, passkey) and local two-factor authentication (TOTP)
+- Security headers via `helmet` active (XSS, clickjacking, MIME sniff)
+- CORS restricted to `APP_URL`
 
-## Browser-Push-Benachrichtigungen & PWA
+## Browser Push Notifications & PWA
 
-OpenISMS unterstützt Browser-Push-Benachrichtigungen und kann als Progressive Web App (PWA) direkt auf mobilen Endgeräten oder dem Desktop installiert werden:
+OpenISMS supports browser push notifications and can be installed as a Progressive Web App (PWA) directly on mobile devices or the desktop:
 
-- **Push-Benachrichtigungen**: Die Aktivierung erfolgt über das Glockensymbol in der Kopfzeile. Die erforderlichen VAPID-Schlüsselpaare werden beim ersten Serverstart automatisch generiert. Optional kann eine Kontakt-E-Mail über die Umgebungsvariable `VAPID_EMAIL` konfiguriert werden.
-- **PWA-Installation**: Die Installation erfolgt einfach über die PWA-Installationsfunktion des Webbrowsers. Nach der Installation stehen praktische App-Shortcuts (z. B. direkter Einstieg ins Risikoregister oder Assets) zur Verfügung.
+- **Push notifications**: Enable via the bell icon in the header. The required VAPID key pairs are generated automatically on first server start. Optionally configure a contact email via the `VAPID_EMAIL` environment variable.
+- **PWA installation**: Install directly through the browser's PWA installation feature. After installation, app shortcuts are available (e.g. direct entry into the risk register or assets).
 
 ---
-## Lizenz
 
-OpenISMS ist **Source-Available-Software**. Der Quellcode ist öffentlich einsehbar, die Nutzung ist für private und nicht-kommerzielle Zwecke kostenfrei. Jede kommerzielle bzw. Enterprise-Nutzung sowie jede Weiterverbreitung erfordert eine kommerzielle Lizenz. Details siehe [LICENSE](./LICENSE). Lizenzanfragen: maximilian@herz.dev
+## License
 
-© 2026 Maximilian Herz. Alle Rechte vorbehalten.
+OpenISMS is **source-available software**. The source code is publicly viewable; use is free for private and non-commercial purposes. Any commercial or enterprise use as well as any redistribution requires a commercial licence. See [LICENSE](./LICENSE) for details. Licence enquiries: maximilian@herz.dev
+
+© 2026 Maximilian Herz. All rights reserved.
