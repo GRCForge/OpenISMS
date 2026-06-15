@@ -103,11 +103,24 @@ const emailOrIpKey = (req) => {
 };
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, keyGenerator: emailOrIpKey, message: { error: 'Zu viele Anmeldeversuche. Bitte warte 15 Minuten.' } });
 const strictLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Zu viele Versuche. Bitte warte 15 Minuten.' } });
+// Teure Operationen (DB-Dumps, Bulk-Imports, Netzwerk-Scans, Report-Aggregationen)
+const heavyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, message: { error: 'Zu viele Anfragen für diese Operation. Bitte warte 15 Minuten.' } });
+// Allgemeines Limit für alle authentifizierten API-Endpunkte (CWE-770)
+const apiLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false, message: { error: 'Zu viele Anfragen. Bitte warte 15 Minuten.' } });
 
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/login/totp', strictLimiter);
 app.use('/api/auth/passkey/login-verify', strictLimiter);
 app.use('/api/auth/2fa', strictLimiter);
+
+// Teure Pfade vor dem generellen Limiter registrieren
+app.use('/api/admin/backup', heavyLimiter);
+app.use('/api/import', heavyLimiter);
+app.use('/api/report', heavyLimiter);
+app.use('/api/discovery', heavyLimiter);
+app.use('/api/dashboard', heavyLimiter);
+// Generelles API-Limit für alle übrigen Endpunkte
+app.use('/api', apiLimiter);
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/auth/oidc', require('./routes/authOidc'));

@@ -116,6 +116,14 @@ router.get('/callback', async (req, res) => {
     }
 
     const general = await getGeneral();
+
+    // Domain allowlist: if ssoAllowedDomains is set, reject emails from unlisted domains.
+    if (general.ssoAllowedDomains) {
+      const allowed = general.ssoAllowedDomains.split(',').map(d => d.trim()).filter(Boolean);
+      const domain = email.split('@')[1] || '';
+      if (!allowed.includes(domain)) throw new Error(`E-Mail-Domain @${domain} ist nicht für SSO zugelassen`);
+    }
+
     let user = await User.findOne({ where: { email } });
     if (!user) {
       if (!general.ssoAutoProvision) throw new Error('Auto-Provisioning ist deaktiviert');
