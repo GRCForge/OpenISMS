@@ -1,0 +1,106 @@
+name: Auto Release on Merge
+
+# Triggered when a pull request targeting main is merged.
+# Extracts the target version from the branch name (release/vX.Y.Z,
+# security/vX.Y.Z, or bare vX.Y.Z), bumps the VERSION file and both
+# package.json files, then dispatches the existing release and
+# docker-publish workflows.
+#
+# Why workflow_dispatch instead of relying on the VERSION path-filter?
+# GITHUB_TOKEN commits do NOT trigger other workflow runs (GitHub's
+# loop-prevention rule), so we call the downstream workflows explicitly
+# via the workflow_dispatch REST API.
+#
+# Branch naming convention (from CLAUDE.md):
+#   release/vX.Y.Z  — new feature / patch
+#   security/vX.Y.Z — security fix
+#   vX.Y.Z          — bare version branch (legacy / Claude-created)
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  auto-release:
+    name: Bump version & trigger release
+    # Only run when the PR was actually merged AND the branch name contains a semver
+    if: github.event.pull_request.merged == true
+    runs-on: self-hosted
+    permissions:
+      contents: write   # to commit the version bump
+      actions: write    # to dispatch downstream workflows
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          # Use default GITHUB_TOKEN — sufficient for commits and workflow dispatch
+          fetch-depth: 0
+
+      - name: Extract semver from branch name
+        id: ver
+        run: |
+          branch="${{ github.event.pull_request.head.ref }}"
+          echo "Merged branch: $branch"
+
+          # Accept: release/v2.2.4, security/v2.2.4, v2.2.4, release/2.2.4, 2.2.4
+          version=$(echo "$branch" | grep -oP '\d+\.\d+\.\d+' | head -1)
+
+          if [ -z "$version" ]; then
+            echo "No semver found in '$branch' — skipping auto-release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            current=$(cat VERSION 2>/dev/null | tr -d '[:space:]')
+            echo "Target version : $version"
+            echo "Current VERSION: $current"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump VERSION and package.json files
+        if: steps.ver.outputs.skip == 'false'
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          # VERSION is the only file the release and docker-publish workflows
+          # read. The package.json files are kept in sync as a convention.
+          echo "$V" > VERSION
+          for pkg in backend/package.json frontend/package.json; do
+            node -e "
+              const fs = require('fs');
+              const p = JSON.parse(fs.readFileSync('${pkg}', 'utf8'));
+              p.version = '${V}';
+              fs.writeFileSync('${pkg}', JSON.stringify(p, null, 2) + '\n');
+            "
+          done
+          echo "Version files updated to $V"
+
+      - name: Commit version bump to main
+        if: steps.ver.outputs.skip == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERSION backend/package.json frontend/package.json
+          if git diff --staged --quiet; then
+            echo "VERSION already at ${{ steps.ver.outputs.version }} — no commit needed."
+          else
+            git commit -m "chore: bump version to ${{ steps.ver.outputs.version }}"
+            git push origin main
+            echo "Version bump committed and pushed."
+          fi
+
+      - name: Dispatch release workflow
+        if: steps.ver.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Dispatching release.yml …"
+          gh workflow run release.yml --ref main
+          # Small delay so release.yml checks out the version-bump commit
+          sleep 5
+          echo "Dispatching docker-publish.yml …"
+          gh workflow run docker-publish.yml --ref main
+          echo "Both workflows dispatched."

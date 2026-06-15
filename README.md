@@ -2,7 +2,7 @@
 
 ![Build & Publish](https://github.com/grcforge/openisms/actions/workflows/docker-publish.yml/badge.svg)
 ![Security & Quality](https://github.com/grcforge/openisms/actions/workflows/security.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.2.4-blue)
+![Version](https://img.shields.io/github/v/release/grcforge/openisms?label=version&color=blue)
 ![License](https://img.shields.io/badge/license-Source--Available-red)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)
