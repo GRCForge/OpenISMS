@@ -5,7 +5,7 @@ import { de } from 'date-fns/locale';
 import {
   FileSpreadsheet, TrendingUp, ShieldAlert, CheckCircle,
   AlertTriangle, Clock, Activity, BookOpen, Shield, Users, Globe, Pen,
-  BarChart2, Target, Zap, CheckSquare,
+  BarChart2, Target, Zap, CheckSquare, RefreshCw,
 } from 'lucide-react';
 import {
   ResponsiveContainer, ComposedChart, LineChart, Line, BarChart, Bar,
@@ -85,6 +85,17 @@ const PieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) 
   return <text x={cx + rad * Math.cos(-midAngle * RADIAN)} y={cy + rad * Math.sin(-midAngle * RADIAN)} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight="bold">{`${(percent * 100).toFixed(0)}%`}</text>;
 };
 
+// Module-level snapshot cache. The report aggregates 9 heavy endpoints; without
+// this, every visit re-fires all 9. Re-opening the page within the TTL reuses the
+// last snapshot (0 requests). "Aktualisieren" or a sign-off forces a refresh.
+type ReportSnapshot = {
+  assets: any[]; risks: any[]; assessments: any[]; reminders: any[];
+  controls: any[]; incidents: any[]; vvtEntries: any[]; trends: any; signOffs: ReviewSignOff[];
+};
+const REPORT_TTL_MS = 3 * 60 * 1000;
+let reportCache: { at: number; data: ReportSnapshot } | null = null;
+export const invalidateReportCache = () => { reportCache = null; };
+
 export const ManagementReport: React.FC = () => {
   const toast = useToast();
   const { user } = useAuth();
@@ -105,25 +116,56 @@ export const ManagementReport: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'details'>('overview');
   const canSignOff = user?.role === 'admin' || user?.role === 'assessor';
 
-  const loadSignOffs = () => api.get('/review/sign-offs').then(r => setSignOffs(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    let failed = 0;
-    Promise.all([
-      api.get('/assets').then(r => setAssets(r.data)).catch(() => { failed++; }),
-      api.get('/risks').then(r => setRisks(Array.isArray(r.data) ? r.data : [])).catch(() => { failed++; }),
-      api.get('/assessments').then(r => setAssessments(r.data)).catch(() => { failed++; }),
-      api.get('/reminders').then(r => setReminders(r.data)).catch(() => { failed++; }),
-      api.get('/controls').then(r => setControls(r.data)).catch(() => { failed++; }),
-      api.get('/incidents').then(r => setIncidents(Array.isArray(r.data) ? r.data : [])).catch(() => { failed++; }),
-      api.get('/vvt').then(r => setVvtEntries(Array.isArray(r.data) ? r.data : [])).catch(() => { failed++; }),
-      api.get('/report/trends').then(r => setTrends(r.data)).catch(() => { failed++; }),
-      loadSignOffs(),
-    ]).finally(() => {
+  const hydrate = (d: ReportSnapshot) => {
+    setAssets(d.assets); setRisks(d.risks); setAssessments(d.assessments);
+    setReminders(d.reminders); setControls(d.controls); setIncidents(d.incidents);
+    setVvtEntries(d.vvtEntries); setTrends(d.trends); setSignOffs(d.signOffs);
+  };
+
+  const loadSignOffs = () =>
+    api.get('/review/sign-offs')
+      .then(r => {
+        const data = Array.isArray(r.data) ? r.data : [];
+        setSignOffs(data);
+        if (reportCache) reportCache.data.signOffs = data;
+      })
+      .catch(() => {});
+
+  const loadAll = (force: boolean) => {
+    if (!force && reportCache && Date.now() - reportCache.at < REPORT_TTL_MS) {
+      hydrate(reportCache.data);
       setLoading(false);
+      return;
+    }
+    if (force) setRefreshing(true);
+    let failed = 0;
+    const d: ReportSnapshot = {
+      assets: [], risks: [], assessments: [], reminders: [],
+      controls: [], incidents: [], vvtEntries: [], trends: null, signOffs: [],
+    };
+    Promise.all([
+      api.get('/assets').then(r => { d.assets = r.data; }).catch(() => { failed++; }),
+      api.get('/risks').then(r => { d.risks = Array.isArray(r.data) ? r.data : []; }).catch(() => { failed++; }),
+      api.get('/assessments').then(r => { d.assessments = r.data; }).catch(() => { failed++; }),
+      api.get('/reminders').then(r => { d.reminders = r.data; }).catch(() => { failed++; }),
+      api.get('/controls').then(r => { d.controls = r.data; }).catch(() => { failed++; }),
+      api.get('/incidents').then(r => { d.incidents = Array.isArray(r.data) ? r.data : []; }).catch(() => { failed++; }),
+      api.get('/vvt').then(r => { d.vvtEntries = Array.isArray(r.data) ? r.data : []; }).catch(() => { failed++; }),
+      api.get('/report/trends').then(r => { d.trends = r.data; }).catch(() => { failed++; }),
+      api.get('/review/sign-offs').then(r => { d.signOffs = Array.isArray(r.data) ? r.data : []; }).catch(() => { failed++; }),
+    ]).finally(() => {
+      hydrate(d);
+      // Only cache a fully successful snapshot — never persist partial data.
+      if (failed === 0) reportCache = { at: Date.now(), data: d };
+      setLoading(false);
+      setRefreshing(false);
       if (failed > 0) toast.error(`${failed} Datenbereiche konnten nicht geladen werden.`);
     });
-  }, []);
+  };
+
+  useEffect(() => { loadAll(false); }, []);
 
   // ── Derived values ────────────────────────────────────────────────────────
   const currentAssessments  = assessments.filter(a => a.is_current);
@@ -272,6 +314,9 @@ export const ManagementReport: React.FC = () => {
               <Pen size={14} /> Review freigeben
             </Button>
           )}
+          <Button variant="secondary" size="sm" onClick={() => loadAll(true)} disabled={refreshing} title="Daten neu laden">
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} /> Aktualisieren
+          </Button>
           <Button size="sm" onClick={exportReport}>
             <FileSpreadsheet size={14} /> Excel-Export
           </Button>
