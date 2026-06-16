@@ -19,7 +19,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      api.get('/auth/me').then(r => setUser(r.data)).catch(() => localStorage.removeItem('token')).finally(() => setLoading(false));
+      api.get('/auth/me')
+        .then(r => setUser(r.data))
+        .catch(err => {
+          // Only drop the session on a genuine auth failure (401). Transient
+          // errors like rate limiting (429), network blips or 5xx must NOT log
+          // the user out — otherwise a single throttled request kills the session.
+          if (err?.response?.status === 401) localStorage.removeItem('token');
+        })
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -37,8 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const r = await api.get('/auth/me');
       setUser(r.data);
-    } catch {
-      localStorage.removeItem('token');
+    } catch (err: any) {
+      // Keep the freshly issued token unless it was actually rejected (401);
+      // a transient 429/5xx right after login must not discard the session.
+      if (err?.response?.status === 401) localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
