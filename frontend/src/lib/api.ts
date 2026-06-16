@@ -31,7 +31,10 @@ api.interceptors.response.use(
 //      between pages doesn't refetch it every time. Any mutating request
 //      (POST/PUT/PATCH/DELETE) clears the cache, so writes are reflected at once.
 const CACHEABLE = [/^\/users$/, /^\/groups$/, /^\/modules$/];
-const TTL_MS = 15_000;
+// Reference data changes rarely and is invalidated on every write (below), so a
+// longer TTL is safe and makes navigating across the many pages that each load
+// /users essentially request-free.
+const TTL_MS = 60_000;
 const inflight = new Map<string, Promise<AxiosResponse>>();
 const cache = new Map<string, { at: number; res: AxiosResponse }>();
 
