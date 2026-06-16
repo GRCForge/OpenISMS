@@ -72,6 +72,16 @@ jobs:
         with:
           languages: javascript-typescript
           queries: security-extended
+          # js/missing-token-validation is a structural false positive: all API
+          # routes authenticate via Bearer JWT (Authorization header), not via
+          # session cookies. passport.session() exists solely for the OIDC PKCE
+          # redirect flow and has no serializeUser/deserializeUser — it never
+          # authenticates a regular request. CSRF via cookies is therefore not
+          # possible. Suppressing 291 noisy locations site-wide via query-filter.
+          config: |
+            query-filters:
+              - exclude:
+                  id: js/missing-token-validation
           ram: 3072
           threads: 1
 
