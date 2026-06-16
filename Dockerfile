@@ -5,7 +5,7 @@
 
 # --- Stage 1: Frontend bauen ---
 FROM node:22-alpine AS frontend-build
-RUN apk add --no-cache git
+RUN apk add --no-cache git && npm install -g npm@11 --loglevel=error
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
@@ -14,11 +14,13 @@ RUN npm run build
 
 # --- Stage 2: Backend + statisches Frontend ---
 FROM node:22-alpine
-RUN apk add --no-cache git
+RUN apk add --no-cache git && npm install -g npm@11 --loglevel=error
 WORKDIR /app
 ENV NODE_ENV=production
 COPY backend/package.json backend/package-lock.json ./
-RUN npm ci --omit=dev
+# --loglevel=error suppresses the dottie deprecation warning (transitive dep of
+# sequelize@6; dottie@2.0.7 is the latest version — no fix available upstream).
+RUN npm ci --omit=dev --loglevel=error
 COPY backend/ ./
 # Gebautes Frontend wird von Express aus /app/public ausgeliefert (siehe src/index.js)
 COPY --from=frontend-build /frontend/dist ./public
