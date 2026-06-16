@@ -77,7 +77,7 @@ if (!sessionSecret) { console.error('FATAL: SESSION_SECRET or JWT_SECRET must be
 // CSRF is not applicable here: the REST API authenticates exclusively via JWT
 // in the Authorization header (not cookies), making cross-site requests harmless.
 // The session is used solely for OIDC PKCE state, which is already CSRF-protected
-// by the OAuth `state` parameter and SameSite=lax cookies. // codeql[js/missing-csrf-middleware]
+// by the OAuth `state` parameter and SameSite=lax cookies. // codeql[js/missing-token-validation]
 app.use(session({
   secret: sessionSecret,
   resave: false,

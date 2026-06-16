@@ -478,28 +478,27 @@ router.post('/trainings/bulk', authenticate, requireRole('admin', 'assessor', 'd
     const externalEmployees = []; // Array of { name, email }
 
     if (req.file) {
-      const ExcelJS = require('exceljs');
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(req.file.buffer);
-      const worksheet = workbook.getWorksheet(1);
-      
+      const { readSheet } = require('read-excel-file/node');
+      // First sheet as array of rows, each row an array of (typed) cell values.
+      const sheet = await readSheet(req.file.buffer);
+
       const parsedRows = [];
-      worksheet.eachRow((row) => {
+      for (const row of sheet) {
         let name = '';
         let email = '';
-        row.eachCell((cell) => {
-          const val = String(cell.value || '').trim();
-          if (!val) return;
+        for (const cell of row) {
+          const val = String(cell ?? '').trim();
+          if (!val) continue;
           if (val.includes('@') && val.length <= 254 && /^[a-zA-Z0-9_'+.\-]+@[a-zA-Z0-9\-.]+\.[a-zA-Z]{2,}$/.test(val)) {
             email = val.toLowerCase();
           } else {
             if (!name) name = val;
           }
-        });
+        }
         if (name || email) {
           parsedRows.push({ name, email });
         }
-      });
+      }
 
       for (const rowData of parsedRows) {
         // Try to match active user

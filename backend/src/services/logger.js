@@ -1,29 +1,27 @@
-const fs = require('fs');
 const path = require('path');
+const { createStream } = require('rotating-file-stream');
 
 // Allow configuring log file path via env, default to /app/uploads/app.log or backend/logs/app.log
 const logFilePath = process.env.LOG_FILE || (
-  process.env.NODE_ENV === 'production' 
+  process.env.NODE_ENV === 'production'
     ? '/app/uploads/app.log'
     : path.join(__dirname, '../../logs/app.log')
 );
 
-// Ensure the directory exists
-try {
-  const logDir = path.dirname(logFilePath);
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
-  }
-} catch (e) {
-  console.error('[Logger] Failed to create log directory:', e.message);
-}
-
-// Create a write stream
+// Create a size-rotated write stream. Rotation caps unbounded disk growth
+// (disk-fill DoS) when high-volume request data reaches the log. The target
+// directory is created automatically by rotating-file-stream. Tunable via env:
+//   LOG_MAX_SIZE   — max size per file before rotation (default 10M)
+//   LOG_MAX_FILES  — number of rotated files to retain (default 5)
 let logStream;
 try {
-  logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+  logStream = createStream(path.basename(logFilePath), {
+    path: path.dirname(logFilePath),
+    size: process.env.LOG_MAX_SIZE || '10M',
+    maxFiles: parseInt(process.env.LOG_MAX_FILES, 10) || 5,
+  });
 } catch (e) {
-  console.error('[Logger] Failed to create write stream for log file:', e.message);
+  console.error('[Logger] Failed to create rotating log stream:', e.message);
 }
 
 // Strip CR/LF from each token to prevent log injection (CWE-117) when
