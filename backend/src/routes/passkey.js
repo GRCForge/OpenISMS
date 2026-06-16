@@ -155,8 +155,14 @@ router.post('/login-options', async (req, res) => {
       allowCredentials,
     });
 
-    req.session.passkey_auth_challenge = options.challenge;
-    res.json(options);
+    // Regenerate the session before storing the challenge so the WebAuthn
+    // ceremony starts on a fresh session id (defence-in-depth against session
+    // fixation; the privilege grant in login-verify also regenerates).
+    req.session.regenerate((err) => {
+      if (err) console.error('[Passkey] session regenerate error:', err.message);
+      req.session.passkey_auth_challenge = options.challenge;
+      res.json(options);
+    });
   } catch (e) {
     console.error('[Passkey login-options]', e);
     res.status(500).json({ error: e.message });

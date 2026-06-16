@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const ExcelJS = require('exceljs');
+const { readSheet } = require('read-excel-file/node');
 const { Asset, User, Vendor, VendorContact, Risk } = require('../models');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
@@ -148,6 +148,20 @@ const safeHeader = (h) => {
   return (k === '__proto__' || k === 'constructor' || k === 'prototype') ? `_${k}` : k;
 };
 
+// read-excel-file returns typed cell values (string | number | boolean | Date |
+// null). Coerce to the trimmed string the mapping/parsing steps expect. Dates
+// are rendered as DD.MM.YYYY (UTC) to match the format the 'date' field parser
+// in /process consumes.
+const cellText = (v) => {
+  if (v == null) return '';
+  if (v instanceof Date) {
+    const d = String(v.getUTCDate()).padStart(2, '0');
+    const m = String(v.getUTCMonth() + 1).padStart(2, '0');
+    return `${d}.${m}.${v.getUTCFullYear()}`;
+  }
+  return String(v).trim();
+};
+
 const readRows = async (file) => {
   const rows = [];
   if (file.originalname.endsWith('.csv')) {
@@ -163,21 +177,17 @@ const readRows = async (file) => {
       rows.push(row);
     }
   } else {
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(file.buffer);
-    const worksheet = workbook.getWorksheet(1);
-    const headers = [];
-    worksheet.getRow(1).eachCell((cell, colNumber) => {
-      headers[colNumber] = safeHeader(cell.text.trim());
-    });
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return;
+    // readSheet returns the first sheet as an array of rows, each row an array
+    // of (typed) cell values. Row 0 is the header row. (The default export of
+    // read-excel-file v9 instead returns [{ sheet, data }], hence readSheet.)
+    const sheet = await readSheet(file.buffer);
+    if (sheet.length === 0) return [];
+    const headers = sheet[0].map(h => safeHeader(cellText(h)));
+    for (let i = 1; i < sheet.length; i++) {
       const dataRow = Object.create(null);
-      row.eachCell((cell, colNumber) => {
-        dataRow[headers[colNumber]] = cell.text.trim();
-      });
+      headers.forEach((h, idx) => { dataRow[h] = cellText(sheet[i][idx]); });
       rows.push(dataRow);
-    });
+    }
   }
   return rows;
 };

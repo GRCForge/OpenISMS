@@ -1,6 +1,6 @@
 {
   "name": "openisms-backend",
-  "version": "2.2.1",
+  "version": "2.2.6",
   "author": "Maximilian Herz",
   "license": "SEE LICENSE IN LICENSE",
   "main": "src/index.js",
@@ -17,7 +17,6 @@
     "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "express-session": "^1.19.0",
@@ -31,6 +30,8 @@
     "otplib": "^13.4.1",
     "passport": "^0.7.0",
     "qrcode": "^1.5.4",
+    "read-excel-file": "^9.2.0",
+    "rotating-file-stream": "^3.2.9",
     "sequelize": "^6.37.8",
     "web-push": "^3.6.7",
     "zod": "^4.4.3"
