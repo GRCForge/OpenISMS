@@ -367,6 +367,23 @@ const start = async () => {
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_risks_status ON risks(status)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents(status)').catch(() => {});
+    // Reminders: the dashboard badge polls COUNT(status='overdue'); notifications filter on status.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_reminders_status ON reminders(status)').catch(() => {});
+    // Assessments: is_current is filtered on virtually every list/dashboard/compliance query.
+    // (asset_id, is_current) serves the Asset→Assessment join; (is_current, assessed_at) serves
+    // standalone "current assessments, newest first" queries.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_assessments_asset_current ON assessments(asset_id, is_current)').catch(() => {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_assessments_current_assessed ON assessments(is_current, assessed_at)').catch(() => {});
+    // Notifications: the bell polls "unread for this user" once a minute.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read)').catch(() => {});
+    // Tasks: overdue date range, the related_type filter / automation lookups, and group assignment.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)').catch(() => {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_tasks_related ON tasks(related_type, related_id)').catch(() => {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_tasks_group ON tasks(assigned_to_group_id)').catch(() => {});
+    // VVT entries: status filtered on the VVT list and the "my area" view.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_vvt_status ON vvt_entries(status)').catch(() => {});
+    // UserTrainings: batch assignment looks up existing (user_id, training_id) pairs.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_user_trainings_user_training ON user_trainings(user_id, training_id)').catch(() => {});
 
     // Backfill ISO 27001 control descriptions from catalog (idempotent)
     try {
