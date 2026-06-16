@@ -109,8 +109,11 @@ const emailOrIpKey = (req) => {
   if (email) return `acct:${email}`;
   return typeof rateLimit.ipKeyGenerator === 'function' ? rateLimit.ipKeyGenerator(req.ip) : req.ip;
 };
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, keyGenerator: emailOrIpKey, message: { error: 'Zu viele Anmeldeversuche. Bitte warte 15 Minuten.' } });
-const strictLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Zu viele Versuche. Bitte warte 15 Minuten.' } });
+// Login/2FA limiters stay deliberately tighter than the general API limiter:
+// they guard against credential brute-force, but are sized to never bother a
+// human fat-fingering a password. Overridable via env for special setups.
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.RATE_LIMIT_LOGIN_MAX) || 50, standardHeaders: true, legacyHeaders: false, keyGenerator: emailOrIpKey, message: { error: 'Zu viele Anmeldeversuche. Bitte warte 15 Minuten.' } });
+const strictLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.RATE_LIMIT_2FA_MAX) || 20, standardHeaders: true, legacyHeaders: false, message: { error: 'Zu viele Versuche. Bitte warte 15 Minuten.' } });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/login/totp', strictLimiter);
 app.use('/api/auth/passkey/login-verify', strictLimiter);

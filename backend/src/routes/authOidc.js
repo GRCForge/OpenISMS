@@ -225,7 +225,10 @@ router.get('/callback', async (req, res) => {
 // Exchange endpoint: frontend trades one-time code for the JWT
 router.get('/exchange', (req, res) => {
   const { code } = req.query;
-  if (!code) return res.status(400).json({ error: 'code erforderlich' });
+  // Validate format: exactly 48 lowercase hex chars (24 random bytes)
+  if (!code || typeof code !== 'string' || !/^[0-9a-f]{48}$/.test(code)) {
+    return res.status(400).json({ error: 'code erforderlich' });
+  }
   const entry = ssoTokens.get(code);
   if (!entry || entry.expires < Date.now()) {
     ssoTokens.delete(code);

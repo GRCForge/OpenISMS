@@ -98,6 +98,7 @@ export const Assets: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState(() => sessionStorage.getItem('assets_search') || '');
   const [search, setSearch] = useState(() => sessionStorage.getItem('assets_search') || '');
   const [typeFilter, setTypeFilter] = useState(() => sessionStorage.getItem('assets_typeFilter') || '');
   const [classFilter, setClassFilter] = useState(() => sessionStorage.getItem('assets_classFilter') || '');
@@ -119,8 +120,9 @@ export const Assets: React.FC = () => {
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSearchChange = (value: string) => {
+    setInputValue(value);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => setSearch(value), 300);
+    searchTimeout.current = setTimeout(() => setSearch(value), 400);
   };
 
   // Restore scroll position after loading completes
@@ -309,9 +311,9 @@ export const Assets: React.FC = () => {
       </div>
 
       <FilterBar
-        search={search} onSearch={handleSearchChange} searchPlaceholder="Assets durchsuchen..."
+        search={inputValue} onSearch={handleSearchChange} searchPlaceholder="Assets durchsuchen..."
         activeCount={[typeFilter, classFilter, statusFilter, lifecycleFilter].filter(Boolean).length}
-        onReset={() => { setSearch(''); setTypeFilter(''); setClassFilter(''); setStatusFilter(''); setLifecycleFilter(''); }}>
+        onReset={() => { setInputValue(''); setSearch(''); setTypeFilter(''); setClassFilter(''); setStatusFilter(''); setLifecycleFilter(''); }}>
         <Select className="w-40" options={[{ value: '', label: 'Alle Typen' }, ...typeOptions]} value={typeFilter} onChange={e => setTypeFilter(e.target.value)} />
         <Select className="w-40" options={[{ value: '', label: 'Alle Klassen' }, ...classOptions]} value={classFilter} onChange={e => setClassFilter(e.target.value)} />
         <Select className="w-40" options={statusOptions} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} />
