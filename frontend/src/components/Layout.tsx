@@ -183,9 +183,16 @@ export const Layout: React.FC = () => {
     setRevealedTokens(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Overdue badge: cheap dedicated endpoint, fetched once on mount and refreshed
+  // every 5 min — NOT on every navigation (which re-ran the full dashboard
+  // aggregation on each page change and hammered the rate limit).
   useEffect(() => {
-    api.get('/dashboard').then(r => setOverdueCount(r.data.stats.overdueReminders)).catch(() => {});
-  }, [location.pathname]);
+    const loadBadge = () =>
+      api.get('/dashboard/badge').then(r => setOverdueCount(r.data.overdueReminders)).catch(() => {});
+    loadBadge();
+    const timer = setInterval(loadBadge, 5 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     api.get('/version').then(r => setVersion(r.data.version)).catch(() => {});

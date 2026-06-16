@@ -4,8 +4,20 @@ const { Asset, Assessment, Reminder, User, AuditLog } = require('../models');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
-const { heavyLimiter } = require('../middleware/rateLimiter');
-router.use(heavyLimiter);
+const { apiLimiter } = require('../middleware/rateLimiter');
+// Dashboard endpoints are read-only aggregations, not heavy jobs — the normal
+// per-user apiLimiter is the right guard (CWE-770). The previous heavyLimiter
+// (300/15min) was too tight for a view that the UI loads on every visit.
+router.use(apiLimiter);
+
+// Lightweight badge count for the sidebar/header: a single COUNT query instead
+// of the ~10 queries of the full dashboard. Polled by the UI, so it must stay cheap.
+router.get('/badge', authenticate, async (req, res) => {
+  try {
+    const overdueReminders = await Reminder.count({ where: { status: 'overdue' } });
+    res.json({ overdueReminders });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 router.get('/', authenticate, async (req, res) => {
   try {

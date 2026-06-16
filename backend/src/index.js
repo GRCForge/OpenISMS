@@ -125,7 +125,6 @@ app.use('/api/admin/backup', sharedHeavyLimiter);
 app.use('/api/import', sharedHeavyLimiter);
 app.use('/api/report', sharedHeavyLimiter);
 app.use('/api/discovery', sharedHeavyLimiter);
-app.use('/api/dashboard', sharedHeavyLimiter);
 app.use('/api', apiLimiter);
 
 app.use('/api/auth', require('./routes/auth'));
