@@ -17,6 +17,99 @@ error()   { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 need_root() { [[ $EUID -eq 0 ]] || error "Please run as root (sudo $0)"; }
 
 ###############################################################################
+# Helpers
+###############################################################################
+check_docker() {
+  command -v docker &>/dev/null || error "Docker not found. Install it first: https://docs.docker.com/get-docker/"
+  docker compose version &>/dev/null || error "Docker Compose v2 not found. Update Docker or install the plugin."
+}
+
+check_node() {
+  if ! command -v node &>/dev/null; then
+    warn "Node.js not found. Installing via NodeSource..."
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
+    apt-get install -y nodejs
+  fi
+  NODE_MAJOR=$(node -e "process.stdout.write(process.version.split('.')[0].slice(1))")
+  [[ "$NODE_MAJOR" -ge 26 ]] || error "Node.js 26+ required (found $(node -v))"
+  info "Node.js $(node -v) detected"
+}
+
+# Interactive Node.js version check for updates
+check_node_interactive() {
+  if ! command -v node &>/dev/null; then
+    warn "Node.js not found. Installing via NodeSource..."
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
+    apt-get install -y nodejs
+    info "Node.js installed successfully."
+    return 0
+  fi
+  
+  NODE_MAJOR=$(node -e "process.stdout.write(process.version.split('.')[0].slice(1))")
+  
+  if [[ "$NODE_MAJOR" -ge 26 ]]; then
+    info "Node.js $(node -v) is compatible"
+    return 0
+  fi
+  
+  warn "Node.js version is outdated: $(node -v)"
+  warn "OpenISMS requires Node.js 26 or later"
+  echo ""
+  read -rp "Update Node.js to version ${NODE_VERSION}? [y/N]: " UPDATE_NODE
+  UPDATE_NODE="${UPDATE_NODE:-n}"
+  
+  if [[ "$UPDATE_NODE" =~ ^[Yy]$ ]]; then
+    info "Updating Node.js via NodeSource..."
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
+    apt-get install -y nodejs
+    info "Node.js updated successfully to $(node -v)"
+    return 0
+  else
+    warn "Skipping Node.js update. Some features may not work correctly."
+    warn "Please update Node.js manually before running npm commands."
+    return 1
+  fi
+}
+
+# Generate a 64-char hex secret (openssl preferred, /dev/urandom fallback).
+gen_secret() {
+  if command -v openssl &>/dev/null; then
+    openssl rand -hex 32
+  else
+    LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 64
+  fi
+}
+
+# Ensure a secret is present and strong in the .env file. Replaces empty,
+# placeholder (your_*_here) or changeme* values with a freshly generated one.
+# Without this the app's required secrets (no fallback since v1.8.1) would stay
+# at the .env.example placeholders and boot with a known-weak value.
+ensure_env_secret() {
+  local key="$1" file="$2" cur
+  cur=$(grep -E "^${key}=" "$file" 2>/dev/null | head -1 | cut -d= -f2-)
+  case "$cur" in
+    ''|your_*_here|changeme*)
+      local val; val=$(gen_secret)
+      if grep -qE "^${key}=" "$file" 2>/dev/null; then
+        sed -i "s|^${key}=.*|${key}=${val}|" "$file"
+      else
+        echo "${key}=${val}" >> "$file"
+      fi
+      info "Generated a strong random ${key}"
+      ;;
+    *) : ;;  # already customised — keep it
+  esac
+}
+
+# Populate all required app secrets in the given .env file.
+ensure_env_secrets() {
+  local file="$1"
+  ensure_env_secret JWT_SECRET "$file"
+  ensure_env_secret SESSION_SECRET "$file"
+  ensure_env_secret ENCRYPTION_KEY "$file"
+}
+
+###############################################################################
 # Mode selection
 ###############################################################################
 echo ""
@@ -71,6 +164,7 @@ if [[ "$MODE" == "3" ]]; then
     if [[ "$(pwd)" != "$INSTALL_DIR" ]]; then
        cp -r backend "$INSTALL_DIR/"
        cp -r frontend "$INSTALL_DIR/"
+       cp VERSION "$INSTALL_DIR/"
        chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
     fi
 
@@ -168,99 +262,6 @@ PYEOF
 fi
 
 ###############################################################################
-# Helpers
-###############################################################################
-check_docker() {
-  command -v docker &>/dev/null || error "Docker not found. Install it first: https://docs.docker.com/get-docker/"
-  docker compose version &>/dev/null || error "Docker Compose v2 not found. Update Docker or install the plugin."
-}
-
-check_node() {
-  if ! command -v node &>/dev/null; then
-    warn "Node.js not found. Installing via NodeSource..."
-    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-    apt-get install -y nodejs
-  fi
-  NODE_MAJOR=$(node -e "process.stdout.write(process.version.split('.')[0].slice(1))")
-  [[ "$NODE_MAJOR" -ge 26 ]] || error "Node.js 26+ required (found $(node -v))"
-  info "Node.js $(node -v) detected"
-}
-
-# Interactive Node.js version check for updates
-check_node_interactive() {
-  if ! command -v node &>/dev/null; then
-    warn "Node.js not found. Installing via NodeSource..."
-    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-    apt-get install -y nodejs
-    info "Node.js installed successfully."
-    return 0
-  fi
-  
-  NODE_MAJOR=$(node -e "process.stdout.write(process.version.split('.')[0].slice(1))")
-  
-  if [[ "$NODE_MAJOR" -ge 26 ]]; then
-    info "Node.js $(node -v) is compatible"
-    return 0
-  fi
-  
-  warn "Node.js version is outdated: $(node -v)"
-  warn "OpenISMS requires Node.js 26 or later"
-  echo ""
-  read -rp "Update Node.js to version ${NODE_VERSION}? [y/N]: " UPDATE_NODE
-  UPDATE_NODE="${UPDATE_NODE:-n}"
-  
-  if [[ "$UPDATE_NODE" =~ ^[Yy]$ ]]; then
-    info "Updating Node.js via NodeSource..."
-    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-    apt-get install -y nodejs
-    info "Node.js updated successfully to $(node -v)"
-    return 0
-  else
-    warn "Skipping Node.js update. Some features may not work correctly."
-    warn "Please update Node.js manually before running npm commands."
-    return 1
-  fi
-}
-
-# Generate a 64-char hex secret (openssl preferred, /dev/urandom fallback).
-gen_secret() {
-  if command -v openssl &>/dev/null; then
-    openssl rand -hex 32
-  else
-    LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 64
-  fi
-}
-
-# Ensure a secret is present and strong in the .env file. Replaces empty,
-# placeholder (your_*_here) or changeme* values with a freshly generated one.
-# Without this the app's required secrets (no fallback since v1.8.1) would stay
-# at the .env.example placeholders and boot with a known-weak value.
-ensure_env_secret() {
-  local key="$1" file="$2" cur
-  cur=$(grep -E "^${key}=" "$file" 2>/dev/null | head -1 | cut -d= -f2-)
-  case "$cur" in
-    ''|your_*_here|changeme*)
-      local val; val=$(gen_secret)
-      if grep -qE "^${key}=" "$file" 2>/dev/null; then
-        sed -i "s|^${key}=.*|${key}=${val}|" "$file"
-      else
-        echo "${key}=${val}" >> "$file"
-      fi
-      info "Generated a strong random ${key}"
-      ;;
-    *) : ;;  # already customised — keep it
-  esac
-}
-
-# Populate all required app secrets in the given .env file.
-ensure_env_secrets() {
-  local file="$1"
-  ensure_env_secret JWT_SECRET "$file"
-  ensure_env_secret SESSION_SECRET "$file"
-  ensure_env_secret ENCRYPTION_KEY "$file"
-}
-
-###############################################################################
 # Mode 1: Docker Compose
 ###############################################################################
 if [[ "$MODE" == "1" ]]; then
@@ -350,6 +351,7 @@ if [[ "$MODE" == "2" ]]; then
   mkdir -p "$INSTALL_DIR"
   cp -r backend "$INSTALL_DIR/"
   cp -r frontend "$INSTALL_DIR/"
+  cp VERSION "$INSTALL_DIR/"
   [[ -f .env ]] && cp .env "$INSTALL_DIR/.env"
   [[ -f .env.example ]] && cp .env.example "$INSTALL_DIR/.env.example"
 
