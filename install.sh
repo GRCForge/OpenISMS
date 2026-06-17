@@ -164,6 +164,7 @@ if [[ "$MODE" == "3" ]]; then
     if [[ "$(pwd)" != "$INSTALL_DIR" ]]; then
        cp -r backend "$INSTALL_DIR/"
        cp -r frontend "$INSTALL_DIR/"
+       cp -r scripts "$INSTALL_DIR/"
        cp VERSION "$INSTALL_DIR/"
        chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
     fi
@@ -351,6 +352,7 @@ if [[ "$MODE" == "2" ]]; then
   mkdir -p "$INSTALL_DIR"
   cp -r backend "$INSTALL_DIR/"
   cp -r frontend "$INSTALL_DIR/"
+  cp -r scripts "$INSTALL_DIR/"
   cp VERSION "$INSTALL_DIR/"
   [[ -f .env ]] && cp .env "$INSTALL_DIR/.env"
   [[ -f .env.example ]] && cp .env.example "$INSTALL_DIR/.env.example"

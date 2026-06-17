@@ -9,6 +9,8 @@ RUN apk add --no-cache git && npm install -g npm@11 --loglevel=error
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
+COPY scripts/ /scripts/
+COPY VERSION /VERSION
 COPY frontend/ ./
 RUN npm run build
 
