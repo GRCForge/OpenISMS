@@ -780,6 +780,8 @@ Siehe auch die Sicherheitsanweisungen in [SECURITY.md](SECURITY.md) für verantw
 - Set up regular MySQL backups of the `isms` schema
 - Rate limiting active on login endpoint (20 attempts / 15 min per IP)
 - **Brute-force protection:** Local user accounts are temporarily locked after a configurable number of failed attempts (configurable in the admin area)
+- Login responses are intentionally generic to prevent account enumeration and protect valid email addresses.
+- Password reset requests return a generic success response, without revealing whether an account exists.
 - **SSO login exclusivity:** Accounts logged in via Single Sign-On (SSO) automatically disable local authentication (password, passkey) and local two-factor authentication (TOTP)
 - Security headers via `helmet` active (XSS, clickjacking, MIME sniff)
 - CORS restricted to `APP_URL`

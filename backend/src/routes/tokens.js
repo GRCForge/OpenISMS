@@ -10,7 +10,7 @@ const { authenticate } = require('../middleware/auth');
 router.use(authenticate);
 
 // GET all active API tokens for the logged-in user
-router.get('/', async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const tokens = await ApiToken.findAll({
       where: { user_id: req.user.id },
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST generate a new API token
-router.post('/', async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
     const { name, expires_at } = req.body;
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
 });
 
 // DELETE an API token
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     const token = await ApiToken.findOne({
       where: { id: req.params.id, user_id: req.user.id }

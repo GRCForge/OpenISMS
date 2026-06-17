@@ -20,7 +20,7 @@ const applyLinks = async (entry, body) => {
 };
 
 // List all VVT entries
-router.get('/', async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const entries = await VvtEntry.findAll({
       include: includeAll,
@@ -51,7 +51,7 @@ const pickVvtFields = (body) => {
 };
 
 // Create entry (dpo, admin, assessor)
-router.post('/', requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
   try {
     const fields = pickVvtFields(req.body);
     const entry = await VvtEntry.create(fields);

@@ -47,6 +47,13 @@ This repository uses an automated security pipeline on every pull request:
 | **npm audit** | Known vulnerabilities in direct dependencies |
 | **SonarQube** | Code quality & additional SAST rules |
 
+## Authentication Hardening
+
+- Login failures return generic error messages so attackers cannot infer whether an email address is registered.
+- Password reset requests are anonymous and always return the same confirmation text.
+- Reset tokens are stored only as SHA-256 hashes and expire after one hour.
+- Failed authentication and lockout events are audited internally, while client responses avoid leaking sensitive details.
+
 ## Verifikation von Abhängigkeiten
 
 Bei einem Upgrade der Node.js-Laufzeit (z. B. auf Node.js 26.3.0) ist eine sorgfältige Verifikation der Abhängigkeiten erforderlich, um Regressions- oder Kompatibilitätsprobleme zu vermeiden. Empfohlene Schritte zum lokalen Testen:

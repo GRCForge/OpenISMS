@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { DataFlow, Asset } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, isAdmin, isAssessor, isDpo } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -27,9 +27,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single flow
+// Get single flow (only admin, assessor, dpo can access)
 router.get('/:id', async (req, res) => {
   try {
+    // Verify authorization: only admin, assessor, dpo
+    if (!isAdmin(req) && !isAssessor(req) && !isDpo(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const flow = await DataFlow.findByPk(req.params.id, { include: flowInclude });
     if (!flow) return res.status(404).json({ error: 'Not found' });
     res.json(flow);

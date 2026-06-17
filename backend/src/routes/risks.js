@@ -43,6 +43,15 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id, { include: includeAll });
     if (!risk) return res.status(404).json({ error: 'Not found' });
+    
+    // Authorization: only admin, assessor, risk owner, or risk is assigned to user's role can view
+    const isAdmin = req.user.role === 'admin';
+    const isAssessor = req.user.role === 'assessor';
+    const isOwner = risk.owner_id === req.user.id;
+    
+    if (!isAdmin && !isAssessor && !isOwner) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     res.json(risk);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
