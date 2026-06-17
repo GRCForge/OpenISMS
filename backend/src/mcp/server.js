@@ -10,9 +10,17 @@ const jwt = require('jsonwebtoken');
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
+const getTokenFromHeaders = (req) => {
+  const authHeader = String(req.headers['authorization'] || '').trim();
+  if (authHeader.startsWith('Bearer ')) {
+    return authHeader.slice(7).trim();
+  }
+  const apiKeyHeader = String(req.headers['x-api-key'] || '').trim();
+  return apiKeyHeader || null;
+};
+
 async function mcpAuth(req, res, next) {
-  const header = req.headers['authorization'] || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const token = getTokenFromHeaders(req);
 
   if (!token) {
     return res.status(401).json({ error: 'MCP: Authorization header required' });
