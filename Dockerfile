@@ -27,5 +27,7 @@ COPY --from=frontend-build /frontend/dist ./public
 # Versionsdatei fuer /api/version
 COPY VERSION ./VERSION
 RUN mkdir -p /app/uploads
+RUN chown -R 1000:1000 /app
+USER 1000
 EXPOSE 3001
 CMD ["node", "src/index.js"]
