@@ -83,7 +83,7 @@ router.put('/:id', canWrite, async (req, res) => {
   }
 });
 
-router.delete('/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const request = await SubjectRequest.findByPk(req.params.id);
     if (!request) return res.status(404).json({ error: 'Not found' });

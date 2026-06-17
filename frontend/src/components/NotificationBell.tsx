@@ -28,8 +28,13 @@ export const NotificationBell: React.FC = () => {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 30000);
-    return () => clearInterval(timer);
+    // Poll once a minute, but only while the tab is visible — a backgrounded tab
+    // shouldn't keep hitting the API. Refresh immediately when it becomes visible.
+    const tick = () => { if (!document.hidden) load(); };
+    const timer = setInterval(tick, 60000);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
   }, []);
 
   useEffect(() => {

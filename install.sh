@@ -8,7 +8,7 @@ set -euo pipefail
 ###############################################################################
 INSTALL_DIR="${INSTALL_DIR:-/opt/isms}"
 SERVICE_USER="${SERVICE_USER:-isms}"
-NODE_VERSION="22"
+NODE_VERSION="26"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()    { echo -e "${GREEN}[INFO]${NC} $*"; }
@@ -63,6 +63,9 @@ if [[ "$MODE" == "3" ]]; then
     info "Docker update complete."
   elif $IS_SYSTEMD; then
     info "Updating Systemd deployment..."
+    
+    # Check Node.js version (interactive for updates)
+    check_node_interactive
     
     # Sync files to install dir if we are running from a staging area BEFORE building
     if [[ "$(pwd)" != "$INSTALL_DIR" ]]; then
@@ -179,8 +182,44 @@ check_node() {
     apt-get install -y nodejs
   fi
   NODE_MAJOR=$(node -e "process.stdout.write(process.version.split('.')[0].slice(1))")
-  [[ "$NODE_MAJOR" -ge 18 ]] || error "Node.js 18+ required (found $(node -v))"
+  [[ "$NODE_MAJOR" -ge 26 ]] || error "Node.js 26+ required (found $(node -v))"
   info "Node.js $(node -v) detected"
+}
+
+# Interactive Node.js version check for updates
+check_node_interactive() {
+  if ! command -v node &>/dev/null; then
+    warn "Node.js not found. Installing via NodeSource..."
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
+    apt-get install -y nodejs
+    info "Node.js installed successfully."
+    return 0
+  fi
+  
+  NODE_MAJOR=$(node -e "process.stdout.write(process.version.split('.')[0].slice(1))")
+  
+  if [[ "$NODE_MAJOR" -ge 26 ]]; then
+    info "Node.js $(node -v) is compatible"
+    return 0
+  fi
+  
+  warn "Node.js version is outdated: $(node -v)"
+  warn "OpenISMS requires Node.js 26 or later"
+  echo ""
+  read -rp "Update Node.js to version ${NODE_VERSION}? [y/N]: " UPDATE_NODE
+  UPDATE_NODE="${UPDATE_NODE:-n}"
+  
+  if [[ "$UPDATE_NODE" =~ ^[Yy]$ ]]; then
+    info "Updating Node.js via NodeSource..."
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
+    apt-get install -y nodejs
+    info "Node.js updated successfully to $(node -v)"
+    return 0
+  else
+    warn "Skipping Node.js update. Some features may not work correctly."
+    warn "Please update Node.js manually before running npm commands."
+    return 1
+  fi
 }
 
 # Generate a 64-char hex secret (openssl preferred, /dev/urandom fallback).

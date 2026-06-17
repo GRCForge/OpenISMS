@@ -1,4 +1,5 @@
 const express = require('express');
+const { Op } = require('sequelize');
 const { Asset, Assessment, Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, User, Task, Training } = require('../models');
 const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
@@ -530,15 +531,19 @@ router.post('/trainings/bulk', authenticate, requireRole('admin', 'assessor', 'd
 
     const created = [];
 
-    // 1. Process registered users
+    // 1. Process registered users.
+    // Pre-load existing assignments for all users in ONE query (was a findOne
+    // per user — N+1 that scaled linearly with the number assigned).
+    const existingByUser = new Map();
+    if (training_id && finalUserIds.length) {
+      const rows = await UserTraining.findAll({
+        where: { training_id, user_id: { [Op.in]: finalUserIds } },
+      });
+      rows.forEach(a => existingByUser.set(a.user_id, a));
+    }
+
     for (const userId of finalUserIds) {
-      // Check if already assigned
-      let assignment = null;
-      if (training_id) {
-        assignment = await UserTraining.findOne({
-          where: { user_id: userId, training_id: training_id }
-        });
-      }
+      const assignment = training_id ? existingByUser.get(userId) : null;
 
       if (assignment) {
         await assignment.update({
@@ -562,26 +567,23 @@ router.post('/trainings/bulk', authenticate, requireRole('admin', 'assessor', 'd
       }
     }
 
-    // 2. Process external employees
+    // 2. Process external employees.
+    // Same batching: one query for all external names instead of a findOne each.
+    // Within a request training_id is fixed, so the match key is consistent.
+    const existingByName = new Map();
+    if (externalEmployees.length) {
+      const empNames = externalEmployees.map(e => e.name);
+      const whereBase = training_id
+        ? { training_id, user_id: null }
+        : { training_title: finalTitle.trim(), user_id: null };
+      const rows = await UserTraining.findAll({
+        where: { ...whereBase, employee_name: { [Op.in]: empNames } },
+      });
+      rows.forEach(a => existingByName.set(a.employee_name, a));
+    }
+
     for (const emp of externalEmployees) {
-      let assignment = null;
-      if (training_id) {
-        assignment = await UserTraining.findOne({
-          where: { 
-            training_id: training_id,
-            user_id: null,
-            employee_name: emp.name
-          }
-        });
-      } else {
-        assignment = await UserTraining.findOne({
-          where: {
-            training_title: finalTitle.trim(),
-            user_id: null,
-            employee_name: emp.name
-          }
-        });
-      }
+      const assignment = existingByName.get(emp.name) || null;
 
       if (assignment) {
         await assignment.update({

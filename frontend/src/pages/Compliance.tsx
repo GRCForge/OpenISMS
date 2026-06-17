@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CheckCircle, AlertTriangle, ChevronRight, Shield, FileWarning, Lock, Server, UserCheck, GitMerge,
@@ -280,10 +280,16 @@ export const Compliance: React.FC = () => {
     api.get('/tasks').then(r => setTasks(r.data)).catch(() => {});
   }, []);
 
+  // Load a tab's data the first time it's opened only — switching back to an
+  // already-visited tab shows the data already in state instead of refetching.
+  // Mutations call loadKpis/loadAudits/loadTrainings directly, so writes always
+  // pull fresh data regardless of this guard.
+  const loadedTabs = useRef<Set<TopTab>>(new Set());
   useEffect(() => {
-    if (activeTab === 'kpis') loadKpis();
-    if (activeTab === 'audits') loadAudits();
-    if (activeTab === 'trainings') loadTrainings();
+    if (loadedTabs.current.has(activeTab)) return;
+    if (activeTab === 'kpis') { loadedTabs.current.add('kpis'); loadKpis(); }
+    if (activeTab === 'audits') { loadedTabs.current.add('audits'); loadAudits(); }
+    if (activeTab === 'trainings') { loadedTabs.current.add('trainings'); loadTrainings(); }
   }, [activeTab]);
 
   // KPI Actions

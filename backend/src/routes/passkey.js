@@ -14,6 +14,16 @@ const { auditFromReq } = require('../services/auditService');
 
 const RP_NAME = process.env.APP_NAME || 'OpenISMS';
 
+const isValidEmail = (value) => {
+  return typeof value === 'string'
+    && value.length <= 320
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+};
+
+const isValidBase64Url = (value) => {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value);
+};
+
 // Erwarteter Origin darf NICHT frei aus Request-Headern übernommen werden —
 // sonst bestimmt ein Phishing-Proxy selbst, welchen Origin der Server beim
 // Verify akzeptiert, und die Phishing-Resistenz von WebAuthn ist ausgehebelt.
@@ -131,7 +141,8 @@ router.post('/register-verify', authenticate, async (req, res) => {
 
 router.post('/login-options', async (req, res) => {
   try {
-    const { email } = req.body || {};
+    const rawEmail = req.body?.email;
+    const email = isValidEmail(rawEmail) ? rawEmail.trim().toLowerCase() : null;
     let allowCredentials = [];
 
     if (email) {
@@ -174,7 +185,9 @@ router.post('/login-verify', async (req, res) => {
     const expectedChallenge = req.session.passkey_auth_challenge;
     if (!expectedChallenge) return res.status(400).json({ error: 'Keine aktive Challenge.' });
 
-    const credentialIdBase64 = req.body.id;
+    const credentialIdBase64 = isValidBase64Url(req.body?.id) ? req.body.id : null;
+    if (!credentialIdBase64) return res.status(401).json({ error: 'Unbekannter Passkey.' });
+
     const pkCred = await PasskeyCredential.findOne({ where: { credential_id: credentialIdBase64 } });
     if (!pkCred) return res.status(401).json({ error: 'Unbekannter Passkey.' });
 
