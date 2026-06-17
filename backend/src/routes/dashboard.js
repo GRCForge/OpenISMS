@@ -14,7 +14,13 @@ router.use(apiLimiter);
 // of the ~10 queries of the full dashboard. Polled by the UI, so it must stay cheap.
 router.get('/badge', authenticate, async (req, res) => {
   try {
-    const overdueReminders = await Reminder.count({ where: { status: 'overdue' } });
+    const overdueReminders = await Reminder.count({
+      where: { status: 'overdue' },
+      include: [{
+        model: Asset,
+        where: { status: { [Op.ne]: 'decommissioned' } }
+      }]
+    });
     res.json({ overdueReminders });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -40,23 +46,42 @@ router.get('/', authenticate, async (req, res) => {
     ] = await Promise.all([
       Asset.count({ where: { status: { [Op.ne]: 'decommissioned' } } }),
       Asset.count({ where: { status: 'active' } }),
-      Reminder.count({ where: { status: 'overdue' } }),
+      Reminder.count({
+        where: { status: 'overdue' },
+        include: [{
+          model: Asset,
+          where: { status: { [Op.ne]: 'decommissioned' } }
+        }]
+      }),
       Reminder.findAll({
         where: { status: 'pending', due_date: { [Op.between]: [todayStr, in30Str] } },
-        include: [{ model: Asset, attributes: ['id', 'name', 'type', 'classification'] }],
+        include: [{
+          model: Asset,
+          attributes: ['id', 'name', 'type', 'classification'],
+          where: { status: { [Op.ne]: 'decommissioned' } }
+        }],
         order: [['due_date', 'ASC']],
         limit: 10,
       }),
       Assessment.findAll({
-        attributes: ['risk_level', [fn('COUNT', col('id')), 'count']],
+        attributes: ['risk_level', [fn('COUNT', col('Assessment.id')), 'count']],
         where: { is_current: true },
+        include: [{
+          model: Asset,
+          attributes: [],
+          where: { status: { [Op.ne]: 'decommissioned' } }
+        }],
         group: ['risk_level'],
         raw: true,
       }),
       Assessment.findAll({
         where: { is_current: true },
         include: [
-          { model: Asset, attributes: ['id', 'name', 'type', 'classification'] },
+          {
+            model: Asset,
+            attributes: ['id', 'name', 'type', 'classification'],
+            where: { status: { [Op.ne]: 'decommissioned' } }
+          },
           { model: User, as: 'assessorUser', attributes: ['id', 'name'] },
         ],
         order: [['assessed_at', 'DESC']],

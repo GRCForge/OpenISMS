@@ -45,10 +45,22 @@ router.get('/overview', async (req, res) => {
       // ── ASSESSOR / ADMIN ────────────────────────────────────────────────────
       ['admin', 'assessor'].includes(user.role) && (async () => {
         const [assessedAssetIds, overdueAssessments, unownedRisks] = await Promise.all([
-          Assessment.findAll({ where: { is_current: true }, attributes: ['asset_id'] }),
+          Assessment.findAll({
+            where: { is_current: true },
+            attributes: ['asset_id'],
+            include: [{
+              model: Asset,
+              attributes: [],
+              where: { status: { [Op.ne]: 'decommissioned' } }
+            }]
+          }),
           Assessment.findAll({
             where: { is_current: true, next_review_at: { [Op.lt]: new Date() } },
-            include: [{ model: Asset, attributes: ['id', 'name'] }],
+            include: [{
+              model: Asset,
+              attributes: ['id', 'name'],
+              where: { status: { [Op.ne]: 'decommissioned' } }
+            }],
             order: [['next_review_at', 'ASC']], limit: 20,
           }),
           Risk.findAll({
