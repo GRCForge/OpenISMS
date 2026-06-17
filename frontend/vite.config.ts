@@ -9,6 +9,7 @@ export default defineConfig({
     }
   },
   build: {
+    chunkSizeWarningLimit: 650,
     assetsDir: 'static',
     rollupOptions: {
       output: {
