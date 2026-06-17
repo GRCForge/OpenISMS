@@ -4,10 +4,15 @@
     "title": "OpenISMS API",
     "description": "REST API für das Information Security Management System (OpenISMS).\n\n## Authentifizierung\nAlle geschützten Endpunkte erfordern einen **Bearer JWT-Token** im `Authorization`-Header:\n```\nAuthorization: Bearer <token>\n```\nDen Token erhalten Sie über `POST /api/auth/login`.\n\n## Rollen\n- `admin` – Vollzugriff\n- `assessor` – Risikobewerter / Auditor\n- `it-staff` – IT-Mitarbeiter (Security-Daten)\n- `dpo` – Datenschutzbeauftragter\n- `owner` – Asset-Verantwortlicher\n- `management` – Nur-Lesen (Management-Ebene)\n- `employee` – Schulungs-Tab, eigene Trainingsübersicht\n- `viewer` – Nur Lesezugriff\n\n**Custom Roles**: Eigene Rollennamen mit Basisrolle über `/api/admin/custom-roles` verwalten.",
     "version": "2.2.7",
-    "contact": { "name": "ISMS Support" }
+    "contact": {
+      "name": "ISMS Support"
+    }
   },
   "servers": [
-    { "url": "/api", "description": "Aktuelle Instanz" }
+    {
+      "url": "/api",
+      "description": "Aktuelle Instanz"
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -20,187 +25,650 @@
     "schemas": {
       "Error": {
         "type": "object",
-        "properties": { "error": { "type": "string" } }
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
       },
       "User": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "name": { "type": "string" },
-          "email": { "type": "string", "format": "email" },
-          "role": { "type": "string", "enum": ["admin","assessor","it-staff","dpo","owner","management","employee","viewer"] },
-          "department": { "type": "string" },
-          "active": { "type": "boolean" },
-          "sso_user": { "type": "boolean" },
-          "totp_enabled": { "type": "boolean" },
-          "custom_role_id": { "type": "integer", "nullable": true },
-          "customRole": { "$ref": "#/components/schemas/CustomRole" },
-          "failed_login_attempts": { "type": "integer" },
-          "lockout_until": { "type": "string", "format": "date-time", "nullable": true },
-          "last_seen_at": { "type": "string", "format": "date-time", "nullable": true }
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "assessor",
+              "it-staff",
+              "dpo",
+              "owner",
+              "management",
+              "employee",
+              "viewer"
+            ]
+          },
+          "department": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "sso_user": {
+            "type": "boolean"
+          },
+          "totp_enabled": {
+            "type": "boolean"
+          },
+          "custom_role_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "customRole": {
+            "$ref": "#/components/schemas/CustomRole"
+          },
+          "failed_login_attempts": {
+            "type": "integer"
+          },
+          "lockout_until": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
         }
       },
       "CustomRole": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "base_role": { "type": "string", "enum": ["admin","assessor","it-staff","dpo","owner","management","employee","viewer"] },
-          "users_count": { "type": "integer" }
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "base_role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "assessor",
+              "it-staff",
+              "dpo",
+              "owner",
+              "management",
+              "employee",
+              "viewer"
+            ]
+          },
+          "users_count": {
+            "type": "integer"
+          }
         }
       },
       "Group": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "name": { "type": "string" },
-          "description": { "type": "string", "nullable": true },
-          "color": { "type": "string", "example": "#3b82f6" },
-          "created_by_id": { "type": "integer", "nullable": true },
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "example": "#3b82f6"
+          },
+          "created_by_id": {
+            "type": "integer",
+            "nullable": true
+          },
           "members": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/User" }
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
           },
-          "created_at": { "type": "string", "format": "date-time" }
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Asset": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "name": { "type": "string" },
-          "type": { "type": "string", "enum": ["hardware","software","information","process","service","personal","application","data","ai_application","ai_agent","other"] },
-          "description": { "type": "string" },
-          "classification": { "type": "string", "enum": ["public","internal","confidential","secret"] },
-          "hosting_type": { "type": "string", "enum": ["on-premise","cloud_public","cloud_private","hybrid"] },
-          "lifecycle_status": { "type": "string", "enum": ["evaluation","production","maintenance","archived"] },
-          "status": { "type": "string", "enum": ["active","inactive","decommissioned"] },
-          "nis2_relevant": { "type": "boolean" },
-          "owner_id": { "type": "integer" },
-          "assessor_id": { "type": "integer" },
-          "vendor_id": { "type": "integer", "nullable": true },
-          "patch_status": { "type": "string", "enum": ["up-to-date","pending","critical"] },
-          "rto_hours": { "type": "integer", "nullable": true },
-          "rpo_hours": { "type": "integer", "nullable": true },
-          "cve_critical": { "type": "integer" },
-          "cve_high": { "type": "integer" },
-          "cve_medium": { "type": "integer" },
-          "cve_low": { "type": "integer" },
-          "frameworks": { "type": "array", "items": { "type": "string" } },
-          "parent_id": { "type": "integer", "nullable": true },
-          "created_at": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hardware",
+              "software",
+              "information",
+              "process",
+              "service",
+              "personal",
+              "application",
+              "data",
+              "ai_application",
+              "ai_agent",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "public",
+              "internal",
+              "confidential",
+              "secret"
+            ]
+          },
+          "hosting_type": {
+            "type": "string",
+            "enum": [
+              "on-premise",
+              "cloud_public",
+              "cloud_private",
+              "hybrid"
+            ]
+          },
+          "lifecycle_status": {
+            "type": "string",
+            "enum": [
+              "evaluation",
+              "production",
+              "maintenance",
+              "archived"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "decommissioned"
+            ]
+          },
+          "nis2_relevant": {
+            "type": "boolean"
+          },
+          "owner_id": {
+            "type": "integer"
+          },
+          "assessor_id": {
+            "type": "integer"
+          },
+          "vendor_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "patch_status": {
+            "type": "string",
+            "enum": [
+              "up-to-date",
+              "pending",
+              "critical"
+            ]
+          },
+          "rto_hours": {
+            "type": "integer",
+            "nullable": true
+          },
+          "rpo_hours": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cve_critical": {
+            "type": "integer"
+          },
+          "cve_high": {
+            "type": "integer"
+          },
+          "cve_medium": {
+            "type": "integer"
+          },
+          "cve_low": {
+            "type": "integer"
+          },
+          "frameworks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "parent_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Risk": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "ref": { "type": "string", "example": "RSK-0001" },
-          "title": { "type": "string" },
-          "description": { "type": "string" },
-          "category": { "type": "string" },
-          "inherent_likelihood": { "type": "integer", "minimum": 1, "maximum": 5 },
-          "inherent_impact": { "type": "integer", "minimum": 1, "maximum": 5 },
-          "inherent_level": { "type": "string", "enum": ["low","medium","high","critical"] },
-          "residual_likelihood": { "type": "integer", "minimum": 1, "maximum": 5 },
-          "residual_impact": { "type": "integer", "minimum": 1, "maximum": 5 },
-          "residual_level": { "type": "string", "enum": ["low","medium","high","critical"] },
-          "treatment": { "type": "string", "enum": ["mitigate","accept","transfer","avoid"] },
-          "status": { "type": "string", "enum": ["open","in_treatment","accepted","closed"] },
-          "owner_id": { "type": "integer" },
-          "acceptance_expires_at": { "type": "string", "format": "date", "nullable": true }
+          "id": {
+            "type": "integer"
+          },
+          "ref": {
+            "type": "string",
+            "example": "RSK-0001"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "inherent_likelihood": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "inherent_impact": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "inherent_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "residual_likelihood": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "residual_impact": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "residual_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "treatment": {
+            "type": "string",
+            "enum": [
+              "mitigate",
+              "accept",
+              "transfer",
+              "avoid"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_treatment",
+              "accepted",
+              "closed"
+            ]
+          },
+          "owner_id": {
+            "type": "integer"
+          },
+          "acceptance_expires_at": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
         }
       },
       "Incident": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "ref": { "type": "string", "example": "INC-0001" },
-          "title": { "type": "string" },
-          "description": { "type": "string" },
-          "category": { "type": "string", "enum": ["malware","phishing","data_breach","dos","unauthorized_access","misconfiguration","loss_theft","social_engineering","other"] },
-          "severity": { "type": "string", "enum": ["low","medium","high","critical"] },
-          "status": { "type": "string", "enum": ["reported","investigating","contained","resolved","closed"] },
-          "nis2_reportable": { "type": "boolean" },
-          "detected_at": { "type": "string", "format": "date-time" },
-          "occurred_at": { "type": "string", "format": "date-time" },
-          "resolved_at": { "type": "string", "format": "date-time", "nullable": true },
-          "assignee_id": { "type": "integer" },
-          "reporter_id": { "type": "integer" },
-          "lessons_learned": { "type": "string", "nullable": true },
-          "external_reference": { "type": "string", "nullable": true }
+          "id": {
+            "type": "integer"
+          },
+          "ref": {
+            "type": "string",
+            "example": "INC-0001"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "malware",
+              "phishing",
+              "data_breach",
+              "dos",
+              "unauthorized_access",
+              "misconfiguration",
+              "loss_theft",
+              "social_engineering",
+              "other"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "reported",
+              "investigating",
+              "contained",
+              "resolved",
+              "closed"
+            ]
+          },
+          "nis2_reportable": {
+            "type": "boolean"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolved_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignee_id": {
+            "type": "integer"
+          },
+          "reporter_id": {
+            "type": "integer"
+          },
+          "lessons_learned": {
+            "type": "string",
+            "nullable": true
+          },
+          "external_reference": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "Control": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "ref": { "type": "string" },
-          "title": { "type": "string" },
-          "description": { "type": "string" },
-          "framework": { "type": "string", "enum": ["iso27001","nis2","bsi_grundschutz","c5","custom"] },
-          "status": { "type": "string", "enum": ["not_started","in_progress","implemented","not_applicable"] },
-          "owner_id": { "type": "integer" }
+          "id": {
+            "type": "integer"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "framework": {
+            "type": "string",
+            "enum": [
+              "iso27001",
+              "nis2",
+              "bsi_grundschutz",
+              "c5",
+              "custom"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "in_progress",
+              "implemented",
+              "not_applicable"
+            ]
+          },
+          "owner_id": {
+            "type": "integer"
+          }
         }
       },
       "Task": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "title": { "type": "string" },
-          "description": { "type": "string", "nullable": true },
-          "status": { "type": "string", "enum": ["open","in_progress","done","cancelled"] },
-          "priority": { "type": "string", "enum": ["low","medium","high","critical"] },
-          "due_date": { "type": "string", "format": "date", "nullable": true },
-          "assigned_to_id": { "type": "integer", "nullable": true },
-          "assigned_to_group_id": { "type": "integer", "nullable": true },
-          "completed_by_id": { "type": "integer", "nullable": true },
-          "related_type": { "type": "string", "nullable": true },
-          "related_id": { "type": "integer", "nullable": true },
-          "created_by_id": { "type": "integer" },
-          "created_at": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "done",
+              "cancelled"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "assigned_to_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "assigned_to_group_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "completed_by_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "related_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "related_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_by_id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Notification": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "type": { "type": "string" },
-          "title": { "type": "string" },
-          "content": { "type": "string", "nullable": true },
-          "link": { "type": "string", "nullable": true },
-          "read": { "type": "boolean" },
-          "created_at": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "nullable": true
+          },
+          "link": {
+            "type": "string",
+            "nullable": true
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "VvtEntry": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "name": { "type": "string" },
-          "purpose": { "type": "string" },
-          "legal_basis": { "type": "string" },
-          "data_categories": { "type": "array", "items": { "type": "string" } },
-          "recipients": { "type": "string", "nullable": true },
-          "third_country_transfer": { "type": "boolean" },
-          "dsfa_required": { "type": "boolean" },
-          "status": { "type": "string", "enum": ["draft","active","archived"] },
-          "last_reviewed_at": { "type": "string", "format": "date", "nullable": true }
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "legal_basis": {
+            "type": "string"
+          },
+          "data_categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recipients": {
+            "type": "string",
+            "nullable": true
+          },
+          "third_country_transfer": {
+            "type": "boolean"
+          },
+          "dsfa_required": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ]
+          },
+          "last_reviewed_at": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
         }
       },
       "SubjectRequest": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "type": { "type": "string", "enum": ["access","erasure","rectification","restriction","portability","objection","automated_decision"] },
-          "requester_name": { "type": "string" },
-          "requester_email": { "type": "string", "format": "email" },
-          "description": { "type": "string", "nullable": true },
-          "status": { "type": "string", "enum": ["open","in_progress","completed","rejected"] },
-          "received_at": { "type": "string", "format": "date" },
-          "due_at": { "type": "string", "format": "date" },
-          "assigned_to_id": { "type": "integer", "nullable": true }
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "access",
+              "erasure",
+              "rectification",
+              "restriction",
+              "portability",
+              "objection",
+              "automated_decision"
+            ]
+          },
+          "requester_name": {
+            "type": "string"
+          },
+          "requester_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "completed",
+              "rejected"
+            ]
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "assigned_to_id": {
+            "type": "integer",
+            "nullable": true
+          }
         }
       },
       "ReportTrends": {
@@ -211,42 +679,88 @@
             "items": {
               "type": "object",
               "properties": {
-                "month": { "type": "string", "example": "2025-01" },
-                "incidents": { "type": "integer" },
-                "risks_new": { "type": "integer" },
-                "assets_new": { "type": "integer" },
-                "tasks_done": { "type": "integer" },
-                "high_incidents": { "type": "integer" }
+                "month": {
+                  "type": "string",
+                  "example": "2025-01"
+                },
+                "incidents": {
+                  "type": "integer"
+                },
+                "risks_new": {
+                  "type": "integer"
+                },
+                "assets_new": {
+                  "type": "integer"
+                },
+                "tasks_done": {
+                  "type": "integer"
+                },
+                "high_incidents": {
+                  "type": "integer"
+                }
               }
             }
           },
-          "riskDistribution": { "type": "object" },
-          "controlStatus": { "type": "object" },
-          "taskStatus": { "type": "object" },
+          "riskDistribution": {
+            "type": "object"
+          },
+          "controlStatus": {
+            "type": "object"
+          },
+          "taskStatus": {
+            "type": "object"
+          },
           "autoKpis": {
             "type": "object",
             "properties": {
-              "health_score": { "type": "number" },
-              "control_coverage": { "type": "number" },
-              "assessment_coverage": { "type": "number" },
-              "open_high_risks": { "type": "integer" },
-              "overdue_reminders": { "type": "integer" },
-              "task_completion_rate": { "type": "number" },
-              "mttr_days": { "type": "number", "nullable": true },
-              "total_assets": { "type": "integer" },
-              "open_incidents": { "type": "integer" }
+              "health_score": {
+                "type": "number"
+              },
+              "control_coverage": {
+                "type": "number"
+              },
+              "assessment_coverage": {
+                "type": "number"
+              },
+              "open_high_risks": {
+                "type": "integer"
+              },
+              "overdue_reminders": {
+                "type": "integer"
+              },
+              "task_completion_rate": {
+                "type": "number"
+              },
+              "mttr_days": {
+                "type": "number",
+                "nullable": true
+              },
+              "total_assets": {
+                "type": "integer"
+              },
+              "open_incidents": {
+                "type": "integer"
+              }
             }
           },
-          "kpis": { "type": "array" }
+          "kpis": {
+            "type": "array"
+          }
         }
       }
     }
   },
-  "security": [{ "bearerAuth": [] }],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
   "paths": {
     "/auth/login": {
       "post": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "Anmelden (JWT erhalten)",
         "security": [],
         "requestBody": {
@@ -255,725 +769,2811 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email","password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
-                  "email": { "type": "string", "format": "email", "example": "admin@isms.local" },
-                  "password": { "type": "string", "example": "Admin1234!" },
-                  "totp_code": { "type": "string", "description": "6-stelliger TOTP-Code (bei aktivierter 2FA)", "example": "123456" }
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "admin@isms.local"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Admin1234!"
+                  },
+                  "totp_code": {
+                    "type": "string",
+                    "description": "6-stelliger TOTP-Code (bei aktivierter 2FA)",
+                    "example": "123456"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Erfolgreich angemeldet", "content": { "application/json": { "schema": { "type": "object", "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/User" } } } } } },
-          "401": { "description": "Ungültige Anmeldedaten oder gesperrtes Konto", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+          "200": {
+            "description": "Erfolgreich angemeldet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ungültige Anmeldedaten oder gesperrtes Konto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/auth/forgot-password": {
       "post": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "Passwort-Reset per E-Mail anfordern",
         "security": [],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
         },
         "responses": {
-          "200": { "description": "Identische Antwort unabhängig davon, ob die E-Mail existiert (User-Enumeration-Schutz)" }
+          "200": {
+            "description": "Identische Antwort unabhängig davon, ob die E-Mail existiert (User-Enumeration-Schutz)"
+          }
         }
       }
     },
     "/auth/reset-password": {
       "post": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "Passwort mit Reset-Token zurücksetzen",
         "security": [],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["token","new_password"], "properties": { "token": { "type": "string" }, "new_password": { "type": "string" } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "new_password"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "new_password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         "responses": {
-          "200": { "description": "Passwort zurückgesetzt" },
-          "400": { "description": "Token ungültig oder Passwortrichtlinie verletzt", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+          "200": {
+            "description": "Passwort zurückgesetzt"
+          },
+          "400": {
+            "description": "Token ungültig oder Passwortrichtlinie verletzt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/auth/me": {
       "get": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "Aktuellen Benutzer abrufen",
         "responses": {
-          "200": { "description": "Benutzerprofil", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }
+          "200": {
+            "description": "Benutzerprofil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/auth/change-password": {
       "post": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "Eigenes Passwort ändern",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["current_password","new_password"], "properties": { "current_password": { "type": "string" }, "new_password": { "type": "string" } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password",
+                  "new_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string"
+                  },
+                  "new_password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         "responses": {
-          "200": { "description": "Passwort geändert" },
-          "400": { "description": "Aktuelles Passwort falsch oder Richtlinie verletzt" }
+          "200": {
+            "description": "Passwort geändert"
+          },
+          "400": {
+            "description": "Aktuelles Passwort falsch oder Richtlinie verletzt"
+          }
         }
       }
     },
     "/auth/totp/setup": {
       "post": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "TOTP-2FA einrichten (QR-Code + Secret)",
         "responses": {
-          "200": { "description": "TOTP-Secret und QR-Code-URL", "content": { "application/json": { "schema": { "type": "object", "properties": { "secret": { "type": "string" }, "qrcode": { "type": "string" } } } } } }
+          "200": {
+            "description": "TOTP-Secret und QR-Code-URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "secret": {
+                      "type": "string"
+                    },
+                    "qrcode": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
     "/auth/totp/verify": {
       "post": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "TOTP aktivieren (nach Setup bestätigen)",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["code"], "properties": { "code": { "type": "string", "example": "123456" } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
         },
         "responses": {
-          "200": { "description": "TOTP aktiviert" },
-          "400": { "description": "Ungültiger Code" }
+          "200": {
+            "description": "TOTP aktiviert"
+          },
+          "400": {
+            "description": "Ungültiger Code"
+          }
         }
       }
     },
     "/auth/totp/disable": {
       "post": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "TOTP deaktivieren",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["code"], "properties": { "code": { "type": "string" } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "200": { "description": "TOTP deaktiviert" } }
+        "responses": {
+          "200": {
+            "description": "TOTP deaktiviert"
+          }
+        }
       }
     },
     "/auth/passkeys": {
       "get": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "Eigene Passkeys abrufen",
-        "responses": { "200": { "description": "Passkey-Liste" } }
+        "responses": {
+          "200": {
+            "description": "Passkey-Liste"
+          }
+        }
       }
     },
     "/auth/passkeys/{id}": {
       "delete": {
-        "tags": ["Authentifizierung"],
+        "tags": [
+          "Authentifizierung"
+        ],
         "summary": "Passkey löschen",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Passkey gelöscht" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Passkey gelöscht"
+          }
+        }
       }
     },
     "/me/overview": {
       "get": {
-        "tags": ["Dashboard"],
+        "tags": [
+          "Dashboard"
+        ],
         "summary": "Personalisierte Übersicht (Mein Bereich)",
         "responses": {
-          "200": { "description": "Eigene Aufgaben, Assets, Risiken, Trainings und Benachrichtigungen" }
+          "200": {
+            "description": "Eigene Aufgaben, Assets, Risiken, Trainings und Benachrichtigungen"
+          }
         }
       }
     },
     "/assets": {
       "get": {
-        "tags": ["Assets"],
+        "tags": [
+          "Assets"
+        ],
         "summary": "Alle Assets abrufen",
         "parameters": [
-          { "name": "search", "in": "query", "schema": { "type": "string" } },
-          { "name": "type", "in": "query", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "hosting_type", "in": "query", "schema": { "type": "string" } },
-          { "name": "classification", "in": "query", "schema": { "type": "string" } },
-          { "name": "lifecycle_status", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hosting_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "classification",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lifecycle_status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Asset-Liste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Asset" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Asset-Liste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Asset"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Assets"],
+        "tags": [
+          "Assets"
+        ],
         "summary": "Neues Asset anlegen",
         "description": "Erfordert Rolle: admin, assessor, it-staff, dpo",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Asset" } } } },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Asset"
+              }
+            }
+          }
+        },
         "responses": {
-          "201": { "description": "Asset erstellt", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Asset" } } } },
-          "400": { "description": "Validierungsfehler", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+          "201": {
+            "description": "Asset erstellt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validierungsfehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/assets/{id}": {
       "get": {
-        "tags": ["Assets"],
+        "tags": [
+          "Assets"
+        ],
         "summary": "Asset-Details abrufen",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Asset mit verknüpften Daten" }, "404": { "description": "Nicht gefunden" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset mit verknüpften Daten"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        }
       },
       "put": {
-        "tags": ["Assets"],
+        "tags": [
+          "Assets"
+        ],
         "summary": "Asset aktualisieren",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Asset" } } } },
-        "responses": { "200": { "description": "Asset aktualisiert" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Asset"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset aktualisiert"
+          }
+        }
       },
       "delete": {
-        "tags": ["Assets"],
+        "tags": [
+          "Assets"
+        ],
         "summary": "Asset löschen",
         "description": "Erfordert Rolle: admin",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Asset gelöscht" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset gelöscht"
+          }
+        }
       }
     },
     "/assets/{id}/documents": {
       "get": {
-        "tags": ["Assets"],
+        "tags": [
+          "Assets"
+        ],
         "summary": "Dokumente eines Assets abrufen",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Dokumentenliste" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dokumentenliste"
+          }
+        }
       },
       "post": {
-        "tags": ["Assets"],
+        "tags": [
+          "Assets"
+        ],
         "summary": "Dokument hochladen (max. 25 MB)",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
-          "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "file": { "type": "string", "format": "binary" }, "category": { "type": "string" }, "description": { "type": "string" } } } } }
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "201": { "description": "Dokument gespeichert" } }
+        "responses": {
+          "201": {
+            "description": "Dokument gespeichert"
+          }
+        }
       }
     },
     "/tasks": {
       "get": {
-        "tags": ["Aufgaben"],
+        "tags": [
+          "Aufgaben"
+        ],
         "summary": "Alle Aufgaben abrufen",
         "parameters": [
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "priority", "in": "query", "schema": { "type": "string" } },
-          { "name": "assigned_to_id", "in": "query", "schema": { "type": "integer" } }
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assigned_to_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Aufgabenliste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Task" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Aufgabenliste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Aufgaben"],
+        "tags": [
+          "Aufgaben"
+        ],
         "summary": "Neue Aufgabe erstellen",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Task" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Task"
+              }
+            }
+          }
         },
-        "responses": { "201": { "description": "Aufgabe erstellt" } }
+        "responses": {
+          "201": {
+            "description": "Aufgabe erstellt"
+          }
+        }
       }
     },
     "/tasks/my": {
       "get": {
-        "tags": ["Aufgaben"],
+        "tags": [
+          "Aufgaben"
+        ],
         "summary": "Eigene Aufgaben abrufen (inkl. Gruppen-Aufgaben)",
-        "responses": { "200": { "description": "Aufgaben des aktuellen Benutzers und seiner Gruppen" } }
+        "responses": {
+          "200": {
+            "description": "Aufgaben des aktuellen Benutzers und seiner Gruppen"
+          }
+        }
       }
     },
     "/tasks/{id}": {
       "get": {
-        "tags": ["Aufgaben"],
+        "tags": [
+          "Aufgaben"
+        ],
         "summary": "Aufgaben-Details",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Aufgabe" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aufgabe"
+          }
+        }
       },
       "put": {
-        "tags": ["Aufgaben"],
+        "tags": [
+          "Aufgaben"
+        ],
         "summary": "Aufgabe aktualisieren",
         "description": "Gruppenaufgaben: Beim Setzen auf `done` wird `completed_by_id` auf den aktuellen Benutzer gesetzt und alle anderen Gruppenmitglieder werden benachrichtigt.",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Task" } } } },
-        "responses": { "200": { "description": "Aufgabe aktualisiert" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Task"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aufgabe aktualisiert"
+          }
+        }
       },
       "delete": {
-        "tags": ["Aufgaben"],
+        "tags": [
+          "Aufgaben"
+        ],
         "summary": "Aufgabe löschen",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Aufgabe gelöscht" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aufgabe gelöscht"
+          }
+        }
       }
     },
     "/groups": {
       "get": {
-        "tags": ["Gruppen"],
+        "tags": [
+          "Gruppen"
+        ],
         "summary": "Alle Gruppen abrufen",
-        "responses": { "200": { "description": "Gruppenliste mit Mitgliedern", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Group" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Gruppenliste mit Mitgliedern",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Group"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Gruppen"],
+        "tags": [
+          "Gruppen"
+        ],
         "summary": "Neue Gruppe anlegen",
         "description": "Erfordert Rolle: admin",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "color": { "type": "string", "example": "#3b82f6" } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": "string",
+                    "example": "#3b82f6"
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "201": { "description": "Gruppe erstellt" } }
+        "responses": {
+          "201": {
+            "description": "Gruppe erstellt"
+          }
+        }
       }
     },
     "/groups/{id}": {
       "get": {
-        "tags": ["Gruppen"],
+        "tags": [
+          "Gruppen"
+        ],
         "summary": "Gruppe mit Mitgliedern abrufen",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Gruppe" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gruppe"
+          }
+        }
       },
       "put": {
-        "tags": ["Gruppen"],
+        "tags": [
+          "Gruppen"
+        ],
         "summary": "Gruppe aktualisieren",
         "description": "Erfordert Rolle: admin",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Group" } } } },
-        "responses": { "200": { "description": "Gruppe aktualisiert" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gruppe aktualisiert"
+          }
+        }
       },
       "delete": {
-        "tags": ["Gruppen"],
+        "tags": [
+          "Gruppen"
+        ],
         "summary": "Gruppe löschen",
         "description": "Erfordert Rolle: admin",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Gruppe gelöscht" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gruppe gelöscht"
+          }
+        }
       }
     },
     "/groups/{id}/members": {
       "post": {
-        "tags": ["Gruppen"],
+        "tags": [
+          "Gruppen"
+        ],
         "summary": "Mitglied zur Gruppe hinzufügen",
         "description": "Erfordert Rolle: admin",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["user_id"], "properties": { "user_id": { "type": "integer" } } } } } },
-        "responses": { "200": { "description": "Mitglied hinzugefügt" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mitglied hinzugefügt"
+          }
+        }
       }
     },
     "/groups/{id}/members/{userId}": {
       "delete": {
-        "tags": ["Gruppen"],
+        "tags": [
+          "Gruppen"
+        ],
         "summary": "Mitglied aus Gruppe entfernen",
         "description": "Erfordert Rolle: admin",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
-          { "name": "userId", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Mitglied entfernt" } }
+        "responses": {
+          "200": {
+            "description": "Mitglied entfernt"
+          }
+        }
       }
     },
     "/risks": {
       "get": {
-        "tags": ["Risiken"],
+        "tags": [
+          "Risiken"
+        ],
         "summary": "Risikoregister abrufen",
         "parameters": [
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "level", "in": "query", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Risikoliste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Risk" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Risikoliste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Risk"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Risiken"],
+        "tags": [
+          "Risiken"
+        ],
         "summary": "Neues Risiko anlegen",
         "description": "Erfordert Rolle: admin, assessor",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Risk" } } } },
-        "responses": { "201": { "description": "Risiko erstellt" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Risk"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Risiko erstellt"
+          }
+        }
       }
     },
     "/risks/{id}": {
       "get": {
-        "tags": ["Risiken"],
+        "tags": [
+          "Risiken"
+        ],
         "summary": "Risiko-Details",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Risikodetails" }, "404": { "description": "Nicht gefunden" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Risikodetails"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        }
       },
       "put": {
-        "tags": ["Risiken"],
+        "tags": [
+          "Risiken"
+        ],
         "summary": "Risiko aktualisieren",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Risk" } } } },
-        "responses": { "200": { "description": "Risiko aktualisiert" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Risk"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Risiko aktualisiert"
+          }
+        }
       },
       "delete": {
-        "tags": ["Risiken"],
+        "tags": [
+          "Risiken"
+        ],
         "summary": "Risiko löschen",
         "description": "Erfordert Rolle: admin",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Risiko gelöscht" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Risiko gelöscht"
+          }
+        }
       }
     },
     "/incidents": {
       "get": {
-        "tags": ["Vorfälle"],
+        "tags": [
+          "Vorfälle"
+        ],
         "summary": "Vorfälle abrufen",
         "parameters": [
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "severity", "in": "query", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Vorfallsliste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Incident" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Vorfallsliste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Incident"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Vorfälle"],
+        "tags": [
+          "Vorfälle"
+        ],
         "summary": "Vorfall melden",
         "description": "Erfordert Rolle: admin, assessor, it-staff",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Incident" } } } },
-        "responses": { "201": { "description": "Vorfall angelegt" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Incident"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vorfall angelegt"
+          }
+        }
       }
     },
     "/incidents/stats": {
       "get": {
-        "tags": ["Vorfälle"],
+        "tags": [
+          "Vorfälle"
+        ],
         "summary": "Vorfall-Statistiken",
-        "responses": { "200": { "description": "Statistiken nach Status und Schweregrad" } }
+        "responses": {
+          "200": {
+            "description": "Statistiken nach Status und Schweregrad"
+          }
+        }
       }
     },
     "/incidents/{id}": {
-      "get": { "tags": ["Vorfälle"], "summary": "Vorfall-Details", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Vorfalldetails" } } },
-      "put": { "tags": ["Vorfälle"], "summary": "Vorfall aktualisieren", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Incident" } } } }, "responses": { "200": { "description": "Aktualisiert" } } },
-      "delete": { "tags": ["Vorfälle"], "summary": "Vorfall löschen", "description": "Erfordert Rolle: admin", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Gelöscht" } } }
+      "get": {
+        "tags": [
+          "Vorfälle"
+        ],
+        "summary": "Vorfall-Details",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vorfalldetails"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Vorfälle"
+        ],
+        "summary": "Vorfall aktualisieren",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Incident"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aktualisiert"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Vorfälle"
+        ],
+        "summary": "Vorfall löschen",
+        "description": "Erfordert Rolle: admin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gelöscht"
+          }
+        }
+      }
     },
     "/assessments": {
-      "get": { "tags": ["Bewertungen"], "summary": "CIA-Bewertungen abrufen", "responses": { "200": { "description": "Bewertungsliste" } } },
+      "get": {
+        "tags": [
+          "Bewertungen"
+        ],
+        "summary": "CIA-Bewertungen abrufen",
+        "responses": {
+          "200": {
+            "description": "Bewertungsliste"
+          }
+        }
+      },
       "post": {
-        "tags": ["Bewertungen"],
+        "tags": [
+          "Bewertungen"
+        ],
         "summary": "Neue Bewertung erstellen",
         "description": "Erfordert Rolle: admin, assessor",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["asset_id","confidentiality","integrity","availability"], "properties": { "asset_id": { "type": "integer" }, "confidentiality": { "type": "integer", "minimum": 1, "maximum": 5 }, "integrity": { "type": "integer", "minimum": 1, "maximum": 5 }, "availability": { "type": "integer", "minimum": 1, "maximum": 5 }, "notes": { "type": "string" }, "risk_treatment": { "type": "string", "enum": ["mitigate","accept","transfer","avoid"] } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "asset_id",
+                  "confidentiality",
+                  "integrity",
+                  "availability"
+                ],
+                "properties": {
+                  "asset_id": {
+                    "type": "integer"
+                  },
+                  "confidentiality": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "integrity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "availability": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "risk_treatment": {
+                    "type": "string",
+                    "enum": [
+                      "mitigate",
+                      "accept",
+                      "transfer",
+                      "avoid"
+                    ]
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "201": { "description": "Bewertung gespeichert" } }
+        "responses": {
+          "201": {
+            "description": "Bewertung gespeichert"
+          }
+        }
       }
     },
     "/controls": {
       "get": {
-        "tags": ["Maßnahmen & SoA"],
+        "tags": [
+          "Maßnahmen & SoA"
+        ],
         "summary": "Maßnahmen abrufen",
         "parameters": [
-          { "name": "framework", "in": "query", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "framework",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Maßnahmenliste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Control" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Maßnahmenliste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Control"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/controls/{id}": {
-      "put": { "tags": ["Maßnahmen & SoA"], "summary": "Maßnahmenstatus aktualisieren", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Control" } } } }, "responses": { "200": { "description": "Maßnahme aktualisiert" } } }
+      "put": {
+        "tags": [
+          "Maßnahmen & SoA"
+        ],
+        "summary": "Maßnahmenstatus aktualisieren",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Control"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Maßnahme aktualisiert"
+          }
+        }
+      }
     },
     "/policies": {
       "get": {
-        "tags": ["Richtlinien"],
+        "tags": [
+          "Richtlinien"
+        ],
         "summary": "Richtlinien-Bibliothek abrufen",
         "parameters": [
-          { "name": "search", "in": "query", "schema": { "type": "string" } },
-          { "name": "category", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Richtlinienliste" } }
+        "responses": {
+          "200": {
+            "description": "Richtlinienliste"
+          }
+        }
       },
       "post": {
-        "tags": ["Richtlinien"],
+        "tags": [
+          "Richtlinien"
+        ],
         "summary": "Neue Richtlinie anlegen",
         "description": "Erfordert Rolle: admin, assessor, dpo",
-        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "required": ["title","category"], "properties": { "title": { "type": "string" }, "category": { "type": "string" }, "code": { "type": "string" }, "description": { "type": "string" }, "file": { "type": "string", "format": "binary" } } } } } },
-        "responses": { "201": { "description": "Richtlinie gespeichert" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "category"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Richtlinie gespeichert"
+          }
+        }
       }
     },
     "/vvt": {
       "get": {
-        "tags": ["DSGVO"],
+        "tags": [
+          "DSGVO"
+        ],
         "summary": "Verarbeitungsverzeichnis abrufen (Art. 30)",
         "description": "Erfordert Modul: dsgvo",
-        "responses": { "200": { "description": "VVT-Einträge", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/VvtEntry" } } } } } }
+        "responses": {
+          "200": {
+            "description": "VVT-Einträge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VvtEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["DSGVO"],
+        "tags": [
+          "DSGVO"
+        ],
         "summary": "VVT-Eintrag anlegen",
         "description": "Erfordert Rolle: admin, assessor, dpo — Modul: dsgvo",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VvtEntry" } } } },
-        "responses": { "201": { "description": "VVT-Eintrag erstellt" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VvtEntry"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "VVT-Eintrag erstellt"
+          }
+        }
       }
     },
     "/vvt/{id}": {
-      "get": { "tags": ["DSGVO"], "summary": "VVT-Eintrag abrufen", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "VVT-Eintrag" } } },
-      "put": { "tags": ["DSGVO"], "summary": "VVT-Eintrag aktualisieren", "description": "Erfordert Rolle: admin, assessor, dpo", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VvtEntry" } } } }, "responses": { "200": { "description": "Aktualisiert" } } },
-      "delete": { "tags": ["DSGVO"], "summary": "VVT-Eintrag löschen", "description": "Erfordert Rolle: admin, dpo", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Gelöscht" } } }
+      "get": {
+        "tags": [
+          "DSGVO"
+        ],
+        "summary": "VVT-Eintrag abrufen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "VVT-Eintrag"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "DSGVO"
+        ],
+        "summary": "VVT-Eintrag aktualisieren",
+        "description": "Erfordert Rolle: admin, assessor, dpo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VvtEntry"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aktualisiert"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "DSGVO"
+        ],
+        "summary": "VVT-Eintrag löschen",
+        "description": "Erfordert Rolle: admin, dpo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gelöscht"
+          }
+        }
+      }
     },
     "/subject-requests": {
       "get": {
-        "tags": ["DSGVO"],
+        "tags": [
+          "DSGVO"
+        ],
         "summary": "Betroffenenrechte-Anfragen abrufen (Art. 15–22)",
         "description": "Erfordert Modul: dsgvo",
-        "responses": { "200": { "description": "Anfragenliste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/SubjectRequest" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Anfragenliste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectRequest"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["DSGVO"],
+        "tags": [
+          "DSGVO"
+        ],
         "summary": "Betroffenenanfrage anlegen",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SubjectRequest" } } } },
-        "responses": { "201": { "description": "Anfrage erstellt" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Anfrage erstellt"
+          }
+        }
       }
     },
     "/subject-requests/{id}": {
-      "put": { "tags": ["DSGVO"], "summary": "Betroffenenanfrage aktualisieren", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SubjectRequest" } } } }, "responses": { "200": { "description": "Aktualisiert" } } },
-      "delete": { "tags": ["DSGVO"], "summary": "Betroffenenanfrage löschen", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Gelöscht" } } }
+      "put": {
+        "tags": [
+          "DSGVO"
+        ],
+        "summary": "Betroffenenanfrage aktualisieren",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aktualisiert"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "DSGVO"
+        ],
+        "summary": "Betroffenenanfrage löschen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gelöscht"
+          }
+        }
+      }
     },
     "/report/trends": {
       "get": {
-        "tags": ["Berichte"],
+        "tags": [
+          "Berichte"
+        ],
         "summary": "Management Report Trends (12 Monate)",
         "description": "Liefert monatliche Verlaufsdaten, Risikoverteilung, Control-Status, Auto-KPIs und manuelle KPIs für den Management Report.",
         "responses": {
           "200": {
             "description": "Trend-Daten",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReportTrends" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportTrends"
+                }
+              }
+            }
           }
         }
       }
     },
     "/notifications": {
       "get": {
-        "tags": ["Benachrichtigungen"],
+        "tags": [
+          "Benachrichtigungen"
+        ],
         "summary": "Eigene Benachrichtigungen abrufen",
-        "responses": { "200": { "description": "Benachrichtigungsliste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Notification" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Benachrichtigungsliste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Notification"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/notifications/{id}/read": {
       "put": {
-        "tags": ["Benachrichtigungen"],
+        "tags": [
+          "Benachrichtigungen"
+        ],
         "summary": "Benachrichtigung als gelesen markieren",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Als gelesen markiert" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Als gelesen markiert"
+          }
+        }
       }
     },
     "/notifications/read-all": {
       "put": {
-        "tags": ["Benachrichtigungen"],
+        "tags": [
+          "Benachrichtigungen"
+        ],
         "summary": "Alle Benachrichtigungen als gelesen markieren",
-        "responses": { "200": { "description": "Alle gelesen" } }
+        "responses": {
+          "200": {
+            "description": "Alle gelesen"
+          }
+        }
       }
     },
     "/users": {
       "get": {
-        "tags": ["Benutzerverwaltung"],
+        "tags": [
+          "Benutzerverwaltung"
+        ],
         "summary": "Alle Benutzer abrufen",
         "description": "Erfordert Rolle: admin. Liefert auch verknüpfte Custom Role und Passkey-Status.",
-        "responses": { "200": { "description": "Benutzerliste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Benutzerliste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Benutzerverwaltung"],
+        "tags": [
+          "Benutzerverwaltung"
+        ],
         "summary": "Benutzer anlegen",
         "description": "Erfordert Rolle: admin",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["name","email","password","role"], "properties": { "name": { "type": "string" }, "email": { "type": "string", "format": "email" }, "password": { "type": "string" }, "role": { "type": "string", "enum": ["admin","assessor","it-staff","dpo","owner","management","employee","viewer"] }, "department": { "type": "string" }, "custom_role_id": { "type": "integer", "nullable": true, "description": "Custom Role zuweisen (überschreibt role mit base_role)" } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "role"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "assessor",
+                      "it-staff",
+                      "dpo",
+                      "owner",
+                      "management",
+                      "employee",
+                      "viewer"
+                    ]
+                  },
+                  "department": {
+                    "type": "string"
+                  },
+                  "custom_role_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Custom Role zuweisen (überschreibt role mit base_role)"
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "201": { "description": "Benutzer erstellt" } }
+        "responses": {
+          "201": {
+            "description": "Benutzer erstellt"
+          }
+        }
       }
     },
     "/users/{id}": {
       "put": {
-        "tags": ["Benutzerverwaltung"],
+        "tags": [
+          "Benutzerverwaltung"
+        ],
         "summary": "Benutzer aktualisieren",
         "description": "Erfordert Rolle: admin. Custom Role zuweisen via `custom_role_id`; auf `null` setzen zum Entfernen.",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
-        "responses": { "200": { "description": "Benutzer aktualisiert" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Benutzer aktualisiert"
+          }
+        }
       },
       "delete": {
-        "tags": ["Benutzerverwaltung"],
+        "tags": [
+          "Benutzerverwaltung"
+        ],
         "summary": "Benutzer löschen",
         "description": "Erfordert Rolle: admin",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Benutzer gelöscht" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Benutzer gelöscht"
+          }
+        }
       }
     },
     "/admin/custom-roles": {
       "get": {
-        "tags": ["Administration"],
+        "tags": [
+          "Administration"
+        ],
         "summary": "Custom Roles abrufen",
         "description": "Erfordert Rolle: admin. Liefert auch users_count je Rolle.",
-        "responses": { "200": { "description": "Custom-Role-Liste", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/CustomRole" } } } } } }
+        "responses": {
+          "200": {
+            "description": "Custom-Role-Liste",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomRole"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Administration"],
+        "tags": [
+          "Administration"
+        ],
         "summary": "Custom Role anlegen",
         "description": "Erfordert Rolle: admin",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name","base_role"], "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "base_role": { "type": "string", "enum": ["admin","assessor","it-staff","dpo","owner","management","employee","viewer"] } } } } } },
-        "responses": { "201": { "description": "Custom Role erstellt" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "base_role"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "base_role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "assessor",
+                      "it-staff",
+                      "dpo",
+                      "owner",
+                      "management",
+                      "employee",
+                      "viewer"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Custom Role erstellt"
+          }
+        }
       }
     },
     "/admin/custom-roles/{id}": {
       "put": {
-        "tags": ["Administration"],
+        "tags": [
+          "Administration"
+        ],
         "summary": "Custom Role aktualisieren",
         "description": "Erfordert Rolle: admin. Änderung der base_role zieht alle zugewiesenen Benutzer automatisch nach.",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CustomRole" } } } },
-        "responses": { "200": { "description": "Aktualisiert" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aktualisiert"
+          }
+        }
       },
       "delete": {
-        "tags": ["Administration"],
+        "tags": [
+          "Administration"
+        ],
         "summary": "Custom Role löschen",
         "description": "Erfordert Rolle: admin. Entfernt Zuweisung bei allen Benutzern (custom_role_id = null), effektive Rolle bleibt erhalten.",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Gelöscht" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gelöscht"
+          }
+        }
       }
     },
     "/admin/modules": {
       "put": {
-        "tags": ["Administration"],
+        "tags": [
+          "Administration"
+        ],
         "summary": "Aktive Compliance-Module setzen",
         "description": "Erfordert Rolle: admin. Gültige Keys: dsgvo, tisax, dora, ai_act, bcm, pentest, discovery, iso27001, bsi_grundschutz, nis2, c5",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["modules"], "properties": { "modules": { "type": "object", "additionalProperties": { "type": "boolean" }, "example": { "dsgvo": true, "iso27001": true, "nis2": false } } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "modules"
+                ],
+                "properties": {
+                  "modules": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "boolean"
+                    },
+                    "example": {
+                      "dsgvo": true,
+                      "iso27001": true,
+                      "nis2": false
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "200": { "description": "Module gespeichert" } }
+        "responses": {
+          "200": {
+            "description": "Module gespeichert"
+          }
+        }
       }
     },
     "/admin/settings": {
-      "get": { "tags": ["Administration"], "summary": "Systemeinstellungen abrufen", "description": "Erfordert Rolle: admin", "responses": { "200": { "description": "Einstellungen" } } },
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Systemeinstellungen abrufen",
+        "description": "Erfordert Rolle: admin",
+        "responses": {
+          "200": {
+            "description": "Einstellungen"
+          }
+        }
+      },
       "put": {
-        "tags": ["Administration"],
+        "tags": [
+          "Administration"
+        ],
         "summary": "Systemeinstellungen speichern",
         "description": "Erfordert Rolle: admin",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "properties": { "appName": { "type": "string" }, "reviewIntervalMonths": { "type": "integer" }, "auditLogRetentionMonths": { "type": "integer" }, "passwordPolicy": { "type": "object", "properties": { "minLength": { "type": "integer" }, "requireUppercase": { "type": "boolean" }, "requireNumber": { "type": "boolean" }, "requireSpecial": { "type": "boolean" } } }, "bruteForcePolicy": { "type": "object", "properties": { "maxAttempts": { "type": "integer" }, "lockoutMinutes": { "type": "integer" } } } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appName": {
+                    "type": "string"
+                  },
+                  "reviewIntervalMonths": {
+                    "type": "integer"
+                  },
+                  "auditLogRetentionMonths": {
+                    "type": "integer"
+                  },
+                  "passwordPolicy": {
+                    "type": "object",
+                    "properties": {
+                      "minLength": {
+                        "type": "integer"
+                      },
+                      "requireUppercase": {
+                        "type": "boolean"
+                      },
+                      "requireNumber": {
+                        "type": "boolean"
+                      },
+                      "requireSpecial": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "bruteForcePolicy": {
+                    "type": "object",
+                    "properties": {
+                      "maxAttempts": {
+                        "type": "integer"
+                      },
+                      "lockoutMinutes": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "200": { "description": "Einstellungen gespeichert" } }
+        "responses": {
+          "200": {
+            "description": "Einstellungen gespeichert"
+          }
+        }
       }
     },
     "/admin/smtp": {
-      "get": { "tags": ["Administration"], "summary": "SMTP-Konfiguration abrufen", "description": "Erfordert Rolle: admin. Passwort wird nicht im Klartext zurückgegeben.", "responses": { "200": { "description": "SMTP-Config" } } },
-      "put": { "tags": ["Administration"], "summary": "SMTP-Konfiguration speichern", "description": "Erfordert Rolle: admin. Passwort wird AES-256-GCM-verschlüsselt gespeichert.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "host": { "type": "string" }, "port": { "type": "integer" }, "secure": { "type": "boolean" }, "user": { "type": "string" }, "password": { "type": "string" }, "from": { "type": "string" } } } } } }, "responses": { "200": { "description": "SMTP gespeichert" } } }
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "SMTP-Konfiguration abrufen",
+        "description": "Erfordert Rolle: admin. Passwort wird nicht im Klartext zurückgegeben.",
+        "responses": {
+          "200": {
+            "description": "SMTP-Config"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "SMTP-Konfiguration speichern",
+        "description": "Erfordert Rolle: admin. Passwort wird AES-256-GCM-verschlüsselt gespeichert.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "host": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "integer"
+                  },
+                  "secure": {
+                    "type": "boolean"
+                  },
+                  "user": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SMTP gespeichert"
+          }
+        }
+      }
     },
     "/admin/smtp/test": {
-      "post": { "tags": ["Administration"], "summary": "SMTP-Verbindung testen", "description": "Sendet eine Test-E-Mail an den Admin", "responses": { "200": { "description": "Test-E-Mail gesendet" }, "500": { "description": "SMTP-Verbindungsfehler" } } }
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "SMTP-Verbindung testen",
+        "description": "Sendet eine Test-E-Mail an den Admin",
+        "responses": {
+          "200": {
+            "description": "Test-E-Mail gesendet"
+          },
+          "500": {
+            "description": "SMTP-Verbindungsfehler"
+          }
+        }
+      }
     },
     "/admin/permissions": {
-      "get": { "tags": ["Administration"], "summary": "RBAC-Berechtigungsmatrix abrufen", "description": "Erfordert Rolle: admin", "responses": { "200": { "description": "Berechtigungsmatrix mit Defaults und Rollenliste" } } },
-      "put": { "tags": ["Administration"], "summary": "RBAC-Berechtigungsmatrix speichern", "description": "Erfordert Rolle: admin", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["permissions"], "properties": { "permissions": { "type": "object", "description": "Modul → Aktion → Rollenliste" } } } } } }, "responses": { "200": { "description": "Gespeichert" } } }
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "RBAC-Berechtigungsmatrix abrufen",
+        "description": "Erfordert Rolle: admin",
+        "responses": {
+          "200": {
+            "description": "Berechtigungsmatrix mit Defaults und Rollenliste"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "RBAC-Berechtigungsmatrix speichern",
+        "description": "Erfordert Rolle: admin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "permissions"
+                ],
+                "properties": {
+                  "permissions": {
+                    "type": "object",
+                    "description": "Modul → Aktion → Rollenliste"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gespeichert"
+          }
+        }
+      }
     },
     "/admin/permissions/reset": {
-      "post": { "tags": ["Administration"], "summary": "RBAC auf Werkseinstellungen zurücksetzen", "description": "Erfordert Rolle: admin", "responses": { "200": { "description": "Zurückgesetzt" } } }
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "RBAC auf Werkseinstellungen zurücksetzen",
+        "description": "Erfordert Rolle: admin",
+        "responses": {
+          "200": {
+            "description": "Zurückgesetzt"
+          }
+        }
+      }
     },
     "/admin/backup/export": {
-      "post": { "tags": ["Administration"], "summary": "Backup erstellen (ZIP mit DB + Uploads)", "description": "Erfordert Rolle: admin", "responses": { "200": { "description": "ZIP-Archiv als Download", "content": { "application/zip": {} } } } }
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Backup erstellen (ZIP mit DB + Uploads)",
+        "description": "Erfordert Rolle: admin",
+        "responses": {
+          "200": {
+            "description": "ZIP-Archiv als Download",
+            "content": {
+              "application/zip": {}
+            }
+          }
+        }
+      }
     },
     "/admin/backup/import": {
-      "post": { "tags": ["Administration"], "summary": "Backup wiederherstellen", "description": "Erfordert Rolle: admin. ZIP-Slip-Schutz und Tabellen-Whitelist aktiv.", "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "file": { "type": "string", "format": "binary" } } } } } }, "responses": { "200": { "description": "Wiederherstellung erfolgreich" } } }
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Backup wiederherstellen",
+        "description": "Erfordert Rolle: admin. ZIP-Slip-Schutz und Tabellen-Whitelist aktiv.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wiederherstellung erfolgreich"
+          }
+        }
+      }
     },
     "/audit-log": {
       "get": {
-        "tags": ["Audit-Log"],
+        "tags": [
+          "Audit-Log"
+        ],
         "summary": "Audit-Log abrufen",
         "description": "Erfordert Rolle: admin, assessor",
         "parameters": [
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100 } },
-          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } },
-          { "name": "action", "in": "query", "schema": { "type": "string" } },
-          { "name": "entity_type", "in": "query", "schema": { "type": "string" } },
-          { "name": "from", "in": "query", "schema": { "type": "string", "format": "date" } },
-          { "name": "to", "in": "query", "schema": { "type": "string", "format": "date" } }
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Audit-Einträge mit Pagination" } }
+        "responses": {
+          "200": {
+            "description": "Audit-Einträge mit Pagination"
+          }
+        }
       }
     },
     "/dashboard": {
       "get": {
-        "tags": ["Dashboard"],
+        "tags": [
+          "Dashboard"
+        ],
         "summary": "Dashboard-Kennzahlen",
-        "responses": { "200": { "description": "KPIs: Assets, Risiken, Incidents, Reviews, Compliance, Aktivitäts-Feed" } }
+        "responses": {
+          "200": {
+            "description": "KPIs: Assets, Risiken, Incidents, Reviews, Compliance, Aktivitäts-Feed"
+          }
+        }
       }
     },
     "/reminders": {
-      "get": { "tags": ["Erinnerungen"], "summary": "Review-Erinnerungen abrufen", "responses": { "200": { "description": "Erinnerungsliste (überfällig, bald fällig, noch nie bewertet)" } } }
+      "get": {
+        "tags": [
+          "Erinnerungen"
+        ],
+        "summary": "Review-Erinnerungen abrufen",
+        "responses": {
+          "200": {
+            "description": "Erinnerungsliste (überfällig, bald fällig, noch nie bewertet)"
+          }
+        }
+      }
     },
     "/vendors": {
-      "get": { "tags": ["Dienstleister"], "summary": "Firmenverzeichnis abrufen", "responses": { "200": { "description": "Vendorliste" } } },
+      "get": {
+        "tags": [
+          "Dienstleister"
+        ],
+        "summary": "Firmenverzeichnis abrufen",
+        "responses": {
+          "200": {
+            "description": "Vendorliste"
+          }
+        }
+      },
       "post": {
-        "tags": ["Dienstleister"],
+        "tags": [
+          "Dienstleister"
+        ],
         "summary": "Neuen Dienstleister anlegen",
         "description": "Erfordert Rolle: admin, assessor",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "website": { "type": "string" }, "category": { "type": "string" }, "risk_level": { "type": "string", "enum": ["low","medium","high","critical"] } } } } } },
-        "responses": { "201": { "description": "Dienstleister angelegt" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "website": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "risk_level": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high",
+                      "critical"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dienstleister angelegt"
+          }
+        }
       }
     },
     "/import/assets": {
       "post": {
-        "tags": ["Import"],
+        "tags": [
+          "Import"
+        ],
         "summary": "Assets per CSV oder Excel importieren",
         "description": "Erfordert Rolle: admin, assessor. Unterstützt CSV und .xlsx.",
-        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "file": { "type": "string", "format": "binary" } } } } } },
-        "responses": { "200": { "description": "Import-Ergebnis mit Erfolg/Fehler-Zählung" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import-Ergebnis mit Erfolg/Fehler-Zählung"
+          }
+        }
       }
     },
     "/import/template": {
-      "get": { "tags": ["Import"], "summary": "CSV-Vorlage herunterladen", "responses": { "200": { "description": "CSV-Template" } } }
+      "get": {
+        "tags": [
+          "Import"
+        ],
+        "summary": "CSV-Vorlage herunterladen",
+        "responses": {
+          "200": {
+            "description": "CSV-Template"
+          }
+        }
+      }
     },
     "/tisax": {
-      "get": { "tags": ["Compliance-Module"], "summary": "TISAX-Bewertungen abrufen", "description": "Erfordert Modul: tisax", "responses": { "200": { "description": "TISAX-Einträge" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "TISAX-Bewertungen abrufen",
+        "description": "Erfordert Modul: tisax",
+        "responses": {
+          "200": {
+            "description": "TISAX-Einträge"
+          }
+        }
+      }
     },
     "/tisax/requirements": {
-      "get": { "tags": ["Compliance-Module"], "summary": "VDA ISA 6 Anforderungskatalog abrufen", "description": "Erfordert Modul: tisax", "responses": { "200": { "description": "TISAX-Anforderungen" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "VDA ISA 6 Anforderungskatalog abrufen",
+        "description": "Erfordert Modul: tisax",
+        "responses": {
+          "200": {
+            "description": "TISAX-Anforderungen"
+          }
+        }
+      }
     },
     "/tisax/requirements/seed": {
-      "post": { "tags": ["Compliance-Module"], "summary": "VDA ISA 6 Katalog initialisieren", "description": "Erfordert Rolle: admin — Modul: tisax", "responses": { "200": { "description": "Katalog angelegt" } } }
+      "post": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "VDA ISA 6 Katalog initialisieren",
+        "description": "Erfordert Rolle: admin — Modul: tisax",
+        "responses": {
+          "200": {
+            "description": "Katalog angelegt"
+          }
+        }
+      }
     },
     "/dora": {
-      "get": { "tags": ["Compliance-Module"], "summary": "DORA IKT-Vorfälle abrufen", "description": "Erfordert Modul: dora", "responses": { "200": { "description": "DORA-Einträge" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "DORA IKT-Vorfälle abrufen",
+        "description": "Erfordert Modul: dora",
+        "responses": {
+          "200": {
+            "description": "DORA-Einträge"
+          }
+        }
+      }
     },
     "/dora/tests": {
-      "get": { "tags": ["Compliance-Module"], "summary": "DORA Resilienztests abrufen", "description": "Erfordert Modul: dora", "responses": { "200": { "description": "Resilienztests" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "DORA Resilienztests abrufen",
+        "description": "Erfordert Modul: dora",
+        "responses": {
+          "200": {
+            "description": "Resilienztests"
+          }
+        }
+      }
     },
     "/ai-act": {
-      "get": { "tags": ["Compliance-Module"], "summary": "EU AI Act Einträge abrufen", "description": "Erfordert Modul: ai_act", "responses": { "200": { "description": "AI-Act-Einträge" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "EU AI Act Einträge abrufen",
+        "description": "Erfordert Modul: ai_act",
+        "responses": {
+          "200": {
+            "description": "AI-Act-Einträge"
+          }
+        }
+      }
     },
     "/bcm": {
-      "get": { "tags": ["Compliance-Module"], "summary": "BCM-Pläne abrufen", "description": "Erfordert Modul: bcm", "responses": { "200": { "description": "BCM-Pläne" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "BCM-Pläne abrufen",
+        "description": "Erfordert Modul: bcm",
+        "responses": {
+          "200": {
+            "description": "BCM-Pläne"
+          }
+        }
+      }
     },
     "/bcm/exercises": {
-      "get": { "tags": ["Compliance-Module"], "summary": "BCM-Übungsprotokoll abrufen", "description": "Erfordert Modul: bcm", "responses": { "200": { "description": "Übungen" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "BCM-Übungsprotokoll abrufen",
+        "description": "Erfordert Modul: bcm",
+        "responses": {
+          "200": {
+            "description": "Übungen"
+          }
+        }
+      }
     },
     "/pentests": {
-      "get": { "tags": ["Compliance-Module"], "summary": "Pentest-Berichte abrufen", "description": "Erfordert Modul: pentest", "responses": { "200": { "description": "Pentest-Einträge" } } }
+      "get": {
+        "tags": [
+          "Compliance-Module"
+        ],
+        "summary": "Pentest-Berichte abrufen",
+        "description": "Erfordert Modul: pentest",
+        "responses": {
+          "200": {
+            "description": "Pentest-Einträge"
+          }
+        }
+      }
     },
     "/version": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "App-Version abrufen",
         "security": [],
-        "responses": { "200": { "description": "Versionsinfo", "content": { "application/json": { "schema": { "type": "object", "properties": { "version": { "type": "string", "example": "2.1.0" } } } } } } }
+        "responses": {
+          "200": {
+            "description": "Versionsinfo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "string",
+                      "example": "2.1.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/health": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Health-Check",
         "security": [],
-        "responses": { "200": { "description": "Status OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" }, "db": { "type": "string", "example": "ok" } } } } } } }
+        "responses": {
+          "200": {
+            "description": "Status OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "db": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
   "tags": [
-    { "name": "Authentifizierung", "description": "Login, JWT, Passwort, TOTP, Passkeys" },
-    { "name": "Assets", "description": "Asset-Register, Dokumente, Lifecycle" },
-    { "name": "Aufgaben", "description": "Task-Management inkl. Gruppen-Aufgaben (First-to-complete)" },
-    { "name": "Gruppen", "description": "Teams & Gruppen — Mitgliederverwaltung, @mention-Fan-out" },
-    { "name": "Risiken", "description": "Risikoregister (ISO 27005, 5×5-Matrix)" },
-    { "name": "Vorfälle", "description": "Incident Management (NIS-2 Art. 23, 24h/72h-Fristen)" },
-    { "name": "Bewertungen", "description": "CIA-Schutzbedarfsfeststellungen" },
-    { "name": "Maßnahmen & SoA", "description": "Controls & Statement of Applicability" },
-    { "name": "Richtlinien", "description": "Richtlinien-Bibliothek mit Versionierung" },
-    { "name": "DSGVO", "description": "VVT (Art. 30), DSFA, Betroffenenrechte (Art. 15–22)" },
-    { "name": "Berichte", "description": "Management Report & KPI-Trends" },
-    { "name": "Benachrichtigungen", "description": "In-App-Benachrichtigungen" },
-    { "name": "Benutzerverwaltung", "description": "Benutzer, Rollen, Custom Roles" },
-    { "name": "Administration", "description": "Einstellungen, SMTP, Module, RBAC, Backup (nur admin)" },
-    { "name": "Audit-Log", "description": "Revisionssichere Protokollierung" },
-    { "name": "Dashboard", "description": "KPI-Übersicht und Mein Bereich" },
-    { "name": "Erinnerungen", "description": "Review-Fälligkeiten (Cron-gesteuert)" },
-    { "name": "Dienstleister", "description": "Vendor-Management, AVV, Supply Chain" },
-    { "name": "Import", "description": "CSV- und Excel-Massenimport" },
-    { "name": "Compliance-Module", "description": "TISAX, DORA, EU AI Act, BCM, Pentest (modul-geschützt)" },
-    { "name": "System", "description": "Health & Version" }
+    {
+      "name": "Authentifizierung",
+      "description": "Login, JWT, Passwort, TOTP, Passkeys"
+    },
+    {
+      "name": "Assets",
+      "description": "Asset-Register, Dokumente, Lifecycle"
+    },
+    {
+      "name": "Aufgaben",
+      "description": "Task-Management inkl. Gruppen-Aufgaben (First-to-complete)"
+    },
+    {
+      "name": "Gruppen",
+      "description": "Teams & Gruppen — Mitgliederverwaltung, @mention-Fan-out"
+    },
+    {
+      "name": "Risiken",
+      "description": "Risikoregister (ISO 27005, 5×5-Matrix)"
+    },
+    {
+      "name": "Vorfälle",
+      "description": "Incident Management (NIS-2 Art. 23, 24h/72h-Fristen)"
+    },
+    {
+      "name": "Bewertungen",
+      "description": "CIA-Schutzbedarfsfeststellungen"
+    },
+    {
+      "name": "Maßnahmen & SoA",
+      "description": "Controls & Statement of Applicability"
+    },
+    {
+      "name": "Richtlinien",
+      "description": "Richtlinien-Bibliothek mit Versionierung"
+    },
+    {
+      "name": "DSGVO",
+      "description": "VVT (Art. 30), DSFA, Betroffenenrechte (Art. 15–22)"
+    },
+    {
+      "name": "Berichte",
+      "description": "Management Report & KPI-Trends"
+    },
+    {
+      "name": "Benachrichtigungen",
+      "description": "In-App-Benachrichtigungen"
+    },
+    {
+      "name": "Benutzerverwaltung",
+      "description": "Benutzer, Rollen, Custom Roles"
+    },
+    {
+      "name": "Administration",
+      "description": "Einstellungen, SMTP, Module, RBAC, Backup (nur admin)"
+    },
+    {
+      "name": "Audit-Log",
+      "description": "Revisionssichere Protokollierung"
+    },
+    {
+      "name": "Dashboard",
+      "description": "KPI-Übersicht und Mein Bereich"
+    },
+    {
+      "name": "Erinnerungen",
+      "description": "Review-Fälligkeiten (Cron-gesteuert)"
+    },
+    {
+      "name": "Dienstleister",
+      "description": "Vendor-Management, AVV, Supply Chain"
+    },
+    {
+      "name": "Import",
+      "description": "CSV- und Excel-Massenimport"
+    },
+    {
+      "name": "Compliance-Module",
+      "description": "TISAX, DORA, EU AI Act, BCM, Pentest (modul-geschützt)"
+    },
+    {
+      "name": "System",
+      "description": "Health & Version"
+    }
   ]
 }

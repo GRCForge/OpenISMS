@@ -8,6 +8,8 @@
   "author": "Maximilian Herz",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
+    "sync-version": "node ../scripts/sync-version.js",
+    "prebuild": "npm run sync-version",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
