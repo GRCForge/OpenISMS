@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   Shield, LayoutDashboard, Server, ClipboardCheck, Bell,
@@ -183,18 +183,33 @@ export const Layout: React.FC = () => {
     setRevealedTokens(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Overdue badge: cheap dedicated endpoint, fetched once on mount and refreshed
+  // every 5 min — NOT on every navigation (which re-ran the full dashboard
+  // aggregation on each page change and hammered the rate limit).
   useEffect(() => {
-    api.get('/dashboard').then(r => setOverdueCount(r.data.stats.overdueReminders)).catch(() => {});
-  }, [location.pathname]);
+    const loadBadge = () =>
+      api.get('/dashboard/badge').then(r => setOverdueCount(r.data.overdueReminders)).catch(() => {});
+    loadBadge();
+    const timer = setInterval(loadBadge, 5 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     api.get('/version').then(r => setVersion(r.data.version)).catch(() => {});
   }, []);
 
+  // Profile data (2FA state, passkeys, API tokens) is fetched only the first
+  // time the modal opens. All in-modal actions update this state locally
+  // (enable/disable 2FA, register/delete passkey, create/delete token), so
+  // reopening the modal doesn't need to refetch all three endpoints each time.
+  const profileLoaded = useRef(false);
   const openProfile = () => {
-    api.get('/auth/me').then(r => setTotpEnabled(r.data.totp_enabled || false)).catch(() => {});
-    api.get('/auth/passkey').then(r => setPasskeys(r.data)).catch(() => {});
-    api.get('/auth/tokens').then(r => setApiTokens(r.data)).catch(() => {});
+    if (!profileLoaded.current) {
+      profileLoaded.current = true;
+      api.get('/auth/me').then(r => setTotpEnabled(r.data.totp_enabled || false)).catch(() => { profileLoaded.current = false; });
+      api.get('/auth/passkey').then(r => setPasskeys(r.data)).catch(() => {});
+      api.get('/auth/tokens').then(r => setApiTokens(r.data)).catch(() => {});
+    }
     setProfileModalOpen(true);
     setTotpSetup(null); setTotpCode(''); setTotpMsg(null);
     setPasskeyMsg(null);

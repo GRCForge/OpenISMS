@@ -17,16 +17,26 @@ router.get('/', authenticate, async (req, res) => {
 
 // Get single vendor
 router.get('/:id', authenticate, async (req, res) => {
-  const vendor = await Vendor.findByPk(req.params.id, {
-    include: [
-      { model: VendorContact, as: 'contacts' },
-      { model: User, as: 'assessedBy', attributes: ['id', 'name'] },
-      { model: Incident, as: 'incidents', through: { attributes: [] } },
-      { model: VvtEntry, as: 'vvtEntries', through: { attributes: [] } },
-    ],
-  });
-  if (!vendor) return res.status(404).json({ error: 'Not found' });
-  res.json(vendor);
+  try {
+    const vendor = await Vendor.findByPk(req.params.id, {
+      include: [
+        { model: VendorContact, as: 'contacts' },
+        { model: User, as: 'assessedBy', attributes: ['id', 'name'] },
+        { model: Incident, as: 'incidents', through: { attributes: [] } },
+        { model: VvtEntry, as: 'vvtEntries', through: { attributes: [] } },
+      ],
+    });
+    if (!vendor) return res.status(404).json({ error: 'Not found' });
+    
+    // Authorization: only admin, assessor, it-staff, dpo can view vendor details
+    if (!isAdmin(req) && !isItStaff(req) && !isDpo(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
+    res.json(vendor);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Create vendor (admin/assessor/it-staff/dpo)
@@ -44,7 +54,7 @@ router.post('/', authenticate, async (req, res) => {
 
 // Update vendor
 router.put('/:id', authenticate, async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req)) return res.status(403).json({ error: 'Forbidden' });
+  if (!isItStaff(req) && !isDpo(req) && !isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
   const vendor = await Vendor.findByPk(req.params.id);
   if (!vendor) return res.status(404).json({ error: 'Not found' });
   

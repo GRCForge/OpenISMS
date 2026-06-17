@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
 });
 
 // My tasks — includes tasks directly assigned AND group tasks for user's groups
-router.get('/my', async (req, res) => {
+router.get('/my', authenticate, async (req, res) => {
   try {
     // Get the groups this user belongs to
     const memberOf = await GroupMember.findAll({ where: { user_id: req.user.id } });
@@ -69,7 +69,7 @@ router.get('/my', async (req, res) => {
 });
 
 // Stats
-router.get('/stats', async (req, res) => {
+router.get('/stats', authenticate, async (req, res) => {
   try {
     const [open, in_progress, done, overdue] = await Promise.all([
       Task.count({ where: { status: 'open' } }),
@@ -81,11 +81,21 @@ router.get('/stats', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Get single task
-router.get('/:id', async (req, res) => {
+// Get single task (verify user has access)
+router.get('/:id', authenticate, async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id, { include: taskInclude });
     if (!task) return res.status(404).json({ error: 'Not found' });
+    
+    // Authorization: user can see task if assigned to them, their group, their role, or they are admin/assessor
+    const isAssigned = task.assigned_to_id === req.user.id;
+    const isGroupMember = task.assigned_to_group_id && task.assignedGroup?.members?.some(m => m.id === req.user.id);
+    const isRoleMatch = task.assigned_role && task.assigned_role === req.user.role;
+    const isPrivileged = ['admin', 'assessor'].includes(req.user.role);
+    
+    if (!isAssigned && !isGroupMember && !isRoleMatch && !isPrivileged) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     res.json(task);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -123,7 +133,7 @@ router.post('/', requireWriteAccess(), async (req, res) => {
 });
 
 // Update task
-router.put('/:id', requireWriteAccess(), async (req, res) => {
+router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id);
     if (!task) return res.status(404).json({ error: 'Not found' });
@@ -183,7 +193,7 @@ router.put('/:id', requireWriteAccess(), async (req, res) => {
 });
 
 // Delete task
-router.delete('/:id', requireWriteAccess(), async (req, res) => {
+router.delete('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id);
     if (!task) return res.status(404).json({ error: 'Not found' });

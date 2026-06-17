@@ -153,6 +153,13 @@ router.get('/:id', authenticate, async (req, res) => {
       ]
     });
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
+    
+    // Authorization: only admin, assessor, dpo, it-staff, owner, or assessor can view
+    const { isDpo } = require('../middleware/auth');
+    const canView = isAdmin(req) || isAssessor(req) || isDpo(req) || isItStaff(req) || 
+                    req.user.id === asset.owner_id || req.user.id === asset.assessor_id;
+    if (!canView) return res.status(403).json({ error: 'Forbidden' });
+    
     res.json(asset);
   } catch (e) {
     console.error('ERROR IN GET ASSET:', e);

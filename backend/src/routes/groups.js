@@ -19,11 +19,12 @@ router.get('/', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Get single group
-router.get('/:id', async (req, res) => {
+// Get single group (all authenticated users can view)
+router.get('/:id', authenticate, async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id, { include: groupInclude });
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });
+    // All authenticated users can view groups (already protected by router.use(authenticate))
     res.json(group);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -41,7 +42,7 @@ router.post('/', requireRole('admin'), async (req, res) => {
 });
 
 // Update group (admin only)
-router.put('/:id', requireRole('admin'), async (req, res) => {
+router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id);
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -54,7 +55,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
 });
 
 // Delete group (admin only)
-router.delete('/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id);
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });

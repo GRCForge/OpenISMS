@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckSquare, Plus, Pencil, Trash2, Clock, AlertTriangle, CheckCircle2, Circle, Link2, Users } from 'lucide-react';
+import { CheckSquare, Plus, Pencil, Trash2, Clock, AlertTriangle, CheckCircle2, Circle, Link2, Users, Square } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import api from '../lib/api';
@@ -29,6 +29,16 @@ const priorityConfig: Record<TaskPriority, { label: string; color: string }> = {
   critical: { label: 'Kritisch', color: 'text-red-600 dark:text-red-400' },
 };
 
+const TYPE_LABELS: Record<string, string> = {
+  asset: 'Asset',
+  risk: 'Risiko',
+  incident: 'Vorfall',
+  training: 'Schulung',
+  subject_request: 'Betroffenenanfrage',
+  ai_system: 'KI-System',
+  _manual: 'Manuell',
+};
+
 const emptyForm = {
   title: '',
   description: '',
@@ -48,11 +58,17 @@ export const Tasks: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inputValue, setInputValue] = useState('');
   const [search, setSearch] = useState('');
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [myTasks, setMyTasks] = useState(false);
   const [showAll, setShowAll] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -74,6 +90,12 @@ export const Tasks: React.FC = () => {
   };
 
   useEffect(() => { load(showAll); }, [showAll]);
+
+  const handleSearchChange = (value: string) => {
+    setInputValue(value);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => setSearch(value), 300);
+  };
 
   const openCreate = () => {
     setEditTask(null);
@@ -130,6 +152,7 @@ export const Tasks: React.FC = () => {
     if (!confirm('Aufgabe wirklich löschen?')) return;
     try {
       await api.delete(`/tasks/${id}`);
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
       load();
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Löschen fehlgeschlagen');
@@ -143,14 +166,73 @@ export const Tasks: React.FC = () => {
     } catch { }
   };
 
+  // ── Multiselect ────────────────────────────────────────────────────────────
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size > 0 && selectedIds.size >= filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(t => t.id)));
+    }
+  };
+
+  const bulkMarkDone = async () => {
+    const ids = [...selectedIds];
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => api.put(`/tasks/${id}`, { status: 'done' })));
+      setSelectedIds(new Set());
+      load();
+      toast.success(`${ids.length} Aufgabe${ids.length !== 1 ? 'n' : ''} als erledigt markiert`);
+    } catch {
+      toast.error('Fehler beim Aktualisieren');
+    } finally { setBulkLoading(false); }
+  };
+
+  const bulkDelete = async () => {
+    const ids = [...selectedIds];
+    if (!confirm(`${ids.length} Aufgabe${ids.length !== 1 ? 'n' : ''} wirklich löschen?`)) return;
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => api.delete(`/tasks/${id}`)));
+      setSelectedIds(new Set());
+      load();
+      toast.success(`${ids.length} Aufgabe${ids.length !== 1 ? 'n' : ''} gelöscht`);
+    } catch {
+      toast.error('Fehler beim Löschen');
+    } finally { setBulkLoading(false); }
+  };
+
+  // ── Filtering ──────────────────────────────────────────────────────────────
   const filtered = tasks.filter(t => {
     if (!statusFilter && (t.status === 'cancelled' || t.status === 'done')) return false;
     if (myTasks && t.assigned_to_id !== user?.id && !t.assignedGroup?.members.some(m => m.id === user?.id)) return false;
     if (statusFilter && t.status !== statusFilter) return false;
     if (priorityFilter && t.priority !== priorityFilter) return false;
+    if (typeFilter === '_manual') {
+      if (t.related_type) return false;
+    } else if (typeFilter && t.related_type !== typeFilter) return false;
     if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  // Derive type options from loaded tasks (only show types that actually exist)
+  const typeOptions = (() => {
+    const seen = new Set<string>();
+    const hasManual = tasks.some(t => !t.related_type);
+    tasks.forEach(t => { if (t.related_type) seen.add(t.related_type); });
+    const opts = [{ value: '', label: 'Alle Typen' }];
+    if (hasManual) opts.push({ value: '_manual', label: 'Manuell' });
+    seen.forEach(type => opts.push({ value: type, label: TYPE_LABELS[type] ?? type }));
+    return opts;
+  })();
 
   const stats = {
     open: tasks.filter(t => t.status === 'open').length,
@@ -158,6 +240,9 @@ export const Tasks: React.FC = () => {
     done: tasks.filter(t => t.status === 'done').length,
     overdue: tasks.filter(t => t.due_date && isPast(parseISO(t.due_date)) && !['done', 'cancelled'].includes(t.status)).length,
   };
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every(t => selectedIds.has(t.id));
+  const someSelected = selectedIds.size > 0;
 
   if (loading) return <div className="flex justify-center pt-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
@@ -189,9 +274,18 @@ export const Tasks: React.FC = () => {
         ))}
       </div>
 
-      <FilterBar search={search} onSearch={setSearch} searchPlaceholder="Aufgabe suchen..."
-        activeCount={[statusFilter, priorityFilter, myTasks, showAll].filter(Boolean).length}
-        onReset={() => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setMyTasks(false); setShowAll(false); }}>
+      <FilterBar
+        search={inputValue}
+        onSearch={handleSearchChange}
+        searchPlaceholder="Aufgabe suchen..."
+        activeCount={[statusFilter, priorityFilter, typeFilter, myTasks, showAll].filter(Boolean).length}
+        onReset={() => {
+          setInputValue(''); setSearch('');
+          setStatusFilter(''); setPriorityFilter(''); setTypeFilter('');
+          setMyTasks(false); setShowAll(false);
+          setSelectedIds(new Set());
+        }}
+      >
         <Select className="w-40" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} options={[
           { value: '', label: 'Alle Status' },
           { value: 'open', label: 'Offen' },
@@ -199,13 +293,16 @@ export const Tasks: React.FC = () => {
           { value: 'done', label: 'Erledigt' },
           { value: 'cancelled', label: 'Abgebrochen' },
         ]} />
-        <Select className="w-40" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} options={[
+        <Select className="w-44" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} options={[
           { value: '', label: 'Alle Prioritäten' },
           { value: 'critical', label: 'Kritisch' },
           { value: 'high', label: 'Hoch' },
           { value: 'medium', label: 'Mittel' },
           { value: 'low', label: 'Niedrig' },
         ]} />
+        {typeOptions.length > 1 && (
+          <Select className="w-48" value={typeFilter} onChange={e => setTypeFilter(e.target.value)} options={typeOptions} />
+        )}
         <button
           onClick={() => setMyTasks(!myTasks)}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${myTasks ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
@@ -221,6 +318,41 @@ export const Tasks: React.FC = () => {
         </button>
       </FilterBar>
 
+      {/* Bulk action bar */}
+      {someSelected && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+          <span className="text-sm font-medium text-blue-700 dark:text-blue-300 flex-1">
+            {selectedIds.size} Aufgabe{selectedIds.size !== 1 ? 'n' : ''} ausgewählt
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={bulkMarkDone}
+            disabled={bulkLoading}
+          >
+            <CheckCircle2 size={14} />
+            Als erledigt markieren
+          </Button>
+          {(user?.role === 'admin') && (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={bulkDelete}
+              disabled={bulkLoading}
+            >
+              <Trash2 size={14} />
+              Löschen
+            </Button>
+          )}
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-xs text-blue-500 dark:text-blue-400 hover:underline whitespace-nowrap"
+          >
+            Aufheben
+          </button>
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
           <CheckSquare size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3" />
@@ -230,14 +362,47 @@ export const Tasks: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-2">
+          {/* Select-all header */}
+          <div className="flex items-center gap-3 px-1 pb-1">
+            <button
+              onClick={toggleSelectAll}
+              className="shrink-0 text-gray-400 hover:text-blue-600 transition-colors"
+              title={allFilteredSelected ? 'Alle abwählen' : 'Alle auswählen'}
+            >
+              {allFilteredSelected
+                ? <CheckSquare size={16} className="text-blue-600" />
+                : <Square size={16} />}
+            </button>
+            <span className="text-xs text-gray-400 dark:text-slate-500">
+              {allFilteredSelected ? 'Alle abwählen' : `Alle ${filtered.length} auswählen`}
+            </span>
+          </div>
+
           {filtered.map(t => {
             const s = statusConfig[t.status];
             const p = priorityConfig[t.priority];
             const isOverdue = t.due_date && isPast(parseISO(t.due_date)) && !['done', 'cancelled'].includes(t.status);
             const StatusIcon = s.icon;
+            const isSelected = selectedIds.has(t.id);
+            const typeLabel = t.related_type ? (TYPE_LABELS[t.related_type] ?? t.related_type) : null;
             return (
-              <Card key={t.id} className={`p-4 transition-all hover:shadow-md ${t.status === 'done' ? 'opacity-60' : ''}`}>
+              <Card
+                key={t.id}
+                className={`p-4 transition-all hover:shadow-md ${t.status === 'done' ? 'opacity-60' : ''} ${isSelected ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}
+              >
                 <div className="flex items-center gap-3">
+                  {/* Multiselect checkbox */}
+                  <button
+                    onClick={() => toggleSelect(t.id)}
+                    className="shrink-0 text-gray-300 hover:text-blue-500 transition-colors"
+                    title="Auswählen"
+                  >
+                    {isSelected
+                      ? <CheckSquare size={18} className="text-blue-600" />
+                      : <Square size={18} />}
+                  </button>
+
+                  {/* Quick-done toggle */}
                   <button
                     onClick={() => quickStatus(t, t.status === 'done' ? 'open' : 'done')}
                     className="shrink-0 text-gray-300 hover:text-green-500 transition-colors"
@@ -245,11 +410,17 @@ export const Tasks: React.FC = () => {
                   >
                     <StatusIcon size={20} className={t.status === 'done' ? 'text-green-500' : ''} />
                   </button>
+
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`font-medium text-gray-900 dark:text-white ${t.status === 'done' ? 'line-through' : ''}`}>{t.title}</span>
                       <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${s.color}`}>{s.label}</span>
                       <span className={`text-xs font-semibold ${p.color}`}>{p.label}</span>
+                      {typeLabel && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                          {typeLabel}
+                        </span>
+                      )}
                     </div>
                     {t.description && <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">{t.description}</p>}
                     <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-400 dark:text-slate-500">

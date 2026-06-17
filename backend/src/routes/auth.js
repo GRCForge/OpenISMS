@@ -23,6 +23,10 @@ const getClientIp = (req) => {
   return req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 };
 
+const genericLoginError = { error: 'Ungültige Anmeldedaten' };
+const genericLockoutError = { error: 'Zu viele fehlgeschlagene Loginversuche. Bitte versuchen Sie es später erneut.' };
+const genericServerError = { error: 'Interner Serverfehler' };
+
 const isIpBlocked = async (ip) => {
   if (!ip) return false;
   const timeframe = new Date(Date.now() - 15 * 60 * 1000); // 15 minutes
@@ -114,28 +118,28 @@ const handleFailedLoginForIp = async (req, email) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (!email || !password) return res.status(400).json({ error: 'E-Mail und Passwort sind erforderlich' });
 
     const ip = getClientIp(req);
     if (ip && await isIpBlocked(ip)) {
-      return res.status(403).json({ error: 'Zu viele fehlerhafte Loginversuche von Ihrer IP-Adresse. Diese IP ist vorübergehend gesperrt.' });
+      return res.status(403).json(genericLockoutError);
     }
 
     const user = await User.findOne({ where: { email, active: true } });
     if (!user) {
       await auditFromReq(req, 'login', 'auth', null, email, { success: false, email, reason: 'Benutzer nicht gefunden oder inaktiv' });
       await handleFailedLoginForIp(req, email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json(genericLoginError);
     }
     if (user.lockout_until && new Date() < new Date(user.lockout_until)) {
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'Konto gesperrt' });
       await handleFailedLoginForIp(req, user.email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(403).json(genericLockoutError);
     }
     if (user.sso_user) {
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'SSO-Benutzer versucht Passwort-Login' });
       await handleFailedLoginForIp(req, user.email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json(genericLoginError);
     }
     if (!(await user.validatePassword(password))) {
       user.failed_login_attempts += 1;
@@ -151,11 +155,10 @@ router.post('/login', async (req, res) => {
         lockoutUntil.setMinutes(lockoutUntil.getMinutes() + (policy.lockoutMinutes || 15));
         user.lockout_until = lockoutUntil;
         await user.save();
-        return res.status(403).json({ error: `Zu viele Fehlversuche. Der Account ist für ${policy.lockoutMinutes} Minuten gesperrt.` });
+        return res.status(403).json(genericLockoutError);
       } else {
         await user.save();
-        const remaining = policy.maxAttempts - user.failed_login_attempts;
-        return res.status(401).json({ error: `Ungültige Anmeldedaten. ${remaining} Versuch(e) übrig.` });
+        return res.status(401).json(genericLoginError);
       }
     }
 
@@ -167,7 +170,10 @@ router.post('/login', async (req, res) => {
     }
     
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) { console.error('JWT_SECRET not set'); return res.status(500).json({ error: 'Server misconfigured' }); }
+    if (!jwtSecret) {
+      console.error('JWT_SECRET not set');
+      return res.status(500).json(genericServerError);
+    }
 
     // If TOTP is enabled, return a temporary pending token instead of the full session token
     if (user.totp_enabled) {
@@ -184,7 +190,8 @@ router.post('/login', async (req, res) => {
     await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: true, email: user.email });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, department: user.department } });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('[Login error]', e);
+    res.status(500).json(genericServerError);
   }
 });
 
@@ -192,10 +199,13 @@ router.post('/login', async (req, res) => {
 router.post('/login/totp', async (req, res) => {
   try {
     const { temp_token, token } = req.body;
-    if (!temp_token || !token) return res.status(400).json({ error: 'temp_token and token required' });
+    if (!temp_token || !token) return res.status(400).json({ error: 'Temporärer Login-Token und TOTP-Code sind erforderlich' });
 
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return res.status(500).json({ error: 'Server misconfigured' });
+    if (!jwtSecret) {
+      console.error('JWT_SECRET not set');
+      return res.status(500).json(genericServerError);
+    }
 
     let decoded;
     try {
@@ -204,7 +214,7 @@ router.post('/login/totp', async (req, res) => {
       return res.status(401).json({ error: 'Ungültiges oder abgelaufenes Token' });
     }
 
-    if (!decoded.totp_pending) return res.status(401).json({ error: 'Kein TOTP-Pending-Token' });
+    if (!decoded.totp_pending) return res.status(401).json({ error: 'Ungültige Anfrage' });
 
     const user = await User.findOne({ where: { id: decoded.id, active: true } });
     if (!user || !user.totp_enabled || !user.totp_secret) {
@@ -239,7 +249,8 @@ router.post('/login/totp', async (req, res) => {
     await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: true, email: user.email, totp: true });
     res.json({ token: sessionToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, department: user.department } });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('[Login TOTP error]', e);
+    res.status(500).json(genericServerError);
   }
 });
 
@@ -258,7 +269,8 @@ router.post('/change-password', authenticate, async (req, res) => {
     await auditFromReq(req, 'update', 'auth', user.id, user.name, { action: 'password_changed' });
     res.json({ message: 'Passwort geändert' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('[Change password error]', e);
+    res.status(500).json(genericServerError);
   }
 });
 
@@ -278,7 +290,8 @@ router.get('/2fa/setup', authenticate, async (req, res) => {
 
     res.json({ secret, otpauth_url, qr_data_url });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('[2FA setup error]', e);
+    res.status(500).json(genericServerError);
   }
 });
 
@@ -306,7 +319,8 @@ router.post('/2fa/verify', authenticate, async (req, res) => {
     await auditFromReq(req, 'update', 'auth', user.id, user.name, { action: '2fa_enabled' });
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('[2FA verify error]', e);
+    res.status(500).json(genericServerError);
   }
 });
 
@@ -332,7 +346,8 @@ router.post('/2fa/disable', authenticate, async (req, res) => {
     await auditFromReq(req, 'update', 'auth', user.id, user.name, { action: '2fa_disabled' });
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('[2FA disable error]', e);
+    res.status(500).json(genericServerError);
   }
 });
 
@@ -345,9 +360,12 @@ router.post('/forgot-password', async (req, res) => {
 
     const user = await User.findOne({ where: { email: email.toLowerCase().trim(), active: true } });
     if (!user) {
+      await auditFromReq(req, 'request', 'auth', null, email.toLowerCase().trim(), { action: 'forgot_password_unknown' });
       // Return the generic response immediately, preventing user enumeration
       return res.json(genericResponse);
     }
+
+    await auditFromReq(req, 'request', 'auth', user.id, user.name, { action: 'forgot_password_requested' });
 
     if (user.sso_user) {
       // Send OIDC reminder email instead of reset token
@@ -361,6 +379,7 @@ router.post('/forgot-password', async (req, res) => {
       await sendEmail({ to: user.email, subject: 'Passwort zurücksetzen (SSO-Account)', html, text })
         .catch(e => console.error('[Reset password SSO email error]', e.message));
         
+      await auditFromReq(req, 'request', 'auth', user.id, user.name, { action: 'forgot_password_sso' });
       return res.json(genericResponse);
     }
 
@@ -409,6 +428,7 @@ router.post('/reset-password', async (req, res) => {
     });
 
     if (!user) {
+      await auditFromReq(req, 'request', 'auth', null, null, { action: 'password_reset_invalid_token' });
       // Return generic error, preventing attacker from knowing if token exists but expired vs doesn't exist
       return res.status(400).json({ error: 'Der Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen.' });
     }
@@ -428,6 +448,7 @@ router.post('/reset-password', async (req, res) => {
     await auditFromReq(req, 'update', 'auth', user.id, user.name, { action: 'password_reset_via_email' });
     res.json({ message: 'Ihr Passwort wurde erfolgreich zurückgesetzt. Sie können sich nun anmelden.' });
   } catch (e) {
+    console.error('[Reset password error]', e);
     res.status(500).json({ error: 'Interner Serverfehler beim Zurücksetzen des Passworts.' });
   }
 });

@@ -1,6 +1,9 @@
 {
   "name": "openisms-backend",
   "version": "2.2.6",
+  "engines": {
+    "node": ">=26.3.0"
+  },
   "author": "Maximilian Herz",
   "license": "SEE LICENSE IN LICENSE",
   "main": "src/index.js",

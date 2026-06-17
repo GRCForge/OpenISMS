@@ -23,7 +23,7 @@ cache:
 
 frontend-check:
   stage: test
-  image: node:20-alpine
+  image: node:26.3.0-alpine
   script:
     - cd frontend
     - npm ci
@@ -32,7 +32,7 @@ frontend-check:
 
 backend-check:
   stage: test
-  image: node:20-alpine
+  image: node:26.3.0-alpine
   script:
     - cd backend
     - npm ci
@@ -57,7 +57,7 @@ backend-check:
 
 npm-audit:
   stage: test
-  image: node:20-alpine
+  image: node:26.3.0-alpine
   script:
     - cd backend && npm ci && npm audit --audit-level=high
     - cd ../frontend && npm ci && npm audit --audit-level=high

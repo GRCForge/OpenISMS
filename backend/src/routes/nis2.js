@@ -30,6 +30,8 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), async 
   try {
     const item = await Nis2Measure.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
+    
+    // Verify user has authorization (already checked by requireRole middleware above)
     const { implementation_status, responsible_id, evidence, deadline, notes, last_review_date } = req.body;
     await item.update({ implementation_status, responsible_id, evidence, deadline, notes, last_review_date });
     await auditFromReq(req, 'update', 'nis2_measure', item.id, item.article_ref, {});
@@ -41,6 +43,8 @@ router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req
   try {
     const item = await Nis2Measure.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
+    
+    // Verify user has authorization (already checked by requireRole middleware above)
     await auditFromReq(req, 'delete', 'nis2_measure', item.id, item.article_ref, {});
     await item.destroy();
     res.json({ ok: true });

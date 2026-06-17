@@ -71,6 +71,7 @@ const checkExpiringAcceptances = async () => {
       include: [
         {
           model: Asset,
+          where: { status: { [Op.ne]: 'decommissioned' } },
           include: [
             { model: User, as: 'owner',    attributes: ['id', 'name', 'email'] },
             { model: User, as: 'assessor', attributes: ['id', 'name', 'email'] },

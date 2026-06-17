@@ -2,11 +2,19 @@ const jwt = require('jsonwebtoken');
 const { User, ApiToken } = require('../models');
 const { notify } = require('../services/notifyService');
 
+const getTokenFromHeaders = (req) => {
+  const authHeader = String(req.headers.authorization || '').trim();
+  if (authHeader.startsWith('Bearer ')) {
+    return authHeader.slice(7).trim();
+  }
+  const apiKeyHeader = String(req.headers['x-api-key'] || '').trim();
+  return apiKeyHeader || null;
+};
+
 const authenticate = async (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+  const token = getTokenFromHeaders(req);
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const token = header.split(' ')[1];
 
     if (token.startsWith('isms_api_')) {
       // Validate format before DB lookup: prefix + 64 lowercase hex chars

@@ -74,7 +74,7 @@ router.use(apiLimiter);
 router.use(authenticate);
 
 // List templates
-router.get('/', async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const where = {};
     if (req.query.category) {
@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
 });
 
 // Upload template
-router.post('/', requireWriteAccess(), upload.single('file'), async (req, res) => {
+router.post('/', authenticate, requireWriteAccess(), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Keine Datei hochgeladen' });
 
@@ -133,12 +133,13 @@ router.post('/', requireWriteAccess(), upload.single('file'), async (req, res) =
   }
 });
 
-// Download template
+// Download template (all authenticated users can download)
 router.get('/:id/download', async (req, res) => {
   try {
     const template = await Template.findByPk(req.params.id);
     if (!template) return res.status(404).json({ error: 'Nicht gefunden' });
 
+    // All authenticated users can download templates (already protected by router.use(authenticate))
     const filePath = getSafePath(template.filename);
     if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Datei nicht gefunden' });
 
@@ -149,7 +150,7 @@ router.get('/:id/download', async (req, res) => {
 });
 
 // Delete template
-router.delete('/:id', requireWriteAccess(), async (req, res) => {
+router.delete('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   try {
     const template = await Template.findByPk(req.params.id);
     if (!template) return res.status(404).json({ error: 'Nicht gefunden' });

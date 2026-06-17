@@ -40,7 +40,16 @@ router.get('/trends', async (req, res) => {
       Task.findAll({ where: { status: 'done', completed_at: { [Op.gte]: twelveMonthsAgo } }, attributes: ['completed_at'], raw: true }),
       Control.findAll({ attributes: ['status'], raw: true }),
       Reminder.findAll({ attributes: ['status'], raw: true }),
-      Assessment.findAll({ where: { is_current: true }, attributes: ['risk_level', 'risk_treatment'], raw: true }),
+      Assessment.findAll({
+        where: { is_current: true },
+        attributes: ['risk_level', 'risk_treatment'],
+        include: [{
+          model: Asset,
+          attributes: [],
+          where: { status: { [Op.ne]: 'decommissioned' } }
+        }],
+        raw: true
+      }),
       Task.findAll({ where: { status: { [Op.ne]: 'cancelled' } }, attributes: ['status'], raw: true }),
     ]);
 
