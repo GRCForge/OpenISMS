@@ -4,7 +4,7 @@
 #   docker build -t isms:latest .
 
 # --- Stage 1: Frontend bauen ---
-FROM node:22-alpine AS frontend-build
+FROM node:26.3.0-alpine AS frontend-build
 RUN apk add --no-cache git && npm install -g npm@11 --loglevel=error
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
@@ -13,7 +13,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # --- Stage 2: Backend + statisches Frontend ---
-FROM node:22-alpine
+FROM node:26.3.0-alpine
 RUN apk add --no-cache git && npm install -g npm@11 --loglevel=error
 WORKDIR /app
 ENV NODE_ENV=production

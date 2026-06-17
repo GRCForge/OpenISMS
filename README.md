@@ -4,7 +4,7 @@
 ![Security & Quality](https://github.com/grcforge/openisms/actions/workflows/security.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/release/grcforge/openisms?label=version&color=blue)
 ![License](https://img.shields.io/badge/license-Source--Available-red)
-![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
+![Node.js](https://img.shields.io/badge/node-%3E%3D26.3.0-brightgreen)
 ![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)
 ![API](https://img.shields.io/badge/API-available-green)
 ![MCP](https://img.shields.io/badge/MCP-available-blue%3Flogo%3Dmcp)
@@ -731,7 +731,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 
 ## Local Development
 
-Requirements: Node.js 22+, MySQL 8.0
+Requirements: Node.js >=26.3.0, MySQL 8.0
 
 ```bash
 # Backend
@@ -744,6 +744,30 @@ npm install && npm run dev    # Vite dev server: http://localhost:5173
 ```
 
 ---
+
+### Node.js Upgrade — Verifikation der Abhängigkeiten
+
+Für die Migration auf Node.js `26.3.0` empfehlen wir, die Abhängigkeiten lokal zu prüfen und Sicherheitswarnungen zu bewerten. Empfohlene Schritte:
+
+```bash
+# Backend
+cd backend
+npm ci
+npm audit --audit-level=high
+
+# Frontend
+cd ../frontend
+npm ci
+npm audit --audit-level=high
+
+# Optional: veraltete Pakete prüfen
+npm outdated
+# Optional: interaktiv prüfen/aktualisieren mit npm-check-updates
+npx npm-check-updates -u
+```
+
+Siehe auch die Sicherheitsanweisungen in [SECURITY.md](SECURITY.md) für verantwortliche Offenlegung und weitere Prüfungen.
+
 
 ## Security Notes for Production
 
@@ -771,6 +795,6 @@ OpenISMS supports browser push notifications and can be installed as a Progressi
 
 ## License
 
-OpenISMS is **source-available software**. The source code is publicly viewable; use is free for private and non-commercial purposes. Any commercial or enterprise use as well as any redistribution requires a commercial licence. See [LICENSE](./LICENSE) for details. Licence enquiries: maximilian@herz.dev
+OpenISMS is **source-available software**. The source code is publicly viewable; use is free for private and non-commercial purposes. Any commercial or enterprise use as well as any redistribution requires a commercial licence. See [LICENSE](./LICENSE) for details. Licence enquiries: info@herz.dev
 
 © 2026 Maximilian Herz. All rights reserved.
