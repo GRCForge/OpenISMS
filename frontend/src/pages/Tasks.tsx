@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckSquare, Plus, Pencil, Trash2, Clock, AlertTriangle, CheckCircle2, Circle, Link2, Users, Square } from 'lucide-react';
+import { CheckSquare, Plus, Pencil, Trash2, Clock, AlertTriangle, CheckCircle2, Circle, Link2, Users, Square, Sparkles } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import api from '../lib/api';
@@ -69,6 +69,8 @@ export const Tasks: React.FC = () => {
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [orphanCount, setOrphanCount] = useState<number | null>(null);
+  const [orphanLoading, setOrphanLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -166,7 +168,7 @@ export const Tasks: React.FC = () => {
     } catch { }
   };
 
-  // ── Multiselect ────────────────────────────────────────────────────────────
+  // ── Multiselect ─────────────────────────────────────────────────────────
   const toggleSelect = (id: number) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -210,7 +212,32 @@ export const Tasks: React.FC = () => {
     } finally { setBulkLoading(false); }
   };
 
-  // ── Filtering ──────────────────────────────────────────────────────────────
+  // ── Orphan cleanup (admin only) ──────────────────────────────────────────────
+  const checkOrphans = async () => {
+    setOrphanLoading(true);
+    try {
+      const { data } = await api.get('/tasks/orphaned-count');
+      setOrphanCount(data.count);
+      if (data.count === 0) {
+        toast.success('Keine verwaisten Aufgaben gefunden.');
+      }
+    } catch { toast.error('Fehler beim Prüfen'); }
+    finally { setOrphanLoading(false); }
+  };
+
+  const purgeOrphans = async () => {
+    if (!confirm(`${orphanCount} verwaiste Aufgabe${orphanCount !== 1 ? 'n' : ''} löschen? Diese Aufgaben zeigen auf nicht mehr existierende Objekte.`)) return;
+    setOrphanLoading(true);
+    try {
+      const { data } = await api.delete('/tasks/orphaned');
+      toast.success(`${data.purged} verwaiste Aufgabe${data.purged !== 1 ? 'n' : ''} gelöscht.`);
+      setOrphanCount(null);
+      load();
+    } catch { toast.error('Fehler beim Löschen'); }
+    finally { setOrphanLoading(false); }
+  };
+
+  // ── Filtering ───────────────────────────────────────────────────────────
   const filtered = tasks.filter(t => {
     if (!statusFilter && (t.status === 'cancelled' || t.status === 'done')) return false;
     if (myTasks && t.assigned_to_id !== user?.id && !t.assignedGroup?.members.some(m => m.id === user?.id)) return false;
@@ -256,7 +283,22 @@ export const Tasks: React.FC = () => {
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">{tasks.length} Aufgaben insgesamt</p>
         </div>
-        {canWrite && <Button onClick={openCreate}><Plus size={16} />Neue Aufgabe</Button>}
+        <div className="flex gap-2">
+          {user?.role === 'admin' && (
+            orphanCount !== null && orphanCount > 0 ? (
+              <Button variant="danger" size="sm" onClick={purgeOrphans} disabled={orphanLoading}>
+                <Trash2 size={14} />
+                {orphanCount} verwaiste löschen
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" onClick={checkOrphans} disabled={orphanLoading}>
+                <Sparkles size={14} />
+                {orphanLoading ? 'Prüfe...' : 'Aufräumen'}
+              </Button>
+            )
+          )}
+          {canWrite && <Button onClick={openCreate}><Plus size={16} />Neue Aufgabe</Button>}
+        </div>
       </div>
 
       {/* Stats row */}

@@ -1,6 +1,6 @@
 const express = require('express');
 const { Op, fn, col } = require('sequelize');
-const { Incident, Asset, User, Risk, Vendor, VvtEntry } = require('../models');
+const { Incident, Asset, User, Risk, Vendor, VvtEntry, Task } = require('../models');
 const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -13,7 +13,7 @@ router.use(apiLimiter);
 const notifyAssignee = async (incident, actorId) => notify({
   userId: incident.assignee_id, actorId, type: 'assignment',
   title: 'Vorfall zugewiesen',
-  content: `Ihnen wurde der Sicherheitsvorfall „${incident.ref || incident.title}" zur Bearbeitung zugewiesen.`,
+  content: `Ihnen wurde der Sicherheitsvorfall „${incident.ref || incident.title}“ zur Bearbeitung zugewiesen.`,
   link: '/incidents',
 });
 
@@ -147,12 +147,15 @@ router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req
       return res.status(400).json({ error: 'Eine Begründung für das Löschen ist erforderlich.' });
     }
 
+    await Task.update(
+      { status: 'cancelled' },
+      { where: { related_type: 'incident', related_id: incident.id, status: { [Op.notIn]: ['done', 'cancelled'] } } }
+    );
     await incident.update({
       deleted: true,
       deletion_reason: deletion_reason.trim(),
       deleted_at: new Date()
     });
-    
     await auditFromReq(req, 'delete', 'incident', incident.id, incident.title, { deletion_reason });
     res.json({ message: 'Incident deleted' });
   } catch (e) { res.status(500).json({ error: e.message }); }

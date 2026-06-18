@@ -65,7 +65,7 @@ router.get('/stats', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── KPI & Effectiveness Measurement ────────────────────────────────
+// ── KPI & Effectiveness Measurement ──────────────────────────────────
 router.get('/kpis', authenticate, async (req, res) => {
   try {
     const items = await Kpi.findAll({
@@ -149,7 +149,7 @@ router.post('/kpis/:id/measurements', authenticate, requireWriteAccess(), async 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Audit & CAPA Module ───────────────────────────────────────────
+// ── Audit & CAPA Module ────────────────────────────────────────────
 router.get('/audits', authenticate, async (req, res) => {
   try {
     const items = await Audit.findAll({
@@ -287,7 +287,7 @@ router.delete('/findings/:id', authenticate, requireRole('admin', 'assessor'), r
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Awareness & Training Tracking ────────────────────────────────
+// ── Awareness & Training Tracking ──────────────────────────────────
 // GET master list of trainings
 router.get('/trainings-list', authenticate, async (req, res) => {
   try {
@@ -379,6 +379,10 @@ router.delete('/trainings-list/:id', authenticate, requireRole('admin', 'assesso
     if (!item) return res.status(404).json({ error: 'Schulung nicht gefunden' });
     
     const { id, title } = item;
+    await Task.update(
+      { status: 'cancelled' },
+      { where: { related_type: 'training', related_id: id, status: { [Op.notIn]: ['done', 'cancelled'] } } }
+    );
     await item.destroy();
     await auditFromReq(req, 'delete', 'training', id, title, {});
     res.json({ ok: true });
