@@ -1,0 +1,27 @@
+{
+  "title": "Dienstleister",
+  "new": "Neuer Dienstleister",
+  "searchPlaceholder": "Dienstleister suchen...",
+  "fields": {
+    "name":     "Unternehmen",
+    "category": "Kategorie",
+    "country":  "Land",
+    "contact":  "Kontakt",
+    "risk":     "Risikoeinstufung",
+    "website":  "Website"
+  },
+  "categories": {
+    "cloud":      "Cloud-Anbieter",
+    "software":   "Software / SaaS",
+    "hardware":   "Hardware",
+    "service":    "IT-Dienstleister",
+    "consulting": "Beratung",
+    "other":      "Sonstiges"
+  },
+  "riskLevels": {
+    "low":      "Gering",
+    "medium":   "Mittel",
+    "high":     "Hoch",
+    "critical": "Kritisch"
+  }
+}

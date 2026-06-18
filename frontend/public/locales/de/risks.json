@@ -1,0 +1,41 @@
+{
+  "title": "Risiken",
+  "new": "Neues Risiko",
+  "searchPlaceholder": "Risiken suchen...",
+  "levels": {
+    "low":      "Gering",
+    "medium":   "Mittel",
+    "high":     "Hoch",
+    "critical": "Kritisch"
+  },
+  "categories": {
+    "it_security":  "IT-Sicherheit",
+    "privacy":      "Datenschutz",
+    "compliance":   "Compliance",
+    "operational":  "Betrieblich",
+    "financial":    "Finanziell",
+    "reputation":   "Reputation",
+    "ai_risk":      "KI-Risiko (AI Act)",
+    "supply_chain": "Lieferkette / Vendor",
+    "other":        "Sonstiges"
+  },
+  "treatment": {
+    "mitigate": "Reduzieren",
+    "accept":   "Akzeptieren",
+    "transfer": "Übertragen",
+    "avoid":    "Vermeiden"
+  },
+  "status": {
+    "open":         "Offen",
+    "in_treatment": "In Behandlung",
+    "accepted":     "Akzeptiert",
+    "closed":       "Geschlossen"
+  },
+  "ratings": {
+    "1": "Sehr Gering (1)",
+    "2": "Gering (2)",
+    "3": "Mittel (3)",
+    "4": "Hoch (4)",
+    "5": "Sehr Hoch (5)"
+  }
+}

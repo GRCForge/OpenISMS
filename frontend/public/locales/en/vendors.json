@@ -1,0 +1,27 @@
+{
+  "title": "Service Providers",
+  "new": "New Provider",
+  "searchPlaceholder": "Search providers...",
+  "fields": {
+    "name":     "Company",
+    "category": "Category",
+    "country":  "Country",
+    "contact":  "Contact",
+    "risk":     "Risk Level",
+    "website":  "Website"
+  },
+  "categories": {
+    "cloud":       "Cloud Provider",
+    "software":    "Software / SaaS",
+    "hardware":    "Hardware",
+    "service":     "IT Service",
+    "consulting":  "Consulting",
+    "other":       "Other"
+  },
+  "riskLevels": {
+    "low":      "Low",
+    "medium":   "Medium",
+    "high":     "High",
+    "critical": "Critical"
+  }
+}

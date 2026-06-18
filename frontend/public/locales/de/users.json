@@ -1,0 +1,22 @@
+{
+  "title": "Benutzerverwaltung",
+  "new": "Neuer Benutzer",
+  "searchPlaceholder": "Benutzer suchen...",
+  "fields": {
+    "name":       "Name",
+    "email":      "E-Mail",
+    "role":       "Rolle",
+    "department": "Abteilung",
+    "active":     "Aktiv",
+    "inactive":   "Inaktiv",
+    "lastLogin":  "Letzter Login",
+    "twoFactor":  "2FA"
+  },
+  "actions": {
+    "activate":      "Aktivieren",
+    "deactivate":    "Deaktivieren",
+    "resetPassword": "Passwort zurücksetzen",
+    "deleteUser":    "Benutzer löschen"
+  },
+  "confirmDelete": "Benutzer wirklich löschen? Alle zugehörigen Daten bleiben erhalten."
+}

@@ -1,0 +1,41 @@
+{
+  "title": "Incidents",
+  "new": "New Incident",
+  "searchPlaceholder": "Search incidents...",
+  "severity": {
+    "low":      "Low",
+    "medium":   "Medium",
+    "high":     "High",
+    "critical": "Critical"
+  },
+  "status": {
+    "reported":      "Reported",
+    "investigating":  "Investigating",
+    "contained":     "Contained",
+    "resolved":      "Resolved",
+    "closed":        "Closed"
+  },
+  "categories": {
+    "malware":             "Malware",
+    "phishing":            "Phishing",
+    "data_breach":         "Data Breach",
+    "dos":                 "DoS / DDoS",
+    "unauthorized_access": "Unauthorized Access",
+    "misconfiguration":    "Misconfiguration",
+    "loss_theft":          "Loss / Theft",
+    "social_engineering":  "Social Engineering",
+    "other":               "Other"
+  },
+  "nis2": {
+    "overdueWarning":  "Early warning overdue",
+    "earlyWarningOpen":"24h early warning open",
+    "reportingOverdue":"72h report overdue",
+    "reportingOpen":   "72h report open",
+    "reported":        "Reported"
+  },
+  "gdpr": {
+    "reported":  "Art. 33 reported",
+    "overdue":   "Art. 33 overdue!",
+    "remaining": "Art. 33: {{hours}}h remaining"
+  }
+}

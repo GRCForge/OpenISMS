@@ -1,0 +1,54 @@
+{
+  "title": "Assets",
+  "subtitle_one":   "{{count}} asset",
+  "subtitle_other": "{{count}} assets",
+  "new": "New Asset",
+  "searchPlaceholder": "Search assets...",
+  "types": {
+    "application":   "Application",
+    "software":      "Software",
+    "hardware":      "Hardware",
+    "service":       "Service",
+    "data":          "Data",
+    "information":   "Information/Data",
+    "process":       "Process",
+    "personal":      "Personnel",
+    "ai_application":"AI Application (AI Act)",
+    "ai_agent":      "AI Agent / Autonomous System",
+    "other":         "Other"
+  },
+  "status": {
+    "active":          "Active",
+    "inactive":        "Inactive",
+    "decommissioned":  "Decommissioned",
+    "all":             "All (incl. decommissioned)",
+    "onlyActive":      "Active only",
+    "onlyInactive":    "Inactive only",
+    "activeAssets":    "Active Assets"
+  },
+  "hosting": {
+    "on-premise":    "On-Premise",
+    "cloud_public":  "Cloud Public",
+    "cloud_private": "Cloud Private",
+    "hybrid":        "Hybrid"
+  },
+  "lifecycle": {
+    "evaluation": "Evaluation",
+    "production": "Production",
+    "maintenance": "Maintenance",
+    "archived":   "Archived"
+  },
+  "filters": {
+    "allTypes":           "All Types",
+    "allFrameworks":      "All Frameworks",
+    "allClassifications": "All Classifications",
+    "allHosting":         "All Hosting",
+    "allLifecycle":       "All Lifecycle",
+    "allStatus":          "Active Assets"
+  },
+  "empty": {
+    "title":       "No assets found",
+    "subtitle":    "Create assets to manage your IT landscape and evaluate risks.",
+    "createFirst": "Create first asset"
+  }
+}

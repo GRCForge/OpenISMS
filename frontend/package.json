@@ -17,10 +17,14 @@
   "dependencies": {
     "axios": "^1.7.2",
     "date-fns": "^4.4.0",
+    "i18next": "^26.3.1",
+    "i18next-browser-languagedetector": "^8.2.1",
+    "i18next-http-backend": "^4.0.0",
     "lucide-react": "^1.20.0",
     "mermaid": "^11.15.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-i18next": "^17.0.8",
     "react-router-dom": "^7.18.0",
     "recharts": "^3.8.1",
     "write-excel-file": "^2.0.0"

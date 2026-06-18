@@ -1,0 +1,41 @@
+{
+  "title": "Risks",
+  "new": "New Risk",
+  "searchPlaceholder": "Search risks...",
+  "levels": {
+    "low":      "Low",
+    "medium":   "Medium",
+    "high":     "High",
+    "critical": "Critical"
+  },
+  "categories": {
+    "it_security":  "IT Security",
+    "privacy":      "Privacy",
+    "compliance":   "Compliance",
+    "operational":  "Operational",
+    "financial":    "Financial",
+    "reputation":   "Reputation",
+    "ai_risk":      "AI Risk (AI Act)",
+    "supply_chain": "Supply Chain / Vendor",
+    "other":        "Other"
+  },
+  "treatment": {
+    "mitigate": "Mitigate",
+    "accept":   "Accept",
+    "transfer": "Transfer",
+    "avoid":    "Avoid"
+  },
+  "status": {
+    "open":         "Open",
+    "in_treatment": "In Treatment",
+    "accepted":     "Accepted",
+    "closed":       "Closed"
+  },
+  "ratings": {
+    "1": "Very Low (1)",
+    "2": "Low (2)",
+    "3": "Medium (3)",
+    "4": "High (4)",
+    "5": "Very High (5)"
+  }
+}

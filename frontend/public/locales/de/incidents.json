@@ -1,0 +1,41 @@
+{
+  "title": "Vorfälle",
+  "new": "Neuer Vorfall",
+  "searchPlaceholder": "Vorfälle suchen...",
+  "severity": {
+    "low":      "Gering",
+    "medium":   "Mittel",
+    "high":     "Hoch",
+    "critical": "Kritisch"
+  },
+  "status": {
+    "reported":      "Gemeldet",
+    "investigating": "In Untersuchung",
+    "contained":     "Eingedämmt",
+    "resolved":      "Behoben",
+    "closed":        "Geschlossen"
+  },
+  "categories": {
+    "malware":             "Schadsoftware",
+    "phishing":            "Phishing",
+    "data_breach":         "Datenschutzverletzung",
+    "dos":                 "DoS / DDoS",
+    "unauthorized_access": "Unbefugter Zugriff",
+    "misconfiguration":    "Fehlkonfiguration",
+    "loss_theft":          "Verlust / Diebstahl",
+    "social_engineering":  "Social Engineering",
+    "other":               "Sonstiges"
+  },
+  "nis2": {
+    "overdueWarning":  "Frühwarnung überfällig",
+    "earlyWarningOpen":"24h-Frühwarnung offen",
+    "reportingOverdue":"72h-Meldung überfällig",
+    "reportingOpen":   "72h-Meldung offen",
+    "reported":        "Gemeldet"
+  },
+  "gdpr": {
+    "reported":  "Art. 33 gemeldet",
+    "overdue":   "Art. 33 überfällig!",
+    "remaining": "Art. 33: {{hours}}h verbleibend"
+  }
+}

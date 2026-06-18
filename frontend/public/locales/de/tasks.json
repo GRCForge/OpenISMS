@@ -1,0 +1,97 @@
+{
+  "title": "Aufgaben & Maßnahmen",
+  "subtitle_one":   "{{count}} Aufgabe insgesamt",
+  "subtitle_other": "{{count}} Aufgaben insgesamt",
+  "new": "Neue Aufgabe",
+  "searchPlaceholder": "Aufgabe suchen...",
+  "status": {
+    "open":        "Offen",
+    "in_progress": "In Bearbeitung",
+    "done":        "Erledigt",
+    "cancelled":   "Abgebrochen"
+  },
+  "priority": {
+    "low":      "Niedrig",
+    "medium":   "Mittel",
+    "high":     "Hoch",
+    "critical": "Kritisch"
+  },
+  "types": {
+    "asset":           "Asset",
+    "risk":            "Risiko",
+    "incident":        "Vorfall",
+    "training":        "Schulung",
+    "subject_request": "Betroffenenanfrage",
+    "ai_system":       "KI-System",
+    "_manual":         "Manuell"
+  },
+  "filters": {
+    "allStatus":     "Alle Status",
+    "allPriorities": "Alle Prioritäten",
+    "allTypes":      "Alle Typen",
+    "myTasks":       "Meine Aufgaben",
+    "next4Weeks":    "Nächste 4 Wochen",
+    "allFuture":     "Alle (inkl. Zukunft)"
+  },
+  "stats": {
+    "open":       "Offen",
+    "inProgress": "In Bearbeitung",
+    "done":       "Erledigt",
+    "overdue":    "Überfällig"
+  },
+  "overdue": "Fällig:",
+  "toAsset": "Zum Asset",
+  "form": {
+    "titleLabel":             "Titel *",
+    "description":            "Beschreibung",
+    "descriptionPlaceholder": "Details zur Aufgabe...",
+    "status":                 "Status",
+    "priority":               "Priorität",
+    "dueDate":                "Fälligkeitsdatum",
+    "assignmentSection":      "Zuweisung",
+    "assignGroup":            "Gruppe zuweisen",
+    "noGroup":                "Keine Gruppe",
+    "assignPerson":           "Einzelperson zuweisen",
+    "unassigned":             "Nicht zugewiesen",
+    "groupNotice":            "Alle Gruppenmitglieder erhalten eine Benachrichtigung. Wer zuerst erledigt, schließt die Aufgabe für alle ab.",
+    "editTitle":              "Aufgabe bearbeiten",
+    "newTitle":               "Neue Aufgabe"
+  },
+  "bulk": {
+    "selected_one":   "{{count}} Aufgabe ausgewählt",
+    "selected_other": "{{count}} Aufgaben ausgewählt",
+    "markDone":       "Als erledigt markieren",
+    "delete":         "Löschen",
+    "deselect":       "Aufheben"
+  },
+  "orphan": {
+    "check":              "Aufräumen",
+    "checking":           "Prüfe...",
+    "purge_one":          "{{count}} verwaiste löschen",
+    "purge_other":        "{{count}} verwaiste löschen",
+    "noneFound":          "Keine verwaisten Aufgaben gefunden.",
+    "confirmPurge_one":   "{{count}} verwaiste Aufgabe löschen? Diese Aufgabe zeigt auf ein nicht mehr existierendes Objekt.",
+    "confirmPurge_other": "{{count}} verwaiste Aufgaben löschen? Diese Aufgaben zeigen auf nicht mehr existierende Objekte.",
+    "purgedSuccess_one":  "{{count}} verwaiste Aufgabe gelöscht.",
+    "purgedSuccess_other":"{{count}} verwaiste Aufgaben gelöscht.",
+    "checkError":         "Fehler beim Prüfen",
+    "purgeError":         "Fehler beim Löschen"
+  },
+  "empty": {
+    "title":       "Keine Aufgaben gefunden",
+    "subtitle":    "Erstelle Aufgaben für Sicherheitsmaßnahmen und Verbesserungen.",
+    "createFirst": "Erste Aufgabe erstellen"
+  },
+  "selectAll":            "Alle {{count}} auswählen",
+  "deselectAll":          "Alle abwählen",
+  "deleteConfirm":        "Aufgabe wirklich löschen?",
+  "deleteSelected_one":   "{{count}} Aufgabe wirklich löschen?",
+  "deleteSelected_other": "{{count}} Aufgaben wirklich löschen?",
+  "markDoneSuccess_one":  "{{count}} Aufgabe als erledigt markiert",
+  "markDoneSuccess_other":"{{count}} Aufgaben als erledigt markiert",
+  "deleteSuccess_one":    "{{count}} Aufgabe gelöscht",
+  "deleteSuccess_other":  "{{count}} Aufgaben gelöscht",
+  "saveError":            "Fehler beim Speichern",
+  "deleteFailed":         "Löschen fehlgeschlagen",
+  "updateError":          "Fehler beim Aktualisieren"
+}

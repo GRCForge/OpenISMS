@@ -1,0 +1,22 @@
+{
+  "title": "User Management",
+  "new": "New User",
+  "searchPlaceholder": "Search users...",
+  "fields": {
+    "name":       "Name",
+    "email":      "Email",
+    "role":       "Role",
+    "department": "Department",
+    "active":     "Active",
+    "inactive":   "Inactive",
+    "lastLogin":  "Last Login",
+    "twoFactor":  "2FA"
+  },
+  "actions": {
+    "activate":      "Activate",
+    "deactivate":    "Deactivate",
+    "resetPassword": "Reset Password",
+    "deleteUser":    "Delete User"
+  },
+  "confirmDelete": "Really delete this user? All associated data will be retained."
+}

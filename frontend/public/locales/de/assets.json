@@ -1,0 +1,54 @@
+{
+  "title": "Assets",
+  "subtitle_one":   "{{count}} Asset",
+  "subtitle_other": "{{count}} Assets",
+  "new": "Neues Asset",
+  "searchPlaceholder": "Assets suchen...",
+  "types": {
+    "application":   "Anwendung",
+    "software":      "Software",
+    "hardware":      "Hardware",
+    "service":       "Dienst",
+    "data":          "Daten",
+    "information":   "Information/Daten",
+    "process":       "Prozess",
+    "personal":      "Personal",
+    "ai_application":"KI-Anwendung (AI Act)",
+    "ai_agent":      "KI-Agent / Autonomes System",
+    "other":         "Sonstiges"
+  },
+  "status": {
+    "active":          "Aktiv",
+    "inactive":        "Inaktiv",
+    "decommissioned":  "Ausgemustert",
+    "all":             "Alle (inkl. Ausgemustert)",
+    "onlyActive":      "Nur Aktiv",
+    "onlyInactive":    "Nur Inaktiv",
+    "activeAssets":    "Aktive Assets"
+  },
+  "hosting": {
+    "on-premise":    "On-Premise",
+    "cloud_public":  "Cloud Public",
+    "cloud_private": "Cloud Private",
+    "hybrid":        "Hybrid"
+  },
+  "lifecycle": {
+    "evaluation": "In Evaluierung",
+    "production": "Produktion",
+    "maintenance": "Wartung",
+    "archived":   "Archiviert"
+  },
+  "filters": {
+    "allTypes":           "Alle Typen",
+    "allFrameworks":      "Alle Frameworks",
+    "allClassifications": "Alle Klassifizierungen",
+    "allHosting":         "Alle Hosting-Arten",
+    "allLifecycle":       "Alle Phasen",
+    "allStatus":          "Aktive Assets"
+  },
+  "empty": {
+    "title":       "Keine Assets gefunden",
+    "subtitle":    "Legen Sie Assets an, um Ihre IT-Landschaft zu verwalten und Risiken zu bewerten.",
+    "createFirst": "Erstes Asset anlegen"
+  }
+}
