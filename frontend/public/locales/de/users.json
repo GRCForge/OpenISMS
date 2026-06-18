@@ -1,6 +1,8 @@
 {
   "title": "Benutzerverwaltung",
+  "subtitle": "{{count}} registrierte Benutzer",
   "new": "Neuer Benutzer",
+  "createUser": "Benutzer anlegen",
   "searchPlaceholder": "Benutzer suchen...",
   "fields": {
     "name":       "Name",
@@ -10,13 +12,94 @@
     "active":     "Aktiv",
     "inactive":   "Inaktiv",
     "lastLogin":  "Letzter Login",
-    "twoFactor":  "2FA"
+    "twoFactor":  "2FA",
+    "authentication": "Authentifizierung",
+    "status": "Status"
   },
+  "roleLabels": {
+    "admin": "Administrator",
+    "assessor": "Auditor / Bewerter",
+    "it-staff": "IT-Mitarbeiter",
+    "dpo": "Datenschutzbeauftragter",
+    "owner": "Asset Owner",
+    "management": "Management",
+    "viewer": "Betrachter",
+    "employee": "Mitarbeiter"
+  },
+  "filters": {
+    "allRoles": "Alle Rollen",
+    "allSecurityLevels": "Alle Sicherheitsstufen",
+    "ssoOnly": "Nur SSO-Benutzer",
+    "localOnly": "Nur lokale Benutzer",
+    "mfaActive": "MFA / Passkey aktiv",
+    "mfaInactive": "MFA inaktiv (unsicher)"
+  },
+  "badges": {
+    "sso": "SSO",
+    "password": "Passwort",
+    "twoFactorInactive": "2FA inaktiv",
+    "totpTitle": "Zwei-Faktor-Authentifizierung via App aktiv",
+    "passkeyTitle": "{{count}} Passkey(s) registriert"
+  },
+  "statusLabels": {
+    "active": "Aktiv",
+    "deactivated": "Deaktiviert"
+  },
+  "customRolesGroup": "Benutzerdefinierte Rollen",
+  "roleSelect": {
+    "ownRoleNotChangeable": "Eigene Rolle nicht änderbar",
+    "changeRoleDirectly": "Rolle direkt ändern"
+  },
+  "form": {
+    "editTitle": "Benutzer bearbeiten",
+    "newTitle": "Neuen Benutzer anlegen",
+    "fullName": "Vollständiger Name *",
+    "fullNamePlaceholder": "z. B. Max Mustermann",
+    "emailLabel": "E-Mail-Adresse *",
+    "emailPlaceholder": "max.mustermann@firma.de",
+    "departmentLabel": "Abteilung / Team",
+    "departmentPlaceholder": "z. B. IT-Operations",
+    "systemRole": "System-Rolle *",
+    "roleOptions": {
+      "admin": "Administrator (Vollzugriff)",
+      "assessor": "Auditor / Bewerter",
+      "it-staff": "IT-Mitarbeiter",
+      "dpo": "Datenschutzbeauftragter",
+      "owner": "Asset Owner (Verantwortlich)",
+      "viewer": "Betrachter (Leserechte)"
+    },
+    "initialPassword": "Initial-Passwort *",
+    "accountStatus": "Account-Status",
+    "accountStatusHint": "Deaktivierte Benutzer können sich nicht mehr am Portal anmelden.",
+    "active": "Aktiv",
+    "deactivated": "Deaktiviert",
+    "saving": "Speichern...",
+    "saveChanges": "Änderungen speichern",
+    "createUser": "Benutzer anlegen"
+  },
+  "resetPw": {
+    "title": "Passwort zurücksetzen",
+    "intro": "Neues Passwort festlegen für",
+    "newPassword": "Neues Passwort *",
+    "saving": "Speichern...",
+    "setPassword": "Passwort setzen",
+    "tooltip": "Passwort zurücksetzen",
+    "success": "Passwort wurde erfolgreich zurückgesetzt."
+  },
+  "toasts": {
+    "saveError": "Fehler beim Speichern",
+    "genericError": "Fehler",
+    "ownRoleWarning": "Eigene Rolle kann nicht geändert werden.",
+    "roleChangeError": "Rolle konnte nicht geändert werden",
+    "selfDeleteWarning": "Sie können sich nicht selbst löschen.",
+    "deleteFailed": "Löschen fehlgeschlagen"
+  },
+  "confirmDelete": "Benutzer wirklich löschen? Alle zugehörigen Daten bleiben erhalten.",
+  "confirmDeleteShort": "Benutzer wirklich löschen?",
   "actions": {
     "activate":      "Aktivieren",
     "deactivate":    "Deaktivieren",
     "resetPassword": "Passwort zurücksetzen",
     "deleteUser":    "Benutzer löschen"
-  },
-  "confirmDelete": "Benutzer wirklich löschen? Alle zugehörigen Daten bleiben erhalten."
+  }
 }
