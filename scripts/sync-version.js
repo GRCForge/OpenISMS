@@ -44,14 +44,30 @@ const filesToUpdate = [
 
 let changed = false;
 for (const file of filesToUpdate) {
-  if (fs.existsSync(file.path)) {
-    const original = fs.readFileSync(file.path, 'utf8');
+  // Use a single open file descriptor for the entire read-compare-write cycle to
+  // avoid the TOCTOU race between existsSync/readFileSync and writeFileSync
+  // (CodeQL js/file-system-race).
+  let fd;
+  try {
+    fd = fs.openSync(file.path, 'r+');
+  } catch {
+    continue; // file doesn't exist — skip
+  }
+  try {
+    const size = fs.fstatSync(fd).size;
+    const buf = Buffer.alloc(size);
+    fs.readSync(fd, buf, 0, size, 0);
+    const original = buf.toString('utf8');
     const updated = file.updater(original);
     if (original !== updated) {
-      fs.writeFileSync(file.path, updated, 'utf8');
+      const out = Buffer.from(updated, 'utf8');
+      fs.ftruncateSync(fd, 0);
+      fs.writeSync(fd, out, 0, out.length, 0);
       console.log(`[Version Sync] Updated ${path.relative(rootDir, file.path)}`);
       changed = true;
     }
+  } finally {
+    fs.closeSync(fd);
   }
 }
 
