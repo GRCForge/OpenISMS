@@ -4,7 +4,9 @@ import {
   TrendingUp, Activity, BarChart3, ChevronRight, Rocket, ArrowRight,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import api from '../lib/api';
 import type { DashboardData, RiskLevel, Classification } from '../types';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
@@ -12,25 +14,8 @@ import { Badge } from '../components/ui/Badge';
 import { Link } from 'react-router-dom';
 import { Skeleton, SkeletonStatCard, SkeletonCard } from '../components/ui/Skeleton';
 
-const riskLabels: Record<RiskLevel, string> = { low: 'Gering', medium: 'Mittel', high: 'Hoch', critical: 'Kritisch' };
 const riskColors: Record<RiskLevel, string> = { low: 'bg-green-500', medium: 'bg-yellow-500', high: 'bg-orange-500', critical: 'bg-red-500' };
-const classLabels: Record<Classification, string> = { public: 'Öffentlich', internal: 'Intern', confidential: 'Vertraulich', secret: 'Geheim' };
 const classColors: Record<string, string> = { public: 'bg-green-400', internal: 'bg-blue-400', confidential: 'bg-orange-400', secret: 'bg-red-500' };
-
-const typeLabels: Record<string, string> = { 
-  hardware: 'Hardware', software: 'Software', information: 'Information/Daten', 
-  process: 'Prozess', service: 'Service', personal: 'Personal',
-  application: 'Anwendung', data: 'Daten', other: 'Sonstiges'
-};
-
-const actionLabels: Record<string, string> = {
-  create: 'erstellt', update: 'bearbeitet', delete: 'gelöscht',
-  assess: 'bewertet', login: 'angemeldet', acknowledge: 'bestätigt', deactivate: 'deaktiviert',
-};
-const entityLabels: Record<string, string> = {
-  asset: 'Asset', assessment: 'Bewertung', user: 'Benutzer', reminder: 'Erinnerung', auth: '',
-  vendor: 'Dienstleister', document: 'Dokument'
-};
 
 const StatCard: React.FC<{
   label: string; value: string | number; icon: React.FC<any>;
@@ -77,6 +62,26 @@ const FwBar: React.FC<{ label: string; count: number; total: number; color: stri
 };
 
 export const Dashboard: React.FC = () => {
+  const { t } = useTranslation(['dashboard', 'risks', 'common']);
+  const dateFnsLocale = i18n.language === 'de' ? de : enUS;
+
+  const riskLabels: Record<string, string> = {
+    low: t('risks:levels.low'), medium: t('risks:levels.medium'),
+    high: t('risks:levels.high'), critical: t('risks:levels.critical'),
+  };
+  const classLabels: Record<string, string> = {
+    public: t('common:classification.public'), internal: t('common:classification.internal'),
+    confidential: t('common:classification.confidential'), secret: t('common:classification.secret'),
+  };
+  const typeLabels: Record<string, string> = {
+    hardware: t('common:assetTypes.hardware'), software: t('common:assetTypes.software'),
+    information: t('common:assetTypes.information'), process: t('common:assetTypes.process'),
+    service: t('common:assetTypes.service'), personal: t('common:assetTypes.personal'),
+    application: t('common:assetTypes.application'), data: t('common:assetTypes.data'),
+    ai_application: t('common:assetTypes.ai_application'), ai_agent: t('common:assetTypes.ai_agent'),
+    other: t('common:assetTypes.other'),
+  };
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -91,7 +96,7 @@ export const Dashboard: React.FC = () => {
   useEffect(() => { load(); }, []);
 
   if (loading) return (
-    <div className="space-y-6" role="status" aria-label="Dashboard wird geladen">
+    <div className="space-y-6" role="status" aria-label={t('dashboard:loading')}>
       <div><Skeleton className="h-7 w-44 mb-1" /><Skeleton className="h-4 w-72" /></div>
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
         {Array.from({ length: 6 }).map((_, i) => <SkeletonStatCard key={i} />)}
@@ -105,7 +110,12 @@ export const Dashboard: React.FC = () => {
       </div>
     </div>
   );
-  if (!data) return <div className="p-6 text-gray-500 flex flex-col items-center gap-3 py-20"><p>Dashboard konnte nicht geladen werden.</p><button onClick={load} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">Erneut versuchen</button></div>;
+  if (!data) return (
+    <div className="p-6 text-gray-500 flex flex-col items-center gap-3 py-20">
+      <p>{t('dashboard:error')}</p>
+      <button onClick={load} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">{t('common:actions.retry')}</button>
+    </div>
+  );
 
   const totalRisk = data.riskDistribution.reduce((s, r) => s + parseInt(r.count), 0);
 
@@ -114,8 +124,8 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <p className="text-gray-500 dark:text-slate-400 text-sm mt-0.5">Übersicht der Informationssicherheit · {format(new Date(), 'dd. MMMM yyyy', { locale: de })}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('dashboard:title')}</h1>
+        <p className="text-gray-500 dark:text-slate-400 text-sm mt-0.5">{`${t('dashboard:subtitle')} · ${format(new Date(), 'd MMMM yyyy', { locale: dateFnsLocale })}`}</p>
       </div>
 
       {isNewSystem && (
@@ -124,14 +134,14 @@ export const Dashboard: React.FC = () => {
             <div className="flex items-start gap-4">
               <div className="p-2.5 rounded-xl bg-blue-600 shrink-0"><Rocket className="text-white" size={20} /></div>
               <div className="flex-1 min-w-0">
-                <h2 className="font-bold text-gray-900 dark:text-white">Willkommen bei OpenISMS!</h2>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Starten Sie in wenigen Schritten mit Ihrer Informationssicherheits-Dokumentation.</p>
+                <h2 className="font-bold text-gray-900 dark:text-white">{t('dashboard:welcome.title')}</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{t('dashboard:welcome.subtitle')}</p>
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {[
-                    { step: '1', label: 'Asset anlegen', desc: 'Server, Anwendung oder Daten erfassen', href: '/assets' },
-                    { step: '2', label: 'Schutzbedarf bewerten', desc: 'Vertraulichkeit, Integrität, Verfügbarkeit', href: '/assessments' },
-                    { step: '3', label: 'Risiken identifizieren', desc: 'Bedrohungen & Schwachstellen dokumentieren', href: '/risks' },
-                    { step: '4', label: 'Maßnahmen zuordnen', desc: 'ISO 27001 Controls & SoA verwalten', href: '/controls' },
+                    { step: '1', label: t('dashboard:welcome.steps.createAsset.label'), desc: t('dashboard:welcome.steps.createAsset.hint'), href: '/assets' },
+                    { step: '2', label: t('dashboard:welcome.steps.assess.label'), desc: t('dashboard:welcome.steps.assess.hint'), href: '/assessments' },
+                    { step: '3', label: t('dashboard:welcome.steps.risks.label'), desc: t('dashboard:welcome.steps.risks.hint'), href: '/risks' },
+                    { step: '4', label: t('dashboard:welcome.steps.controls.label'), desc: t('dashboard:welcome.steps.controls.hint'), href: '/controls' },
                   ].map(s => (
                     <Link key={s.step} to={s.href} className="flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-slate-800/60 border border-blue-100 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-sm transition-all group">
                       <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{s.step}</span>
@@ -149,23 +159,23 @@ export const Dashboard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard label="Assets gesamt" value={data.stats.totalAssets} icon={Server} color="bg-blue-500" sub={`${data.stats.activeAssets} aktiv`} />
-        <StatCard label="Hoch / Kritisch" value={data.stats.highRisk} icon={ShieldAlert} color={data.stats.highRisk > 0 ? 'bg-red-500' : 'bg-gray-400 dark:bg-slate-800'} warn={data.stats.highRisk > 0} />
-        <StatCard label="Überfällige Reviews" value={data.stats.overdueReminders} icon={AlertTriangle} color={data.stats.overdueReminders > 0 ? 'bg-red-500' : 'bg-gray-400 dark:bg-slate-800'} warn={data.stats.overdueReminders > 0} />
-        <StatCard label="Reviews in 30 Tagen" value={data.stats.upcomingReminders} icon={Clock} color="bg-yellow-500" />
-        <StatCard label="Compliance" value={`${data.stats.compliancePct}%`} icon={CheckCircle} color={data.stats.compliancePct >= 80 ? 'bg-green-500' : data.stats.compliancePct >= 50 ? 'bg-yellow-500' : 'bg-orange-500'} sub="Framework-Abdeckung" />
-        <StatCard label="Bewertet" value={`${totalRisk} / ${data.stats.totalAssets}`} icon={TrendingUp} color="bg-purple-500" sub={`von ${data.stats.totalAssets} Assets bewertet`} />
+        <StatCard label={t('dashboard:stats.totalAssets')} value={data.stats.totalAssets} icon={Server} color="bg-blue-500" sub={`${data.stats.activeAssets} ${t('common:status.active')}`} />
+        <StatCard label={t('dashboard:stats.highCritical')} value={data.stats.highRisk} icon={ShieldAlert} color={data.stats.highRisk > 0 ? 'bg-red-500' : 'bg-gray-400 dark:bg-slate-800'} warn={data.stats.highRisk > 0} />
+        <StatCard label={t('dashboard:stats.overdueReviews')} value={data.stats.overdueReminders} icon={AlertTriangle} color={data.stats.overdueReminders > 0 ? 'bg-red-500' : 'bg-gray-400 dark:bg-slate-800'} warn={data.stats.overdueReminders > 0} />
+        <StatCard label={t('dashboard:stats.reviewsIn30Days')} value={data.stats.upcomingReminders} icon={Clock} color="bg-yellow-500" />
+        <StatCard label={t('dashboard:stats.compliance')} value={`${data.stats.compliancePct}%`} icon={CheckCircle} color={data.stats.compliancePct >= 80 ? 'bg-green-500' : data.stats.compliancePct >= 50 ? 'bg-yellow-500' : 'bg-orange-500'} sub={t('dashboard:stats.frameworkCoverage')} />
+        <StatCard label={t('dashboard:stats.assessed')} value={`${totalRisk} / ${data.stats.totalAssets}`} icon={TrendingUp} color="bg-purple-500" sub={t('dashboard:stats.assetsAssessed', { total: data.stats.totalAssets })} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><div className="flex items-center gap-2"><BarChart3 size={16} className="text-blue-600 dark:text-blue-400" /><h2 className="font-semibold dark:text-white">Risikoverteilung</h2></div></CardHeader>
+          <CardHeader><div className="flex items-center gap-2"><BarChart3 size={16} className="text-blue-600 dark:text-blue-400" /><h2 className="font-semibold dark:text-white">{t('dashboard:sections.riskDistribution')}</h2></div></CardHeader>
           <CardBody className="space-y-3">
             {totalRisk === 0 ? (
               <div className="text-center py-6">
                 <ShieldAlert size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">Noch keine Risikobewertungen</p>
-                <Link to="/assessments" className="text-xs text-blue-500 hover:underline mt-1 inline-block">Erste Bewertung starten →</Link>
+                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noRiskAssessments')}</p>
+                <Link to="/assessments" className="text-xs text-blue-500 hover:underline mt-1 inline-block">{t('dashboard:sections.startAssessment')}</Link>
               </div>
             ) :
               (['critical', 'high', 'medium', 'low'] as RiskLevel[]).map(level => {
@@ -176,13 +186,13 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card>
-          <CardHeader><div className="flex items-center gap-2"><Server size={16} className="text-indigo-600 dark:text-indigo-400" /><h2 className="font-semibold dark:text-white">Nach Klassifizierung</h2></div></CardHeader>
+          <CardHeader><div className="flex items-center gap-2"><Server size={16} className="text-indigo-600 dark:text-indigo-400" /><h2 className="font-semibold dark:text-white">{t('dashboard:sections.byClassification')}</h2></div></CardHeader>
           <CardBody className="space-y-3">
             {data.stats.activeAssets === 0 ? (
               <div className="text-center py-6">
                 <Server size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">Noch keine aktiven Assets</p>
-                <Link to="/assets" className="text-xs text-blue-500 hover:underline mt-1 inline-block">Asset anlegen →</Link>
+                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noActiveAssets')}</p>
+                <Link to="/assets" className="text-xs text-blue-500 hover:underline mt-1 inline-block">{t('dashboard:sections.createAsset')}</Link>
               </div>
             ) :
               (['secret', 'confidential', 'internal', 'public'] as Classification[]).map(cls => {
@@ -197,16 +207,16 @@ export const Dashboard: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2"><Clock size={16} className="text-orange-500 dark:text-orange-400" /><h2 className="font-semibold dark:text-white">Anstehende Reviews (nächste 30 Tage)</h2></div>
-            <Link to="/reminders" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 transition-colors">Alle <ChevronRight size={12} /></Link>
+            <div className="flex items-center gap-2"><Clock size={16} className="text-orange-500 dark:text-orange-400" /><h2 className="font-semibold dark:text-white">{t('dashboard:sections.upcomingReviews')}</h2></div>
+            <Link to="/reminders" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 transition-colors">{t('dashboard:sections.all')} <ChevronRight size={12} /></Link>
           </div>
         </CardHeader>
         <CardBody className="p-0">
           {data.upcomingReminders.length === 0 ? (
             <div className="text-center py-8">
               <Clock size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-              <p className="text-sm text-gray-400 dark:text-slate-500">Keine Reviews in den nächsten 30 Tagen</p>
-              <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">Reviews werden automatisch nach der Erstbewertung geplant.</p>
+              <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noReviews')}</p>
+              <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">{t('dashboard:sections.reviewsScheduled')}</p>
             </div>
           ) :
             <div className="divide-y divide-gray-100 dark:divide-slate-800/50">
@@ -221,7 +231,7 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <Badge value={r.Asset?.classification || ''} label={classLabels[r.Asset?.classification as Classification]} />
-                    <span className="text-sm text-gray-600 dark:text-slate-400 font-mono">{format(new Date(r.due_date), 'dd.MM.yyyy', { locale: de })}</span>
+                    <span className="text-sm text-gray-600 dark:text-slate-400 font-mono">{format(new Date(r.due_date), 'P', { locale: dateFnsLocale })}</span>
                     <ChevronRight size={16} className="text-gray-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
                   </div>
                 </Link>
@@ -234,34 +244,34 @@ export const Dashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2"><CheckCircle size={16} className="text-green-600 dark:text-green-400" /><h2 className="font-semibold dark:text-white">Compliance Frameworks</h2></div>
-              <Link to="/compliance" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 transition-colors">Details <ChevronRight size={12} /></Link>
+              <div className="flex items-center gap-2"><CheckCircle size={16} className="text-green-600 dark:text-green-400" /><h2 className="font-semibold dark:text-white">{t('dashboard:sections.complianceFrameworks')}</h2></div>
+              <Link to="/compliance" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 transition-colors">{t('dashboard:sections.details')} <ChevronRight size={12} /></Link>
             </div>
           </CardHeader>
           <CardBody className="space-y-4">
             {data.frameworkCoverage.total === 0 ? (
               <div className="text-center py-6">
                 <CheckCircle size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">Noch keine Assets mit Framework-Zuordnung</p>
-                <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">Weisen Sie Assets den Frameworks ISO 27001, NIS-2 oder DSGVO zu.</p>
+                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noFrameworkAssets')}</p>
+                <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">{t('dashboard:sections.assignFrameworks')}</p>
               </div>
             ) : <>
               <FwBar label="ISO 27001" count={data.frameworkCoverage.iso27001} total={data.frameworkCoverage.total} color="bg-blue-500" />
               <FwBar label="NIS-2" count={data.frameworkCoverage.nis2} total={data.frameworkCoverage.total} color="bg-purple-500" />
               <FwBar label="DSGVO / GDPR" count={data.frameworkCoverage.gdpr} total={data.frameworkCoverage.total} color="bg-green-500" />
-              <p className="text-xs text-gray-400 dark:text-slate-500 pt-1 border-t border-gray-100 dark:border-slate-800 transition-colors">Mindestens ein Framework: {data.stats.compliancePct}% der aktiven Assets</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 pt-1 border-t border-gray-100 dark:border-slate-800 transition-colors">{`${t('dashboard:sections.minOneFramework')} ${data.stats.compliancePct}%`}</p>
             </>}
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader><div className="flex items-center gap-2"><Activity size={16} className="text-gray-500 dark:text-slate-400" /><h2 className="font-semibold dark:text-white">Letzte Aktivitäten</h2></div></CardHeader>
+          <CardHeader><div className="flex items-center gap-2"><Activity size={16} className="text-gray-500 dark:text-slate-400" /><h2 className="font-semibold dark:text-white">{t('dashboard:sections.recentActivity')}</h2></div></CardHeader>
           <CardBody className="p-0">
             {data.recentActivity.length === 0 ? (
               <div className="text-center py-8">
                 <Activity size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">Noch keine Aktivitäten</p>
-                <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">Alle Änderungen werden hier protokolliert.</p>
+                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noActivity')}</p>
+                <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">{t('dashboard:sections.allChangesLogged')}</p>
               </div>
             ) :
               <div className="divide-y divide-gray-50 dark:divide-slate-800/50">
@@ -270,11 +280,14 @@ export const Dashboard: React.FC = () => {
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm leading-snug dark:text-slate-300">
-                        <span className="font-medium dark:text-white">{log.actor_name}</span>
-                        {log.entity_name && <> hat <span className="text-blue-700 dark:text-blue-400">„{log.entity_name}"</span></>}
-                        {' '}{entityLabels[log.entity_type] && <span className="text-gray-400 dark:text-slate-500">({entityLabels[log.entity_type]})</span>} {actionLabels[log.action] || log.action}
+                        {t('dashboard:sections.activityText', {
+                          actor: log.actor_name,
+                          action: t(`common:auditActions.${log.action}`, log.action),
+                          name: log.entity_name || '',
+                          type: log.entity_type ? t(`dashboard:entityLabels.${log.entity_type}`, log.entity_type) : '',
+                        })}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: de })}</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: dateFnsLocale })}</p>
                     </div>
                   </div>
                 ))}
