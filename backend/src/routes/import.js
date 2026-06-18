@@ -172,7 +172,9 @@ const readRows = async (file) => {
     const headers = lines[0].split(sep).map(h => safeHeader(h.replace(/^"|"$/g, '').trim()));
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(sep).map(v => v.replace(/^"|"$/g, '').trim());
-      const row = Object.create(null);
+      const row = Object.create(null); // null prototype — no inherited properties to shadow
+      // codeql[js/remote-property-injection] — row has no prototype (Object.create(null));
+      // safeHeader() above already strips __proto__/constructor/prototype keys.
       headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
       rows.push(row);
     }
@@ -184,7 +186,8 @@ const readRows = async (file) => {
     if (sheet.length === 0) return [];
     const headers = sheet[0].map(h => safeHeader(cellText(h)));
     for (let i = 1; i < sheet.length; i++) {
-      const dataRow = Object.create(null);
+      const dataRow = Object.create(null); // null prototype — no inherited properties to shadow
+      // codeql[js/remote-property-injection] — same guarantee as the CSV path above.
       headers.forEach((h, idx) => { dataRow[h] = cellText(sheet[i][idx]); });
       rows.push(dataRow);
     }
