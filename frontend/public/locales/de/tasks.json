@@ -4,6 +4,7 @@
   "subtitle_other": "{{count}} Aufgaben insgesamt",
   "new": "Neue Aufgabe",
   "searchPlaceholder": "Aufgabe suchen...",
+  "selectTask": "Auswählen",
   "status": {
     "open":        "Offen",
     "in_progress": "In Bearbeitung",
@@ -31,7 +32,8 @@
     "allTypes":      "Alle Typen",
     "myTasks":       "Meine Aufgaben",
     "next4Weeks":    "Nächste 4 Wochen",
-    "allFuture":     "Alle (inkl. Zukunft)"
+    "allFuture":     "Alle (inkl. Zukunft)",
+    "showAllHint":   "Standardmäßig werden nur Aufgaben der nächsten 4 Wochen angezeigt"
   },
   "stats": {
     "open":       "Offen",
@@ -53,9 +55,12 @@
     "noGroup":                "Keine Gruppe",
     "assignPerson":           "Einzelperson zuweisen",
     "unassigned":             "Nicht zugewiesen",
+    "members":                "Mitglieder",
     "groupNotice":            "Alle Gruppenmitglieder erhalten eine Benachrichtigung. Wer zuerst erledigt, schließt die Aufgabe für alle ab.",
     "editTitle":              "Aufgabe bearbeiten",
-    "newTitle":               "Neue Aufgabe"
+    "newTitle":               "Neue Aufgabe",
+    "save":                   "Speichern",
+    "saving":                 "Speichern..."
   },
   "bulk": {
     "selected_one":   "{{count}} Aufgabe ausgewählt",

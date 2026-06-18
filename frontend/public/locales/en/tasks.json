@@ -4,6 +4,7 @@
   "subtitle_other": "{{count}} tasks total",
   "new": "New Task",
   "searchPlaceholder": "Search tasks...",
+  "selectTask": "Select",
   "status": {
     "open":        "Open",
     "in_progress": "In Progress",
@@ -31,7 +32,8 @@
     "allTypes":      "All Types",
     "myTasks":       "My Tasks",
     "next4Weeks":    "Next 4 Weeks",
-    "allFuture":     "All (incl. future)"
+    "allFuture":     "All (incl. future)",
+    "showAllHint":   "By default only tasks within the next 4 weeks are shown"
   },
   "stats": {
     "open":       "Open",
@@ -53,9 +55,12 @@
     "noGroup":                "No group",
     "assignPerson":           "Assign to person",
     "unassigned":             "Unassigned",
+    "members":                "members",
     "groupNotice":            "All group members will be notified. Whoever completes it first closes the task for all.",
     "editTitle":              "Edit Task",
-    "newTitle":               "New Task"
+    "newTitle":               "New Task",
+    "save":                   "Save",
+    "saving":                 "Saving..."
   },
   "bulk": {
     "selected_one":   "{{count}} task selected",
