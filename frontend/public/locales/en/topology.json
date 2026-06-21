@@ -1,0 +1,43 @@
+{
+  "title": "Asset Topology",
+  "subtitle": "Overview of all assets and their dependencies (parent/child)",
+  "loadingLabel": "Loading topology",
+  "typeFilter": "Filter by asset type",
+  "allTypes": "All Types",
+  "directionGroup": "Diagram orientation",
+  "horizontal": "Horizontal view",
+  "vertical": "Vertical view",
+  "types": {
+    "hardware": "Hardware",
+    "software": "Software",
+    "information": "Information/Data",
+    "process": "Process",
+    "service": "Service",
+    "personal": "Personnel",
+    "application": "Application",
+    "data": "Data",
+    "ai_application": "AI Application (AI Act)",
+    "ai_agent": "AI Agent",
+    "other": "Other"
+  },
+  "stats": {
+    "assets": "Assets",
+    "roots": "Root Systems",
+    "linked": "Linked",
+    "isolated": "Isolated"
+  },
+  "graph": {
+    "title": "Dependency Graph",
+    "legend": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "unassessed": "Unassessed",
+      "ai": "AI Asset"
+    },
+    "tip": "Tip: Click a node to navigate to the asset.",
+    "noAssets": "No assets available.",
+    "noDependencies": "No dependencies recorded. Link assets using the \"Parent Asset\" field."
+  }
+}

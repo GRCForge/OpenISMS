@@ -1,0 +1,67 @@
+{
+  "title": "Gesetzliches Pflichten-Register",
+  "subtitle": "Rechtliche Anforderungen an Datenschutz, Informationssicherheit und Compliance · {{count}} Einträge",
+  "new": "Pflicht erfassen",
+  "category": {
+    "data_protection": "Datenschutz",
+    "information_security": "Informationssicherheit",
+    "sector_specific": "Branchenspezifisch",
+    "labor_law": "Arbeitsrecht",
+    "commercial_law": "Handels-/Steuerrecht",
+    "other": "Sonstiges"
+  },
+  "status": {
+    "identified": "Identifiziert",
+    "assessed": "Bewertet",
+    "implemented": "Umgesetzt",
+    "obsolete": "Veraltet"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "identified": "Identifiziert",
+    "assessed": "Bewertet",
+    "implemented": "Umgesetzt"
+  },
+  "filters": {
+    "allCategories": "Alle Kategorien",
+    "allStatus": "Alle Status",
+    "searchPlaceholder": "Titel oder Beschreibung suchen..."
+  },
+  "table": {
+    "title": "Titel",
+    "category": "Kategorie",
+    "status": "Status",
+    "applicableSince": "Gilt ab",
+    "review": "Review",
+    "responsible": "Verantwortlich"
+  },
+  "empty": {
+    "noResults": "Keine Einträge gefunden",
+    "new": "Pflicht erfassen"
+  },
+  "modal": {
+    "editTitle": "Rechtliche Pflicht bearbeiten",
+    "newTitle": "Rechtliche Pflicht erfassen"
+  },
+  "form": {
+    "title": "Titel / Bezeichnung *",
+    "titlePlaceholder": "z. B. DSGVO Art. 30 – Verzeichnis von Verarbeitungstätigkeiten",
+    "category": "Kategorie",
+    "status": "Status",
+    "description": "Beschreibung / Anforderung",
+    "descriptionPlaceholder": "Was ist konkret gefordert? Welche Maßnahmen sind zu treffen?",
+    "referenceUrl": "Quellenlink / Gesetzestext URL",
+    "applicableSince": "Gilt ab (Datum)",
+    "reviewDate": "Nächste Überprüfung",
+    "owner": "Verantwortliche Person",
+    "ownerNone": "– niemand –",
+    "notes": "Notizen / Umsetzungsstand",
+    "cancel": "Abbrechen",
+    "save": "Aktualisieren",
+    "create": "Anlegen",
+    "saving": "Speichern..."
+  },
+  "toast": { "saveError": "Fehler beim Speichern", "error": "Fehler" },
+  "confirm": { "delete": "„{{title}}“ wirklich löschen?" },
+  "openSource": "Quelle öffnen"
+}
