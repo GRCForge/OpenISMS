@@ -112,7 +112,7 @@ router.get('/callback', async (req, res) => {
     let avatar_url = info.picture || claims.picture || null;
     if (!avatar_url && tokenSet.access_token) {
       try {
-        const photoRes = await fetch('https://graph.microsoft.com/v1.0/me/photos/48x48/$value', {
+        const photoRes = await fetch('https://graph.microsoft.com/v1.0/me/photos/240x240/$value', {
           headers: { Authorization: `Bearer ${tokenSet.access_token}` },
           signal: AbortSignal.timeout(4000),
         });
