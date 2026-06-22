@@ -1,60 +1,60 @@
 {
   "title": "NIS-2 · Art. 21 Sicherheitsmaßnahmen",
-  "subtitle": "Network and Information Security Directive 2 · {{count}} Maßnahmen",
+  "subtitle": "Netzwerk- und Informationssicherheitsrichtlinie 2 · {{count}} Maßnahmen",
   "status": {
-    "not_started": "Offen",
-    "in_progress": "In Umsetzung",
-    "implemented": "Umgesetzt",
+    "not_started": "Öffnen",
+    "in_progress": "In Bearbeitung",
+    "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
   },
   "stats": {
     "total": "Gesamt",
-    "implemented": "Umgesetzt",
-    "inProgress": "In Umsetzung",
-    "open": "Offen"
+    "implemented": "Implementiert",
+    "inProgress": "In Bearbeitung",
+    "open": "Öffnen"
   },
   "entity": {
     "essential": {
-      "title": "Wesentliche Einrichtungen (Anhang I)",
-      "description": "Energie, Transport, Bankwesen, Finanzmarktinfrastruktur, Gesundheitswesen, Trinkwasser, Abwasser, digitale Infrastruktur, IKT-Dienstleistungen, Weltraum, öffentliche Verwaltung."
+      "title": "Wesentliche Entitäten (Anhang I)",
+      "description": "Energie, Transport, Banken, Finanzmarktinfrastruktur, Gesundheit, Trinkwasser, digitale Infrastruktur, IKT-Dienstleistungen, Raum, öffentliche Verwaltung."
     },
     "important": {
-      "title": "Wichtige Einrichtungen (Anhang II)",
-      "description": "Post- und Kurierdienste, Abfallwirtschaft, Chemie, Lebensmittel, verarbeitendes Gewerbe, digitale Dienste, Forschung. Alle Art.-21-Maßnahmen gelten für beide Kategorien."
+      "title": "Wichtige Entitäten (Anhang II)",
+      "description": "Post- und Kurierdienstleistungen, Abfallbewirtschaftung, Chemikalien, Lebensmittel, Herstellung, digitale Dienstleistungen, Forschung. Alle Maßnahmen gemäß Artikel 21 gelten für beide Kategorien."
     }
   },
   "filter": {
-    "searchPlaceholder": "Artikel-Referenz, Titel oder Kategorie suchen...",
+    "searchPlaceholder": "Artikelreferenz, Titel oder Kategorie...",
     "allStatus": "Alle Status",
     "allCategories": "Alle Kategorien"
   },
   "table": {
     "article": "Artikel",
-    "measure": "Maßnahme",
+    "measure": "Messen",
     "status": "Status",
-    "deadline": "Frist",
+    "deadline": "Deadline",
     "lastReview": "Letzte Prüfung",
-    "measureCount": "{{count}} Maßnahmen"
+    "measureCount": "{{count}} Messungen"
   },
   "description": {
     "show": "Beschreibung anzeigen",
     "hide": "Beschreibung ausblenden",
-    "evidence": "Nachweis: "
+    "evidence": "Beweise: "
   },
   "empty": {
-    "title": "Noch keine NIS-2-Maßnahmen vorhanden",
-    "description": "Lade den integrierten NIS-2-Katalog (Art. 21), um mit der Umsetzungsverfolgung zu starten.",
-    "loadButton": "NIS-2-Katalog laden",
-    "loading": "Lade Katalog..."
+    "title": "Noch keine NIS-2-Maßnahmen",
+    "description": "Laden Sie den integrierten NIS-2-Katalog (Art. 21), um mit der Umsetzung und Nachverfolgung zu beginnen.",
+    "loadButton": "NIS-2 Katalog laden",
+    "loading": "Katalog wird geladen..."
   },
-  "filterEmpty": "Keine Maßnahmen entsprechen den Filterkriterien.",
+  "filterEmpty": "Keine Messungen entsprechen den Filterkriterien.",
   "modal": {
-    "status": "Umsetzungsstatus",
+    "status": "Implementierungsstatus",
     "responsible": "Verantwortliche Person",
     "nobody": "– niemand –",
-    "evidence": "Nachweis / Evidence",
-    "evidencePlaceholder": "Referenz auf Dokumente, Richtlinien oder Maßnahmen",
-    "deadline": "Frist (Deadline)",
+    "evidence": "Beweise",
+    "evidencePlaceholder": "Verweis auf Dokumente, Richtlinien oder Maßnahmen",
+    "deadline": "Deadline",
     "lastReview": "Letzte Prüfung",
     "notes": "Notizen",
     "cancel": "Abbrechen",

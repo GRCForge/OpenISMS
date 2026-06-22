@@ -1,9 +1,371 @@
 {
   "title": "Administration",
   "sections": {
-    "users":   "Benutzerverwaltung",
+    "users": "Benutzerverwaltung",
     "modules": "Modulkonfiguration",
-    "system":  "Systemeinstellungen",
-    "audit":   "Audit-Log"
+    "system": "Systemeinstellungen",
+    "audit": "Audit-Log"
+  },
+  "subtitle": "Benutzer, Protokollierung und Systemkonfiguration",
+  "save": "Speichern",
+  "save_saving": "Speichern…",
+  "save_failed": "Speichern fehlgeschlagen.",
+  "ok": "OK",
+  "cancel": "Abbrechen",
+  "tabs": {
+    "users": "Benutzer",
+    "groups": "Gruppen",
+    "modules": "Module",
+    "audit": "Audit Log",
+    "security": "Sicherheit & SSO",
+    "smtp": "E-Mail / SMTP",
+    "settings": "Allgemein",
+    "rbac": "Rollen & Rechte",
+    "api": "API Dokumentation",
+    "backup": "Backup & Restore"
+  },
+  "smtp": {
+    "title": "E-Mail / SMTP-Konfiguration",
+    "description": "Für den Versand von Benachrichtigungen und Erinnerungen per E-Mail muss ein SMTP-Server konfiguriert werden.",
+    "host": "SMTP-Host",
+    "port": "Port",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "from": "Absender (\"Von\"-Adresse)",
+    "use_secure": "SSL/TLS verwenden (Port 465) — deaktiviert für STARTTLS (Port 587)",
+    "testing": "Teste…",
+    "test_connection": "Verbindung testen",
+    "test_success": "Verbindung erfolgreich — SMTP-Server erreichbar.",
+    "test_failed": "Verbindungstest fehlgeschlagen.",
+    "send_test_email": "Test-E-Mail senden",
+    "sending": "Sende…",
+    "send": "Senden",
+    "test_email_sent": "Test-E-Mail an {{to}} gesendet.",
+    "send_failed": "Senden fehlgeschlagen.",
+    "send_test_help": "Sendet eine Test-E-Mail mit der aktuellen Konfiguration. Speichern Sie zuerst die Einstellungen."
+  },
+  "oidc": {
+    "title": "Single Sign-On (OIDC)",
+    "enable": "SSO aktivieren (zeigt den Anmelde-Button auf der Login-Seite)",
+    "display_name": "Anzeigename (Button-Text)",
+    "display_name_placeholder": "z. B. Mit Authentik anmelden",
+    "issuer_url": "Issuer-URL (Discovery)",
+    "client_id": "Client-ID",
+    "client_secret": "Client-Secret",
+    "client_secret_set": " (gesetzt)",
+    "client_secret_placeholder": "•••••••• (unverändert lassen)",
+    "scopes": "Scopes",
+    "redirect_uri_help": "Redirect-URI (im Identity-Provider hinterlegen):",
+    "copy": "Kopieren",
+    "save_success": "Konfiguration gespeichert.",
+    "discovery_success": "Discovery erfolgreich: {{issuer}}",
+    "discovery_failed": "Discovery fehlgeschlagen."
+  },
+  "general": {
+    "title": "Allgemeine Einstellungen",
+    "app_name": "Anwendungsname",
+    "review_interval": "Standard-Review-Intervall (Monate)",
+    "sso_default_role": "Standard-Rolle für neue SSO-Nutzer",
+    "sso_autoprovision": "Neue SSO-Nutzer automatisch anlegen (Auto-Provisioning)",
+    "saved": " Gespeichert"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "assessor": "Bewerter",
+    "it-staff": "IT-Mitarbeiter",
+    "dpo": "Datenschutzbeauftragter",
+    "owner": "Asset Owner",
+    "viewer": "Betrachter (Viewer)",
+    "admin_short": "Admin",
+    "assessor_short": "Assessor",
+    "it-staff_short": "IT-Staff",
+    "dpo_short": "DPO",
+    "owner_short": "Owner",
+    "management_short": "Management",
+    "viewer_short": "Viewer"
+  },
+  "security": {
+    "purge_confirm": "Audit-Log-Einträge jenseits der Aufbewahrungsfrist jetzt löschen? Dieser Vorgang ist nicht umkehrbar.",
+    "password_policy_title": "Passwortrichtlinie (lokale Benutzer)",
+    "min_length": "Mindestlänge",
+    "req_uppercase": "Mindestens ein Großbuchstabe erforderlich",
+    "req_number": "Mindestens eine Ziffer erforderlich",
+    "req_special": "Mindestens ein Sonderzeichen erforderlich",
+    "brute_force_title": "Brute-Force-Schutz (Lokale Logins)",
+    "max_attempts": "Maximale Anmeldeversuche",
+    "lockout_minutes": "Sperrdauer (Minuten)",
+    "brute_force_help": "Sperrt den Account nach der definierten Anzahl fehlgeschlagener Anmeldeversuche für die angegebene Zeit.",
+    "audit_retention_title": "Audit-Log Aufbewahrung & Wartung",
+    "retention_period": "Aufbewahrungsdauer (Monate)",
+    "retention_help": "ISO 27001 empfiehlt mindestens 12 Monate. Standard: 15 Monate (1 Jahr + 3 Monate Puffer).",
+    "cleanup_help": "Die automatische Bereinigung läuft täglich um 02:00 Uhr. Ältere Einträge werden permanent gelöscht.",
+    "save_retention": "Aufbewahrung speichern",
+    "purging": "Bereinige…",
+    "purge_now": "Jetzt bereinigen",
+    "purge_result": "{{count}} Einträge gelöscht (älter als {{date}})"
+  },
+  "custom_roles": {
+    "title": "Benutzerdefinierte Rollen",
+    "description": "Definiere eigene Rollennamen, die du Benutzern in der Benutzerverwaltung direkt zuweisen oder für OIDC-Gruppen-Mapping nutzen kannst. Jede Rolle erbt die Rechte einer Basisrolle.",
+    "no_roles": "Noch keine benutzerdefinierten Rollen vorhanden.",
+    "name_header": "Name",
+    "base_role_header": "Basisrolle",
+    "description_header": "Beschreibung",
+    "description_placeholder": "Beschreibung (optional)",
+    "delete_confirm": "Benutzerdefinierte Rolle löschen?",
+    "users_count": "({{count}} Benutzer)",
+    "add_title": "Neue Rolle hinzufügen",
+    "name_placeholder": "Name (z.B. Cloud-Admin)",
+    "add_btn": "Rolle hinzufügen",
+    "saved": "Gespeichert.",
+    "error": "Fehler"
+  },
+  "oidc_mappings": {
+    "title": "OIDC Claim-Mappings",
+    "description": "Bei SSO-Anmeldung werden OIDC-Claims (z.B. groups, roles) gegen diese Mappings geprüft. Der erste Treffer (höchste Priorität) setzt die Rolle des Nutzers.",
+    "no_mappings": "Keine Mappings konfiguriert — SSO-Nutzer erhalten die Standard-SSO-Rolle.",
+    "claim_path": "Claim-Pfad",
+    "claim_value": "Claim-Wert",
+    "role": "→ Rolle",
+    "prio": "Prio",
+    "new_mapping": "Neues Mapping",
+    "claim_path_label": "Claim-Pfad (z.B. groups, roles, realm_access.roles)",
+    "use_custom_role": "Benutzerdefinierte Rolle verwenden",
+    "custom_role_label": "Benutzerdefinierte Rolle",
+    "select_placeholder": "— Auswählen —",
+    "standard_role_label": "Standardrolle",
+    "priority_label": "Priorität (höher = bevorzugt)",
+    "add_btn": "Mapping hinzufügen",
+    "adding": "Hinzufügen…",
+    "added": "Mapping hinzugefügt.",
+    "delete_confirm": "Mapping löschen?"
+  },
+  "rbac": {
+    "title": "Berechtigungen anpassen",
+    "saved": "Gespeichert",
+    "reset": "Zurücksetzen",
+    "reset_confirm": "Alle Berechtigungen auf Standard zurücksetzen?",
+    "select_role_label": "Systemrolle auswählen:",
+    "admin_role_title": "Administrator-Rolle",
+    "admin_role_help": "Administratoren besitzen systemweit vollen Zugriff. Die Berechtigungen können für diese Rolle nicht eingeschränkt werden."
+  },
+  "api_docs": {
+    "title": "REST API Dokumentation",
+    "auth_title": "Authentifizierung",
+    "auth_help": "Alle geschützten API-Endpunkte erfordern einen Bearer-JWT-Token:",
+    "token_help_before": "Token via",
+    "token_help_after": "abrufen.",
+    "interactive_title": "Interaktive API-Dokumentation",
+    "interactive_desc": "Swagger UI mit Try-It-Out – direkt gegen diese Instanz testbar.",
+    "open_swagger": "Swagger UI öffnen",
+    "spec_title": "OpenAPI 3.0 Spec (JSON)",
+    "spec_desc": "Maschinenlesbare Spezifikation für Code-Generierung oder Postman-Import.",
+    "spec_download": "Spezifikation herunterladen",
+    "cat": {
+      "auth": "Authentifizierung",
+      "auth_desc": "Login, JWT",
+      "assets": "Assets",
+      "assets_desc": "CRUD, Dokumente",
+      "risks": "Risiken",
+      "risks_desc": "Risikoregister",
+      "incidents": "Vorfälle",
+      "incidents_desc": "Incident Management",
+      "assessments": "Bewertungen",
+      "assessments_desc": "CIA / SBF",
+      "controls": "Maßnahmen",
+      "controls_desc": "Controls & SoA",
+      "policies": "Richtlinien",
+      "policies_desc": "Policy-Bibliothek",
+      "users": "Benutzer",
+      "users_desc": "User Management",
+      "admin": "Administration",
+      "admin_desc": "Einstellungen, RBAC",
+      "import": "Import",
+      "import_desc": "CSV-Massenimport"
+    }
+  },
+  "backup": {
+    "export_failed": "Export fehlgeschlagen.",
+    "export_success": "Backup erfolgreich heruntergeladen.",
+    "restore_success": "Wiederherstellung erfolgreich: {{tables}} Tabellen, {{files}} Dateien.",
+    "restore_failed": "Fehler: {{error}}",
+    "create_title": "Backup erstellen",
+    "create_desc": "Exportiert die vollständige Datenbank und alle hochgeladenen Dateien als ZIP-Archiv. Enthält alle Tabellen inkl. Junction-Tables, Benutzer, Assets, Risiken, Vorfälle, Richtlinien, Einstellungen und Uploads.",
+    "loading_stats": "Lade Datenbankstatistik…",
+    "total_records": "Datensätze gesamt",
+    "tables": "Tabellen",
+    "upload_size": "Upload-Größe",
+    "exporting": "Exportiere…",
+    "download_btn": "Backup jetzt herunterladen",
+    "zip_help": "ZIP-Archiv mit database.json + uploads/",
+    "restore_title": "Backup wiederherstellen",
+    "destructive": "Destruktiv",
+    "restore_warning_before": "Die Wiederherstellung",
+    "restore_warning_bold": "überschreibt alle aktuellen Daten",
+    "restore_warning_after": "vollständig. Dieser Vorgang kann nicht rückgängig gemacht werden. Erstellen Sie vorher ein aktuelles Backup.",
+    "click_to_change": "Klicken zum Wechseln",
+    "drag_drop_help": "ZIP-Backup hierher ziehen oder klicken",
+    "zip_limits": "Nur .zip-Dateien · Max. 1 GB",
+    "details": "Backup-Details",
+    "version": "Version",
+    "created_at": "Erstellt am",
+    "preview_tables": "{{tables}} ({{rows}} Zeilen)",
+    "version_mismatch": "Versions-Unterschied: Backup stammt aus v{{backupVersion}}, aktuelle Installation ist v{{currentVersion}}. Prüfen Sie vor dem Wiederherstellen, ob die Datenbankschemas kompatibel sind.",
+    "selected": "Backup ausgewählt",
+    "proceed_warning": "Beim Fortfahren werden alle aktuellen Daten ersetzt.",
+    "restoring": "Wiederherstellung läuft…",
+    "restore_btn": "Wiederherstellen",
+    "confirm_modal": {
+      "title": "Datenverlust bestätigen",
+      "subtitle": "Diese Aktion kann nicht rückgängig gemacht werden.",
+      "warning": "Alle aktuellen Datenbankeinträge und Upload-Dateien werden dauerhaft gelöscht und durch das Backup ersetzt.",
+      "input_label": "Zur Bestätigung eingeben: ",
+      "submit_btn": "Jetzt wiederherstellen"
+    }
+  },
+  "modules": {
+    "assets": "Assets & Anwendungen",
+    "risks": "Risikoregister",
+    "incidents": "Vorfälle",
+    "assessments": "Bewertungen (SBF)",
+    "controls": "Maßnahmen & SoA",
+    "policies": "Richtlinien-Bibliothek",
+    "reminders": "Erinnerungen",
+    "vendors": "Dienstleister",
+    "import": "Import",
+    "reports": "Management-Reports",
+    "admin": "Administration"
+  },
+  "actions": {
+    "view": "Lesen",
+    "create": "Erstellen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "access": "Zugriff",
+    "edit_basics": "Stammdaten änd.",
+    "edit_compliance": "Compliance änd.",
+    "edit_security": "Security änd."
+  },
+  "modules_config": {
+    "dsgvo": {
+      "label": "DSGVO / Datenschutz",
+      "description": "Datenschutz-Grundverordnung — Verzeichnis der Verarbeitungstätigkeiten (Art. 30), Betroffenenrechte (Art. 15–22), DSFA-Workflow (Art. 35) und Datenflusskarte.",
+      "features": [
+        "Verarbeitungsverzeichnis (VVT, Art. 30)",
+        "Betroffenenrechte Art. 15–22",
+        "DSFA-Workflow (Art. 35)",
+        "Datenflusskarte"
+      ]
+    },
+    "tisax": {
+      "label": "TISAX",
+      "description": "Trusted Information Security Assessment Exchange — Anforderungen der Automobilindustrie (VDA ISA), Label-Tracking.",
+      "features": [
+        "Assessment-Tracking",
+        "Label-Status (AL2/AL3)",
+        "Auditplanung",
+        "Gültigkeitsüberwachung"
+      ]
+    },
+    "dora": {
+      "label": "DORA",
+      "description": "Digital Operational Resilience Act — IKT-Drittparteienregister, Kritikalitätsbewertung und SLA-Tracking nach EU 2022/2554.",
+      "features": [
+        "IKT-Drittparteienregister",
+        "Kritikalitätsbewertung",
+        "RTO/RPO-Tracking",
+        "Review-Fristen"
+      ]
+    },
+    "ai_act": {
+      "label": "EU AI Act",
+      "description": "KI-Register nach EU 2024/1689 — Risikoklassifikation (minimal/limited/high-risk/prohibited), Konformitätsstatus und technische Dokumentation.",
+      "features": [
+        "KI-Systemregister",
+        "Risikoklassifikation (Art. 5–7)",
+        "Konformitätsstatus",
+        "Technische Dokumentation"
+      ]
+    },
+    "bcm": {
+      "label": "BCM",
+      "description": "Business Continuity Management — Business Impact Analysis, Wiederanlaufzeiten (RTO/RPO), Recovery-Strategien und Übungsprotokoll.",
+      "features": [
+        "BIA-Prozessregister",
+        "RTO/RPO-Ziele",
+        "Recovery-Strategien",
+        "Übungsprotokoll"
+      ]
+    },
+    "pentest": {
+      "label": "Pentest-Tracking",
+      "description": "Verwaltung von Penetrationstests — Projekte, Findings mit Schweregrad (CVSS), Remediation-Status und Retest-Tracking.",
+      "features": [
+        "Projekt- & Scope-Verwaltung",
+        "Finding-Register mit CVSS",
+        "Remediation-Tracking",
+        "Retest-Status"
+      ]
+    },
+    "discovery": {
+      "label": "Network Discovery & CVE",
+      "description": "Netzwerk-Scanning, automatisches Asset-Discovery und CVE-Vulnerability-Matching (NVD, OSV.dev) für erkannte Assets.",
+      "features": [
+        "Netzwerk-Scan (Agent-basiert)",
+        "CVE-Matching per CPE/OSV",
+        "CVSS-Schweregrade",
+        "Automatisches Asset-Inventar"
+      ]
+    },
+    "iso27001": {
+      "label": "ISO 27001:2022",
+      "description": "Statement of Applicability (SoA) und Umsetzungsstatus aller 93 Annex-A-Controls nach ISO/IEC 27001:2022 — Organisatorisch, Personell, Physisch, Technologisch.",
+      "features": [
+        "93 Annex-A-Controls (4 Themes)",
+        "Statement of Applicability (SoA)",
+        "Umsetzungsstatus & Begründung",
+        "Gap-Analyse & Fortschrittsübersicht"
+      ]
+    },
+    "bsi_grundschutz": {
+      "label": "BSI IT-Grundschutz",
+      "description": "Anforderungsmanagement nach BSI IT-Grundschutz-Kompendium — Bausteine (ISMS, ORP, CON, OPS, DER, APP, SYS, NET, INF) mit Basis-, Standard- und Erhöhten-Anforderungen.",
+      "features": [
+        "Bausteine & Anforderungskatalog",
+        "Basis-, Standard- und Erhöhte Anforderungen",
+        "Umsetzungsstatus je Anforderung",
+        "Verantwortliche & Review-Fristen"
+      ]
+    },
+    "nis2": {
+      "label": "NIS-2 (EU 2022/2555)",
+      "description": "Sicherheitsmaßnahmen nach Art. 21 NIS-2-Richtlinie und Meldepflichten nach Art. 23 — für wesentliche und wichtige Einrichtungen nach EU 2022/2555.",
+      "features": [
+        "10 Mindestmaßnahmen (Art. 21)",
+        "Meldepflichten Art. 23 (24h/72h/1 Monat)",
+        "Entitätsklassifizierung (wesentlich/wichtig)",
+        "Umsetzungsnachweis & Fristen"
+      ]
+    },
+    "c5": {
+      "label": "BSI C5:2026",
+      "description": "BSI Cloud Computing Compliance Criteria Catalogue (C5:2026) — 174 Kriterien in 18 Domains für Cloud-Anbieter und deren Auftraggeber.",
+      "features": [
+        "174 Kriterien (C5:2026)",
+        "18 Domains (AM, IAM, OPS, CRY, DEV …)",
+        "Umsetzungsstatus & Nachweise",
+        "Gap-Analyse nach BSI-Testat-Vorbereitung"
+      ]
+    },
+    "mcp": {
+      "label": "Model Context Protocol (MCP)",
+      "description": "KI-Integration — Stellt einen Model Context Protocol (MCP) Server auf /mcp zur Verfügung, über den KI-Assistenten wie Claude Assets abfragen, Risiken verwalten und Sicherheitsvorfälle anlegen können.",
+      "features": [
+        "MCP Server Endpoint (/mcp)",
+        "KI-Interaktion (Claude, Cursor etc.)",
+        "Lese- & Schreib-Tools",
+        "API-Token / MCP_SECRET Auth"
+      ]
+    }
   }
 }

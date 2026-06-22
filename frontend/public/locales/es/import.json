@@ -1,0 +1,51 @@
+{
+  "title": "Data Import",
+  "subtitle": "Import assets, users, vendors or risks",
+  "back": "Back",
+  "template": "Template (.csv)",
+  "steps": {
+    "upload": "Upload",
+    "mapping": "Mapping",
+    "result": "Result"
+  },
+  "step1": {
+    "whatToImport": "What do you want to import?",
+    "chooseFile": "Choose a CSV or Excel file",
+    "dropHint": "Click or drag & drop here",
+    "fileSizeKb": "{{size}} KB",
+    "analyzing": "Analysing file...",
+    "analyze": "Analyse file"
+  },
+  "entityTypes": {
+    "asset": "Assets (Inventory)",
+    "user": "Users (Employees)",
+    "vendor": "Vendors (Companies)",
+    "risk": "Risks (Register)",
+    "vendor_contact": "Companies + Contacts (Outlook)"
+  },
+  "step2": {
+    "previewTitle": "Preview (first 5 rows)",
+    "mappingTitle": "Field Mapping",
+    "mappingHint": "Map the columns from your file to the ISMS fields.",
+    "notImport": "-- Do not import --",
+    "summaryTitle": "Summary",
+    "file": "File:",
+    "rows": "Rows:",
+    "importType": "Import type:",
+    "importButton": "Import {{count}} records",
+    "importing": "Importing..."
+  },
+  "step3": {
+    "done": "Import complete",
+    "doneSubtitle": "{{count}} records were created successfully.",
+    "errorCount": "{{count}} errors occurred:",
+    "rowError": "Row {{row}}:",
+    "startNew": "Start another import",
+    "backToOverview": "Back to overview"
+  },
+  "toast": {
+    "previewError": "Preview failed",
+    "importError": "Import failed",
+    "downloadError": "Error downloading template"
+  }
+}

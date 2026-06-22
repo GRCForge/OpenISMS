@@ -1,0 +1,123 @@
+{
+  "criticality": {
+    "critical": "Kritisch",
+    "important": "Wichtig",
+    "normal": "Normal"
+  },
+  "status": {
+    "documented": "Dokumentiert",
+    "tested": "Getestet",
+    "approved": "Genehmigt"
+  },
+  "exerciseType": {
+    "tabletop": "Tabletop-Übung",
+    "simulation": "Simulation",
+    "technical_recovery": "Technischer Wiederanlauf",
+    "full_failover": "Voll-Failover"
+  },
+  "exerciseResult": {
+    "pending": "Ausstehend",
+    "passed": "Bestanden",
+    "passed_with_findings": "Bestanden mit Findings",
+    "failed": "Nicht bestanden"
+  },
+  "errors": {
+    "saveError": "Fehler beim Speichern",
+    "generic": "Fehler"
+  },
+  "confirm": {
+    "deleteProcess": "„{{name}}\" wirklich löschen?",
+    "deleteExercise": "„{{title}}\" wirklich löschen?"
+  },
+  "title": {
+    "processes": "BCM – Prozessregister",
+    "exercises": "BCM – Übungsprotokoll"
+  },
+  "subtitle": {
+    "processes": "Business Continuity Management – kritische Geschäftsprozesse und Wiederanlaufstrategien · {{count}} Einträge",
+    "exercises": "Notfall- und Wiederanlaufübungen · {{count}} Einträge"
+  },
+  "button": {
+    "addProcess": "Prozess erfassen",
+    "addExercise": "Übung erfassen",
+    "cancel": "Abbrechen",
+    "saving": "Speichern...",
+    "update": "Aktualisieren",
+    "create": "Anlegen"
+  },
+  "tab": {
+    "processes": "Prozesse (BIA)",
+    "exercises": "Übungsprotokoll"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "critical": "Kritische Prozesse",
+    "testOverdue": "Test überfällig",
+    "approved": "Genehmigt",
+    "exercisesTotal": "Übungen gesamt",
+    "passed": "Bestanden",
+    "withFindings": "Mit Findings",
+    "failed": "Nicht bestanden"
+  },
+  "filter": {
+    "searchPlaceholder": "Prozess oder Wiederanlaufstrategie suchen...",
+    "allCriticalities": "Alle Kritikalitäten",
+    "allStatus": "Alle Status"
+  },
+  "table": {
+    "process": "Prozess",
+    "criticality": "Kritikalität",
+    "rto_rpo": "RTO / RPO",
+    "status": "Status",
+    "owner": "Verantwortlich",
+    "nextTest": "Nächster Test",
+    "title": "Titel",
+    "exerciseType": "Übungsart",
+    "date": "Datum",
+    "result": "Ergebnis"
+  },
+  "noProcesses": "Keine BCM-Prozesse gefunden",
+  "noExercises": "Keine Übungen gefunden",
+  "modal": {
+    "editExercise": "Übung bearbeiten",
+    "addExercise": "Übung erfassen",
+    "editProcess": "BCM-Prozess bearbeiten",
+    "addProcess": "BCM-Prozess erfassen"
+  },
+  "form": {
+    "titleRequired": "Titel *",
+    "titlePlaceholder": "z. B. Notfallübung Rechenzentrumsausfall",
+    "exerciseType": "Übungsart",
+    "process": "Prozess",
+    "noProcess": "— Kein Prozess —",
+    "exerciseDate": "Übungsdatum",
+    "result": "Ergebnis",
+    "participants": "Teilnehmer",
+    "participantsPlaceholder": "z. B. IT-Team, Notfallstab, Fachbereiche",
+    "findings": "Findings",
+    "findingsPlaceholder": "Festgestellte Schwachstellen und Auffälligkeiten",
+    "actions": "Maßnahmen",
+    "actionsPlaceholder": "Abgeleitete Verbesserungsmaßnahmen",
+    "notes": "Notizen",
+    "processNameRequired": "Prozessname *",
+    "processNamePlaceholder": "z. B. Auftragsabwicklung, IT-Notfallbetrieb",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Kurzbeschreibung des Geschäftsprozesses",
+    "criticality": "Kritikalität",
+    "status": "Status",
+    "rto": "RTO (Stunden)",
+    "rtoPlaceholder": "Recovery Time Objective in Stunden",
+    "rpo": "RPO (Stunden)",
+    "rpoPlaceholder": "Recovery Point Objective in Stunden",
+    "owner": "Verantwortliche Person",
+    "noOwner": "– niemand –",
+    "dependencies": "Abhängigkeiten",
+    "dependenciesPlaceholder": "Systeme, Ressourcen und Prozesse, von denen dieser Prozess abhängt",
+    "recoveryStrategy": "Wiederanlaufstrategie",
+    "recoveryStrategyPlaceholder": "Beschreibung der Notfall- und Wiederanlaufmaßnahmen",
+    "lastTest": "Letzter Test",
+    "nextTest": "Nächster Test"
+  },
+  "rtoFormat": "RTO {{count}}h",
+  "rpoFormat": "RPO {{count}}h"
+}

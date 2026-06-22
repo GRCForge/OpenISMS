@@ -92,6 +92,51 @@ router.get('/stats', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Count orphaned tasks (admin only) — safe preview before purge
+router.get('/orphaned-count', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    let total = 0;
+    for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
+      const activeTasks = await Task.findAll({
+        where: { related_type: relType, status: { [Op.notIn]: ['done', 'cancelled'] } },
+        attributes: ['id', 'related_id'],
+        raw: true,
+      });
+      if (!activeTasks.length) continue;
+      const ids = [...new Set(activeTasks.map(t => t.related_id))];
+      const existing = await model.findAll({ where: { id: { [Op.in]: ids }, ...where }, attributes: ['id'], raw: true });
+      const existingSet = new Set(existing.map(r => r.id));
+      total += activeTasks.filter(t => !existingSet.has(t.related_id)).length;
+    }
+    res.json({ count: total });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Purge orphaned tasks (admin only) — deletes tasks whose related object no longer exists
+router.delete('/orphaned', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    let purged = 0;
+    for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
+      const activeTasks = await Task.findAll({
+        where: { related_type: relType, status: { [Op.notIn]: ['done', 'cancelled'] } },
+        attributes: ['id', 'related_id'],
+        raw: true,
+      });
+      if (!activeTasks.length) continue;
+      const ids = [...new Set(activeTasks.map(t => t.related_id))];
+      const existing = await model.findAll({ where: { id: { [Op.in]: ids }, ...where }, attributes: ['id'], raw: true });
+      const existingSet = new Set(existing.map(r => r.id));
+      const orphanIds = activeTasks.filter(t => !existingSet.has(t.related_id)).map(t => t.id);
+      if (orphanIds.length) {
+        await Task.destroy({ where: { id: { [Op.in]: orphanIds } } });
+        purged += orphanIds.length;
+      }
+    }
+    await auditFromReq(req, 'delete', 'task', null, 'Purge verwaister Aufgaben', { purged });
+    res.json({ purged });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Get single task (verify user has access)
 router.get('/:id', authenticate, async (req, res) => {
   try {
@@ -203,50 +248,7 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// Count orphaned tasks (admin only) — safe preview before purge
-router.get('/orphaned-count', authenticate, requireRole('admin'), async (req, res) => {
-  try {
-    let total = 0;
-    for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
-      const activeTasks = await Task.findAll({
-        where: { related_type: relType, status: { [Op.notIn]: ['done', 'cancelled'] } },
-        attributes: ['id', 'related_id'],
-        raw: true,
-      });
-      if (!activeTasks.length) continue;
-      const ids = [...new Set(activeTasks.map(t => t.related_id))];
-      const existing = await model.findAll({ where: { id: { [Op.in]: ids }, ...where }, attributes: ['id'], raw: true });
-      const existingSet = new Set(existing.map(r => r.id));
-      total += activeTasks.filter(t => !existingSet.has(t.related_id)).length;
-    }
-    res.json({ count: total });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
-// Purge orphaned tasks (admin only) — deletes tasks whose related object no longer exists
-router.delete('/orphaned', authenticate, requireRole('admin'), async (req, res) => {
-  try {
-    let purged = 0;
-    for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
-      const activeTasks = await Task.findAll({
-        where: { related_type: relType, status: { [Op.notIn]: ['done', 'cancelled'] } },
-        attributes: ['id', 'related_id'],
-        raw: true,
-      });
-      if (!activeTasks.length) continue;
-      const ids = [...new Set(activeTasks.map(t => t.related_id))];
-      const existing = await model.findAll({ where: { id: { [Op.in]: ids }, ...where }, attributes: ['id'], raw: true });
-      const existingSet = new Set(existing.map(r => r.id));
-      const orphanIds = activeTasks.filter(t => !existingSet.has(t.related_id)).map(t => t.id);
-      if (orphanIds.length) {
-        await Task.destroy({ where: { id: { [Op.in]: orphanIds } } });
-        purged += orphanIds.length;
-      }
-    }
-    await auditFromReq(req, 'delete', 'task', null, 'Purge verwaister Aufgaben', { purged });
-    res.json({ purged });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
 // Delete task
 router.delete('/:id', authenticate, requireWriteAccess(), async (req, res) => {

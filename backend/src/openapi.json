@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenISMS API",
     "description": "REST API für das Information Security Management System (OpenISMS).\n\n## Authentifizierung\nAlle geschützten Endpunkte erfordern einen **Bearer JWT-Token** im `Authorization`-Header:\n```\nAuthorization: Bearer <token>\n```\nDen Token erhalten Sie über `POST /api/auth/login`.\n\n## Rollen\n- `admin` – Vollzugriff\n- `assessor` – Risikobewerter / Auditor\n- `it-staff` – IT-Mitarbeiter (Security-Daten)\n- `dpo` – Datenschutzbeauftragter\n- `owner` – Asset-Verantwortlicher\n- `management` – Nur-Lesen (Management-Ebene)\n- `employee` – Schulungs-Tab, eigene Trainingsübersicht\n- `viewer` – Nur Lesezugriff\n\n**Custom Roles**: Eigene Rollennamen mit Basisrolle über `/api/admin/custom-roles` verwalten.",
-    "version": "2.2.8",
+    "version": "2.2.9",
     "contact": {
       "name": "ISMS Support"
     }

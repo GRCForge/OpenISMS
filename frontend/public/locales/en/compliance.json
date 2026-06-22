@@ -6,9 +6,9 @@
     "mandatory": "Mandatory",
     "optional": "Optional",
     "status": {
-      "valid":    "Valid",
-      "pending":  "Pending",
-      "expired":  "Expired"
+      "valid": "Valid",
+      "pending": "Pending",
+      "expired": "Expired"
     }
   },
   "kpis": {
@@ -19,27 +19,336 @@
     "title": "Audits",
     "new": "New Audit",
     "types": {
-      "internal":      "Internal",
-      "external":      "External",
+      "internal": "Internal",
+      "external": "External",
       "certification": "Certification"
     },
     "status": {
-      "planned":     "Planned",
+      "planned": "Planned",
       "in_progress": "In Progress",
-      "completed":   "Completed"
+      "completed": "Completed"
     }
   },
   "findings": {
     "severity": {
       "observation": "Observation",
-      "minor":       "Minor",
-      "major":       "Major",
-      "critical":    "Critical"
+      "minor": "Minor",
+      "major": "Major",
+      "critical": "Critical"
     },
     "status": {
-      "open":        "Open",
+      "open": "Open",
       "in_progress": "In Progress",
-      "closed":      "Closed"
+      "closed": "Closed"
     }
-  }
+  },
+  "yes": "Yes",
+  "nobody": "nobody",
+  "cancel": "Cancel",
+  "save": "Save",
+  "remove": "Remove",
+  "description": "Description",
+  "remarks": "Remarks",
+  "date": "Date",
+  "bis": "to",
+  "loadingCompliance": "Loading Compliance...",
+  "loadingError": "Error loading compliance data.",
+  "retry": "Try again",
+  "header": {
+    "title": "Compliance, KPIs & Audits",
+    "subtitle": "Standards coverage, continuous improvement, and training records"
+  },
+  "tabs": {
+    "frameworks": "Norm Scope (ISO/NIS2/GDPR)",
+    "kpis": "KPIs & Effectiveness",
+    "audits": "Audit & CAPA Modules",
+    "trainings": "Training Matrix"
+  },
+  "stats": {
+    "assetsInScope": "Assets in ISMS Scope",
+    "highRiskAssets": "High-Risk Assets",
+    "gdprGaps": "GDPR Gaps (missing VVT)"
+  },
+  "frameworkTabs": {
+    "mappings": "Cross References",
+    "gdpr": "GDPR (DSGVO)"
+  },
+  "iso27001": {
+    "assetsTitle": "ISO 27001 Assets",
+    "noAssets": "No assets found in scope.",
+    "infoText1": "The ISO/IEC 27001 standard defines the criteria for a robust Information Security Management System (ISMS).",
+    "infoText2": "All active assets of the organization are subject to risk assessments and require the definition of technical and organizational measures (TOMs)."
+  },
+  "nis2": {
+    "assetsTitle": "NIS-2 Relevant Assets",
+    "noAssets": "Currently no assets marked as NIS-2 relevant.",
+    "infoText1": "The NIS-2 directive serves to establish a high common level of cybersecurity across the European Union.",
+    "infoText2": "Operators of critical or important entities must take appropriate and proportionate security measures."
+  },
+  "gdpr": {
+    "gapTitle_one": "GDPR violation: 1 gap detected",
+    "gapTitle_other": "GDPR violation: {{count}} gaps detected",
+    "gapText": "The assets listed below process personal data but do not yet have a complete ROPA (VVT) entry. This is a legal requirement.",
+    "noGaps": "All assets processing personal data have a complete ROPA (VVT) entry. No GDPR gaps detected.",
+    "assetsTitle": "Assets with Personal Data Processing",
+    "noAssets": "No assets with personal data processing found.",
+    "infoText1": "The General Data Protection Regulation (GDPR) regulates the protection of personal data.",
+    "infoText2": "Any asset processing personal data must be documented with an entry in the Record of Processing Activities (ROPA/VVT)."
+  },
+  "frameworkInfo": {
+    "title": "Framework Info",
+    "openRisks": "Open Risk Management",
+    "securityControls": "Security Controls (TOMs)",
+    "manageIncidents": "Manage Incidents",
+    "manageVvt": "Manage ROPA (VVT)"
+  },
+  "riskLevels": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical",
+    "unrated": "Unrated"
+  },
+  "classLabels": {
+    "public": "Public",
+    "internal": "Internal",
+    "confidential": "Confidential",
+    "secret": "Secret"
+  },
+  "vvtLabels": {
+    "none": "Not recorded",
+    "pending": "In progress",
+    "complete": "Complete"
+  },
+  "dataCatLabels": {
+    "none": "No PD",
+    "normal": "Normal (Art. 6)",
+    "special": "Special (Art. 9)"
+  },
+  "actions": {
+    "details": "Details"
+  },
+  "kpiSection": {
+    "title": "Key Performance Indicators (KPIs)",
+    "defineBtn": "Define KPI",
+    "stats": {
+      "onTarget": "Target Met / Compliant",
+      "warning": "Warnings",
+      "critical": "Critical Deviations"
+    },
+    "status": {
+      "on_target": "Target met",
+      "warning": "Warning",
+      "critical": "Critical"
+    },
+    "noValues": "No values",
+    "logValueBtn": "Log value",
+    "noKpis": "No KPIs defined yet. Define metrics to evaluate the effectiveness of your controls."
+  },
+  "auditSection": {
+    "title": "Audits & Corrective Actions (CAPA)",
+    "planBtn": "Plan Audit",
+    "stats": {
+      "total": "Total Audits",
+      "openFindings": "Open Deviations (Findings)",
+      "resolvedFindings": "Resolved Findings (CAPA)"
+    },
+    "types": {
+      "certification": "Certification",
+      "external": "External Audit",
+      "internal": "Internal Audit"
+    },
+    "status": {
+      "completed": "Completed",
+      "in_progress": "In Progress",
+      "planned": "Planned"
+    },
+    "addFindingBtn": "Log Finding",
+    "docsBtn": "Documents",
+    "docsTitle": "Manage documents",
+    "externalReport": "External Report ↗",
+    "auditor": "Auditor: {{name}}",
+    "period": "Period:",
+    "severity": {
+      "major": "Major Non-Conformity",
+      "minor": "Minor Non-Conformity",
+      "observation": "Recommendation"
+    },
+    "findingStatus": {
+      "resolved": "Resolved",
+      "wont_fix": "Accepted",
+      "open": "Open"
+    },
+    "noTaskLinked": "No task linked",
+    "markResolvedBtn": "Mark as resolved",
+    "acceptBtn": "Accept",
+    "noFindings": "No findings recorded for this audit. Perfect!",
+    "noAudits": "No audits planned. Plan internal and external audits to secure the information security standard."
+  },
+  "trainingSection": {
+    "title": "Employee Training Matrix (Awareness & Training)",
+    "createBtn": "Create Training",
+    "stats": {
+      "completed": "Completed Records (Active)",
+      "pending": "Pending Assignments",
+      "expired": "Expired Records"
+    },
+    "catalogTitle": "Training Catalog",
+    "coursesCount_one": "1 Course",
+    "coursesCount_other": "{{count}} Courses",
+    "mandatory": "Mandatory",
+    "optional": "Optional",
+    "completedOfAssigned": "{{completed}} / {{assigned}} completed",
+    "editCourseTitle": "Edit training",
+    "deleteCourseTitle": "Delete training",
+    "noCourses": "No trainings in catalog. Click 'Create Training' to start.",
+    "assignAttendeesBtn": "Assign Employees",
+    "contestedPrefix": "⚠ Contested:",
+    "externalWithEmail": "External ({{email}})",
+    "external": "External",
+    "attendeeStatus": {
+      "pending": "Pending",
+      "valid": "Active",
+      "warning": "Expiring",
+      "expired": "Expired"
+    },
+    "certificateLink": "Certificate ↗",
+    "noUpload": "No upload",
+    "editAttendeeTitle": "Manage certificate / Change status",
+    "deleteAttendeeTitle": "Delete assignment",
+    "noAttendees": "No employees assigned to this training yet. Click 'Assign Employees' to assign participants or upload an Excel attendance list.",
+    "selectCoursePlaceholder": "Please select a training on the left to display the participant list and completion status."
+  },
+  "kpiModal": {
+    "createTitle": "Define KPI / Effectiveness Metric",
+    "titleLabel": "Metric Title *",
+    "titlePlaceholder": "e.g., Phishing click rate in annual campaign testing",
+    "descriptionPlaceholder": "How is this metric measured? Which control does it validate?",
+    "targetLabel": "Target Value *",
+    "targetPlaceholder": "e.g., < 5%",
+    "ownerLabel": "Responsible Owner"
+  },
+  "measureModal": {
+    "title": "Log Measurement Value",
+    "valueLabel": "Measured Value *",
+    "valuePlaceholder": "e.g., 3.2% or 4 days",
+    "dateLabel": "Measurement Date *",
+    "notesPlaceholder": "Deviations or context when logging"
+  },
+  "auditModal": {
+    "title": "Plan Audit",
+    "titleLabel": "Audit Title",
+    "titlePlaceholder": "e.g., Internal Audit Data Center & Backup",
+    "scopeLabel": "Scope",
+    "scopePlaceholder": "Which departments, systems or controls are audited?",
+    "auditorLabel": "Auditor (Person/Company)",
+    "auditorPlaceholder": "e.g., TÜV SÜD, Assessor",
+    "startDateLabel": "Start Date",
+    "endDateLabel": "End Date",
+    "reportLinkLabel": "Report Link (Wiki/PDF)",
+    "reportLinkPlaceholder": "e.g., https://sharepoint.company.com/compliance/audit-report.pdf",
+    "submitBtn": "Create Audit"
+  },
+  "findingModal": {
+    "title": "Log Deviation (Finding)",
+    "titleLabel": "Deviation Title",
+    "titlePlaceholder": "e.g., Missing backup concept for new SaaS",
+    "descriptionLabel": "Detailed Description",
+    "descriptionPlaceholder": "Exact description of the finding, including target/actual comparison",
+    "assigneeLabel": "Responsible Person",
+    "capaTaskLabel": "Linked CAPA Action (Task)",
+    "noTaskLabel": "— Do not link a task —",
+    "submitBtn": "Log Deviation"
+  },
+  "masterTrainingModal": {
+    "editTitle": "Edit Training Course",
+    "createTitle": "Create Training Course",
+    "titleLabel": "Training Title *",
+    "titlePlaceholder": "e.g., Annual Security Awareness Training 2026",
+    "descriptionPlaceholder": "Content, focus areas of the training...",
+    "dateLabel": "Date *",
+    "mandatoryLabel": "This training is mandatory"
+  },
+  "assignModal": {
+    "title": "Assign Participants & Perform Mapping",
+    "coursePrefix": "Assignment to course:",
+    "markCompletedLabel": "Mark assigned participants directly as completed / done",
+    "completedAtLabel": "Completion Date *",
+    "expiresAtLabel": "Valid until / Expiration date",
+    "certificateUrlLabel": "Certificate / Proof Link (Wiki/PDF)",
+    "certificateUrlPlaceholder": "e.g., https://sharepoint.company.com/trainings/cert_123.pdf",
+    "selectAttendeesTitle": "Select Participants",
+    "manualOption_one": "Option A: Select employees manually (1 selected)",
+    "manualOption_other": "Option A: Select employees manually ({{count}} selected)",
+    "selectAllBtn": "Select All",
+    "deselectAllBtn": "Deselect All",
+    "noMatchingUsers": "No matching employees found.",
+    "uploadOption": "Option B: Upload attendance list (.xlsx)",
+    "uploadFormatTitle": "Format: Excel (.xlsx) — required fields per row:",
+    "uploadFormatName": "Name — First and last name of the participant (text column)",
+    "uploadFormatEmail": "Email — Email address (column with @ sign)",
+    "uploadFormatDesc": "Column order is arbitrary. Rows without name and email will be skipped. Known users will be automatically mapped by name or email, unknown entries will be recorded as external participants.",
+    "submitBtn": "Assign & Save"
+  },
+  "editAssignmentModal": {
+    "title": "Edit Training Participation",
+    "completedAtLabel": "Completion Date",
+    "completedAtPlaceholder": "Leave blank if not yet completed",
+    "certificateUrlLabel": "Proof / Certificate Link",
+    "certificateUrlPlaceholder": "e.g., https://sharepoint.company.com/cert.pdf"
+  },
+  "docsModal": {
+    "title": "Documents: {{title}}",
+    "header": "Stored Documents",
+    "noDocs": "No documents uploaded yet.",
+    "categories": {
+      "audit_report": "Audit Report",
+      "certificate": "Certificate",
+      "contract": "Contract / NDA",
+      "other": "Other"
+    },
+    "uploadHeader": "Upload New Document",
+    "docTypeLabel": "Document Type",
+    "descriptionPlaceholder": "Short note about the document...",
+    "uploadingStatus": "Uploading...",
+    "uploadBtn": "Upload"
+  },
+  "toasts": {
+    "docUploadSuccess": "Document uploaded successfully",
+    "docUploadError": "Error uploading document",
+    "docDeleteSuccess": "Document deleted",
+    "docDeleteError": "Error deleting document",
+    "kpiCreateSuccess": "KPI successfully created",
+    "kpiCreateError": "Error creating KPI",
+    "kpiDeleteSuccess": "KPI deleted",
+    "deleteError": "Error deleting",
+    "measurementAdded": "Measurement value logged",
+    "saveError": "Error saving",
+    "auditCreateSuccess": "Audit successfully created",
+    "genericError": "Error",
+    "auditDeleteSuccess": "Audit deleted",
+    "findingCreateSuccess": "Deviation (Finding) recorded",
+    "findingStatusUpdated": "Finding status updated",
+    "trainingUpdated": "Training proof updated",
+    "trainingRecorded": "Training proof(s) recorded",
+    "trainingRecordError": "Error recording training",
+    "entryDeleted": "Entry deleted",
+    "trainingCatalogUpdated": "Training catalog updated",
+    "trainingCourseAdded": "Training course added",
+    "trainingDeleted": "Training deleted",
+    "attendeesAssigned": "Participants assigned",
+    "assignError": "Error assigning",
+    "attendeeStatusUpdated": "Participant status updated",
+    "assignmentRemoved": "Assignment removed",
+    "removeError": "Error removing"
+  },
+  "confirms": {
+    "deleteDoc": "Are you sure you want to delete this document?",
+    "deleteKpi": "Are you sure you want to delete this KPI?",
+    "deleteAudit": "Are you sure you want to delete this audit?",
+    "deleteTrainingRecord": "Are you sure you want to delete this training record?",
+    "deleteMasterTraining": "Are you sure you want to delete this training course and all associated employee assignments?",
+    "deleteAssignment": "Are you sure you want to delete the assignment for this employee?"
+  },
+  "searchPlaceholder": "Search..."
 }

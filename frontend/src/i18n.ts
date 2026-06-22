@@ -11,7 +11,9 @@ const NAMESPACES = [
   'auditlog', 'legalrequirements', 'topology',
   'vendorcontacts', 'import', 'cves', 'dataflows',
   'c5', 'bsigrundschutz', 'iso27001', 'nis2',
-  'subjectrequests', 'myarea', 'aiact',
+  'subjectrequests', 'myarea', 'aiact', 'bcm', 'dora',
+  'networkdiscovery', 'tisax', 'policylibrary', 'managementreport',
+  'pentests', 'vvt',
 ];
 
 i18n
@@ -20,7 +22,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: 'en',
-    supportedLngs: ['en', 'de'],
+    supportedLngs: ['en', 'de', 'es'],
     defaultNS: 'common',
     ns: NAMESPACES,
     backend: {

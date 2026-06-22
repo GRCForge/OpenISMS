@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Zap, Plus, Trash2, Pencil, CalendarCheck, FlaskConical } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import api from '../lib/api';
 import { Card, CardBody } from '../components/ui/Card';
@@ -35,9 +36,9 @@ interface DoraItem {
 }
 
 const criticalityLabels: Record<DoraCriticality, string> = {
-  critical: 'Kritisch (DORA Art. 31)',
-  important: 'Wichtig',
-  standard: 'Standard',
+  critical: 'criticality.critical',
+  important: 'criticality.important',
+  standard: 'criticality.standard',
 };
 
 const criticalityColors: Record<DoraCriticality, string> = {
@@ -47,9 +48,9 @@ const criticalityColors: Record<DoraCriticality, string> = {
 };
 
 const statusLabels: Record<DoraStatus, string> = {
-  active: 'Aktiv',
-  under_review: 'In Prüfung',
-  terminated: 'Beendet',
+  active: 'status.active',
+  under_review: 'status.under_review',
+  terminated: 'status.terminated',
 };
 
 const statusColors: Record<DoraStatus, string> = {
@@ -77,18 +78,18 @@ interface DoraResilienceTest {
 }
 
 const testTypeLabels: Record<DoraTestType, string> = {
-  tlpt: 'TLPT (Threat-Led Pentest)',
-  penetration_test: 'Penetrationstest',
-  vulnerability_scan: 'Schwachstellenscan',
-  scenario_based: 'Szenariobasierter Test',
-  bcp_test: 'BCP-/Wiederanlauftest',
-  other: 'Sonstiger Test',
+  tlpt: 'testType.tlpt',
+  penetration_test: 'testType.penetration_test',
+  vulnerability_scan: 'testType.vulnerability_scan',
+  scenario_based: 'testType.scenario_based',
+  bcp_test: 'testType.bcp_test',
+  other: 'testType.other',
 };
 
 const testStatusLabels: Record<DoraTestStatus, string> = {
-  planned: 'Geplant',
-  in_progress: 'Laufend',
-  completed: 'Abgeschlossen',
+  planned: 'testStatus.planned',
+  in_progress: 'testStatus.in_progress',
+  completed: 'testStatus.completed',
 };
 
 const testStatusColors: Record<DoraTestStatus, string> = {
@@ -98,10 +99,10 @@ const testStatusColors: Record<DoraTestStatus, string> = {
 };
 
 const testResultLabels: Record<DoraTestResult, string> = {
-  pending: 'Ausstehend',
-  passed: 'Bestanden',
-  passed_with_findings: 'Bestanden mit Findings',
-  failed: 'Nicht bestanden',
+  pending: 'testResult.pending',
+  passed: 'testResult.passed',
+  passed_with_findings: 'testResult.passed_with_findings',
+  failed: 'testResult.failed',
 };
 
 const testResultColors: Record<DoraTestResult, string> = {
@@ -142,6 +143,7 @@ const emptyForm = {
 };
 
 export const Dora: React.FC = () => {
+  const { t } = useTranslation('dora');
   const { user } = useAuth();
   const toast = useToast();
   const canWrite = hasWriteAccess(user?.role);
@@ -226,19 +228,19 @@ export const Dora: React.FC = () => {
       setModalOpen(false);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toast.saveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (i: DoraItem) => {
-    if (!confirm(`„${i.name}" wirklich löschen?`)) return;
+    if (!confirm(t('confirm.deleteVendor', { name: i.name }))) return;
     try {
       await api.delete(`/dora/${i.id}`);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toast.error'));
     }
   };
 
@@ -247,25 +249,25 @@ export const Dora: React.FC = () => {
 
   const testStats = useMemo(() => ({
     total: tests.length,
-    planned: tests.filter(t => t.status === 'planned').length,
-    completed: tests.filter(t => t.status === 'completed').length,
-    failed: tests.filter(t => t.result === 'failed').length,
+    planned: tests.filter(testVal => testVal.status === 'planned').length,
+    completed: tests.filter(testVal => testVal.status === 'completed').length,
+    failed: tests.filter(testVal => testVal.result === 'failed').length,
   }), [tests]);
 
   const openNewTest = () => { setTestEditId(null); setTestForm({ ...emptyTestForm }); setTestModalOpen(true); };
-  const openEditTest = (t: DoraResilienceTest) => {
-    setTestEditId(t.id);
+  const openEditTest = (testItem: DoraResilienceTest) => {
+    setTestEditId(testItem.id);
     setTestForm({
-      title: t.title,
-      test_type: t.test_type,
-      test_date: t.test_date || '',
-      performed_by: t.performed_by || '',
-      status: t.status,
-      result: t.result,
-      findings: t.findings || '',
-      remediation: t.remediation || '',
-      next_test_date: t.next_test_date || '',
-      notes: t.notes || '',
+      title: testItem.title,
+      test_type: testItem.test_type,
+      test_date: testItem.test_date || '',
+      performed_by: testItem.performed_by || '',
+      status: testItem.status,
+      result: testItem.result,
+      findings: testItem.findings || '',
+      remediation: testItem.remediation || '',
+      next_test_date: testItem.next_test_date || '',
+      notes: testItem.notes || '',
     });
     setTestModalOpen(true);
   };
@@ -279,24 +281,24 @@ export const Dora: React.FC = () => {
       setTestModalOpen(false);
       loadTests();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toast.saveError'));
     } finally {
       setTestSaving(false);
     }
   };
 
-  const removeTest = async (t: DoraResilienceTest) => {
-    if (!confirm(`„${t.title}" wirklich löschen?`)) return;
+  const removeTest = async (testItem: DoraResilienceTest) => {
+    if (!confirm(t('confirm.deleteTest', { title: testItem.title }))) return;
     try {
-      await api.delete(`/dora/tests/${t.id}`);
+      await api.delete(`/dora/tests/${testItem.id}`);
       loadTests();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toast.error'));
     }
   };
 
-  const isNextTestOverdue = (t: DoraResilienceTest) =>
-    !!t.next_test_date && new Date(t.next_test_date) < today;
+  const isNextTestOverdue = (testItem: DoraResilienceTest) =>
+    !!testItem.next_test_date && new Date(testItem.next_test_date) < today;
 
   if (loading) return (
     <div className="flex justify-center pt-20">
@@ -310,23 +312,23 @@ export const Dora: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
             <Zap size={24} className="text-blue-600" />
-            {tab === 'register' ? 'DORA IKT-Drittparteienregister' : 'DORA Resilienztests'}
+            {tab === 'register' ? t('title.register') : t('title.tests')}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">
             {tab === 'register'
-              ? `Digital Operational Resilience Act – Register IKT-Drittdienstleister · ${items.length} Einträge`
-              : `Tests der digitalen operationalen Resilienz (DORA Art. 24–26) · ${tests.length} Einträge`}
+              ? t('subtitle.register', { count: items.length })
+              : t('subtitle.tests', { count: tests.length })}
           </p>
         </div>
-        {canWrite && tab === 'register' && <Button onClick={openNew}><Plus size={16} />Dienstleister erfassen</Button>}
-        {canWrite && tab === 'tests' && <Button onClick={openNewTest}><Plus size={16} />Test erfassen</Button>}
+        {canWrite && tab === 'register' && <Button onClick={openNew}><Plus size={16} />{t('button.addVendor')}</Button>}
+        {canWrite && tab === 'tests' && <Button onClick={openNewTest}><Plus size={16} />{t('button.addTest')}</Button>}
       </div>
 
       <div className="border-b border-gray-200 dark:border-slate-800">
         <nav className="flex gap-1 -mb-px overflow-x-auto no-scrollbar scroll-smooth">
           {([
-            { key: 'register' as const, label: 'Drittparteien', icon: Zap },
-            { key: 'tests' as const, label: 'Resilienztests', icon: FlaskConical },
+            { key: 'register' as const, label: t('tab.vendors'), icon: Zap },
+            { key: 'tests' as const, label: t('tab.tests'), icon: FlaskConical },
           ]).map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
@@ -341,10 +343,10 @@ export const Dora: React.FC = () => {
       {tab === 'register' && (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Gesamt', value: stats.total, color: 'bg-blue-500' },
-          { label: 'Kritisch', value: stats.critical, color: 'bg-red-500' },
-          { label: 'Review fällig', value: stats.reviewDue, color: 'bg-orange-500' },
-          { label: 'Aktive Verträge', value: stats.active, color: 'bg-green-600' },
+          { label: t('stats.total'), value: stats.total, color: 'bg-blue-500' },
+          { label: t('stats.critical'), value: stats.critical, color: 'bg-red-500' },
+          { label: t('stats.reviewDue'), value: stats.reviewDue, color: 'bg-orange-500' },
+          { label: t('stats.active'), value: stats.active, color: 'bg-green-600' },
         ].map(s => (
           <Card key={s.label}>
             <CardBody className="flex items-center gap-3 py-4">
@@ -363,7 +365,7 @@ export const Dora: React.FC = () => {
       <FilterBar
         search={search}
         onSearch={setSearch}
-        searchPlaceholder="Dienstleister, IKT-Service oder Land suchen..."
+        searchPlaceholder={t('filter.searchPlaceholder')}
         activeCount={[critFilter, statusFilter].filter(Boolean).length}
         onReset={() => { setSearch(''); setCritFilter(''); setStatusFilter(''); }}
       >
@@ -371,13 +373,13 @@ export const Dora: React.FC = () => {
           className="w-52"
           value={critFilter}
           onChange={e => setCritFilter(e.target.value)}
-          options={[{ value: '', label: 'Alle Kritikalitäten' }, ...Object.entries(criticalityLabels).map(([v, l]) => ({ value: v, label: l }))]}
+          options={[{ value: '', label: t('filter.allCriticalities') }, ...Object.entries(criticalityLabels).map(([v, l]) => ({ value: v, label: t(l) }))]}
         />
         <Select
           className="w-40"
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
-          options={[{ value: '', label: 'Alle Status' }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]}
+          options={[{ value: '', label: t('filter.allStatus') }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: t(l) }))]}
         />
       </FilterBar>
 
@@ -386,12 +388,12 @@ export const Dora: React.FC = () => {
           <Table>
             <Thead>
               <tr>
-                <Th>Dienstleister</Th>
-                <Th>IKT-Service</Th>
-                <Th>Kritikalität</Th>
-                <Th>Status</Th>
-                <Th>Land</Th>
-                <Th>Nächste Prüfung</Th>
+                <Th>{t('table.vendor')}</Th>
+                <Th>{t('table.ictService')}</Th>
+                <Th>{t('table.criticality')}</Th>
+                <Th>{t('table.status')}</Th>
+                <Th>{t('table.country')}</Th>
+                <Th>{t('table.nextReview')}</Th>
                 <Th>{''}</Th>
               </tr>
             </Thead>
@@ -409,12 +411,12 @@ export const Dora: React.FC = () => {
                   <Td className="text-gray-600 dark:text-slate-300">{i.ict_service}</Td>
                   <Td>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${criticalityColors[i.criticality]}`}>
-                      {criticalityLabels[i.criticality]}
+                      {t(criticalityLabels[i.criticality])}
                     </span>
                   </Td>
                   <Td>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[i.status]}`}>
-                      {statusLabels[i.status]}
+                      {t(statusLabels[i.status])}
                     </span>
                   </Td>
                   <Td className="text-gray-500">{i.country || '–'}</Td>
@@ -456,13 +458,13 @@ export const Dora: React.FC = () => {
                   <td colSpan={7}>
                     <div className="py-16 text-center">
                       <Zap size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-                      <p className="text-gray-500 dark:text-slate-400 font-medium">Keine IKT-Drittdienstleister gefunden</p>
+                      <p className="text-gray-500 dark:text-slate-400 font-medium">{t('noVendors')}</p>
                       {canWrite && (
                         <button
                           onClick={openNew}
                           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
-                          <Plus size={15} /> Dienstleister erfassen
+                          <Plus size={15} /> {t('button.addVendor')}
                         </button>
                       )}
                     </div>
@@ -478,10 +480,10 @@ export const Dora: React.FC = () => {
       {tab === 'tests' && (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Tests gesamt', value: testStats.total, color: 'bg-blue-500' },
-          { label: 'Geplant', value: testStats.planned, color: 'bg-gray-500' },
-          { label: 'Abgeschlossen', value: testStats.completed, color: 'bg-green-600' },
-          { label: 'Nicht bestanden', value: testStats.failed, color: 'bg-red-500' },
+          { label: t('stats.testsTotal'), value: testStats.total, color: 'bg-blue-500' },
+          { label: t('stats.planned'), value: testStats.planned, color: 'bg-gray-500' },
+          { label: t('stats.completed'), value: testStats.completed, color: 'bg-green-600' },
+          { label: t('stats.failed'), value: testStats.failed, color: 'bg-red-500' },
         ].map(s => (
           <Card key={s.label}>
             <CardBody className="flex items-center gap-3 py-4">
@@ -502,47 +504,47 @@ export const Dora: React.FC = () => {
           <Table>
             <Thead>
               <tr>
-                <Th>Titel</Th>
-                <Th>Testart</Th>
-                <Th>Datum</Th>
-                <Th>Durchgeführt von</Th>
-                <Th>Status</Th>
-                <Th>Ergebnis</Th>
-                <Th>Nächster Test</Th>
+                <Th>{t('table.title')}</Th>
+                <Th>{t('table.testType')}</Th>
+                <Th>{t('table.date')}</Th>
+                <Th>{t('table.performedBy')}</Th>
+                <Th>{t('table.status')}</Th>
+                <Th>{t('table.result')}</Th>
+                <Th>{t('table.nextTest')}</Th>
                 <Th>{''}</Th>
               </tr>
             </Thead>
             <Tbody>
-              {tests.map(t => (
+              {tests.map(testItem => (
                 <tr
-                  key={t.id}
+                  key={testItem.id}
                   className="hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer"
-                  onClick={() => openEditTest(t)}
+                  onClick={() => openEditTest(testItem)}
                 >
                   <Td>
-                    <p className="font-medium dark:text-slate-200">{t.title}</p>
+                    <p className="font-medium dark:text-slate-200">{testItem.title}</p>
                   </Td>
-                  <Td className="text-gray-600 dark:text-slate-300">{testTypeLabels[t.test_type]}</Td>
+                  <Td className="text-gray-600 dark:text-slate-300">{t(testTypeLabels[testItem.test_type])}</Td>
                   <Td className="text-gray-500">
-                    {t.test_date ? format(new Date(t.test_date), 'dd.MM.yyyy') : '–'}
+                    {testItem.test_date ? format(new Date(testItem.test_date), 'dd.MM.yyyy') : '–'}
                   </Td>
-                  <Td className="text-gray-500">{t.performed_by || '–'}</Td>
+                  <Td className="text-gray-500">{testItem.performed_by || '–'}</Td>
                   <Td>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${testStatusColors[t.status]}`}>
-                      {testStatusLabels[t.status]}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${testStatusColors[testItem.status]}`}>
+                      {t(testStatusLabels[testItem.status])}
                     </span>
                   </Td>
                   <Td>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${testResultColors[t.result]}`}>
-                      {testResultLabels[t.result]}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${testResultColors[testItem.result]}`}>
+                      {t(testResultLabels[testItem.result])}
                     </span>
                   </Td>
                   <Td>
-                    {t.next_test_date ? (
-                      <span className={`text-xs flex items-center gap-1 ${isNextTestOverdue(t) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-500'}`}>
+                    {testItem.next_test_date ? (
+                      <span className={`text-xs flex items-center gap-1 ${isNextTestOverdue(testItem) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-500'}`}>
                         <CalendarCheck size={11} />
-                        {format(new Date(t.next_test_date), 'dd.MM.yyyy')}
-                        {isNextTestOverdue(t) && ' ⚠'}
+                        {format(new Date(testItem.next_test_date), 'dd.MM.yyyy')}
+                        {isNextTestOverdue(testItem) && ' ⚠'}
                       </span>
                     ) : <span className="text-gray-300">–</span>}
                   </Td>
@@ -551,14 +553,14 @@ export const Dora: React.FC = () => {
                       {canWrite && (
                         <>
                           <button
-                            onClick={() => openEditTest(t)}
+                            onClick={() => openEditTest(testItem)}
                             className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
                           >
                             <Pencil size={14} />
                           </button>
                           {canDelete && (
                             <button
-                              onClick={() => removeTest(t)}
+                              onClick={() => removeTest(testItem)}
                               className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
                             >
                               <Trash2 size={14} />
@@ -575,13 +577,13 @@ export const Dora: React.FC = () => {
                   <td colSpan={8}>
                     <div className="py-16 text-center">
                       <FlaskConical size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-                      <p className="text-gray-500 dark:text-slate-400 font-medium">Keine Resilienztests gefunden</p>
+                      <p className="text-gray-500 dark:text-slate-400 font-medium">{t('noTests')}</p>
                       {canWrite && (
                         <button
                           onClick={openNewTest}
                           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
-                          <Plus size={15} /> Test erfassen
+                          <Plus size={15} /> {t('button.addTest')}
                         </button>
                       )}
                     </div>
@@ -597,28 +599,28 @@ export const Dora: React.FC = () => {
       <Modal
         open={testModalOpen}
         onClose={() => setTestModalOpen(false)}
-        title={testEditId ? 'Resilienztest bearbeiten' : 'Resilienztest erfassen'}
+        title={testEditId ? t('modal.editTest') : t('modal.addTest')}
         size="lg"
       >
         <form onSubmit={saveTest} className="space-y-4">
           <Input
-            label="Titel *"
+            label={t('form.titleRequired')}
             value={testForm.title}
             onChange={e => setTestForm({ ...testForm, title: e.target.value })}
             required
-            placeholder="z. B. Jährlicher Penetrationstest Kernbanksystem"
+            placeholder={t('form.titlePlaceholder')}
             disabled={!canWrite}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              label="Testart"
+              label={t('form.testType')}
               value={testForm.test_type}
               onChange={e => setTestForm({ ...testForm, test_type: e.target.value as DoraTestType })}
-              options={Object.entries(testTypeLabels).map(([v, l]) => ({ value: v, label: l }))}
+              options={Object.entries(testTypeLabels).map(([v, l]) => ({ value: v, label: t(l) }))}
               disabled={!canWrite}
             />
             <Input
-              label="Testdatum"
+              label={t('form.testDate')}
               type="date"
               value={testForm.test_date}
               onChange={e => setTestForm({ ...testForm, test_date: e.target.value })}
@@ -627,58 +629,58 @@ export const Dora: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="Durchgeführt von"
+              label={t('form.performedBy')}
               value={testForm.performed_by}
               onChange={e => setTestForm({ ...testForm, performed_by: e.target.value })}
-              placeholder="z. B. externer Dienstleister, internes Team"
+              placeholder={t('form.performedByPlaceholder')}
               disabled={!canWrite}
             />
             <Select
-              label="Status"
+              label={t('form.status')}
               value={testForm.status}
               onChange={e => setTestForm({ ...testForm, status: e.target.value as DoraTestStatus })}
-              options={Object.entries(testStatusLabels).map(([v, l]) => ({ value: v, label: l }))}
+              options={Object.entries(testStatusLabels).map(([v, l]) => ({ value: v, label: t(l) }))}
               disabled={!canWrite}
             />
             <Select
-              label="Ergebnis"
+              label={t('form.result')}
               value={testForm.result}
               onChange={e => setTestForm({ ...testForm, result: e.target.value as DoraTestResult })}
-              options={Object.entries(testResultLabels).map(([v, l]) => ({ value: v, label: l }))}
+              options={Object.entries(testResultLabels).map(([v, l]) => ({ value: v, label: t(l) }))}
               disabled={!canWrite}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Findings</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.findings')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={testForm.findings}
               onChange={e => setTestForm({ ...testForm, findings: e.target.value })}
-              placeholder="Festgestellte Schwachstellen und Auffälligkeiten"
+              placeholder={t('form.findingsPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Behebungsmaßnahmen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.remediation')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={testForm.remediation}
               onChange={e => setTestForm({ ...testForm, remediation: e.target.value })}
-              placeholder="Geplante bzw. umgesetzte Maßnahmen zur Behebung"
+              placeholder={t('form.remediationPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <Input
-            label="Nächster Test"
+            label={t('form.nextTest')}
             type="date"
             value={testForm.next_test_date}
             onChange={e => setTestForm({ ...testForm, next_test_date: e.target.value })}
             disabled={!canWrite}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.notes')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
@@ -689,11 +691,11 @@ export const Dora: React.FC = () => {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setTestModalOpen(false)} className="flex-1 justify-center">
-              Abbrechen
+              {t('button.cancel')}
             </Button>
             {canWrite && (
               <Button type="submit" disabled={testSaving} className="flex-1 justify-center">
-                {testSaving ? 'Speichern...' : (testEditId ? 'Aktualisieren' : 'Anlegen')}
+                {testSaving ? t('button.saving') : (testEditId ? t('button.update') : t('button.create'))}
               </Button>
             )}
           </div>
@@ -703,54 +705,54 @@ export const Dora: React.FC = () => {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editId ? 'IKT-Drittdienstleister bearbeiten' : 'IKT-Drittdienstleister erfassen'}
+        title={editId ? t('modal.editVendor') : t('modal.addVendor')}
         size="lg"
       >
         <form onSubmit={save} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Dienstleistername *"
+              label={t('form.vendorNameRequired')}
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               required
-              placeholder="z. B. Microsoft Azure"
+              placeholder={t('form.vendorNamePlaceholder')}
               disabled={!canWrite}
             />
             <Input
-              label="IKT-Service / Leistungsbeschreibung *"
+              label={t('form.ictServiceRequired')}
               value={form.ict_service}
               onChange={e => setForm({ ...form, ict_service: e.target.value })}
               required
-              placeholder="z. B. Cloud-Infrastruktur, SaaS-Plattform"
+              placeholder={t('form.ictServicePlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              label="Kritikalität (DORA)"
+              label={t('form.criticality')}
               value={form.criticality}
               onChange={e => setForm({ ...form, criticality: e.target.value as DoraCriticality })}
-              options={Object.entries(criticalityLabels).map(([v, l]) => ({ value: v, label: l }))}
+              options={Object.entries(criticalityLabels).map(([v, l]) => ({ value: v, label: t(l) }))}
               disabled={!canWrite}
             />
             <Select
-              label="Status"
+              label={t('form.status')}
               value={form.status}
               onChange={e => setForm({ ...form, status: e.target.value as DoraStatus })}
-              options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))}
+              options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: t(l) }))}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Vertragsbeginn"
+              label={t('form.contractStart')}
               type="date"
               value={form.contract_start}
               onChange={e => setForm({ ...form, contract_start: e.target.value })}
               disabled={!canWrite}
             />
             <Input
-              label="Vertragsende"
+              label={t('form.contractEnd')}
               type="date"
               value={form.contract_end}
               onChange={e => setForm({ ...form, contract_end: e.target.value })}
@@ -759,58 +761,58 @@ export const Dora: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="Land"
+              label={t('form.country')}
               value={form.country}
               onChange={e => setForm({ ...form, country: e.target.value })}
-              placeholder="z. B. Deutschland, USA"
+              placeholder={t('form.countryPlaceholder')}
               disabled={!canWrite}
             />
             <Input
-              label="SLA RTO (Stunden)"
+              label={t('form.slaRto')}
               type="number"
               min={0}
               value={form.sla_rto_hours}
               onChange={e => setForm({ ...form, sla_rto_hours: e.target.value })}
-              placeholder="z. B. 4"
+              placeholder={t('form.slaRtoPlaceholder')}
               disabled={!canWrite}
             />
             <Input
-              label="SLA RPO (Stunden)"
+              label={t('form.slaRpo')}
               type="number"
               min={0}
               value={form.sla_rpo_hours}
               onChange={e => setForm({ ...form, sla_rpo_hours: e.target.value })}
-              placeholder="z. B. 1"
+              placeholder={t('form.slaRpoPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Ansprechpartner (Name)"
+              label={t('form.contactName')}
               value={form.contact_name}
               onChange={e => setForm({ ...form, contact_name: e.target.value })}
-              placeholder="Vollständiger Name"
+              placeholder={t('form.contactNamePlaceholder')}
               disabled={!canWrite}
             />
             <Input
-              label="Ansprechpartner (E-Mail)"
+              label={t('form.contactEmail')}
               type="email"
               value={form.contact_email}
               onChange={e => setForm({ ...form, contact_email: e.target.value })}
-              placeholder="kontakt@example.com"
+              placeholder={t('form.contactEmailPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Letzte Prüfung"
+              label={t('form.lastReview')}
               type="date"
               value={form.last_review_date}
               onChange={e => setForm({ ...form, last_review_date: e.target.value })}
               disabled={!canWrite}
             />
             <Input
-              label="Nächste Prüfung"
+              label={t('form.nextReview')}
               type="date"
               value={form.next_review_date}
               onChange={e => setForm({ ...form, next_review_date: e.target.value })}
@@ -818,7 +820,7 @@ export const Dora: React.FC = () => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.notes')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
@@ -829,11 +831,11 @@ export const Dora: React.FC = () => {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">
-              Abbrechen
+              {t('button.cancel')}
             </Button>
             {canWrite && (
               <Button type="submit" disabled={saving} className="flex-1 justify-center">
-                {saving ? 'Speichern...' : (editId ? 'Aktualisieren' : 'Anlegen')}
+                {saving ? t('button.saving') : (editId ? t('button.update') : t('button.create'))}
               </Button>
             )}
           </div>

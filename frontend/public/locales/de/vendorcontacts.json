@@ -1,11 +1,11 @@
 {
-  "title": "Ansprechpartner",
-  "subtitle": "{{count}} Kontakte über {{vendors}} Firmen",
-  "new": "Kontakt anlegen",
-  "searchPlaceholder": "Name, E-Mail oder Rolle suchen...",
+  "title": "Kontakte",
+  "subtitle": "{{count}} Kontakte in {{vendors}} Unternehmen",
+  "new": "Neuer Kontakt",
+  "searchPlaceholder": "Suche Name, E-Mail oder Rolle...",
   "filters": {
-    "allCompanies": "Alle Firmen",
-    "allTypes": "Alle Firmen-Typen",
+    "allCompanies": "Alle Unternehmen",
+    "allTypes": "Alle Unternehmenstypen",
     "allRoles": "Alle Rollen"
   },
   "table": {
@@ -15,47 +15,49 @@
     "contact": "Kontakt",
     "actions": "Aktionen"
   },
-  "empty": "Keine Ansprechpartner gefunden",
+  "empty": "Keine Kontakte gefunden",
   "modal": {
-    "editTitle": "Ansprechpartner bearbeiten",
-    "newTitle": "Neuen Ansprechpartner anlegen"
+    "editTitle": "Kontakt bearbeiten",
+    "newTitle": "Neuer Kontakt"
   },
   "form": {
-    "company": "Zugehöriges Unternehmen",
-    "switchToNew": "Neue Firma anlegen",
-    "switchToExisting": "Existierende Firma wählen",
-    "newCompanyName": "Name der Firma *",
+    "company": "Zugewiesene Firma",
+    "switchToNew": "Neue Firma erstellen",
+    "switchToExisting": "Bestehende Firma auswählen",
+    "newCompanyName": "Firmenname *",
     "newCompanyNamePlaceholder": "Firma GmbH",
     "type": "Typ *",
     "selectCompany": "Firma auswählen...",
-    "fullName": "Vollständiger Name des Kontakts *",
-    "fullNamePlaceholder": "z. B. Erika Musterfrau",
+    "fullName": "Vollständiger Kontaktname *",
+    "fullNamePlaceholder": "z.B. Jane Doe",
     "functionRole": "Funktion / Rolle",
-    "functionRolePlaceholder": "z. B. Key Account Manager",
+    "functionRolePlaceholder": "z.B. Key Account Manager",
     "department": "Abteilung (extern)",
-    "departmentPlaceholder": "z. B. Vertrieb, Technik",
+    "departmentPlaceholder": "z.B. Verkauf, Technik",
     "email": "E-Mail-Adresse",
     "phone": "Telefonnummer",
-    "notes": "Notizen zum Kontakt",
-    "notesPlaceholder": "Verfügbarkeiten, Eskalationsweg, etc.",
+    "notes": "Kontaktnotizen",
+    "notesPlaceholder": "Verfügbarkeit, Eskalationspfad usw.",
     "cancel": "Abbrechen",
     "save": "Kontakt aktualisieren",
-    "create": "Kontakt anlegen",
+    "create": "Neuer Kontakt",
     "saving": "Speichern..."
   },
-  "confirm": { "delete": "Ansprechpartner wirklich löschen?" },
+  "confirm": {
+    "delete": "Diesen Kontakt löschen?"
+  },
   "toast": {
     "loadError": "Kontaktdaten konnten nicht geladen werden",
     "saveError": "Fehler beim Speichern",
     "deleteError": "Löschen fehlgeschlagen"
   },
   "types": {
-    "software": "Software-Hersteller",
-    "cloud": "Cloud-Dienstleister / SaaS",
-    "hardware": "Hardware-Lieferant",
-    "consulting": "Beratung / Consulting",
+    "software": "Softwareanbieter",
+    "cloud": "Cloud-Service / SaaS",
+    "hardware": "Hardwarelieferant",
+    "consulting": "Beratung",
     "hosting": "Rechenzentrum / Hosting",
     "logistics": "Logistik",
-    "other": "Sonstiges"
+    "other": "Andere"
   }
 }

@@ -1,17 +1,17 @@
 {
   "title": "Datenimport",
-  "subtitle": "Assets, Benutzer, Dienstleister oder Risiken importieren",
+  "subtitle": "Importiere Assets, Benutzer, Anbieter oder Risiken",
   "back": "Zurück",
   "template": "Vorlage (.csv)",
   "steps": {
-    "upload": "Upload",
-    "mapping": "Mapping",
+    "upload": "Hochladen",
+    "mapping": "Zuordnung",
     "result": "Ergebnis"
   },
   "step1": {
     "whatToImport": "Was möchten Sie importieren?",
-    "chooseFile": "CSV- oder Excel-Datei wählen",
-    "dropHint": "Klicken oder per Drag & Drop herziehen",
+    "chooseFile": "CSV- oder Excel-Datei auswählen",
+    "dropHint": "Hier klicken oder per Drag-and-drop verschieben",
     "fileSizeKb": "{{size}} KB",
     "analyzing": "Analysiere Datei...",
     "analyze": "Datei analysieren"
@@ -19,28 +19,28 @@
   "entityTypes": {
     "asset": "Assets (Inventar)",
     "user": "Benutzer (Mitarbeiter)",
-    "vendor": "Dienstleister (Firmen)",
+    "vendor": "Anbieter (Unternehmen)",
     "risk": "Risiken (Register)",
-    "vendor_contact": "Firmen + Kontakte (Outlook)"
+    "vendor_contact": "Unternehmen + Kontakte (Outlook)"
   },
   "step2": {
     "previewTitle": "Vorschau (erste 5 Zeilen)",
-    "mappingTitle": "Feld-Mapping",
-    "mappingHint": "Ordnen Sie die Spalten Ihrer Datei den ISMS-Feldern zu.",
+    "mappingTitle": "Feldzuordnung",
+    "mappingHint": "Ordnen Sie die Spalten aus Ihrer Datei den ISMS-Feldern zu.",
     "notImport": "-- Nicht importieren --",
-    "summaryTitle": "Zusammenfassung",
+    "summaryTitle": "Summary",
     "file": "Datei:",
     "rows": "Zeilen:",
     "importType": "Import-Typ:",
-    "importButton": "{{count}} Datensätze importieren",
-    "importing": "Importiere..."
+    "importButton": "Importiere {{count}} Einträge",
+    "importing": "Importieren..."
   },
   "step3": {
     "done": "Import abgeschlossen",
-    "doneSubtitle": "{{count}} Datensätze wurden erfolgreich angelegt.",
+    "doneSubtitle": "{{count}} Datensätze wurden erfolgreich erstellt.",
     "errorCount": "{{count}} Fehler aufgetreten:",
     "rowError": "Zeile {{row}}:",
-    "startNew": "Weiteren Import starten",
+    "startNew": "Einen weiteren Import starten",
     "backToOverview": "Zurück zur Übersicht"
   },
   "toast": {

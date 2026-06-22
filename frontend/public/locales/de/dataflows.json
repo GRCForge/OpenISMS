@@ -1,11 +1,13 @@
 {
   "title": "Datenflussdiagramm",
-  "subtitle": "{{count}} Datenflüsse dokumentiert",
+  "subtitle": "{{count}} Datenströme dokumentiert",
   "listView": "Liste",
   "diagramView": "Diagramm",
   "new": "Datenfluss",
   "searchPlaceholder": "Datenfluss suchen...",
-  "filters": { "allStatus": "Alle Status" },
+  "filters": {
+    "allStatus": "Alle Status"
+  },
   "status": {
     "active": "Aktiv",
     "inactive": "Inaktiv",
@@ -18,25 +20,25 @@
     "manual": "Manuell",
     "email": "E-Mail",
     "sftp": "SFTP",
-    "message_queue": "Message Queue",
-    "other": "Sonstiges"
+    "message_queue": "Nachrichtenwarteschlange",
+    "other": "Andere"
   },
   "diagram": {
     "personalData": "Persönliche Daten",
     "encrypted": "Verschlüsselt",
     "standard": "Standard",
     "encryptedIcon": "🔒 = Verschlüsselt",
-    "noFlows": "Keine aktiven Datenflüsse für das Diagramm"
+    "noFlows": "Keine aktiven Datenströme für Diagramm"
   },
   "empty": {
-    "title": "Keine Datenflüsse dokumentiert",
-    "description": "Dokumentiere Datenflüsse zwischen Systemen und Diensten.",
+    "title": "Keine Datenströme dokumentiert",
+    "description": "Dokumentendaten fließen zwischen Systemen und Diensten.",
     "firstFlow": "Ersten Datenfluss erstellen"
   },
   "card": {
     "encrypted": "Verschlüsselt",
     "unencrypted": "Unverschlüsselt",
-    "personalData": "Personenbezogene Daten",
+    "personalData": "Persönliche Daten",
     "frequency": "Frequenz: {{freq}}"
   },
   "modal": {
@@ -44,25 +46,27 @@
     "newTitle": "Neuer Datenfluss"
   },
   "form": {
-    "name": "Bezeichnung *",
-    "namePlaceholder": "z.B. CRM → ERP Kundendaten-Sync",
-    "source": "Quelle (Quell-System)",
-    "target": "Ziel-System",
-    "externalSystem": "Externes System / manuell",
+    "name": "Name *",
+    "namePlaceholder": "z.B. CRM → ERP Kundendatensynchronisation",
+    "source": "Quellsystem",
+    "target": "Zielsystem",
+    "externalSystem": "Externes System / Handbuch",
     "mechanism": "Übertragungsmechanismus",
     "status": "Status",
-    "dataCategoriesLabel": "Datenkategorien (kommagetrennt)",
+    "dataCategoriesLabel": "Datenkategorien (durch Komma getrennt)",
     "dataCategoriesPlaceholder": "Kundendaten, Bestellungen, E-Mail-Adressen, ...",
-    "frequency": "Übertragungsfrequenz",
-    "frequencyPlaceholder": "z.B. Täglich 02:00 Uhr, Echtzeit, Wöchentlich",
+    "frequency": "Übertragungshäufigkeit",
+    "frequencyPlaceholder": "z.B. Täglich 02:00, Echtzeit, wöchentlich",
     "encryptionCheck": "Übertragung verschlüsselt (TLS/SFTP/etc.)",
-    "personalDataCheck": "Enthält personenbezogene Daten (DSGVO-relevant)",
+    "personalDataCheck": "Enthält persönliche Daten (GDPR-relevant)",
     "notes": "Notizen",
     "cancel": "Abbrechen",
     "save": "Speichern",
     "saving": "Speichern..."
   },
-  "confirm": { "delete": "Datenfluss wirklich löschen?" },
+  "confirm": {
+    "delete": "Diesen Datenfluss löschen?"
+  },
   "toast": {
     "saveError": "Fehler beim Speichern",
     "deleteError": "Löschen fehlgeschlagen"

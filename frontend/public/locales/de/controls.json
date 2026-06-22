@@ -1,31 +1,29 @@
 {
-  "title": "Maßnahmen & SoA",
-  "subtitle": "Statement of Applicability · ISO 27001 / NIS-2 / BSI · {{count}} Controls",
+  "title": "Steuerung & SoA",
+  "subtitle": "Statement of Applicability · ISO 27001 / NIS-2 / BSI · {{count}} Kontrollen",
   "searchPlaceholder": "Suche (Code/Titel)…",
-  "new": "Eigene Maßnahme",
-  "bulkDeleteBtn_one": "{{count}} Löschen",
-  "bulkDeleteBtn_other": "{{count}} Löschen",
+  "new": "Neue benutzerdefinierte Steuerung",
   "type": {
     "organizational": "Organisatorisch",
-    "people": "Personell",
-    "physical": "Physisch",
-    "technological": "Technisch"
+    "people": "Personen",
+    "physical": "Körperlich",
+    "technological": "Technologisch"
   },
   "status": {
-    "implemented": "Umgesetzt",
+    "implemented": "Implementiert",
     "planned": "Geplant",
     "not_applicable": "Nicht anwendbar"
   },
   "stats": {
-    "implemented": "Umgesetzt",
+    "implemented": "Implementiert",
     "planned": "Geplant",
     "notApplicable": "Nicht anwendbar",
     "coverage": "Abdeckung"
   },
   "hints": {
-    "iso27001": "ISO 27001-Controls stammen aus dem <a>ISO 27001-Modul</a>. Status dort bearbeiten für volle Details.",
-    "nis2": "NIS-2-Maßnahmen stammen aus dem <a>NIS-2-Modul</a>. Status dort bearbeiten für volle Details.",
-    "bsi": "BSI-Anforderungen stammen aus dem <a>BSI-Modul</a>. Status dort bearbeiten für volle Details."
+    "iso27001": "ISO 27001 Steuerelemente stammen vom <a>ISO 27001 Modul</a>. Bearbeiten Sie dort den Status für alle Details.",
+    "nis2": "NIS-2 Steuerelemente kommen aus dem <a>NIS-2 Modul</a>. Bearbeiten Sie dort den Status für vollständige Details.",
+    "bsi": "BSI-Anforderungen kommen aus dem <a>BSI-Modul</a>. Bearbeiten Sie dort den Status für alle Details."
   },
   "filters": {
     "allFrameworks": "Alle Frameworks",
@@ -33,28 +31,28 @@
   },
   "table": {
     "code": "Code",
-    "control": "Maßnahme",
+    "control": "Steuerung",
     "framework": "Framework",
-    "reference": "Bezug",
+    "reference": "Referenz",
     "status": "Status"
   },
   "form": {
-    "basicInfo": "Basis-Informationen",
+    "basicInfo": "Grundlegende Informationen",
     "title": "Titel",
     "type": "Typ",
     "description": "Beschreibung",
-    "soaStatus": "SoA-Status",
-    "justification": "Begründung der Anwendbarkeit (SoA)",
-    "justificationPlaceholder": "Warum (nicht) anwendbar bzw. wie umgesetzt?",
+    "soaStatus": "SoA Status",
+    "justification": "Anwendbarkeitsbegründung (SoA)",
+    "justificationPlaceholder": "Warum (nicht) anwendbar oder wie implementiert?",
     "linkedPolicies": "Verknüpfte Richtlinien",
-    "linkedPoliciesHint": "Verbinden Sie diese Maßnahme mit Richtlinien aus Ihrer Bibliothek, die diese TOM näher beschreiben.",
-    "noPolicies": "Keine Richtlinien vorhanden.",
+    "linkedPoliciesHint": "Verknüpfen Sie dieses Steuerelement mit Richtlinien aus Ihrer Bibliothek, die dieses TOM detailliert beschreiben.",
+    "noPolicies": "Keine Richtlinien verfügbar.",
     "noCode": "Kein Code"
   },
   "createModal": {
-    "title": "Eigene Maßnahme anlegen",
+    "title": "Benutzerdefinierte Steuerung erstellen",
     "code": "Code (optional)",
-    "codePlaceholder": "z. B. ORG-01"
+    "codePlaceholder": "z.B. ORG-01"
   },
   "buttons": {
     "cancel": "Abbrechen",
@@ -62,16 +60,18 @@
     "create": "Anlegen"
   },
   "empty": {
-    "noResults": "Keine Controls gefunden"
+    "noResults": "Keine Steuerelemente gefunden"
   },
   "confirm": {
-    "delete": "Maßnahme \"{{title}}\" löschen?",
-    "bulkDelete": "Möchten Sie die {{count}} ausgewählten eigenen Maßnahmen wirklich löschen?"
+    "delete": "Steuerung \"{{title}} \"löschen?",
+    "bulkDelete": "{{count}} ausgewählte Bedienelemente wirklich löschen?"
   },
   "toast": {
-    "bulkDeleted_one": "{{count}} Maßnahme gelöscht",
-    "bulkDeleted_other": "{{count}} Maßnahmen gelöscht",
     "deleteError": "Fehler beim Löschen",
-    "error": "Fehler"
-  }
+    "error": "Fehler",
+    "bulkDeleted_one": "{{count}} Steuerung gelöscht",
+    "bulkDeleted_other": "{{count}} Steuerelemente gelöscht"
+  },
+  "bulkDeleteBtn_one": "{{count}} löschen",
+  "bulkDeleteBtn_other": "{{count}} löschen"
 }
