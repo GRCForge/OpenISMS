@@ -1,20 +1,20 @@
 {
-  "title": "Erinnerungen & Reviews",
-  "searchPlaceholder": "Asset suchen...",
+  "title": "Erinnerungen & Bewertungen",
+  "searchPlaceholder": "Suche Asset...",
   "overdueCount": "{{count}} überfällig",
   "pendingCount": "{{count}} ausstehend",
   "status": {
     "pending": "Ausstehend",
     "acknowledged": "Bestätigt",
     "overdue": "Überfällig",
-    "completed": "Erledigt"
+    "completed": "Abgeschlossen"
   },
   "filters": {
     "allStatus": "Alle Status",
-    "showDistantFuture": "Auch ferne Zukunft"
+    "showDistantFuture": "Auch weit Zukunft"
   },
-  "overdueAlertBold": "{{count}} Asset(s)",
-  "overdueAlertRest": " haben überfällige Sicherheitsbewertungen. Bitte zeitnah aktualisieren.",
+  "overdueAlertBold": "{{count}} asset(s)",
+  "overdueAlertRest": " haben überfällige Sicherheitsbewertungen. Bitte aktualisieren Sie sofort.",
   "table": {
     "asset": "Asset",
     "classification": "Klassifizierung",
@@ -24,7 +24,7 @@
   },
   "overdueBadge": "Überfällig!",
   "actions": {
-    "assess": "Bewerten",
+    "assess": "Bewertung",
     "acknowledge": "Bestätigen"
   },
   "empty": {
@@ -39,7 +39,7 @@
     "status": "Status",
     "acknowledgedAt": "Bestätigt am",
     "notes": "Notizen",
-    "filename": "erinnerungen",
+    "filename": "Erinnerungen",
     "sheetName": "Erinnerungen"
   },
   "toast": {
