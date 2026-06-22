@@ -159,9 +159,9 @@ export const AssetDetail: React.FC = () => {
     try {
       await api.post(`/assets/${id}/resolve-cpe`, { cpe, title });
       setEditForm((prev: any) => ({ ...prev, cpe, cpe_title: title }));
-      toast.success(`CPE gespeichert: ${title}`);
+      toast.success(t('toast.cpeSaved', { title }));
       loadAsset();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Speichern fehlgeschlagen'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.errorSaving')); }
     finally { setCpeResolving(false); }
   };
 
@@ -226,7 +226,7 @@ export const AssetDetail: React.FC = () => {
         special_categories: false, third_country_transfers: false, transfer_safeguards: '',
       });
       loadAsset();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Fehler beim Erstellen'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.createFailed')); }
     finally { setSaving(false); }
   };
 
@@ -239,7 +239,7 @@ export const AssetDetail: React.FC = () => {
       const status = err?.response?.status;
       let detail = '';
       try { if (err?.response?.data instanceof Blob) detail = JSON.parse(await err.response.data.text())?.error || ''; } catch { /* ignore */ }
-      toast.error(`PDF konnte nicht geladen werden${status ? ` (HTTP ${status})` : ''}${detail ? `: ${detail}` : ''}`);
+      toast.error(t('toast.pdfLoadError') + (status ? ` (HTTP ${status})` : '') + (detail ? `: ${detail}` : ''));
     }
   };
 
@@ -309,7 +309,7 @@ export const AssetDetail: React.FC = () => {
     e.preventDefault();
     const isAccept = assessForm.risk_treatment === 'accept';
     if (isAccept && !raDocFile) {
-      toast.warning('Risikoakzeptanz erfordert ein unterschriebenes Akzeptanz-Dokument. Bitte laden Sie es hoch.');
+      toast.warning(t('toast.riskAcceptanceDocRequired'));
       return;
     }
     setSaving(true);
@@ -319,7 +319,7 @@ export const AssetDetail: React.FC = () => {
         const fd = new FormData();
         fd.append('file', raDocFile);
         fd.append('category', 'risk_acceptance');
-        fd.append('description', `Risikoakzeptanz – ${asset?.name || ''}`);
+        fd.append('description', `${t('detail.riskAcceptanceDocDesc')} – ${asset?.name || ''}`);
         const up = await api.post(`/assets/${id}/documents`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         acceptance_document_id = up.data.id;
       }
@@ -337,7 +337,7 @@ export const AssetDetail: React.FC = () => {
         acceptance_document_id,
       });
       setAssessModalOpen(false); setRaDocFile(null); loadAsset(); loadDocs();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Fehler'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.genericError')); }
     finally { setSaving(false); }
   };
 
@@ -353,7 +353,7 @@ export const AssetDetail: React.FC = () => {
       await api.post(`/assets/${id}/documents`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       setDocModalOpen(false); setDocFile(null); setDocForm({ category: 'other', description: '' });
       loadDocs();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Fehler'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.genericError')); }
     finally { setSaving(false); }
   };
 
@@ -366,7 +366,7 @@ export const AssetDetail: React.FC = () => {
         parent_id: replyingTo?.id 
       });
       setComment(''); setMeetingDate(''); setReplyingTo(null); loadComments();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Fehler'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.genericError')); }
     finally { setSaving(false); }
   };
 
@@ -384,12 +384,12 @@ export const AssetDetail: React.FC = () => {
       await api.put(`/assets/${id}`, { ...editForm, frameworks: editFrameworks, vvt_ids: editVvtIds });
       setEditSection(null); loadAsset();
       loadLocations();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Fehler'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.genericError')); }
     finally { setSaving(false); }
   };
 
   if (loading) return (
-    <div className="space-y-6" role="status" aria-label="Asset wird geladen">
+    <div className="space-y-6" role="status" aria-label={t('detail.loading')}>
       <div className="flex items-center gap-1.5 text-sm">
         <Skeleton className="h-4 w-12" />
         <span className="text-gray-300 dark:text-slate-700">/</span>
@@ -876,7 +876,7 @@ export const AssetDetail: React.FC = () => {
                            </span>
                          )}
                          <Button size="sm" variant="secondary" onClick={refreshCVEs} disabled={cveRefreshing}>
-                           {cveRefreshing ? 'Wird geladen…' : 'CVEs aktualisieren'}
+                           {cveRefreshing ? t('detail.refreshing') : t('detail.refreshCves')}
                          </Button>
                        </div>
                      )}
@@ -1159,7 +1159,7 @@ export const AssetDetail: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">DSFA Erforderlich?</span>
-                      <Badge value={asset.dsfa_required ? 'critical' : 'active'} label={asset.dsfa_required ? 'Ja (Erforderlich)' : 'Nein'} />
+                      <Badge value={asset.dsfa_required ? 'critical' : 'active'} label={asset.dsfa_required ? t('detail.dsfaYes') : t('detail.dsfaNo')} />
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">Daten-Kategorie</span>
@@ -1250,7 +1250,7 @@ export const AssetDetail: React.FC = () => {
                                        <span className="text-gray-300">·</span>
                                        <span>{format(new Date(h.created_at), 'dd.MM.yy HH:mm')}</span>
                                        {h.original_filename?.toLowerCase().endsWith('.pdf') && (
-                                          <button onClick={() => handleViewPdf(`/policies/${p.id}/versions/${h.id}/download?inline=true`)} className="text-blue-500 hover:underline flex items-center gap-1"><Eye size={10}/> Ansehen</button>
+                                          <button onClick={() => handleViewPdf(`/policies/${p.id}/versions/${h.id}/download?inline=true`)} className="text-blue-500 hover:underline flex items-center gap-1"><Eye size={10}/> {t('detail.view')}</button>
                                        )}
                                        <a href={`/api/policies/${p.id}/versions/${h.id}/download`} target="_blank" rel="noreferrer" className="text-gray-500 hover:underline flex items-center gap-1"><Download size={10}/> Speichern</a>
                                     </div>
@@ -1261,10 +1261,10 @@ export const AssetDetail: React.FC = () => {
                           {p.file_url && (
                             <div className="flex gap-1">
                               {p.original_filename?.toLowerCase().endsWith('.pdf') && (
-                                 <Button size="sm" variant="secondary" onClick={() => handleViewPdf(`/policies/${p.id}/download?inline=true`)} title="Ansehen"><Eye size={14} /></Button>
+                                 <Button size="sm" variant="secondary" onClick={() => handleViewPdf(`/policies/${p.id}/download?inline=true`)} title={t('detail.view')}><Eye size={14} /></Button>
                               )}
                               <a href={`/api/policies/${p.id}/download`} target="_blank" rel="noreferrer">
-                                <Button size="sm" variant="secondary" title="Herunterladen"><Download size={14} /></Button>
+                                <Button size="sm" variant="secondary" title={t('detail.download')}><Download size={14} /></Button>
                               </a>
                             </div>
                           )}
@@ -1308,11 +1308,11 @@ export const AssetDetail: React.FC = () => {
                           </div>
                           <div className="flex gap-1 text-sm">
                             {doc.original_name?.toLowerCase().endsWith('.pdf') && (
-                               <Button size="sm" variant="secondary" onClick={() => handleViewPdf(`/assets/${id}/documents/${doc.id}/download?inline=true`)} title="Ansehen"><Eye size={14} /></Button>
+                               <Button size="sm" variant="secondary" onClick={() => handleViewPdf(`/assets/${id}/documents/${doc.id}/download?inline=true`)} title={t('detail.view')}><Eye size={14} /></Button>
                             )}
-                            <a href={`/api/assets/${id}/documents/${doc.id}/download`} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary" title="Herunterladen"><Download size={14} /></Button></a>
+                            <a href={`/api/assets/${id}/documents/${doc.id}/download`} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary" title={t('detail.download')}><Download size={14} /></Button></a>
                             {!isViewer && (user?.role === 'admin' || user?.id === doc.uploader?.id) && (
-                              <Button size="sm" variant="danger" title="Löschen" onClick={async () => { if (confirm(t('detail.deleteFileConfirm'))) { await api.delete(`/assets/${id}/documents/${doc.id}`); loadDocs(); } }}><Trash2 size={14}/></Button>
+                              <Button size="sm" variant="danger" title={t('detail.deleteLabel')} onClick={async () => { if (confirm(t('detail.deleteFileConfirm'))) { await api.delete(`/assets/${id}/documents/${doc.id}`); loadDocs(); } }}><Trash2 size={14}/></Button>
                             )}
                           </div>
                         </div>
