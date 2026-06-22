@@ -1,72 +1,72 @@
 {
-  "title": "Legal Obligations Register",
-  "subtitle": "Legal requirements for data protection, information security and compliance · {{count}} entries",
-  "new": "Add Obligation",
+  "title": "Register für rechtliche Verpflichtungen",
+  "subtitle": "Gesetzliche Anforderungen für Datenschutz, Informationssicherheit und Compliance · {{count}} Einträge",
+  "new": "Verpflichtung hinzufügen",
   "category": {
-    "data_protection": "Data Protection",
-    "information_security": "Information Security",
-    "sector_specific": "Sector Specific",
-    "labor_law": "Labor Law",
-    "commercial_law": "Commercial / Tax Law",
-    "other": "Other"
+    "data_protection": "Datenschutz",
+    "information_security": "Informationssicherheit",
+    "sector_specific": "Sektorspezifisch",
+    "labor_law": "Arbeitsrecht",
+    "commercial_law": "Handels- / Steuerrecht",
+    "other": "Andere"
   },
   "status": {
-    "identified": "Identified",
-    "assessed": "Assessed",
-    "implemented": "Implemented",
-    "obsolete": "Obsolete"
+    "identified": "Identifiziert",
+    "assessed": "Bewertet",
+    "implemented": "Implementiert",
+    "obsolete": "Veraltet"
   },
   "stats": {
-    "total": "Total",
-    "identified": "Identified",
-    "assessed": "Assessed",
-    "implemented": "Implemented"
+    "total": "Gesamt",
+    "identified": "Identifiziert",
+    "assessed": "Bewertet",
+    "implemented": "Implementiert"
   },
   "filters": {
-    "allCategories": "All Categories",
-    "allStatus": "All Status",
-    "searchPlaceholder": "Search title or description..."
+    "allCategories": "Alle Kategorien",
+    "allStatus": "Alle Status",
+    "searchPlaceholder": "Titel oder Beschreibung suchen..."
   },
   "table": {
-    "title": "Title",
-    "category": "Category",
+    "title": "Titel",
+    "category": "Kategorie",
     "status": "Status",
-    "applicableSince": "Applicable Since",
-    "review": "Review",
-    "responsible": "Responsible"
+    "applicableSince": "Anwendbar seit",
+    "review": "Überprüfen",
+    "responsible": "Verantwortlich"
   },
   "empty": {
-    "noResults": "No entries found",
-    "new": "Add Obligation"
+    "noResults": "Keine Einträge gefunden",
+    "new": "Verpflichtung hinzufügen"
   },
   "modal": {
-    "editTitle": "Edit Legal Obligation",
-    "newTitle": "Add Legal Obligation"
+    "editTitle": "Rechtliche Verpflichtung bearbeiten",
+    "newTitle": "Rechtliche Verpflichtung hinzufügen"
   },
   "form": {
-    "title": "Title / Designation *",
-    "titlePlaceholder": "e.g. GDPR Art. 30 – Records of Processing Activities",
-    "category": "Category",
+    "title": "Titel / Bezeichnung *",
+    "titlePlaceholder": "z. B. DPR Art. 30 – Aufzeichnungen über Verarbeitungsaktivitäten",
+    "category": "Kategorie",
     "status": "Status",
-    "description": "Description / Requirement",
-    "descriptionPlaceholder": "What is specifically required? What measures need to be taken?",
-    "referenceUrl": "Source Link / Law Text URL",
-    "applicableSince": "Applicable Since (Date)",
-    "reviewDate": "Next Review",
-    "owner": "Responsible Person",
-    "ownerNone": "– nobody –",
-    "notes": "Notes / Implementation Status",
-    "cancel": "Cancel",
-    "save": "Update",
-    "create": "Create",
-    "saving": "Saving..."
+    "description": "Beschreibung / Anforderung",
+    "descriptionPlaceholder": "Welche Maßnahmen müssen ergriffen werden?",
+    "referenceUrl": "Quelllink / Gesetzestext-URL",
+    "applicableSince": "Anwendbar seit (Datum)",
+    "reviewDate": "Nächste Bewertung",
+    "owner": "Verantwortliche Person",
+    "ownerNone": "– niemand –",
+    "notes": "Anmerkungen / Implementierungsstatus",
+    "cancel": "Abbrechen",
+    "save": "Aktualisieren",
+    "create": "Anlegen",
+    "saving": "Speichern..."
   },
   "toast": {
-    "saveError": "Error saving",
-    "error": "Error"
+    "saveError": "Fehler beim Speichern",
+    "error": "Fehler"
   },
   "confirm": {
-    "delete": "Delete \"{{title}}\"?"
+    "delete": "\"{{title}} \"löschen?"
   },
-  "openSource": "Open source"
+  "openSource": "Quelle öffnen"
 }
