@@ -1,63 +1,63 @@
 {
-  "title": "Contacts",
-  "subtitle": "{{count}} contacts across {{vendors}} companies",
-  "new": "Add Contact",
-  "searchPlaceholder": "Search name, email or role...",
+  "title": "Kontakte",
+  "subtitle": "{{count}} Kontakte in {{vendors}} Unternehmen",
+  "new": "Neuer Kontakt",
+  "searchPlaceholder": "Suche Name, E-Mail oder Rolle...",
   "filters": {
-    "allCompanies": "All Companies",
-    "allTypes": "All Company Types",
-    "allRoles": "All Roles"
+    "allCompanies": "Alle Unternehmen",
+    "allTypes": "Alle Unternehmenstypen",
+    "allRoles": "Alle Rollen"
   },
   "table": {
     "name": "Name",
-    "company": "Company",
-    "role": "Function / Role",
-    "contact": "Contact",
-    "actions": "Actions"
+    "company": "Firma",
+    "role": "Funktion / Rolle",
+    "contact": "Kontakt",
+    "actions": "Aktionen"
   },
-  "empty": "No contacts found",
+  "empty": "Keine Kontakte gefunden",
   "modal": {
-    "editTitle": "Edit Contact",
-    "newTitle": "Add New Contact"
+    "editTitle": "Kontakt bearbeiten",
+    "newTitle": "Neuer Kontakt"
   },
   "form": {
-    "company": "Assigned Company",
-    "switchToNew": "Create New Company",
-    "switchToExisting": "Choose Existing Company",
-    "newCompanyName": "Company Name *",
-    "newCompanyNamePlaceholder": "Company GmbH",
-    "type": "Type *",
-    "selectCompany": "Select company...",
-    "fullName": "Full Contact Name *",
-    "fullNamePlaceholder": "e.g. Jane Doe",
-    "functionRole": "Function / Role",
-    "functionRolePlaceholder": "e.g. Key Account Manager",
-    "department": "Department (external)",
-    "departmentPlaceholder": "e.g. Sales, Technology",
-    "email": "Email Address",
-    "phone": "Phone Number",
-    "notes": "Contact Notes",
-    "notesPlaceholder": "Availability, escalation path, etc.",
-    "cancel": "Cancel",
-    "save": "Update Contact",
-    "create": "Add Contact",
-    "saving": "Saving..."
+    "company": "Zugewiesene Firma",
+    "switchToNew": "Neue Firma erstellen",
+    "switchToExisting": "Bestehende Firma auswählen",
+    "newCompanyName": "Firmenname *",
+    "newCompanyNamePlaceholder": "Firma GmbH",
+    "type": "Typ *",
+    "selectCompany": "Firma auswählen...",
+    "fullName": "Vollständiger Kontaktname *",
+    "fullNamePlaceholder": "z.B. Jane Doe",
+    "functionRole": "Funktion / Rolle",
+    "functionRolePlaceholder": "z.B. Key Account Manager",
+    "department": "Abteilung (extern)",
+    "departmentPlaceholder": "z.B. Verkauf, Technik",
+    "email": "E-Mail-Adresse",
+    "phone": "Telefonnummer",
+    "notes": "Kontaktnotizen",
+    "notesPlaceholder": "Verfügbarkeit, Eskalationspfad usw.",
+    "cancel": "Abbrechen",
+    "save": "Kontakt aktualisieren",
+    "create": "Neuer Kontakt",
+    "saving": "Speichern..."
   },
   "confirm": {
-    "delete": "Delete this contact?"
+    "delete": "Diesen Kontakt löschen?"
   },
   "toast": {
-    "loadError": "Could not load contact data",
-    "saveError": "Error saving",
-    "deleteError": "Delete failed"
+    "loadError": "Kontaktdaten konnten nicht geladen werden",
+    "saveError": "Fehler beim Speichern",
+    "deleteError": "Löschen fehlgeschlagen"
   },
   "types": {
-    "software": "Software Vendor",
-    "cloud": "Cloud Service / SaaS",
-    "hardware": "Hardware Supplier",
-    "consulting": "Consulting",
-    "hosting": "Data Center / Hosting",
-    "logistics": "Logistics",
-    "other": "Other"
+    "software": "Softwareanbieter",
+    "cloud": "Cloud-Service / SaaS",
+    "hardware": "Hardwarelieferant",
+    "consulting": "Beratung",
+    "hosting": "Rechenzentrum / Hosting",
+    "logistics": "Logistik",
+    "other": "Andere"
   }
 }
