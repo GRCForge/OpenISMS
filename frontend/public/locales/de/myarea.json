@@ -34,7 +34,7 @@
     "manageAll": "Alle Aufgaben verwalten",
     "empty": "Keine offenen Aufgaben",
     "emptyDescription": "Super! Alles erledigt.",
-    "overdueWarning_one": "{{count}} Aufgabe übcrfällig",
+    "overdueWarning_one": "{{count}} Aufgabe überfällig",
     "overdueWarning_other": "{{count}} Aufgaben überfällig",
     "overdueSuffix": "⚠ Überfällig ·",
     "dueLabel": "Fällig",
