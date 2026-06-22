@@ -26,19 +26,19 @@ export const LanguageSwitcher: React.FC = () => {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-xs font-medium w-full"
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs font-medium w-full"
         title={current.label}
       >
         <img
           src={current.flagUrl}
           alt={current.label}
-          className="w-5 h-3.5 object-cover rounded-sm border border-slate-700/50"
+          className="w-5 h-3.5 object-cover rounded-sm border border-gray-200 dark:border-slate-700/50"
         />
         <span>{current.code.toUpperCase()}</span>
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 mb-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px]">
+        <div className="absolute bottom-full left-0 mb-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px]">
           {LANGUAGES.map(lang => (
             <button
               key={lang.code}
@@ -46,13 +46,13 @@ export const LanguageSwitcher: React.FC = () => {
               className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm transition-colors ${
                 current.code === lang.code
                   ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <img
                 src={lang.flagUrl}
                 alt={lang.label}
-                className="w-5 h-3.5 object-cover rounded-sm border border-slate-700/50"
+                className="w-5 h-3.5 object-cover rounded-sm border border-gray-200 dark:border-slate-700/50"
               />
               <span>{lang.label}</span>
             </button>
