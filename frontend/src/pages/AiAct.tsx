@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Bot, Plus, Trash2, Pencil, CalendarCheck, ExternalLink, Paperclip, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import type { User, Vendor, AiActItem, AiRiskCategory, AiConformityStatus } from '../types';
 import { Card, CardBody } from '../components/ui/Card';
@@ -15,25 +16,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
-const riskCategoryLabels: Record<AiRiskCategory, string> = {
-  prohibited: 'Verboten (Art. 5)',
-  high_risk: 'Hohes Risiko (Anhang III)',
-  limited: 'Begrenztes Risiko',
-  minimal: 'Minimales Risiko',
-};
-
 const riskCategoryColors: Record<AiRiskCategory, string> = {
   prohibited: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   high_risk: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
   limited: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
   minimal: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-};
-
-const conformityLabels: Record<AiConformityStatus, string> = {
-  not_assessed: 'Nicht bewertet',
-  in_assessment: 'In Bewertung',
-  compliant: 'Konform',
-  non_compliant: 'Nicht konform',
 };
 
 const conformityColors: Record<AiConformityStatus, string> = {
@@ -60,6 +47,7 @@ const emptyForm = {
 };
 
 export const AiAct: React.FC = () => {
+  const { t } = useTranslation('aiact');
   const { user } = useAuth();
   const toast = useToast();
   const canWrite = hasWriteAccess(user?.role);
@@ -77,13 +65,26 @@ export const AiAct: React.FC = () => {
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
 
-  // Document Library State
   const [docsModalOpen, setDocsModalOpen] = useState(false);
   const [selectedAiForDocs, setSelectedAiForDocs] = useState<AiActItem | null>(null);
   const [aiDocs, setAiDocs] = useState<any[]>([]);
   const [docForm, setDocForm] = useState({ category: 'ai_documentation', description: '' });
   const [docFile, setDocFile] = useState<File | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+
+  const riskCategoryLabels: Record<AiRiskCategory, string> = {
+    prohibited: t('riskCategory.prohibited'),
+    high_risk: t('riskCategory.high_risk'),
+    limited: t('riskCategory.limited'),
+    minimal: t('riskCategory.minimal'),
+  };
+
+  const conformityLabels: Record<AiConformityStatus, string> = {
+    not_assessed: t('conformityStatus.not_assessed'),
+    in_assessment: t('conformityStatus.in_assessment'),
+    compliant: t('conformityStatus.compliant'),
+    non_compliant: t('conformityStatus.non_compliant'),
+  };
 
   const loadDocs = (id: number) => {
     api.get(`/ai-act/${id}/documents`)
@@ -113,26 +114,26 @@ export const AiAct: React.FC = () => {
       await api.post(`/ai-act/${selectedAiForDocs.id}/documents`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      toast.success('Dokument erfolgreich hochgeladen');
+      toast.success(t('toast.uploadSuccess'));
       setDocFile(null);
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       loadDocs(selectedAiForDocs.id);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Hochladen des Dokuments');
+      toast.error(err.response?.data?.error || t('toast.uploadError'));
     } finally {
       setUploadingDoc(false);
     }
   };
 
   const handleDocDelete = async (docId: number) => {
-    if (!selectedAiForDocs || !confirm('Dokument wirklich löschen?')) return;
+    if (!selectedAiForDocs || !confirm(t('docs.deleteTitle'))) return;
     try {
       await api.delete(`/ai-act/${selectedAiForDocs.id}/documents/${docId}`);
-      toast.success('Dokument gelöscht');
+      toast.success(t('toast.deleteSuccess'));
       loadDocs(selectedAiForDocs.id);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Löschen des Dokuments');
+      toast.error(err.response?.data?.error || t('toast.deleteError'));
     }
   };
 
@@ -192,8 +193,8 @@ export const AiAct: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { 
-        ...form, 
+      const payload = {
+        ...form,
         owner_id: form.owner_id || null,
         vendor_id: form.vendor_id || null
       };
@@ -203,19 +204,19 @@ export const AiAct: React.FC = () => {
       load();
       loadLocations();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toast.saveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (i: AiActItem) => {
-    if (!confirm(`„${i.name}" wirklich löschen?`)) return;
+    if (!confirm(t('confirm.delete', { name: i.name }))) return;
     try {
       await api.delete(`/ai-act/${i.id}`);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toast.removeError'));
     }
   };
 
@@ -230,21 +231,21 @@ export const AiAct: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
-            <Bot size={24} className="text-blue-600" />EU AI Act – KI-Systemregister
+            <Bot size={24} className="text-blue-600" />{t('title')}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">
-            Verzeichnis eingesetzter KI-Systeme gemäß EU Artificial Intelligence Act · {items.length} Einträge
+            {t('subtitle', { count: items.length })}
           </p>
         </div>
-        {canWrite && <Button onClick={openNew}><Plus size={16} />KI-System erfassen</Button>}
+        {canWrite && <Button onClick={openNew}><Plus size={16} />{t('newButton')}</Button>}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Gesamt', value: stats.total, color: 'bg-blue-500' },
-          { label: 'Verboten', value: stats.prohibited, color: 'bg-red-600' },
-          { label: 'Hohes Risiko', value: stats.highRisk, color: 'bg-orange-500' },
-          { label: 'Nicht konform', value: stats.nonCompliant, color: 'bg-red-400' },
+          { label: t('stats.total'), value: stats.total, color: 'bg-blue-500' },
+          { label: t('stats.prohibited'), value: stats.prohibited, color: 'bg-red-600' },
+          { label: t('stats.highRisk'), value: stats.highRisk, color: 'bg-orange-500' },
+          { label: t('stats.nonCompliant'), value: stats.nonCompliant, color: 'bg-red-400' },
         ].map(s => (
           <Card key={s.label}>
             <CardBody className="flex items-center gap-3 py-4">
@@ -263,7 +264,7 @@ export const AiAct: React.FC = () => {
       <FilterBar
         search={search}
         onSearch={setSearch}
-        searchPlaceholder="KI-System, Anwendungsfall oder Anbieter suchen..."
+        searchPlaceholder={t('filter.searchPlaceholder')}
         activeCount={[riskFilter, conformityFilter].filter(Boolean).length}
         onReset={() => { setSearch(''); setRiskFilter(''); setConformityFilter(''); }}
       >
@@ -271,13 +272,13 @@ export const AiAct: React.FC = () => {
           className="w-52"
           value={riskFilter}
           onChange={e => setRiskFilter(e.target.value)}
-          options={[{ value: '', label: 'Alle Risikokategorien' }, ...Object.entries(riskCategoryLabels).map(([v, l]) => ({ value: v, label: l }))]}
+          options={[{ value: '', label: t('filter.allRiskCategories') }, ...Object.entries(riskCategoryLabels).map(([v, l]) => ({ value: v, label: l }))]}
         />
         <Select
           className="w-44"
           value={conformityFilter}
           onChange={e => setConformityFilter(e.target.value)}
-          options={[{ value: '', label: 'Alle Konformitäten' }, ...Object.entries(conformityLabels).map(([v, l]) => ({ value: v, label: l }))]}
+          options={[{ value: '', label: t('filter.allConformity') }, ...Object.entries(conformityLabels).map(([v, l]) => ({ value: v, label: l }))]}
         />
       </FilterBar>
 
@@ -286,12 +287,12 @@ export const AiAct: React.FC = () => {
           <Table>
             <Thead>
               <tr>
-                <Th>KI-System</Th>
-                <Th>Risikokategorie</Th>
-                <Th>Konformität</Th>
-                <Th>Anbieter</Th>
-                <Th>Verantwortlich</Th>
-                <Th>Letzte Prüfung</Th>
+                <Th>{t('table.name')}</Th>
+                <Th>{t('table.riskCategory')}</Th>
+                <Th>{t('table.conformity')}</Th>
+                <Th>{t('table.provider')}</Th>
+                <Th>{t('table.owner')}</Th>
+                <Th>{t('table.lastReview')}</Th>
                 <Th>{''}</Th>
               </tr>
             </Thead>
@@ -334,7 +335,7 @@ export const AiAct: React.FC = () => {
                           target="_blank"
                           rel="noreferrer"
                           className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
-                          title="Technische Dokumentation öffnen"
+                          title={t('docLink')}
                         >
                           <ExternalLink size={14} />
                         </a>
@@ -344,7 +345,7 @@ export const AiAct: React.FC = () => {
                           <button
                             onClick={() => openDocs(i)}
                             className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
-                            title="Dokumente verwalten (Nachweise)"
+                            title={t('manageDocsTitle')}
                           >
                             <Paperclip size={14} />
                           </button>
@@ -373,13 +374,13 @@ export const AiAct: React.FC = () => {
                   <td colSpan={7}>
                     <div className="py-16 text-center">
                       <Bot size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-                      <p className="text-gray-500 dark:text-slate-400 font-medium">Keine KI-Systeme gefunden</p>
+                      <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
                       {canWrite && (
                         <button
                           onClick={openNew}
                           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
-                          <Plus size={15} /> KI-System erfassen
+                          <Plus size={15} /> {t('empty.createButton')}
                         </button>
                       )}
                     </div>
@@ -394,40 +395,39 @@ export const AiAct: React.FC = () => {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editId ? 'KI-System bearbeiten' : 'KI-System erfassen'}
+        title={editId ? t('modal.editTitle') : t('modal.newTitle')}
         size="lg"
       >
-        {/* ... form content ... */}
         <form onSubmit={save} className="space-y-4">
           <Input
-            label="Name des KI-Systems"
+            label={t('modal.nameLabel')}
             value={form.name}
             onChange={e => setForm({ ...form, name: e.target.value })}
             required
-            placeholder="z. B. Dokumentenklassifizierung, Chatbot Support"
+            placeholder={t('modal.namePlaceholder')}
             disabled={!canWrite}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Beschreibung</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.descriptionLabel')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              placeholder="Kurzbeschreibung des KI-Systems und seiner Funktionsweise"
+              placeholder={t('modal.descriptionPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              label="Risikokategorie (EU AI Act)"
+              label={t('modal.riskCategoryLabel')}
               value={form.risk_category}
               onChange={e => setForm({ ...form, risk_category: e.target.value as AiRiskCategory })}
               options={Object.entries(riskCategoryLabels).map(([v, l]) => ({ value: v, label: l }))}
               disabled={!canWrite}
             />
             <Select
-              label="Konformitätsstatus"
+              label={t('modal.conformityLabel')}
               value={form.conformity_status}
               onChange={e => setForm({ ...form, conformity_status: e.target.value as AiConformityStatus })}
               options={Object.entries(conformityLabels).map(([v, l]) => ({ value: v, label: l }))}
@@ -436,35 +436,35 @@ export const AiAct: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Anwendungsfall"
+              label={t('modal.useCaseLabel')}
               value={form.use_case}
               onChange={e => setForm({ ...form, use_case: e.target.value })}
-              placeholder="Beschreibung des Einsatzszenarios"
+              placeholder={t('modal.useCasePlaceholder')}
               disabled={!canWrite}
             />
             <Input
-              label="Anbieter / Hersteller"
+              label={t('modal.providerLabel')}
               value={form.provider}
               onChange={e => setForm({ ...form, provider: e.target.value })}
-              placeholder="z. B. OpenAI, Microsoft, internes System"
+              placeholder={t('modal.providerPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Im Einsatz seit"
+              label={t('modal.deployedSinceLabel')}
               type="date"
               value={form.deployed_since}
               onChange={e => setForm({ ...form, deployed_since: e.target.value })}
               disabled={!canWrite}
             />
             <div className="flex flex-col w-full relative">
-              <Input 
-                label="Standort / Region" 
-                value={form.location} 
-                onChange={e => setForm({ ...form, location: e.target.value })} 
-                placeholder="z. B. Cloud Region, RZ..." 
-                list="ai-locations-datalist" 
+              <Input
+                label={t('modal.locationLabel')}
+                value={form.location}
+                onChange={e => setForm({ ...form, location: e.target.value })}
+                placeholder={t('modal.locationPlaceholder')}
+                list="ai-locations-datalist"
                 disabled={!canWrite}
               />
               <datalist id="ai-locations-datalist">
@@ -476,7 +476,7 @@ export const AiAct: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Letzte Überprüfung"
+              label={t('modal.lastReviewLabel')}
               type="date"
               value={form.last_review_date}
               onChange={e => setForm({ ...form, last_review_date: e.target.value })}
@@ -485,7 +485,7 @@ export const AiAct: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             <Input
-              label="Dokumentations-URL"
+              label={t('modal.docsUrlLabel')}
               value={form.documentation_url}
               onChange={e => setForm({ ...form, documentation_url: e.target.value })}
               placeholder="https://..."
@@ -494,14 +494,14 @@ export const AiAct: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchableSelect
-              label="Verantwortliche Person"
+              label={t('modal.ownerLabel')}
               value={form.owner_id}
               onChange={val => setForm({ ...form, owner_id: val })}
-              options={[{ value: '', label: '– niemand –' }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]}
+              options={[{ value: '', label: t('modal.noOwner') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]}
               disabled={!canWrite}
             />
             <SearchableSelect
-              label="Zugeordneter Dienstleister (aus Register)"
+              label={t('modal.vendorLabel')}
               value={form.vendor_id}
               onChange={val => {
                 setForm(prev => {
@@ -515,12 +515,12 @@ export const AiAct: React.FC = () => {
                   return next;
                 });
               }}
-              options={[{ value: '', label: '– kein Dienstleister –' }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]}
+              options={[{ value: '', label: t('modal.noVendor') }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]}
               disabled={!canWrite}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.notesLabel')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
@@ -531,11 +531,11 @@ export const AiAct: React.FC = () => {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">
-              Abbrechen
+              {t('modal.cancel')}
             </Button>
             {canWrite && (
               <Button type="submit" disabled={saving} className="flex-1 justify-center">
-                {saving ? 'Speichern...' : (editId ? 'Aktualisieren' : 'Anlegen')}
+                {saving ? t('modal.save') : (editId ? t('modal.update') : t('modal.create'))}
               </Button>
             )}
           </div>
@@ -543,12 +543,12 @@ export const AiAct: React.FC = () => {
       </Modal>
 
       {/* Document Library Modal */}
-      <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)} title={`Dokumente: ${selectedAiForDocs?.name}`} size="lg">
+      <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)} title={t('docs.modalTitle', { name: selectedAiForDocs?.name })} size="lg">
         <div className="space-y-6">
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Hinterlegte Dokumente</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('docs.sectionTitle')}</h3>
             {aiDocs.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-slate-400 italic">Noch keine Dokumente hinterlegt.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 italic">{t('docs.empty')}</p>
             ) : (
               <div className="grid grid-cols-1 gap-2">
                 {aiDocs.map((doc: any) => (
@@ -562,27 +562,27 @@ export const AiAct: React.FC = () => {
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-gray-500 dark:text-slate-400">
                           <span className="font-medium px-1.5 py-0.5 rounded-sm bg-gray-100 dark:bg-slate-700 uppercase tracking-wider">{doc.category}</span>
                           <span>{(doc.size / 1024).toFixed(0)} KB</span>
-                          <span>• {new Date(doc.created_at).toLocaleDateString('de')}</span>
+                          <span>• {new Date(doc.created_at).toLocaleDateString()}</span>
                           {doc.uploader && <span>• {doc.uploader.name}</span>}
                         </div>
                         {doc.description && <p className="text-xs text-gray-600 dark:text-slate-300 mt-1 line-clamp-2">{doc.description}</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <a 
-                        href={`${api.defaults.baseURL}/ai-act/${selectedAiForDocs?.id}/documents/${doc.id}/download`} 
-                        target="_blank" 
+                      <a
+                        href={`${api.defaults.baseURL}/ai-act/${selectedAiForDocs?.id}/documents/${doc.id}/download`}
+                        target="_blank"
                         rel="noreferrer"
                         className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                        title="Herunterladen"
+                        title={t('docs.downloadTitle')}
                       >
                         <Download size={16} />
                       </a>
                       {canWrite && (
-                        <button 
+                        <button
                           onClick={() => handleDocDelete(doc.id)}
                           className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                          title="Löschen"
+                          title={t('docs.deleteTitle')}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -596,18 +596,18 @@ export const AiAct: React.FC = () => {
 
           {canWrite && (
             <form onSubmit={handleDocUpload} className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-200 dark:border-slate-700 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Neues Dokument hochladen</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">{t('docs.uploadTitle')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
-                  label="Dokumententyp"
+                  label={t('docs.categoryLabel')}
                   value={docForm.category}
                   onChange={e => setDocForm({ ...docForm, category: e.target.value })}
                   options={[
-                    { value: 'ai_documentation', label: 'KI-Dokumentation / Beschreibung' },
-                    { value: 'risk_report', label: 'Risikobewertung' },
-                    { value: 'contract', label: 'Vertrag / DPA' },
-                    { value: 'certificate', label: 'Zertifikat' },
-                    { value: 'other', label: 'Sonstiges' }
+                    { value: 'ai_documentation', label: t('docs.categories.ai_documentation') },
+                    { value: 'risk_report', label: t('docs.categories.risk_report') },
+                    { value: 'contract', label: t('docs.categories.contract') },
+                    { value: 'certificate', label: t('docs.categories.certificate') },
+                    { value: 'other', label: t('docs.categories.other') }
                   ]}
                 />
                 <div className="flex flex-col justify-end">
@@ -620,14 +620,14 @@ export const AiAct: React.FC = () => {
                 </div>
               </div>
               <Input
-                label="Beschreibung (optional)"
+                label={t('docs.descriptionLabel')}
                 value={docForm.description}
                 onChange={e => setDocForm({ ...docForm, description: e.target.value })}
-                placeholder="Kurze Anmerkung zum Dokument..."
+                placeholder={t('docs.descriptionPlaceholder')}
               />
               <div className="flex justify-end pt-2">
                 <Button type="submit" disabled={!docFile || uploadingDoc}>
-                  {uploadingDoc ? 'Wird hochgeladen...' : 'Hochladen'}
+                  {uploadingDoc ? t('docs.uploading') : t('docs.uploadButton')}
                 </Button>
               </div>
             </form>
