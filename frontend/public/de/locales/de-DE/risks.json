@@ -1,134 +1,134 @@
 {
-  "title": "Risks",
-  "new": "New Risk",
-  "searchPlaceholder": "Search risks...",
-  "registerTitle": "Risk Register",
-  "subtitle": "ISO 27005 Risk Management · {{count}} risks",
+  "title": "Risiken",
+  "new": "Neues Risiko",
+  "searchPlaceholder": "Suchrisiken...",
+  "registerTitle": "Risiko-Register",
+  "subtitle": "ISO 27005 Risikomanagement · {{count}} Risiken",
   "levels": {
-    "low": "Low",
-    "medium": "Medium",
-    "high": "High",
-    "critical": "Critical"
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "critical": "Kritisch"
   },
   "categories": {
-    "it_security": "IT Security",
-    "privacy": "Privacy",
+    "it_security": "IT-Sicherheit",
+    "privacy": "Privatsphäre",
     "compliance": "Compliance",
-    "operational": "Operational",
-    "financial": "Financial",
+    "operational": "Operativ",
+    "financial": "Finanziell",
     "reputation": "Reputation",
-    "ai_risk": "AI Risk (AI Act)",
-    "supply_chain": "Supply Chain / Vendor",
-    "other": "Other"
+    "ai_risk": "AI Risiko (AI Act)",
+    "supply_chain": "Versorgungskette / Lieferant",
+    "other": "Andere"
   },
   "treatment": {
-    "mitigate": "Mitigate",
-    "accept": "Accept",
-    "transfer": "Transfer",
-    "avoid": "Avoid"
+    "mitigate": "Abmildern",
+    "accept": "Akzeptieren",
+    "transfer": "Überweisung",
+    "avoid": "Vermeiden"
   },
   "status": {
-    "open": "Open",
-    "in_treatment": "In Treatment",
-    "accepted": "Accepted",
-    "closed": "Closed"
+    "open": "Öffnen",
+    "in_treatment": "In der Behandlung",
+    "accepted": "Akzeptiert",
+    "closed": "Geschlossen"
   },
   "ratings": {
-    "1": "Very Low (1)",
-    "2": "Low (2)",
-    "3": "Medium (3)",
-    "4": "High (4)",
-    "5": "Very High (5)"
+    "1": "Sehr niedrig (1)",
+    "2": "Niedrig (2)",
+    "3": "Mittel (3)",
+    "4": "Hoch (4)",
+    "5": "Sehr hoch (5)"
   },
   "stats": {
-    "criticalHigh": "Critical / High",
-    "inTreatment": "In Treatment",
-    "accepted": "Accepted",
-    "total": "Total"
+    "criticalHigh": "Kritisch / Hoch",
+    "inTreatment": "In der Behandlung",
+    "accepted": "Akzeptiert",
+    "total": "Gesamt"
   },
   "filters": {
-    "allStatus": "All Status",
-    "allCategories": "All Categories",
-    "allLevels": "All Levels"
+    "allStatus": "Alle Status",
+    "allCategories": "Alle Kategorien",
+    "allLevels": "Alle Ebenen"
   },
   "empty": {
-    "title": "No risks recorded yet",
-    "subtitle": "Identify and document risks according to ISO 27005.",
-    "createFirst": "Record first risk"
+    "title": "Noch keine Risiken erfasst",
+    "subtitle": "Identifizieren und dokumentieren Sie Risiken nach ISO 27005.",
+    "createFirst": "Erstes Risiko aufnehmen"
   },
-  "noFilter": "No risks match the filter criteria.",
+  "noFilter": "Keine Risiken entsprechen den Filterkriterien.",
   "table": {
-    "ref": "Ref",
-    "risk": "Risk",
-    "inherent": "Inherent",
-    "residual": "Residual",
+    "ref": "Referenz",
+    "risk": "Risiko",
+    "inherent": "Vererbt",
+    "residual": "Restwert",
     "status": "Status"
   },
-  "notTreated": "Untreated",
-  "acceptedUntil": "Accepted until",
+  "notTreated": "Unbehandelt",
+  "acceptedUntil": "Akzeptiert bis",
   "templates": {
-    "title": "Risk Templates",
-    "manage": "Manage",
-    "empty": "No templates available."
+    "title": "Risiko-Vorlagen",
+    "manage": "Verwalten",
+    "empty": "Keine Vorlagen verfügbar."
   },
   "modal": {
-    "editTitle": "Edit Risk",
-    "newTitle": "Record New Risk"
+    "editTitle": "Risiko bearbeiten",
+    "newTitle": "Neues Risiko aufnehmen"
   },
   "form": {
-    "title": "Risk Title *",
-    "description": "Description / Scenario",
-    "category": "Risk Category",
-    "owner": "Risk Owner (Responsible) *",
-    "inherentSection": "Inherent Assessment (Gross Risk)",
-    "likelihood": "Likelihood (L)",
-    "impact": "Impact (I)",
-    "affectedAssets": "Affected Assets ({{count}})",
-    "assetFilter": "Filter assets...",
-    "noAssets": "No assets found",
-    "relevantThreats": "Relevant Threats ({{count}})",
-    "threatFilter": "Filter threats...",
-    "noThreats": "No threats found",
-    "treatment": "Risk Treatment",
-    "treatmentPlan": "Treatment Plan / Strategy",
-    "linkedControls": "Linked Controls / Measures ({{count}})",
-    "controlSearch": "Search control (e.g. A.8.7, Backup)…",
-    "residualSection": "Residual Risk (Net)",
-    "residualPending": "Will be calculated after saving.",
-    "nextReview": "Next Review",
-    "signoff": "Risk-Owner Sign-off (NIS-2 Management Liability)",
-    "acceptedBy": "Accepted by {{name}}",
-    "acceptedAt": "On {{date}}",
-    "acceptedUntil": "· Valid until {{date}}",
-    "revokeSignoff": "Revoke approval",
-    "signoffDate": "Valid until",
-    "digitalSignoff": "Digital approval",
-    "controlHint": "Only <strong>implemented</strong> controls reduce the automatic residual risk. Effectiveness W1–W5.",
-    "ownerRequired": "Please select a risk owner.",
-    "select": "Select...",
-    "descriptionPlaceholder": "Detailed description of the risk scenario...",
-    "titlePlaceholder": "e.g. Data center failure due to fire...",
-    "controlEffectiveness": "Effectiveness"
+    "title": "Risiko-Titel *",
+    "description": "Beschreibung / Szenario",
+    "category": "Risikokategorie",
+    "owner": "Risikomanager (Verantwortlich) *",
+    "inherentSection": "Erbliche Bewertung (Brutto-Risiko)",
+    "likelihood": "Wahrscheinlichkeit (L)",
+    "impact": "Auswirkung (I)",
+    "affectedAssets": "Betroffene Assets ({{count}})",
+    "assetFilter": "Assets filtern...",
+    "noAssets": "Keine Assets gefunden",
+    "relevantThreats": "Relevante Bedrohungen ({{count}})",
+    "threatFilter": "Bedrohungen filtern...",
+    "noThreats": "Keine Bedrohungen gefunden",
+    "treatment": "Risikobehandlung",
+    "treatmentPlan": "Behandlungsplan / Strategie",
+    "linkedControls": "Verknüpfte Steuerungen / Maßnahmen ({{count}})",
+    "controlSearch": "Suchsteuerung (z.B. A.8.7, Sicherung)…",
+    "residualSection": "Restrisiko (Netto)",
+    "residualPending": "Wird nach dem Speichern berechnet.",
+    "nextReview": "Nächste Bewertung",
+    "signoff": "Risiko-Besitzer Abmeldung (NIS-2-Management-Haftung)",
+    "acceptedBy": "{{name}} akzeptiert",
+    "acceptedAt": "{{date}}",
+    "acceptedUntil": "· Gültig bis {{date}}",
+    "revokeSignoff": "Genehmigung widerrufen",
+    "signoffDate": "Gültig bis",
+    "digitalSignoff": "Digitale Genehmigung",
+    "controlHint": "Nur <strong>implementierte</strong> Steuerungen reduzieren das automatische Restrisiko. Wirkungsgrad W1–W5.",
+    "ownerRequired": "Bitte wählen Sie einen Risikoeigentümer.",
+    "select": "Auswählen...",
+    "descriptionPlaceholder": "Detaillierte Beschreibung des Risikoszenarios...",
+    "titlePlaceholder": "z.B. Rechenzentrumsfehler aufgrund von Feuer...",
+    "controlEffectiveness": "Effektivität"
   },
   "buttons": {
-    "cancel": "Cancel",
-    "saveChanges": "Save Changes",
-    "createRisk": "Create Risk",
-    "saving": "Saving…"
+    "cancel": "Abbrechen",
+    "saveChanges": "Änderungen speichern",
+    "createRisk": "Risiko erstellen",
+    "saving": "Speichern…"
   },
   "toast": {
-    "downloadError": "Download failed",
-    "errorSaving": "Error saving",
-    "errorDelete": "Error",
-    "errorSignoff": "Error during sign-off"
+    "downloadError": "Download fehlgeschlagen",
+    "errorSaving": "Fehler beim Speichern",
+    "errorDelete": "Fehler",
+    "errorSignoff": "Fehler beim Abmelden"
   },
   "confirm": {
-    "delete": "Delete risk \"{{ref}}\"?",
-    "revokeSignoff": "Really revoke approval?"
+    "delete": "Risiko löschen \"{{ref}}\"?",
+    "revokeSignoff": "Genehmigung wirklich widerrufen?"
   },
   "controlStatus": {
-    "implemented": "implemented",
-    "planned": "planned",
+    "implemented": "implementiert",
+    "planned": "geplant",
     "na": "n/a"
   }
 }
