@@ -1,88 +1,88 @@
 {
-  "title": "Subject Rights",
-  "subtitle": "Requests under Art. 15–22 GDPR · 30-day deadline",
-  "newButton": "New Request",
+  "title": "Betreff Rechte",
+  "subtitle": "Anfragen nach Art. 15–22 DPR · 30-Tage-Frist",
+  "newButton": "Neue Anfrage",
   "type": {
-    "access": "Access (Art. 15)",
-    "rectification": "Rectification (Art. 16)",
-    "erasure": "Erasure (Art. 17)",
-    "restriction": "Restriction (Art. 18)",
-    "portability": "Portability (Art. 20)",
-    "objection": "Objection (Art. 21)",
-    "withdraw_consent": "Withdraw Consent (Art. 7)"
+    "access": "Zugang (Art. 15)",
+    "rectification": "Berichtigung (Art. 16)",
+    "erasure": "Löschen (Art. 17)",
+    "restriction": "Einschränkung (Art. 18)",
+    "portability": "Portabilität (Art. 20)",
+    "objection": "Einwand (Art. 21)",
+    "withdraw_consent": "Einwilligung zurückziehen (Art. 7)"
   },
   "typeShort": {
-    "access": "Access",
-    "rectification": "Rectification",
-    "erasure": "Erasure",
-    "restriction": "Restriction",
-    "portability": "Portability",
-    "objection": "Objection",
-    "withdraw_consent": "Withdrawal"
+    "access": "Zugang",
+    "rectification": "Korrektur",
+    "erasure": "Löschen",
+    "restriction": "Einschränkung",
+    "portability": "Portabilität",
+    "objection": "Einwand",
+    "withdraw_consent": "Abhebung"
   },
   "status": {
-    "received": "Received",
-    "in_progress": "In Progress",
-    "completed": "Completed",
-    "rejected": "Rejected",
-    "extended": "Extended"
+    "received": "Erhalten",
+    "in_progress": "In Bearbeitung",
+    "completed": "Abgeschlossen",
+    "rejected": "Abgelehnt",
+    "extended": "Erweitert"
   },
   "stats": {
-    "received": "Received",
-    "inProgress": "In Progress",
-    "overdue": "Overdue",
-    "completedMonth": "Completed (Month)"
+    "received": "Erhalten",
+    "inProgress": "In Bearbeitung",
+    "overdue": "Überfällig",
+    "completedMonth": "Abgeschlossen (Monat)"
   },
   "deadline": {
-    "overdue": "overdue",
-    "extended": "(extended)",
+    "overdue": "verspätet",
+    "extended": "(erweitert)",
     "label": "Deadline:"
   },
   "filter": {
-    "searchPlaceholder": "Search by name, ref, email…",
-    "allTypes": "All types",
-    "allStatus": "All status",
+    "searchPlaceholder": "Suche nach Namen, Referenz, E-Mail…",
+    "allTypes": "Alle Typen",
+    "allStatus": "Alle Status",
     "reset": "Reset"
   },
   "table": {
-    "ref": "Ref",
-    "requester": "Requester",
-    "type": "Type",
+    "ref": "Referenz",
+    "requester": "Anfrage",
+    "type": "Typ",
     "status": "Status",
     "deadline": "Deadline",
-    "handler": "Handler"
+    "handler": "Bearbeiter"
   },
   "empty": {
-    "filterTitle": "No requests match the selected filters.",
-    "filterReset": "Reset filters",
-    "title": "No subject requests yet",
-    "description": "Record requests for access, erasure and other rights under Art. 15–22 GDPR.",
-    "createButton": "Create first request"
+    "filterTitle": "Keine Anfragen stimmen mit den ausgewählten Filtern überein.",
+    "filterReset": "Filter zurücksetzen",
+    "title": "Noch keine Betreffanfragen",
+    "description": "Aufzeichnungsanfragen nach Zugriff, Löschung und anderen Rechten gemäß §15–22 GDPR.",
+    "createButton": "Erstelle erste Anfrage"
   },
   "modal": {
-    "editTitle": "Edit Request",
-    "newTitle": "New Subject Request",
-    "typeLabel": "Request type *",
+    "editTitle": "Anfrage bearbeiten",
+    "newTitle": "Neue Betreffanfrage",
+    "typeLabel": "Anfragetyp *",
     "statusLabel": "Status",
-    "requesterName": "Requester name *",
-    "requesterEmail": "Requester email",
-    "idVerified": "Requester identity verified",
-    "receivedDate": "Received *",
-    "dueDate": "Deadline (default: +30 days)",
-    "extendedUntil": "Extended until (max. 90 days)",
-    "extensionReason": "Extension reason",
-    "description": "Description / Request content",
+    "requesterName": "Name des Antragstellers *",
+    "requesterEmail": "E-Mail des Antragstellers",
+    "idVerified": "Identität des Antragstellers überprüft",
+    "receivedDate": "Erhalten *",
+    "dueDate": "Frist (Standard: +30 Tage)",
+    "extendedUntil": "Verlängert bis (max. 90 Tage)",
+    "extensionReason": "Grund der Erweiterung",
+    "description": "Beschreibung / Inhalt anfordern",
     "handler": "Handler",
-    "unassigned": "Unassigned",
-    "decision": "Decision / Response",
-    "notes": "Internal notes",
-    "cancel": "Cancel",
-    "save": "Save",
-    "create": "Create request"
+    "unassigned": "Nicht zugeordnet",
+    "decision": "Entscheidung / Antwort",
+    "notes": "Interne Notizen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "create": "Anfrage erstellen"
   },
   "alert": {
-    "saveError": "Error saving",
-    "deleteConfirm": "Really delete this request?",
-    "deleteError": "Error deleting"
+    "saveError": "Fehler beim Speichern",
+    "deleteConfirm": "Diese Anfrage wirklich löschen?",
+    "deleteError": "Fehler beim Löschen"
   }
 }
