@@ -1,69 +1,69 @@
 {
-  "title": "NIS-2 · Art. 21 Security Measures",
-  "subtitle": "Network and Information Security Directive 2 · {{count}} measures",
+  "title": "NIS-2 · Art. 21 Sicherheitsmaßnahmen",
+  "subtitle": "Netzwerk- und Informationssicherheitsrichtlinie 2 · {{count}} Maßnahmen",
   "status": {
-    "not_started": "Open",
-    "in_progress": "In progress",
-    "implemented": "Implemented",
-    "not_applicable": "Not applicable"
+    "not_started": "Öffnen",
+    "in_progress": "In Bearbeitung",
+    "implemented": "Implementiert",
+    "not_applicable": "Nicht anwendbar"
   },
   "stats": {
-    "total": "Total",
-    "implemented": "Implemented",
-    "inProgress": "In progress",
-    "open": "Open"
+    "total": "Gesamt",
+    "implemented": "Implementiert",
+    "inProgress": "In Bearbeitung",
+    "open": "Öffnen"
   },
   "entity": {
     "essential": {
-      "title": "Essential entities (Annex I)",
-      "description": "Energy, transport, banking, financial market infrastructure, health, drinking water, wastewater, digital infrastructure, ICT services, space, public administration."
+      "title": "Wesentliche Entitäten (Anhang I)",
+      "description": "Energie, Transport, Banken, Finanzmarktinfrastruktur, Gesundheit, Trinkwasser, digitale Infrastruktur, IKT-Dienstleistungen, Raum, öffentliche Verwaltung."
     },
     "important": {
-      "title": "Important entities (Annex II)",
-      "description": "Postal and courier services, waste management, chemicals, food, manufacturing, digital services, research. All Art. 21 measures apply to both categories."
+      "title": "Wichtige Entitäten (Anhang II)",
+      "description": "Post- und Kurierdienstleistungen, Abfallbewirtschaftung, Chemikalien, Lebensmittel, Herstellung, digitale Dienstleistungen, Forschung."
     }
   },
   "filter": {
-    "searchPlaceholder": "Article reference, title or category...",
-    "allStatus": "All status",
-    "allCategories": "All categories"
+    "searchPlaceholder": "Artikelreferenz, Titel oder Kategorie...",
+    "allStatus": "Alle Status",
+    "allCategories": "Alle Kategorien"
   },
   "table": {
-    "article": "Article",
-    "measure": "Measure",
+    "article": "Artikel",
+    "measure": "Messen",
     "status": "Status",
     "deadline": "Deadline",
-    "lastReview": "Last review",
-    "measureCount": "{{count}} measures"
+    "lastReview": "Letzte Prüfung",
+    "measureCount": "{{count}} Messungen"
   },
   "description": {
-    "show": "Show description",
-    "hide": "Hide description",
-    "evidence": "Evidence: "
+    "show": "Beschreibung anzeigen",
+    "hide": "Beschreibung ausblenden",
+    "evidence": "Beweise: "
   },
   "empty": {
-    "title": "No NIS-2 measures yet",
-    "description": "Load the integrated NIS-2 catalogue (Art. 21) to start tracking implementation.",
-    "loadButton": "Load NIS-2 catalogue",
-    "loading": "Loading catalogue..."
+    "title": "Noch keine NIS-2-Maßnahmen",
+    "description": "Laden Sie den integrierten NIS-2-Katalog (Art.",
+    "loadButton": "NIS-2 Katalog laden",
+    "loading": "Katalog wird geladen..."
   },
-  "filterEmpty": "No measures match the filter criteria.",
+  "filterEmpty": "Keine Messungen entsprechen den Filterkriterien.",
   "modal": {
-    "status": "Implementation status",
-    "responsible": "Responsible person",
-    "nobody": "– nobody –",
-    "evidence": "Evidence",
-    "evidencePlaceholder": "Reference to documents, policies or measures",
+    "status": "Implementierungsstatus",
+    "responsible": "Verantwortliche Person",
+    "nobody": "– niemand –",
+    "evidence": "Beweise",
+    "evidencePlaceholder": "Verweis auf Dokumente, Richtlinien oder Maßnahmen",
     "deadline": "Deadline",
-    "lastReview": "Last review",
-    "notes": "Notes",
-    "cancel": "Cancel",
-    "save": "Save",
-    "saving": "Saving...",
-    "edit": "Edit"
+    "lastReview": "Letzte Prüfung",
+    "notes": "Notizen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saving": "Speichern...",
+    "edit": "Bearbeiten"
   },
   "toast": {
-    "loadError": "Error loading catalogue",
-    "saveError": "Error saving"
+    "loadError": "Fehler beim Laden des Katalogs",
+    "saveError": "Fehler beim Speichern"
   }
 }
