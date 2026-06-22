@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const LANGUAGES = [
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'en', label: 'English', flagUrl: '/flags/en.svg' },
+  { code: 'de', label: 'Deutsch', flagUrl: '/flags/de.svg' },
+  { code: 'es', label: 'Español', flagUrl: '/flags/es.svg' },
 ];
 
 export const LanguageSwitcher: React.FC = () => {
@@ -28,7 +29,11 @@ export const LanguageSwitcher: React.FC = () => {
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-xs font-medium w-full"
         title={current.label}
       >
-        <span className="text-base leading-none">{current.flag}</span>
+        <img
+          src={current.flagUrl}
+          alt={current.label}
+          className="w-5 h-3.5 object-cover rounded-sm border border-slate-700/50"
+        />
         <span>{current.code.toUpperCase()}</span>
       </button>
 
@@ -44,7 +49,11 @@ export const LanguageSwitcher: React.FC = () => {
                   : 'text-slate-300 hover:bg-slate-700 hover:text-white'
               }`}
             >
-              <span>{lang.flag}</span>
+              <img
+                src={lang.flagUrl}
+                alt={lang.label}
+                className="w-5 h-3.5 object-cover rounded-sm border border-slate-700/50"
+              />
               <span>{lang.label}</span>
             </button>
           ))}

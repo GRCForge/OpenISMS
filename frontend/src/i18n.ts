@@ -20,7 +20,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: 'en',
-    supportedLngs: ['en', 'de'],
+    supportedLngs: ['en', 'de', 'es'],
     defaultNS: 'common',
     ns: NAMESPACES,
     backend: {
