@@ -1,47 +1,47 @@
 {
   "title": "BSI IT-Grundschutz",
-  "subtitle": "IT-Grundschutz-Kompendium · {{count}} Anforderungen",
+  "subtitle": "IT-Grundschutz Compendium · {{count}} Anforderungen",
   "status": {
-    "not_started": "Offen",
-    "in_progress": "In Umsetzung",
-    "implemented": "Umgesetzt",
+    "not_started": "Öffnen",
+    "in_progress": "In Bearbeitung",
+    "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
   },
   "level": {
-    "basis": "Basis",
+    "basis": "Einfache",
     "standard": "Standard",
-    "erhoehter_schutzbedarf": "Erhöhter Schutzbedarf"
+    "erhoehter_schutzbedarf": "Hoher Schutz"
   },
   "stats": {
     "total": "Gesamt",
-    "implemented": "Umgesetzt",
-    "inProgress": "In Umsetzung",
-    "open": "Offen"
+    "implemented": "Implementiert",
+    "inProgress": "In Bearbeitung",
+    "open": "Öffnen"
   },
   "filter": {
-    "searchPlaceholder": "Anforderungs-ID, Baustein oder Titel suchen...",
+    "searchPlaceholder": "Anforderungsnummer, Modul oder Titel...",
     "allStatus": "Alle Status",
-    "allLevels": "Alle Schutzbedarfe",
-    "allLayers": "Alle Schichten"
+    "allLevels": "Alle Schutzniveaus",
+    "allLayers": "Alle Ebenen"
   },
   "table": {
-    "reqId": "Anforderungs-ID",
+    "reqId": "Anforderungsnummer",
     "title": "Titel",
-    "level": "Schutzbedarf",
+    "level": "Schutzstufe",
     "status": "Status",
     "lastReview": "Letzte Prüfung",
     "reqCount": "{{count}} Anf."
   },
   "empty": {
-    "title": "Noch keine BSI-IT-Grundschutz-Anforderungen vorhanden",
-    "description": "Lade den integrierten BSI-IT-Grundschutz-Katalog, um mit der Umsetzungsverfolgung zu starten.",
+    "title": "Noch keine BSI IT-Grundschutzanforderungen",
+    "description": "Laden Sie den integrierten BSI IT-Grundschutz Katalog, um mit der Tracking-Implementierung zu beginnen.",
     "loadButton": "BSI-Katalog laden",
-    "loading": "Lade Katalog..."
+    "loading": "Katalog wird geladen..."
   },
   "filterEmpty": "Keine Anforderungen entsprechen den Filterkriterien.",
   "editTitle": "Bearbeiten",
   "modal": {
-    "status": "Umsetzungsstatus",
+    "status": "Implementierungsstatus",
     "responsible": "Verantwortliche Person",
     "nobody": "– niemand –",
     "lastReview": "Letzte Prüfung",
