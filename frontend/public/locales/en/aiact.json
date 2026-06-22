@@ -96,6 +96,6 @@
     "removeError": "Error"
   },
   "confirm": {
-    "delete": "Really delete “{{name}}”?"
+    "delete": "Really delete \"{{name}}\"?"
   }
 }

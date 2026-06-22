@@ -30,7 +30,7 @@
   "stats": {
     "received": "Eingegangen",
     "inProgress": "In Bearbeitung",
-    "overdue": "Überfällig",
+    "overdue": "Übcrfällig",
     "completedMonth": "Abgeschlossen (Monat)"
   },
   "deadline": {
