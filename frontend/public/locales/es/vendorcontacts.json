@@ -1,0 +1,63 @@
+{
+  "title": "Contacts",
+  "subtitle": "{{count}} contacts across {{vendors}} companies",
+  "new": "Add Contact",
+  "searchPlaceholder": "Search name, email or role...",
+  "filters": {
+    "allCompanies": "All Companies",
+    "allTypes": "All Company Types",
+    "allRoles": "All Roles"
+  },
+  "table": {
+    "name": "Name",
+    "company": "Company",
+    "role": "Function / Role",
+    "contact": "Contact",
+    "actions": "Actions"
+  },
+  "empty": "No contacts found",
+  "modal": {
+    "editTitle": "Edit Contact",
+    "newTitle": "Add New Contact"
+  },
+  "form": {
+    "company": "Assigned Company",
+    "switchToNew": "Create New Company",
+    "switchToExisting": "Choose Existing Company",
+    "newCompanyName": "Company Name *",
+    "newCompanyNamePlaceholder": "Company GmbH",
+    "type": "Type *",
+    "selectCompany": "Select company...",
+    "fullName": "Full Contact Name *",
+    "fullNamePlaceholder": "e.g. Jane Doe",
+    "functionRole": "Function / Role",
+    "functionRolePlaceholder": "e.g. Key Account Manager",
+    "department": "Department (external)",
+    "departmentPlaceholder": "e.g. Sales, Technology",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "notes": "Contact Notes",
+    "notesPlaceholder": "Availability, escalation path, etc.",
+    "cancel": "Cancel",
+    "save": "Update Contact",
+    "create": "Add Contact",
+    "saving": "Saving..."
+  },
+  "confirm": {
+    "delete": "Delete this contact?"
+  },
+  "toast": {
+    "loadError": "Could not load contact data",
+    "saveError": "Error saving",
+    "deleteError": "Delete failed"
+  },
+  "types": {
+    "software": "Software Vendor",
+    "cloud": "Cloud Service / SaaS",
+    "hardware": "Hardware Supplier",
+    "consulting": "Consulting",
+    "hosting": "Data Center / Hosting",
+    "logistics": "Logistics",
+    "other": "Other"
+  }
+}
