@@ -1,0 +1,131 @@
+{
+  "criticality": {
+    "critical": "Kritisch (DORA Art. 31)",
+    "important": "Wichtig",
+    "standard": "Standard"
+  },
+  "status": {
+    "active": "Aktiv",
+    "under_review": "In Prüfung",
+    "terminated": "Beendet"
+  },
+  "testType": {
+    "tlpt": "TLPT (Threat-Led Pentest)",
+    "penetration_test": "Penetrationstest",
+    "vulnerability_scan": "Schwachstellenscan",
+    "scenario_based": "Szenariobasierter Test",
+    "bcp_test": "BCP-/Wiederanlauftest",
+    "other": "Sonstiger Test"
+  },
+  "testStatus": {
+    "planned": "Geplant",
+    "in_progress": "Laufend",
+    "completed": "Abgeschlossen"
+  },
+  "testResult": {
+    "pending": "Ausstehend",
+    "passed": "Bestanden",
+    "passed_with_findings": "Bestanden mit Findings",
+    "failed": "Nicht bestanden"
+  },
+  "toast": {
+    "saveError": "Fehler beim Speichern",
+    "error": "Fehler"
+  },
+  "confirm": {
+    "deleteVendor": "„{{name}}\" wirklich löschen?",
+    "deleteTest": "„{{title}}\" wirklich löschen?"
+  },
+  "title": {
+    "register": "DORA IKT-Drittparteienregister",
+    "tests": "DORA Resilienztests"
+  },
+  "subtitle": {
+    "register": "Digital Operational Resilience Act – Register IKT-Drittdienstleister · {{count}} Einträge",
+    "tests": "Tests der digitalen operationalen Resilienz (DORA Art. 24–26) · {{count}} Einträge"
+  },
+  "button": {
+    "addVendor": "Dienstleister erfassen",
+    "addTest": "Test erfassen",
+    "cancel": "Abbrechen",
+    "saving": "Speichern...",
+    "update": "Aktualisieren",
+    "create": "Anlegen"
+  },
+  "tab": {
+    "vendors": "Drittparteien",
+    "tests": "Resilienztests"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "critical": "Kritisch",
+    "reviewDue": "Review fällig",
+    "active": "Aktive Verträge",
+    "testsTotal": "Tests gesamt",
+    "planned": "Geplant",
+    "completed": "Abgeschlossen",
+    "failed": "Nicht bestanden"
+  },
+  "filter": {
+    "searchPlaceholder": "Dienstleister, IKT-Service oder Land suchen...",
+    "allCriticalities": "Alle Kritikalitäten",
+    "allStatus": "Alle Status"
+  },
+  "table": {
+    "vendor": "Dienstleister",
+    "ictService": "IKT-Service",
+    "criticality": "Kritikalität",
+    "status": "Status",
+    "country": "Land",
+    "nextReview": "Nächste Prüfung",
+    "title": "Titel",
+    "testType": "Testart",
+    "date": "Datum",
+    "performedBy": "Durchgeführt von",
+    "result": "Ergebnis",
+    "nextTest": "Nächster Test"
+  },
+  "noVendors": "Keine IKT-Drittdienstleister gefunden",
+  "noTests": "Keine Resilienztests gefunden",
+  "modal": {
+    "editTest": "Resilienztest bearbeiten",
+    "addTest": "Resilienztest erfassen",
+    "editVendor": "IKT-Drittdienstleister bearbeiten",
+    "addVendor": "IKT-Drittdienstleister erfassen"
+  },
+  "form": {
+    "titleRequired": "Titel *",
+    "titlePlaceholder": "z. B. Jährlicher Penetrationstest Kernbanksystem",
+    "testType": "Testart",
+    "testDate": "Testdatum",
+    "performedBy": "Durchgeführt von",
+    "performedByPlaceholder": "z. B. externer Dienstleister, internes Team",
+    "status": "Status",
+    "result": "Ergebnis",
+    "findings": "Findings",
+    "findingsPlaceholder": "Festgestellte Schwachstellen und Auffälligkeiten",
+    "remediation": "Behebungsmaßnahmen",
+    "remediationPlaceholder": "Geplante bzw. umgesetzte Maßnahmen zur Behebung",
+    "nextTest": "Nächster Test",
+    "notes": "Notizen",
+    "vendorNameRequired": "Dienstleistername *",
+    "vendorNamePlaceholder": "z. B. Microsoft Azure",
+    "ictServiceRequired": "IKT-Service / Leistungsbeschreibung *",
+    "ictServicePlaceholder": "z. B. Cloud-Infrastruktur, SaaS-Plattform",
+    "criticality": "Kritikalität (DORA)",
+    "contractStart": "Vertragsbeginn",
+    "contractEnd": "Vertragsende",
+    "country": "Land",
+    "countryPlaceholder": "z. B. Deutschland, USA",
+    "slaRto": "SLA RTO (Stunden)",
+    "slaRtoPlaceholder": "z. B. 4",
+    "slaRpo": "SLA RPO (Stunden)",
+    "slaRpoPlaceholder": "z. B. 1",
+    "contactName": "Ansprechpartner (Name)",
+    "contactNamePlaceholder": "Vollständiger Name",
+    "contactEmail": "Ansprechpartner (E-Mail)",
+    "contactEmailPlaceholder": "kontakt@example.com",
+    "lastReview": "Letzte Prüfung",
+    "nextReview": "Nächste Prüfung"
+  }
+}
