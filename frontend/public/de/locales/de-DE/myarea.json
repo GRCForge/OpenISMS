@@ -1,77 +1,77 @@
 {
-  "title": "My Area",
-  "welcome": "Welcome, {{name}}",
-  "openItems": "{{count}} open items",
-  "noPasskey": "No Passkey",
+  "title": "Mein Bereich",
+  "welcome": "Willkommen, {{name}}",
+  "openItems": "{{count}} offene Elemente",
+  "noPasskey": "Kein Passwort",
   "employee": {
-    "title": "My Trainings",
-    "subtitle": "Here you can see an overview of your completed trainings. You can contest entries if you attended a different training or the information is incorrect.",
-    "required": "Required",
-    "completedAt": "Completed on:",
-    "expiresAt": "Valid until:",
-    "contested": "Contested",
-    "contest": "Contest",
-    "empty": "No training records found",
-    "emptyDescription": "No training participations have been recorded for your account yet."
+    "title": "Meine Trainings",
+    "subtitle": "Hier siehst du einen Überblick über deine abgeschlossenen Trainings. Du kannst Eintrge bewerten, wenn du ein anderes Training besucht hast oder die Informationen falsch sind.",
+    "required": "Benötigt",
+    "completedAt": "Abgeschlossen am:",
+    "expiresAt": "Gültig bis:",
+    "contested": "Gefecht",
+    "contest": "Wettbewerb",
+    "empty": "Keine Trainingseinträge gefunden",
+    "emptyDescription": "Es wurden noch keine Schulungsteilnehmer für Ihr Konto registriert."
   },
   "contestModal": {
-    "title": "Contest Training Record",
-    "hint": "If you did not attend this training, the date is wrong, or you attended a different training, you can explain this here. A compliance officer will review your request.",
-    "hintTitle": "Note about contestation",
-    "selectedTraining": "Selected Training",
-    "registeredDate": "Registered date:",
-    "reasonLabel": "Reason / Correction note",
+    "title": "Training Rekord des Wettbewerbs",
+    "hint": "Wenn Sie nicht an diesem Training teilgenommen haben, ist das Datum falsch, oder Sie haben eine andere Ausbildung besucht, können Sie dies hier erklären. Ein Compliance-Offizier wird Ihre Anfrage überprüfen.",
+    "hintTitle": "Hinweis zu Wettbewerben",
+    "selectedTraining": "Ausgewähltes Training",
+    "registeredDate": "Registriertes Datum:",
+    "reasonLabel": "Begründung / Korrekturnotiz",
     "reasonRequired": "*",
-    "reasonPlaceholder": "e.g. 'I did not attend this training on that date, but attended Data Protection Training B instead.'",
-    "cancel": "Cancel",
-    "submit": "Submit contestation",
-    "submitting": "Submitting..."
+    "reasonPlaceholder": "z.B. \"Ich habe zu diesem Zeitpunkt nicht an dieser Ausbildung teilgenommen, sondern stattdessen an der Data Protection Training B teilgenommen.\"",
+    "cancel": "Abbrechen",
+    "submit": "Wettbewerb abschicken",
+    "submitting": "Wird gesendet..."
   },
   "tasks": {
-    "title": "My Tasks",
-    "openCount": "({{count}} open)",
-    "allTasks": "All Tasks",
-    "manageAll": "Manage all tasks",
-    "empty": "No open tasks",
-    "emptyDescription": "Great! Everything done.",
-    "overdueWarning_one": "{{count}} task overdue",
-    "overdueWarning_other": "{{count}} tasks overdue",
-    "overdueSuffix": "⚠ Overdue ·",
-    "dueLabel": "Due",
-    "markDone": "Mark as done",
-    "setInProgress": "Set in progress",
-    "done": "Done"
+    "title": "Meine Aufgaben",
+    "openCount": "({{count}} offen)",
+    "allTasks": "Alle Aufgaben",
+    "manageAll": "Alle Aufgaben verwalten",
+    "empty": "Keine offenen Aufgaben",
+    "emptyDescription": "Super! Alles getan.",
+    "overdueWarning_one": "{{count}} Aufgabe überfällig",
+    "overdueWarning_other": "{{count}} überfällige Aufgaben",
+    "overdueSuffix": "⚠ Überfällig",
+    "dueLabel": "Fällig",
+    "markDone": "Als erledigt markieren",
+    "setInProgress": "Setze in Bearbeitung",
+    "done": "Fertig"
   },
   "priority": {
-    "critical": "Critical",
-    "high": "High",
-    "medium": "Medium",
-    "low": "Low"
+    "critical": "Kritisch",
+    "high": "Hoch",
+    "medium": "Mittel",
+    "low": "Niedrig"
   },
   "sections": {
-    "title": "Action Required",
-    "showMore": "+{{count}} more → Show all"
+    "title": "Aktion erforderlich",
+    "showMore": "+{{count}} mehr → Alle anzeigen"
   },
   "allClear": {
-    "title": "All clear",
-    "description": "No open tasks or action items for your role."
+    "title": "Alles klar",
+    "description": "Keine offenen Aufgaben oder Aktionselemente für Ihre Rolle."
   },
   "passkey": {
-    "title": "No passkey configured",
-    "description": "Enhance your account security with a passkey. Click your profile picture and choose “Add passkey”."
+    "title": "Kein Passwort konfiguriert",
+    "description": "Verbessern Sie Ihre Kontosicherheit mit einem Passwort. Klicken Sie auf Ihr Profilbild und wählen Sie \"Passwort hinzufügen\"."
   },
   "roles": {
-    "admin": "System Administrator",
+    "admin": "Systemadministrator",
     "assessor": "Auditor & Assessor",
-    "it-staff": "IT Staff",
-    "dpo": "Data Protection Officer",
-    "owner": "Asset Owner",
-    "viewer": "Guest",
-    "employee": "Employee"
+    "it-staff": "IT-Mitarbeiter",
+    "dpo": "Datenschutzbeauftragter",
+    "owner": "Asset-Besitzer",
+    "viewer": "Gast",
+    "employee": "Mitarbeiter"
   },
   "toast": {
-    "contestSuccess": "Contestation submitted successfully.",
-    "contestError": "Error submitting contestation.",
-    "taskError": "Error updating task"
+    "contestSuccess": "Wettbewerb erfolgreich eingereicht.",
+    "contestError": "Fehler beim Senden des Wettbewerbs.",
+    "taskError": "Fehler beim Aktualisieren der Aufgabe"
   }
 }
