@@ -1,101 +1,101 @@
 {
-  "title": "EU AI Act – AI System Register",
-  "subtitle": "Registry of deployed AI systems under the EU Artificial Intelligence Act · {{count}} entries",
-  "newButton": "Add AI System",
+  "title": "EU AI Akt – KI Systemregister",
+  "subtitle": "Registry von eingesetzten KI-Systemen gemäß dem EU Artificial Intelligence Act · {{count}} Einträge",
+  "newButton": "KI-System hinzufügen",
   "riskCategory": {
-    "prohibited": "Prohibited (Art. 5)",
-    "high_risk": "High Risk (Annex III)",
-    "limited": "Limited Risk",
-    "minimal": "Minimal Risk"
+    "prohibited": "Verboten (Art. 5)",
+    "high_risk": "Hochrisiko (Anhang III)",
+    "limited": "Begrenztes Risiko",
+    "minimal": "Minimales Risiko"
   },
   "conformityStatus": {
-    "not_assessed": "Not assessed",
-    "in_assessment": "In assessment",
-    "compliant": "Compliant",
-    "non_compliant": "Non-compliant"
+    "not_assessed": "Nicht bewertet",
+    "in_assessment": "In Prüfung",
+    "compliant": "Konform",
+    "non_compliant": "Nicht konform"
   },
   "stats": {
-    "total": "Total",
-    "prohibited": "Prohibited",
-    "highRisk": "High Risk",
-    "nonCompliant": "Non-compliant"
+    "total": "Gesamt",
+    "prohibited": "Verboten",
+    "highRisk": "Hohes Risiko",
+    "nonCompliant": "Nicht konform"
   },
   "filter": {
-    "searchPlaceholder": "Search AI system, use case or provider...",
-    "allRiskCategories": "All risk categories",
-    "allConformity": "All conformity statuses"
+    "searchPlaceholder": "Suche KI System, Fall oder Anbieter verwenden...",
+    "allRiskCategories": "Alle Risikokategorien",
+    "allConformity": "Alle Konformitätsstatus"
   },
   "table": {
     "name": "AI System",
-    "riskCategory": "Risk Category",
-    "conformity": "Conformity",
-    "provider": "Provider",
-    "owner": "Owner",
-    "lastReview": "Last Review"
+    "riskCategory": "Risikokategorie",
+    "conformity": "Übereinstimmung",
+    "provider": "Anbieter",
+    "owner": "Besitzer",
+    "lastReview": "Letzte Überprüfung"
   },
   "empty": {
-    "title": "No AI systems found",
-    "createButton": "Add AI System"
+    "title": "Keine KI-Systeme gefunden",
+    "createButton": "KI-System hinzufügen"
   },
   "modal": {
-    "editTitle": "Edit AI System",
-    "newTitle": "Add AI System",
-    "nameLabel": "AI system name",
-    "namePlaceholder": "e.g. Document Classification, Support Chatbot",
-    "descriptionLabel": "Description",
-    "descriptionPlaceholder": "Brief description of the AI system and its functionality",
-    "riskCategoryLabel": "Risk category (EU AI Act)",
-    "conformityLabel": "Conformity status",
-    "useCaseLabel": "Use case",
-    "useCasePlaceholder": "Description of the deployment scenario",
-    "providerLabel": "Provider / Manufacturer",
-    "providerPlaceholder": "e.g. OpenAI, Microsoft, internal system",
-    "deployedSinceLabel": "Deployed since",
-    "locationLabel": "Location / Region",
-    "locationPlaceholder": "e.g. Cloud Region, Data Center...",
-    "lastReviewLabel": "Last Review",
-    "docsUrlLabel": "Documentation URL",
-    "ownerLabel": "Owner",
-    "vendorLabel": "Assigned vendor (from register)",
-    "notesLabel": "Notes",
-    "noOwner": "– nobody –",
-    "noVendor": "– no vendor –",
-    "cancel": "Cancel",
-    "save": "Saving...",
-    "update": "Update",
-    "create": "Create"
+    "editTitle": "KI-System bearbeiten",
+    "newTitle": "KI-System hinzufügen",
+    "nameLabel": "KI-Systemname",
+    "namePlaceholder": "z.B. Dokumentenklassifizierung, Support-Chatbot",
+    "descriptionLabel": "Beschreibung",
+    "descriptionPlaceholder": "Kurze Beschreibung des KI-Systems und seiner Funktionalität",
+    "riskCategoryLabel": "Risikokategorie (EU AI Act)",
+    "conformityLabel": "Konformitätsstatus",
+    "useCaseLabel": "Gehäuse verwenden",
+    "useCasePlaceholder": "Beschreibung des Bereitstellungsszenarios",
+    "providerLabel": "Anbieter / Hersteller",
+    "providerPlaceholder": "z.B. OpenAI, Microsoft, internes System",
+    "deployedSinceLabel": "Bereitgestellt seit",
+    "locationLabel": "Standort / Region",
+    "locationPlaceholder": "z.B. Cloud-Region, Datenzentrum...",
+    "lastReviewLabel": "Letzte Überprüfung",
+    "docsUrlLabel": "Dokumentations-URL",
+    "ownerLabel": "Besitzer",
+    "vendorLabel": "Zugewiesener Anbieter (von Register)",
+    "notesLabel": "Notizen",
+    "noOwner": "– niemand –",
+    "noVendor": "– kein Lieferant –",
+    "cancel": "Abbrechen",
+    "save": "Speichern...",
+    "update": "Aktualisieren",
+    "create": "Anlegen"
   },
   "docs": {
-    "modalTitle": "Documents: {{name}}",
-    "sectionTitle": "Stored Documents",
-    "empty": "No documents stored yet.",
-    "uploadTitle": "Upload New Document",
-    "categoryLabel": "Document type",
-    "descriptionLabel": "Description (optional)",
-    "descriptionPlaceholder": "Brief note about the document...",
-    "uploadButton": "Upload",
-    "uploading": "Uploading...",
+    "modalTitle": "Dokumente: {{name}}",
+    "sectionTitle": "Gespeicherte Dokumente",
+    "empty": "Noch keine Dokumente gespeichert.",
+    "uploadTitle": "Neues Dokument hochladen",
+    "categoryLabel": "Dokumententyp",
+    "descriptionLabel": "Beschreibung (optional)",
+    "descriptionPlaceholder": "Kurze Notiz zum Dokument...",
+    "uploadButton": "Hochladen",
+    "uploading": "Hochladen...",
     "downloadTitle": "Download",
-    "deleteTitle": "Delete",
+    "deleteTitle": "Löschen",
     "categories": {
-      "ai_documentation": "AI Documentation / Description",
-      "risk_report": "Risk Assessment",
-      "contract": "Contract / DPA",
-      "certificate": "Certificate",
-      "other": "Other"
+      "ai_documentation": "KI-Dokumentation / Beschreibung",
+      "risk_report": "Risikobewertung",
+      "contract": "Vertrag / DPA",
+      "certificate": "Zertifikat",
+      "other": "Andere"
     }
   },
-  "docLink": "Open technical documentation",
-  "manageDocsTitle": "Manage documents (evidence)",
+  "docLink": "Technische Dokumentation öffnen",
+  "manageDocsTitle": "Dokumente verwalten (Beweis)",
   "toast": {
-    "uploadSuccess": "Document uploaded successfully",
-    "uploadError": "Error uploading document",
-    "deleteSuccess": "Document deleted",
-    "deleteError": "Error deleting document",
-    "saveError": "Error saving",
-    "removeError": "Error"
+    "uploadSuccess": "Dokument erfolgreich hochgeladen",
+    "uploadError": "Fehler beim Hochladen des Dokuments",
+    "deleteSuccess": "Dokument gelöscht",
+    "deleteError": "Fehler beim Löschen des Dokuments",
+    "saveError": "Fehler beim Speichern",
+    "removeError": "Fehler"
   },
   "confirm": {
-    "delete": "Really delete “{{name}}”?"
+    "delete": "Wirklich \"{{name}}\" löschen?"
   }
 }
