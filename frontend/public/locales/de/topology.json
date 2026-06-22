@@ -1,43 +1,43 @@
 {
   "title": "Asset-Topologie",
-  "subtitle": "Gesamtübersicht aller Assets und ihrer Abhängigkeiten (Parent/Child)",
-  "loadingLabel": "Topologie wird geladen",
+  "subtitle": "Übersicht aller Assets und ihrer Abhängigkeiten (Eltern/Kind)",
+  "loadingLabel": "Lade Topologie",
   "typeFilter": "Nach Asset-Typ filtern",
   "allTypes": "Alle Typen",
-  "directionGroup": "Diagramm-Ausrichtung",
+  "directionGroup": "Diagrammausrichtung",
   "horizontal": "Horizontale Ansicht",
   "vertical": "Vertikale Ansicht",
   "types": {
     "hardware": "Hardware",
     "software": "Software",
-    "information": "Information/Daten",
-    "process": "Prozess",
+    "information": "Informationen/Daten",
+    "process": "Verarbeiten",
     "service": "Service",
     "personal": "Personal",
     "application": "Anwendung",
     "data": "Daten",
-    "ai_application": "KI-Anwendung (AI Act)",
-    "ai_agent": "KI-Agent",
-    "other": "Sonstiges"
+    "ai_application": "AI Anwendung (AI Act)",
+    "ai_agent": "AI Agent",
+    "other": "Andere"
   },
   "stats": {
     "assets": "Assets",
-    "roots": "Wurzel-Systeme",
+    "roots": "Root-Systeme",
     "linked": "Verknüpft",
-    "isolated": "Isoliert"
+    "isolated": "isoliert"
   },
   "graph": {
-    "title": "Abhängigkeitsgraph",
+    "title": "Abhängigkeitsdiagramm",
     "legend": {
       "critical": "Kritisch",
       "high": "Hoch",
       "medium": "Mittel",
-      "low": "Gering",
-      "unassessed": "Unbewertet",
-      "ai": "KI-Asset"
+      "low": "Niedrig",
+      "unassessed": "Ungeprüft",
+      "ai": "AI Asset"
     },
-    "tip": "Tipp: Auf einen Knoten klicken, um zum jeweiligen Asset zu springen.",
-    "noAssets": "Keine Assets vorhanden.",
-    "noDependencies": "Keine Abhängigkeiten erfasst. Verknüpfe Assets über das Feld „Übergeordnetes Asset“."
+    "tip": "Tipp: Klicken Sie auf einen Knoten, um zum Asset zu navigieren.",
+    "noAssets": "Keine Assets verfügbar.",
+    "noDependencies": "Keine Abhängigkeiten aufgezeichnet. Verknüpfen Sie Assets mit dem Feld \"Übergeordnetes Asset\"."
   }
 }
