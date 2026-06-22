@@ -102,7 +102,12 @@
     "nvdNoCpe": "No CPE entry found in NVD. Please check manufacturer/name or adjust search term.",
     "cpeResolveFailed": "CPE resolution failed",
     "cveSearchImpossible": "CVE search not possible (missing asset data).",
-    "linkFailed": "Error linking"
+    "linkFailed": "Error linking",
+    "cpeSaved": "CPE saved: {{title}}",
+    "createFailed": "Error creating",
+    "pdfLoadError": "PDF could not be loaded",
+    "riskAcceptanceDocRequired": "Risk acceptance requires a signed acceptance document. Please upload it.",
+    "genericError": "An error occurred"
   },
   "yn": {
     "yes": "Yes",
@@ -329,6 +334,9 @@
     "online": "Online",
     "offline": "Offline",
     "download": "Download",
+    "deleteLabel": "Delete",
+    "riskAcceptanceDocDesc": "Risk acceptance",
+    "loading": "Loading asset",
     "noIncidents": "No incidents known for this asset.",
     "bold": "Bold",
     "italic": "Italic",

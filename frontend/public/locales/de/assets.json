@@ -91,7 +91,21 @@
     "bulkDeleted_one": "{{count}} Asset gelöscht",
     "bulkDeleted_other": "{{count}} Assets gelöscht",
     "bulkDeleteConfirm_one": "Möchten Sie die {{count}} ausgewählten Assets wirklich löschen bzw. außer Betrieb nehmen?",
-    "bulkDeleteConfirm_other": "Möchten Sie die {{count}} ausgewählten Assets wirklich löschen bzw. außer Betrieb nehmen?"
+    "bulkDeleteConfirm_other": "Möchten Sie die {{count}} ausgewählten Assets wirklich löschen bzw. außer Betrieb nehmen?",
+    "nvdNoCpe": "Kein CPE-Eintrag im NVD gefunden. Hersteller/Name prüfen oder Suchbegriff anpassen.",
+    "cpeResolveFailed": "CPE-Auflösung fehlgeschlagen",
+    "cveSearchImpossible": "CVE-Suche nicht möglich (fehlende Asset-Daten).",
+    "linkFailed": "Fehler beim Verknüpfen",
+    "cpeSaved": "CPE gespeichert: {{title}}",
+    "createFailed": "Fehler beim Erstellen",
+    "pdfLoadError": "PDF konnte nicht geladen werden",
+    "riskAcceptanceDocRequired": "Risikoakzeptanz erfordert ein unterschriebenes Akzeptanz-Dokument. Bitte laden Sie es hoch.",
+    "genericError": "Ein Fehler ist aufgetreten"
+  },
+  "detail": {
+    "deleteLabel": "Löschen",
+    "riskAcceptanceDocDesc": "Risikoakzeptanz",
+    "loading": "Asset wird geladen"
   },
   "yn": {
     "yes": "Ja",
