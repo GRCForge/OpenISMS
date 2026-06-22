@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Radar, Download, Play, CheckSquare, Square, Server, Wifi, Terminal, AlertTriangle, CheckCircle, Info, ChevronRight, Package, Inbox, Trash2, Check, X, RefreshCw } from 'lucide-react';
+import { useTranslation, Trans } from 'react-i18next';
 import api from '../lib/api';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -41,6 +42,7 @@ interface ScanResult {
 
 export const NetworkDiscovery: React.FC = () => {
   const toast = useToast();
+  const { t } = useTranslation('networkdiscovery');
   const [tab, setTab] = useState<Tab>('scan');
 
   // Network scan state
@@ -65,7 +67,7 @@ export const NetworkDiscovery: React.FC = () => {
       const { data } = await api.get('/discovery/staged');
       setStagedSoftware(data);
     } catch {
-      toast.error('Freizugebende Software konnte nicht geladen werden');
+      toast.error(t('messages.loadFailed'));
     } finally {
       setLoadingStaged(false);
     }
@@ -74,31 +76,31 @@ export const NetworkDiscovery: React.FC = () => {
   const approveSoftware = async (id: number) => {
     try {
       await api.post(`/discovery/staged/${id}/approve`);
-      toast.success('Software freigegeben und zu Assets hinzugefügt.');
+      toast.success(t('messages.approveSuccess'));
       loadStaged();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Freigabe fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('messages.approveFailed'));
     }
   };
 
   const ignoreSoftware = async (id: number) => {
     try {
       await api.post(`/discovery/staged/${id}/ignore`);
-      toast.success('Software ignoriert.');
+      toast.success(t('messages.ignoreSuccess'));
       loadStaged();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Aktion fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('messages.actionFailed'));
     }
   };
 
   const deleteStaged = async (id: number) => {
-    if (!confirm('Eintrag wirklich löschen?')) return;
+    if (!confirm(t('messages.confirmDeleteSingle'))) return;
     try {
       await api.delete(`/discovery/staged/${id}`);
-      toast.success('Eintrag gelöscht.');
+      toast.success(t('messages.deleteSuccessSingle'));
       loadStaged();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Löschen fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('messages.deleteFailedSingle'));
     }
   };
 
@@ -115,7 +117,7 @@ export const NetworkDiscovery: React.FC = () => {
         failCount++;
       }
     }
-    toast.success(`${successCount} Software-Einträge freigegeben.${failCount > 0 ? ` ${failCount} fehlgeschlagen.` : ''}`);
+    toast.success(t('messages.bulkApproveSuccess', { successCount, failedText: failCount > 0 ? ` ${t('messages.bulkApproveFailedCount', { failCount })}` : '' }));
     setSelectedStaged(new Set());
     loadStaged();
   };
@@ -130,13 +132,13 @@ export const NetworkDiscovery: React.FC = () => {
         successCount++;
       } catch {}
     }
-    toast.success(`${successCount} Software-Einträge ignoriert.`);
+    toast.success(t('messages.bulkIgnoreSuccess', { count: successCount }));
     setSelectedStaged(new Set());
     loadStaged();
   };
 
   const bulkDelete = async () => {
-    if (selectedStaged.size === 0 || !confirm(`${selectedStaged.size} Einträge wirklich löschen?`)) return;
+    if (selectedStaged.size === 0 || !confirm(t('messages.bulkDeleteConfirm', { count: selectedStaged.size }))) return;
     const ids = Array.from(selectedStaged);
     let successCount = 0;
     for (const id of ids) {
@@ -145,7 +147,7 @@ export const NetworkDiscovery: React.FC = () => {
         successCount++;
       } catch {}
     }
-    toast.success(`${successCount} Einträge gelöscht.`);
+    toast.success(t('messages.bulkDeleteSuccess', { count: successCount }));
     setSelectedStaged(new Set());
     loadStaged();
   };
@@ -164,10 +166,10 @@ export const NetworkDiscovery: React.FC = () => {
     try {
       const { data } = await api.post('/discovery/network-scan', { cidr });
       setScanResult(data);
-      if (data.found === 0) toast.error('Keine aktiven Hosts gefunden. CIDR-Bereich oder Ports prüfen.');
-      else toast.success(`${data.found} aktive Host(s) in ${data.scanned} geprüften Adressen gefunden.`);
+      if (data.found === 0) toast.error(t('scan.noActiveHosts'));
+      else toast.success(t('messages.scanSuccess', { found: data.found, scanned: data.scanned }));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Scan fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('messages.scanFailed'));
     } finally { setScanning(false); }
   };
 
@@ -190,14 +192,14 @@ export const NetworkDiscovery: React.FC = () => {
       const hosts = scanResult.hosts.filter(h => selected.has(h.ip));
       const { data } = await api.post('/discovery/import', { hosts });
       const msg = data.skipped > 0
-        ? `${data.created} Host(s) zur Freigabe gestellt (${data.skipped} bereits vorhanden/ignoriert).`
-        : `${data.created} Host(s) zur Freigabe gestellt.`;
+        ? t('messages.importSuccessWithSkipped', { created: data.created, skipped: data.skipped })
+        : t('messages.importSuccess', { created: data.created });
       toast.success(msg);
       setSelected(new Set());
       // Switch to staging tab automatically
       handleTabChange('staged');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Staging fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('messages.importFailed'));
     } finally { setImporting(false); }
   };
 
@@ -210,7 +212,7 @@ export const NetworkDiscovery: React.FC = () => {
       a.href = url; a.download = fname;
       document.body.appendChild(a); a.click(); a.remove();
       window.URL.revokeObjectURL(url);
-    } catch { toast.error('Download fehlgeschlagen'); }
+    } catch { toast.error(t('messages.downloadFailed')); }
   };
 
   const SERVICE_COLORS: Record<string, string> = {
@@ -232,18 +234,18 @@ export const NetworkDiscovery: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
-            <Radar size={24} className="text-blue-500" /> Netzwerk-Discovery
+            <Radar size={24} className="text-blue-500" /> {t('title')}
           </h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">Assets automatisch im Netzwerk erkennen</p>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitle')}</p>
         </div>
       </div>
 
       {/* Tab bar */}
       <div className="flex gap-1 border-b dark:border-slate-800">
         {([
-          ['scan', Wifi, 'Netzwerk-Scan'],
-          ['agent', Terminal, 'Discovery-Agent'],
-          ['staged', Inbox, 'Freigabe-Queue']
+          ['scan', Wifi, t('tabs.scan')],
+          ['agent', Terminal, t('tabs.agent')],
+          ['staged', Inbox, t('tabs.staged')]
         ] as const).map(([t, Icon, label]) => (
           <button key={t} onClick={() => handleTabChange(t)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
@@ -264,30 +266,30 @@ export const NetworkDiscovery: React.FC = () => {
               <div className="flex gap-3 items-end">
                 <div className="flex-1">
                   <Input
-                    label="IP-Bereich (CIDR)"
+                    label={t('scan.ipRangeLabel')}
                     value={cidr}
                     onChange={e => setCidr(e.target.value)}
                     placeholder="192.168.1.0/24"
                   />
                   <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-                    Nur private RFC-1918-Bereiche · Maximum /24 (254 Hosts)
+                    {t('scan.ipRangeHelp')}
                   </p>
                 </div>
                 <Button onClick={runScan} disabled={scanning} className="gap-2 mb-5">
-                  <Play size={14} />{scanning ? 'Scanne…' : 'Scan starten'}
+                  <Play size={14} />{scanning ? t('scan.scanning') : t('scan.startScan')}
                 </Button>
               </div>
 
               {scanning && (
                 <div className="flex items-center gap-3 text-sm text-blue-600 dark:text-blue-400 py-2">
                   <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  TCP-Verbindungstest läuft… (max. ~15 Sekunden für /24)
+                  {t('scan.scanProgress')}
                 </div>
               )}
 
               <div className="flex items-start gap-2 text-xs text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-800 rounded-lg p-3">
                 <Info size={13} className="mt-0.5 flex-shrink-0" />
-                <span>Der Scan testet offene TCP-Ports (SSH, HTTP/S, RDP, SMB, MySQL, …) — kein Root / kein nmap erforderlich. Reverse-DNS wird für Hostnamen genutzt.</span>
+                <span>{t('scan.scanInfo')}</span>
               </div>
             </CardBody>
           </Card>
@@ -299,18 +301,18 @@ export const NetworkDiscovery: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Server size={16} className="text-blue-500" />
                     <h2 className="font-bold dark:text-white">
-                      {scanResult.found} aktive Host(s) — {scanResult.scanned} Adressen geprüft
+                      {t('scan.hostsFound', { found: scanResult.found, scanned: scanResult.scanned })}
                     </h2>
                   </div>
                   <div className="flex items-center gap-3">
                     <button onClick={selectAll} className="text-xs text-blue-500 dark:text-blue-400 hover:underline flex items-center gap-1">
                       {selected.size === scanResult.hosts.length
-                        ? <><Square size={12} />Auswahl aufheben</>
-                        : <><CheckSquare size={12} />Alle auswählen</>}
+                        ? <><Square size={12} />{t('scan.deselectAll')}</>
+                        : <><CheckSquare size={12} />{t('scan.selectAll')}</>}
                     </button>
                     {selected.size > 0 && (
                       <Button size="sm" onClick={importSelected} disabled={importing}>
-                        {importing ? 'Staging…' : `${selected.size} zur Freigabe stellen`}
+                        {importing ? t('scan.staging') : t('scan.submitForApproval', { count: selected.size })}
                       </Button>
                     )}
                   </div>
@@ -345,7 +347,7 @@ export const NetworkDiscovery: React.FC = () => {
                           )}
                           {host.vendor && (
                             <span className="text-xs font-medium text-gray-400 dark:text-slate-500 ml-2">
-                              Hersteller: {host.vendor}
+                              {t('scan.vendor', { vendor: host.vendor })}
                             </span>
                           )}
                         </div>
@@ -359,7 +361,7 @@ export const NetworkDiscovery: React.FC = () => {
                       </div>
                       {/* Risk hint for sensitive ports */}
                       {host.openPorts.some(p => [23, 445, 3389, 5900].includes(p.port)) && (
-                        <span title="Kritische Dienste offen (Telnet/SMB/RDP/VNC)"><AlertTriangle size={14} className="text-orange-400 mt-1 flex-shrink-0" /></span>
+                        <span title={t('scan.criticalPortsOpen')}><AlertTriangle size={14} className="text-orange-400 mt-1 flex-shrink-0" /></span>
                       )}
                     </div>
                   ))}
@@ -378,7 +380,7 @@ export const NetworkDiscovery: React.FC = () => {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Download size={16} className="text-green-500" />
-                <h2 className="font-bold dark:text-white">Agent herunterladen</h2>
+                <h2 className="font-bold dark:text-white">{t('agent.downloadTitle')}</h2>
               </div>
             </CardHeader>
             <CardBody className="space-y-5">
@@ -395,7 +397,7 @@ export const NetworkDiscovery: React.FC = () => {
                     }`}>
                     <Terminal size={24} className={platform === p ? 'text-blue-500' : 'text-gray-400'} />
                     <span className={`text-sm font-bold ${platform === p ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'}`}>
-                      {p === 'windows' ? 'Windows (PowerShell)' : 'Linux (Bash)'}
+                      {p === 'windows' ? t('agent.windowsPowerShell') : t('agent.linuxBash')}
                     </span>
                   </button>
                 ))}
@@ -403,28 +405,28 @@ export const NetworkDiscovery: React.FC = () => {
 
               <Button onClick={downloadAgent} className="w-full justify-center gap-2">
                 <Download size={15} />
-                {platform === 'windows' ? 'isms-discovery-agent.ps1' : 'isms-discovery-agent.sh'} herunterladen
+                {t('agent.downloadButton', { filename: platform === 'windows' ? 'isms-discovery-agent.ps1' : 'isms-discovery-agent.sh' })}
               </Button>
 
               <div className="space-y-3 pt-2 border-t dark:border-slate-800">
-                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">Einrichtung in 3 Schritten</p>
+                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">{t('agent.setupSteps')}</p>
                 {[
                   {
                     n: 1,
-                    title: 'Skript herunterladen',
-                    desc: 'Skript auf dem Ziel-System ablegen',
+                    title: t('agent.step1Title'),
+                    desc: t('agent.step1Desc'),
                   },
                   {
                     n: 2,
-                    title: 'JWT-Token eintragen',
-                    desc: 'In der Skript-Datei den Platzhalter DEIN-JWT-TOKEN durch Ihren Token ersetzen (Profil → oben rechts)',
+                    title: t('agent.step2Title'),
+                    desc: t('agent.step2Desc'),
                   },
                   {
                     n: 3,
-                    title: 'Skript ausführen',
+                    title: t('agent.step3Title'),
                     desc: platform === 'windows'
-                      ? 'powershell -ExecutionPolicy Bypass -File isms-discovery-agent.ps1'
-                      : 'chmod +x isms-discovery-agent.sh && ./isms-discovery-agent.sh',
+                      ? t('agent.step3DescWindows')
+                      : t('agent.step3DescLinux'),
                   },
                 ].map(s => (
                   <div key={s.n} className="flex gap-3 items-start">
@@ -454,14 +456,14 @@ export const NetworkDiscovery: React.FC = () => {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Package size={16} className="text-purple-500" />
-                  <h2 className="font-bold dark:text-white">Was wird erkannt?</h2>
+                  <h2 className="font-bold dark:text-white">{t('agent.whatIsDetected')}</h2>
                 </div>
               </CardHeader>
               <CardBody className="space-y-3">
                 {[
-                  { icon: '🪟', label: 'Windows', desc: 'Installierte Software aus der Registry (HKLM + HKCU Uninstall-Keys), Hostname, IP, OS-Version' },
-                  { icon: '🐧', label: 'Linux (deb)', desc: 'dpkg-query: alle installierten Pakete mit Version und Maintainer' },
-                  { icon: '🐧', label: 'Linux (rpm)', desc: 'rpm -qa: alle installierten Pakete mit Version und Vendor' },
+                  { icon: '🪟', label: t('agent.windows'), desc: t('agent.windowsDetected') },
+                  { icon: '🐧', label: t('agent.linuxDeb'), desc: t('agent.linuxDebDetected') },
+                  { icon: '🐧', label: t('agent.linuxRpm'), desc: t('agent.linuxRpmDetected') },
                 ].map(item => (
                   <div key={item.label} className="flex gap-3 items-start">
                     <span className="text-lg">{item.icon}</span>
@@ -479,9 +481,9 @@ export const NetworkDiscovery: React.FC = () => {
                 <div className="flex gap-3 items-start">
                   <CheckCircle size={16} className="text-green-500 mt-0.5 flex-shrink-0" />
                   <div className="space-y-1">
-                    <p className="text-sm font-bold dark:text-slate-200">Automatisches Asset-Matching</p>
+                    <p className="text-sm font-bold dark:text-slate-200">{t('agent.assetMatchingTitle')}</p>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Neue Software landet in der <strong>Freigabe-Queue</strong> — ein Admin kann jeden Eintrag einzeln prüfen und als Asset freigeben oder ignorieren. Existiert bereits ein Asset mit identischem Namen, wird nur die Version aktualisiert.
+                      <Trans i18nKey="agent.assetMatchingDesc" components={{ strong: <strong /> }} />
                     </p>
                   </div>
                 </div>
@@ -493,12 +495,12 @@ export const NetworkDiscovery: React.FC = () => {
                 <div className="flex gap-3 items-start">
                   <Info size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
                   <div className="space-y-1">
-                    <p className="text-sm font-bold dark:text-slate-200">Nächster Schritt: CVE-Matching</p>
+                    <p className="text-sm font-bold dark:text-slate-200">{t('agent.cveMatchingTitle')}</p>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Nach dem Import kann für jedes erkannte Asset automatisch per „CPE auto-auflösen" oder OSV.dev-Paketname eine präzise CVE-Suche gestartet werden.
+                      {t('agent.cveMatchingDesc')}
                     </p>
                     <div className="flex items-center gap-1 text-xs text-blue-500 dark:text-blue-400 mt-1">
-                      <ChevronRight size={12} />Assets → Asset öffnen → Reiter Security
+                      <ChevronRight size={12} />{t('agent.cveMatchingHint')}
                     </div>
                   </div>
                 </div>
@@ -538,14 +540,14 @@ export const NetworkDiscovery: React.FC = () => {
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      {f === 'pending' ? 'Ausstehend' : f === 'approved' ? 'Freigegeben' : f === 'ignored' ? 'Ignoriert' : 'Alle'}
+                      {f === 'pending' ? t('staged.pending') : f === 'approved' ? t('staged.approved') : f === 'ignored' ? t('staged.ignored') : t('staged.all')}
                     </button>
                   ))}
                 </div>
                 
                 <div className="flex gap-2 items-center flex-1 max-w-md w-full">
                   <Input
-                    placeholder="Software, Host oder Hersteller suchen..."
+                    placeholder={t('staged.searchPlaceholder')}
                     value={stagedSearch}
                     onChange={e => setStagedSearch(e.target.value)}
                     className="w-full !py-1.5"
@@ -561,17 +563,17 @@ export const NetworkDiscovery: React.FC = () => {
             {selectedStaged.size > 0 && (
               <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl animate-fade-in">
                 <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                  {selectedStaged.size} Einträge ausgewählt:
+                  {t('staged.itemsSelected', { count: selectedStaged.size })}
                 </span>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={bulkApprove} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
-                    <Check size={14} /> Ausgewählte freigeben
+                    <Check size={14} /> {t('staged.approveSelected')}
                   </Button>
                   <Button size="sm" onClick={bulkIgnore} className="gap-1">
-                    <X size={14} /> Ausgewählte ignorieren
+                    <X size={14} /> {t('staged.ignoreSelected')}
                   </Button>
                   <Button size="sm" onClick={bulkDelete} className="gap-1 bg-red-600 hover:bg-red-700 text-white">
-                    <Trash2 size={14} /> Ausgewählte löschen
+                    <Trash2 size={14} /> {t('staged.deleteSelected')}
                   </Button>
                 </div>
               </div>
@@ -582,7 +584,7 @@ export const NetworkDiscovery: React.FC = () => {
               {loadingStaged ? (
                 <div className="flex flex-col items-center justify-center py-20 text-gray-500 dark:text-slate-400">
                   <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-                  Lade erfasste Programme...
+                  {t('staged.loading')}
                 </div>
               ) : (
                 <div className="p-0">
@@ -607,13 +609,13 @@ export const NetworkDiscovery: React.FC = () => {
                             )}
                           </button>
                         </Th>
-                        <Th>Name / Typ</Th>
-                        <Th>Version</Th>
-                        <Th>Hersteller</Th>
-                        <Th>Host / IP</Th>
-                        <Th>Dienste / OS</Th>
-                        <Th>Status</Th>
-                        <Th className="text-right">Aktionen</Th>
+                        <Th>{t('staged.table.nameType')}</Th>
+                        <Th>{t('staged.table.version')}</Th>
+                        <Th>{t('staged.table.vendor')}</Th>
+                        <Th>{t('staged.table.hostIp')}</Th>
+                        <Th>{t('staged.table.servicesOs')}</Th>
+                        <Th>{t('staged.table.status')}</Th>
+                        <Th className="text-right">{t('staged.table.actions')}</Th>
                       </tr>
                     </Thead>
                     <Tbody>
@@ -645,14 +647,14 @@ export const NetworkDiscovery: React.FC = () => {
                                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                     : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
                                 }`}>
-                                  {item.source === 'network-scan' ? 'Netzwerk-Scan' : 'Agent'}
+                                  {item.source === 'network-scan' ? t('staged.sourceNetworkScan') : t('staged.sourceAgent')}
                                 </span>
                                 <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
                                   item.asset_type === 'hardware'
                                     ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                                     : 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
                                 }`}>
-                                  {item.asset_type === 'hardware' ? 'Hardware' : 'Software'}
+                                  {item.asset_type === 'hardware' ? t('staged.hardware') : t('staged.software')}
                                 </span>
                               </div>
                             </div>
@@ -697,7 +699,7 @@ export const NetworkDiscovery: React.FC = () => {
                                 ? 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400'
                                 : 'bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-400'
                             }`}>
-                              {item.status === 'pending' ? 'Ausstehend' : item.status === 'approved' ? 'Freigegeben' : 'Ignoriert'}
+                              {item.status === 'pending' ? t('staged.pending') : item.status === 'approved' ? t('staged.approved') : t('staged.ignored')}
                             </span>
                           </Td>
                           <Td className="text-right">
@@ -707,14 +709,14 @@ export const NetworkDiscovery: React.FC = () => {
                                   <button
                                     onClick={() => approveSoftware(item.id)}
                                     className="p-1 hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg transition-colors"
-                                    title="Freigeben & zu Assets hinzufügen"
+                                    title={t('staged.tooltips.approveAndAdd')}
                                   >
                                     <Check size={16} />
                                   </button>
                                   <button
                                     onClick={() => ignoreSoftware(item.id)}
                                     className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-lg transition-colors"
-                                    title="Ignorieren"
+                                    title={t('staged.tooltips.ignore')}
                                   >
                                     <X size={16} />
                                   </button>
@@ -723,7 +725,7 @@ export const NetworkDiscovery: React.FC = () => {
                               <button
                                 onClick={() => deleteStaged(item.id)}
                                 className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 dark:text-red-400 rounded-lg transition-colors"
-                                title="Eintrag löschen"
+                                title={t('staged.tooltips.delete')}
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -734,7 +736,7 @@ export const NetworkDiscovery: React.FC = () => {
                       {filteredStaged.length === 0 && (
                         <tr>
                           <Td colSpan={8} className="text-center py-12 text-gray-400 italic">
-                            Keine Einträge in dieser Ansicht. Führen Sie einen Netzwerk-Scan durch oder starten Sie den Discovery-Agent.
+                            {t('staged.noItems')}
                           </Td>
                         </tr>
                       )}
