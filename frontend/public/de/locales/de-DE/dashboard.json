@@ -1,67 +1,67 @@
 {
   "title": "Dashboard",
-  "subtitle": "Information Security Overview",
+  "subtitle": "Informationssicherheitsübersicht",
   "welcome": {
-    "title": "Welcome to OpenISMS!",
-    "subtitle": "Get started with your information security documentation in a few steps.",
+    "title": "Willkommen bei OpenISMS!",
+    "subtitle": "Beginnen Sie in wenigen Schritten mit Ihrer Informationssicherheitsdokumentation.",
     "steps": {
       "createAsset": {
-        "label": "Create Asset",
-        "hint": "Record servers, applications or data"
+        "label": "Asset erstellen",
+        "hint": "Server, Anwendungen oder Daten aufzeichnen"
       },
       "assess": {
-        "label": "Assess Protection Needs",
-        "hint": "Confidentiality, Integrity, Availability"
+        "label": "Assess-Schutz benötigt",
+        "hint": "Vertraulichkeit, Integrität, Verfügbarkeit"
       },
       "risks": {
-        "label": "Identify Risks",
-        "hint": "Document threats & vulnerabilities"
+        "label": "Risiken identifizieren",
+        "hint": "Bedrohungen und Schwachstellen von Dokumenten"
       },
       "controls": {
-        "label": "Assign Controls",
-        "hint": "Manage ISO 27001 Controls & SoA"
+        "label": "Steuerung zuweisen",
+        "hint": "Verwaltung von ISO 27001 Steuerungen & SoA"
       }
     }
   },
   "stats": {
-    "totalAssets": "Total Assets",
-    "highCritical": "High / Critical",
-    "overdueReviews": "Overdue Reviews",
-    "reviewsIn30Days": "Reviews in 30 days",
+    "totalAssets": "Gesamte Assets",
+    "highCritical": "Hoch / Kritisch",
+    "overdueReviews": "Überfällige Bewertungen",
+    "reviewsIn30Days": "Bewertungen in 30 Tagen",
     "compliance": "Compliance",
-    "frameworkCoverage": "Framework Coverage",
-    "assessed": "Assessed",
-    "assetsAssessed": "of {{total}} assets assessed"
+    "frameworkCoverage": "Framework-Abdeckung",
+    "assessed": "Bewertet",
+    "assetsAssessed": "von {{total}} Assets bewertet"
   },
   "sections": {
-    "riskDistribution": "Risk Distribution",
-    "byClassification": "By Classification",
-    "noRiskAssessments": "No risk assessments yet",
-    "startAssessment": "Start first assessment →",
-    "noActiveAssets": "No active assets yet",
-    "createAsset": "Create asset →",
-    "upcomingReviews": "Upcoming Reviews (next 30 days)",
-    "all": "All",
-    "noReviews": "No reviews in the next 30 days",
-    "reviewsScheduled": "Reviews are scheduled automatically after the first assessment.",
-    "complianceFrameworks": "Compliance Frameworks",
+    "riskDistribution": "Risikoverteilung",
+    "byClassification": "Nach Klassifizierung",
+    "noRiskAssessments": "Noch keine Risikobewertungen",
+    "startAssessment": "Erste Prüfung starten →",
+    "noActiveAssets": "Noch keine aktiven Assets",
+    "createAsset": "Asset erstellen →",
+    "upcomingReviews": "Nächste Bewertungen (nächste 30 Tage)",
+    "all": "Alle",
+    "noReviews": "Keine Bewertungen in den nächsten 30 Tagen",
+    "reviewsScheduled": "Nach der ersten Prüfung werden die Bewertungen automatisch geplant.",
+    "complianceFrameworks": "Compliance-Frameworks",
     "details": "Details",
-    "noFrameworkAssets": "No assets with framework mapping yet",
-    "assignFrameworks": "Assign assets to frameworks ISO 27001, NIS-2 or GDPR.",
-    "minOneFramework": "At least one framework:",
-    "recentActivity": "Recent Activity",
-    "noActivity": "No activity yet",
-    "allChangesLogged": "All changes are logged here.",
+    "noFrameworkAssets": "Noch keine Assets mit Frame-Mapping",
+    "assignFrameworks": "Assets den Frameworks ISO 27001, NIS-2 oder GDPR zuweisen.",
+    "minOneFramework": "Mindestens ein Framework:",
+    "recentActivity": "Letzte Aktivität",
+    "noActivity": "Noch keine Aktivität",
+    "allChangesLogged": "Alle Änderungen sind hier protokolliert.",
     "activityText": "{{actor}} {{action}} \"{{name}}\" ({{type}})"
   },
   "entityLabels": {
     "asset": "Asset",
-    "assessment": "Assessment",
-    "user": "User",
-    "reminder": "Review",
-    "vendor": "Service Provider",
-    "document": "Document"
+    "assessment": "Prüfung",
+    "user": "Benutzer",
+    "reminder": "Überprüfen",
+    "vendor": "Dienstanbieter",
+    "document": "Dokument"
   },
-  "error": "Dashboard could not be loaded.",
-  "loading": "Loading dashboard"
+  "error": "Dashboard konnte nicht geladen werden.",
+  "loading": "Dashboard wird geladen"
 }
