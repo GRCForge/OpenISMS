@@ -1,67 +1,67 @@
 {
   "title": "Risiken",
   "new": "Neues Risiko",
-  "searchPlaceholder": "Risiken durchsuchen...",
-  "registerTitle": "Risikoregister",
+  "searchPlaceholder": "Suchrisiken...",
+  "registerTitle": "Risiko-Register",
   "subtitle": "ISO 27005 Risikomanagement · {{count}} Risiken",
   "levels": {
-    "low": "Gering",
+    "low": "Niedrig",
     "medium": "Mittel",
     "high": "Hoch",
     "critical": "Kritisch"
   },
   "categories": {
     "it_security": "IT-Sicherheit",
-    "privacy": "Datenschutz",
+    "privacy": "Privatsphäre",
     "compliance": "Compliance",
-    "operational": "Betrieblich",
+    "operational": "Operativ",
     "financial": "Finanziell",
     "reputation": "Reputation",
-    "ai_risk": "KI-Risiko (AI Act)",
-    "supply_chain": "Lieferkette / Vendor",
-    "other": "Sonstiges"
+    "ai_risk": "AI Risiko (AI Act)",
+    "supply_chain": "Versorgungskette / Lieferant",
+    "other": "Andere"
   },
   "treatment": {
-    "mitigate": "Reduzieren",
+    "mitigate": "Abmildern",
     "accept": "Akzeptieren",
-    "transfer": "Übertragen",
+    "transfer": "Überweisung",
     "avoid": "Vermeiden"
   },
   "status": {
-    "open": "Offen",
-    "in_treatment": "In Behandlung",
+    "open": "Öffnen",
+    "in_treatment": "In der Behandlung",
     "accepted": "Akzeptiert",
     "closed": "Geschlossen"
   },
   "ratings": {
-    "1": "Sehr Gering (1)",
-    "2": "Gering (2)",
+    "1": "Sehr niedrig (1)",
+    "2": "Niedrig (2)",
     "3": "Mittel (3)",
     "4": "Hoch (4)",
-    "5": "Sehr Hoch (5)"
+    "5": "Sehr hoch (5)"
   },
   "stats": {
     "criticalHigh": "Kritisch / Hoch",
-    "inTreatment": "In Behandlung",
+    "inTreatment": "In der Behandlung",
     "accepted": "Akzeptiert",
     "total": "Gesamt"
   },
   "filters": {
     "allStatus": "Alle Status",
     "allCategories": "Alle Kategorien",
-    "allLevels": "Alle Stufen"
+    "allLevels": "Alle Ebenen"
   },
   "empty": {
     "title": "Noch keine Risiken erfasst",
-    "subtitle": "Identifizieren und dokumentieren Sie Risiken gemäß ISO 27005.",
-    "createFirst": "Erstes Risiko erfassen"
+    "subtitle": "Identifizieren und dokumentieren Sie Risiken nach ISO 27005.",
+    "createFirst": "Erstes Risiko aufnehmen"
   },
   "noFilter": "Keine Risiken entsprechen den Filterkriterien.",
   "table": {
-    "ref": "Ref",
+    "ref": "Referenz",
     "risk": "Risiko",
-    "inherent": "Inhärent",
-    "residual": "Restrisiko",
+    "inherent": "Vererbt",
+    "residual": "Restwert",
     "status": "Status"
   },
   "notTreated": "Unbehandelt",
@@ -69,65 +69,65 @@
   "templates": {
     "title": "Risiko-Vorlagen",
     "manage": "Verwalten",
-    "empty": "Keine Vorlagen hinterlegt."
+    "empty": "Keine Vorlagen verfügbar."
   },
   "modal": {
     "editTitle": "Risiko bearbeiten",
-    "newTitle": "Neues Risiko erfassen"
+    "newTitle": "Neues Risiko aufnehmen"
   },
   "form": {
-    "title": "Titel des Risikos *",
+    "title": "Risiko-Titel *",
     "description": "Beschreibung / Szenario",
-    "category": "Risiko-Kategorie",
-    "owner": "Risiko-Owner (Verantwortlich) *",
-    "inherentSection": "Inhärente Bewertung (Brutto-Risiko)",
-    "likelihood": "Eintrittswahrscheinlichkeit (W)",
-    "impact": "Auswirkung (A)",
+    "category": "Risikokategorie",
+    "owner": "Risikomanager (Verantwortlich) *",
+    "inherentSection": "Erbliche Bewertung (Brutto-Risiko)",
+    "likelihood": "Wahrscheinlichkeit (L)",
+    "impact": "Auswirkung (I)",
     "affectedAssets": "Betroffene Assets ({{count}})",
-    "assetFilter": "Asset filtern...",
+    "assetFilter": "Assets filtern...",
     "noAssets": "Keine Assets gefunden",
     "relevantThreats": "Relevante Bedrohungen ({{count}})",
-    "threatFilter": "Bedrohung filtern...",
+    "threatFilter": "Bedrohungen filtern...",
     "noThreats": "Keine Bedrohungen gefunden",
     "treatment": "Risikobehandlung",
     "treatmentPlan": "Behandlungsplan / Strategie",
-    "linkedControls": "Verknüpfte Maßnahmen / Controls ({{count}})",
-    "controlSearch": "Control suchen (z. B. A.8.7, Backup)…",
+    "linkedControls": "Verknüpfte Steuerungen / Maßnahmen ({{count}})",
+    "controlSearch": "Suchsteuerung (z.B. A.8.7, Sicherung)…",
     "residualSection": "Restrisiko (Netto)",
     "residualPending": "Wird nach dem Speichern berechnet.",
-    "nextReview": "Nächstes Review",
-    "signoff": "Risk-Owner Sign-off (NIS-2 Management-Haftung)",
-    "acceptedBy": "Akzeptiert von {{name}}",
-    "acceptedAt": "Am {{date}}",
+    "nextReview": "Nächste Bewertung",
+    "signoff": "Risiko-Besitzer Abmeldung (NIS-2-Management-Haftung)",
+    "acceptedBy": "{{name}} akzeptiert",
+    "acceptedAt": "{{date}}",
     "acceptedUntil": "· Gültig bis {{date}}",
-    "revokeSignoff": "Freigabe widerrufen",
+    "revokeSignoff": "Genehmigung widerrufen",
     "signoffDate": "Gültig bis",
-    "digitalSignoff": "Digital freigeben",
-    "controlHint": "Nur <strong>umgesetzt</strong> markierte Maßnahmen reduzieren das automatische Restrisiko. Wirksamkeit W1–W5.",
-    "ownerRequired": "Bitte einen Risiko-Owner auswählen.",
+    "digitalSignoff": "Digitale Genehmigung",
+    "controlHint": "Nur <strong>implementierte</strong> Steuerungen reduzieren das automatische Restrisiko. Wirkungsgrad W1–W5.",
+    "ownerRequired": "Bitte wählen Sie einen Risikoeigentümer.",
     "select": "Auswählen...",
     "descriptionPlaceholder": "Detaillierte Beschreibung des Risikoszenarios...",
-    "titlePlaceholder": "z. B. Ausfall des Rechenzentrums durch Brand...",
-    "controlEffectiveness": "Wirksamkeit"
+    "titlePlaceholder": "z.B. Rechenzentrumsfehler aufgrund von Feuer...",
+    "controlEffectiveness": "Effektivität"
   },
   "buttons": {
     "cancel": "Abbrechen",
     "saveChanges": "Änderungen speichern",
-    "createRisk": "Risiko anlegen",
+    "createRisk": "Risiko erstellen",
     "saving": "Speichern…"
   },
   "toast": {
     "downloadError": "Download fehlgeschlagen",
     "errorSaving": "Fehler beim Speichern",
     "errorDelete": "Fehler",
-    "errorSignoff": "Fehler bei Sign-off"
+    "errorSignoff": "Fehler beim Abmelden"
   },
   "confirm": {
-    "delete": "Risiko \"{{ref}}\" löschen?",
-    "revokeSignoff": "Freigabe wirklich zurückziehen?"
+    "delete": "Risiko löschen \"{{ref}}\"?",
+    "revokeSignoff": "Genehmigung wirklich widerrufen?"
   },
   "controlStatus": {
-    "implemented": "umgesetzt",
+    "implemented": "implementiert",
     "planned": "geplant",
     "na": "n/a"
   }
