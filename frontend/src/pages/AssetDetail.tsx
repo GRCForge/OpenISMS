@@ -9,7 +9,9 @@ import {
   BookOpen, AlertOctagon, ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import api from '../lib/api';
 import { useModules } from '../contexts/ModulesContext';
 import type { 
@@ -32,36 +34,7 @@ import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { Skeleton, SkeletonDetailHeader } from '../components/ui/Skeleton';
 
-const ratingLabels = ['', 'Sehr Gering (1)', 'Gering (2)', 'Mittel (3)', 'Hoch (4)', 'Sehr Hoch (5)'];
-const classLabels: Record<string, string> = { public: 'Öffentlich', internal: 'Intern', confidential: 'Vertraulich', secret: 'Geheim' };
-const typeLabels: Record<string, string> = {
-  hardware: 'Hardware', software: 'Software', information: 'Information/Daten',
-  process: 'Prozess', service: 'Service', personal: 'Personal', application: 'Anwendung', data: 'Daten',
-  ai_application: 'KI-Anwendung (AI Act)', ai_agent: 'KI-Agent / Autonomes System', other: 'Sonstiges'
-};
-
-const hostingLabels: Record<HostingType, string> = { 
-  'on-premise': 'On-Premise', cloud_public: 'Cloud Public', 
-  'cloud_private': 'Cloud Private', hybrid: 'Hybrid' 
-};
-
-const lifecycleLabels: Record<LifecycleStatus, string> = { 
-  evaluation: 'In Evaluierung', production: 'Produktion', 
-  maintenance: 'Wartung', archived: 'Archiviert' 
-};
-
-const patchStatusLabels: Record<PatchStatus, string> = { 
-  'up-to-date': 'Konform / Aktuell', pending: 'Ausstehend', critical: 'Kritisch / Veraltet' 
-};
-
-const riskLabels: Record<string, string> = { low: 'Gering', medium: 'Mittel', high: 'Hoch', critical: 'Kritisch' };
-const fwLabels: Record<string, string> = { iso27001: 'ISO 27001', nis2: 'NIS-2', gdpr: 'DSGVO / GDPR' };
-const vvtLabels: Record<string, string> = { none: 'Nicht verzeichnet', pending: 'In Arbeit', complete: 'Vollständig erfasst' };
-const dataCatLabels: Record<string, string> = { none: 'Unbekannt', normal: 'Normal (Art. 6)', special: 'Besonders (Art. 9)' };
-
-const catLabels: Record<string, string> = { contract: 'Vertrag', dpa: 'AVV / DPA', policy: 'Richtlinie', guideline: 'Leitfaden', procedure: 'Verfahrensanweisung', certificate: 'Zertifikat', risk_report: 'Risikobericht', risk_acceptance: 'Risikoakzeptanz', other: 'Sonstiges' };
 const catColors: Record<string, string> = { contract: 'bg-blue-100 text-blue-800', dpa: 'bg-purple-100 text-purple-800', policy: 'bg-green-100 text-green-800', guideline: 'bg-teal-100 text-teal-800', procedure: 'bg-indigo-100 text-indigo-800', certificate: 'bg-yellow-100 text-yellow-800', risk_report: 'bg-orange-100 text-orange-800', risk_acceptance: 'bg-red-100 text-red-800', other: 'bg-gray-100 text-gray-700' };
-const treatmentLabels: Record<string, string> = { mitigate: 'Reduzieren (Mitigate)', accept: 'Akzeptieren (Accept)', transfer: 'Übertragen (Transfer)', avoid: 'Vermeiden (Avoid)' };
 
 const RatingBar: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <div>
@@ -101,6 +74,22 @@ const isOnline = (lastSeen?: string) => {
 };
 
 export const AssetDetail: React.FC = () => {
+  const { t } = useTranslation(['assets', 'common']);
+  const dateFnsLocale = i18n.language === 'de' ? de : enUS;
+
+  const ratingLabels = t('detail.ratingLabels', { returnObjects: true }) as string[] || ['', 'Sehr Gering (1)', 'Gering (2)', 'Mittel (3)', 'Hoch (4)', 'Sehr Hoch (5)'];
+  const classLabels = t('classification', { ns: 'common', returnObjects: true }) as Record<string, string>;
+  const typeLabels = t('types', { returnObjects: true }) as Record<string, string>;
+  const hostingLabels = t('hosting', { returnObjects: true }) as Record<HostingType, string>;
+  const lifecycleLabels = t('lifecycle', { returnObjects: true }) as Record<LifecycleStatus, string>;
+  const patchStatusLabels = t('detail.patchStatusLabels', { returnObjects: true }) as Record<PatchStatus, string>;
+  const riskLabels = t('detail.riskLabels', { returnObjects: true }) as Record<string, string>;
+  const fwLabels = t('frameworks', { ns: 'common', returnObjects: true }) as Record<string, string>;
+  const vvtLabels = t('detail.vvtLabels', { returnObjects: true }) as Record<string, string>;
+  const dataCatLabels = t('detail.dataCatLabels', { returnObjects: true }) as Record<string, string>;
+  const catLabels = t('detail.catLabels', { returnObjects: true }) as Record<string, string>;
+  const treatmentLabels = t('detail.treatmentLabels', { returnObjects: true }) as Record<string, string>;
+
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const canWrite = hasWriteAccess(user?.role);
@@ -430,15 +419,15 @@ export const AssetDetail: React.FC = () => {
   const visibleDocs = documents.filter(d => !isRestricted || d.category !== 'contract');
 
   const tabs: { key: Tab; label: string; icon: React.FC<any>; badge?: number }[] = [
-    { key: 'basics', label: 'Allgemein', icon: Info },
-    { key: 'classification', label: 'Schutzbedarf', icon: Shield },
-    ...(isEnabled('dsgvo') ? [{ key: 'vvt' as Tab, label: 'VVT', icon: BookOpen, badge: (asset?.vvtEntries?.length || 0) }] : []),
-    { key: 'incidents', label: 'Vorfälle', icon: AlertOctagon, badge: (asset?.incidents?.length || 0) },
-    { key: 'dependencies', label: 'Topologie', icon: Network },
-    { key: 'security', label: 'Security Status', icon: Activity },
-    { key: 'compliance', label: 'Richtlinien', icon: ListChecks },
-    { key: 'documents', label: 'Dateien', icon: FileText, badge: visibleDocs.length },
-    { key: 'comments', label: 'Kommentare', icon: MessageSquare, badge: comments.length },
+    { key: 'basics', label: t('detail.tabs.basics'), icon: Info },
+    { key: 'classification', label: t('detail.tabs.classification'), icon: Shield },
+    ...(isEnabled('dsgvo') ? [{ key: 'vvt' as Tab, label: t('detail.tabs.vvt'), icon: BookOpen, badge: (asset?.vvtEntries?.length || 0) }] : []),
+    { key: 'incidents', label: t('detail.tabs.incidents'), icon: AlertOctagon, badge: (asset?.incidents?.length || 0) },
+    { key: 'dependencies', label: t('detail.tabs.dependencies'), icon: Network },
+    { key: 'security', label: t('detail.tabs.security'), icon: Activity },
+    { key: 'compliance', label: t('detail.tabs.compliance'), icon: ListChecks },
+    { key: 'documents', label: t('detail.tabs.documents'), icon: FileText, badge: visibleDocs.length },
+    { key: 'comments', label: t('detail.tabs.comments'), icon: MessageSquare, badge: comments.length },
   ];
 
   const generateMermaid = () => {
@@ -528,12 +517,12 @@ export const AssetDetail: React.FC = () => {
   return (
     <div className="space-y-6">
       <nav className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400">
-        <Link to="/assets" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Assets</Link>
+        <Link to="/assets" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{t('title')}</Link>
         <ChevronRight size={14} className="text-gray-300 dark:text-slate-600" />
         <span className="text-gray-900 dark:text-white font-medium truncate max-w-xs">{asset.name}</span>
       </nav>
       <div className="flex items-start gap-4">
-        <Link to="/assets"><Button variant="ghost" size="sm"><ArrowLeft size={16} />Zurück</Button></Link>
+        <Link to="/assets"><Button variant="ghost" size="sm"><ArrowLeft size={16} />{t('detail.back')}</Button></Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
              <span className="text-xs font-mono bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-sm text-gray-500">ID: {asset.id}</span>
@@ -542,8 +531,8 @@ export const AssetDetail: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <Badge value={asset.type} label={typeLabels[asset.type] || asset.type} />
             <Badge value={asset.lifecycle_status} label={lifecycleLabels[asset.lifecycle_status as LifecycleStatus] || asset.lifecycle_status} />
-            {asset.nis2_relevant && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"><AlertTriangle size={10} className="mr-1"/>NIS-2 Relevant</span>}
-            {current && <Badge value={current.risk_level} label={`Risiko: ${riskLabels[current.risk_level as RiskLevel] || current.risk_level}`} />}
+            {asset.nis2_relevant && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"><AlertTriangle size={10} className="mr-1"/>{t('detail.nis2Relevant')}</span>}
+            {current && <Badge value={current.risk_level} label={`${t('detail.risk')}: ${riskLabels[current.risk_level as RiskLevel] || current.risk_level}`} />}
           </div>
         </div>
         <div className="flex gap-2">
@@ -554,10 +543,14 @@ export const AssetDetail: React.FC = () => {
             if (!section) return null;
             const allowed = section === 'security' ? (isItStaff || isAssessor) : section === 'compliance' ? (isDpo || isAssessor) : canEdit;
             if (!allowed) return null;
-            const labels = { basics: 'Stammdaten', compliance: 'Compliance', security: 'Security' };
-            return <Button variant="secondary" onClick={() => openEditSection(section)}><Edit size={16} />{labels[section]} bearbeiten</Button>;
+            const editButtonLabels = {
+              basics: t('detail.editBasics'),
+              compliance: t('detail.editCompliance'),
+              security: t('detail.editSecurity')
+            };
+            return <Button variant="secondary" onClick={() => openEditSection(section)}><Edit size={16} />{editButtonLabels[section]}</Button>;
           })()}
-          {!isViewer && canAssess && <Button onClick={() => setAssessModalOpen(true)}><Shield size={16} />Bewerten</Button>}
+          {!isViewer && canAssess && <Button onClick={() => setAssessModalOpen(true)}><Shield size={16} />{t('detail.assess')}</Button>}
         </div>
       </div>
 
@@ -565,19 +558,19 @@ export const AssetDetail: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className={`p-2 rounded-lg shrink-0 ${current ? riskColorMap[current.risk_level] : 'bg-gray-400'}`}><Shield className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">Risiko</p><p className="text-sm font-bold dark:text-white truncate">{current ? (riskLabels[current.risk_level as RiskLevel] || current.risk_level) : 'Nicht bewertet'}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.risk')}</p><p className="text-sm font-bold dark:text-white truncate">{current ? (riskLabels[current.risk_level as RiskLevel] || current.risk_level) : t('detail.notAssessed')}</p></div>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className="p-2 rounded-lg shrink-0 bg-indigo-500"><Activity className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">Schutzbedarf</p><p className="text-sm font-bold dark:text-white">{current?.risk_score != null ? `${current.risk_score.toFixed(1)} / 5` : '–'}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.protectionNeed')}</p><p className="text-sm font-bold dark:text-white">{current?.risk_score != null ? `${current.risk_score.toFixed(1)} / 5` : '–'}</p></div>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className="p-2 rounded-lg shrink-0 bg-orange-500"><Clock className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">Nächstes Review</p><p className="text-sm font-bold dark:text-white truncate">{current?.next_review_at ? format(new Date(current.next_review_at), 'dd.MM.yyyy') : 'Ausstehend'}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.nextReview')}</p><p className="text-sm font-bold dark:text-white truncate">{current?.next_review_at ? format(new Date(current.next_review_at), 'dd.MM.yyyy', { locale: dateFnsLocale }) : t('detail.pendingReview')}</p></div>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className="p-2 rounded-lg shrink-0 bg-blue-500"><User className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">Owner</p><p className="text-sm font-bold dark:text-white truncate">{asset.owner?.name || '–'}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.owner')}</p><p className="text-sm font-bold dark:text-white truncate">{asset.owner?.name || '–'}</p></div>
         </div>
       </div>
 
@@ -602,26 +595,26 @@ export const AssetDetail: React.FC = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><div className="flex items-center gap-2"><Info size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">Strukturanalyse & Status</h2></div></CardHeader>
+                <CardHeader><div className="flex items-center gap-2"><Info size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">{t('detail.structuralAnalysis')}</h2></div></CardHeader>
                 <CardBody className="space-y-4">
                   <div className="grid grid-cols-2 gap-y-3 text-sm">
-                    <span className="text-gray-500 dark:text-slate-400">Asset-ID</span><span className="font-mono dark:text-slate-200">{asset.id}</span>
-                    <span className="text-gray-500 dark:text-slate-400">Asset-Name</span><span className="font-medium dark:text-slate-200">{asset.name}</span>
-                    <span className="text-gray-500 dark:text-slate-400">Asset-Typ</span><span className="font-medium dark:text-slate-200">{typeLabels[asset.type] || asset.type}</span>
-                    <span className="text-gray-500 dark:text-slate-400">Status (Lifecycle)</span><Badge value={asset.lifecycle_status} label={lifecycleLabels[asset.lifecycle_status as LifecycleStatus] || asset.lifecycle_status} />
-                    <span className="text-gray-500 dark:text-slate-400">Betriebs-Status</span><Badge value={asset.status} label={asset.status === 'active' ? 'Aktiv' : 'Inaktiv'} />
-                    <span className="text-gray-500 dark:text-slate-400">Hosting / Standort</span><span className="dark:text-slate-200">{hostingLabels[asset.hosting_type as HostingType]} {asset.location ? `(${asset.location})` : ''}</span>
-                    <span className="text-gray-500 dark:text-slate-400">Version / Revision</span><span className="dark:text-slate-200">{asset.version || '–'}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.assetId')}</span><span className="font-mono dark:text-slate-200">{asset.id}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.assetName')}</span><span className="font-medium dark:text-slate-200">{asset.name}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.assetType')}</span><span className="font-medium dark:text-slate-200">{typeLabels[asset.type] || asset.type}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.lifecycleStatus')}</span><Badge value={asset.lifecycle_status} label={lifecycleLabels[asset.lifecycle_status as LifecycleStatus] || asset.lifecycle_status} />
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.operationalStatus')}</span><Badge value={asset.status} label={asset.status === 'active' ? t('status.active') : t('status.inactive')} />
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.hostingLocation')}</span><span className="dark:text-slate-200">{hostingLabels[asset.hosting_type as HostingType]} {asset.location ? `(${asset.location})` : ''}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.version')}</span><span className="dark:text-slate-200">{asset.version || '–'}</span>
                   </div>
                 </CardBody>
               </Card>
               <Card>
-                <CardHeader><div className="flex items-center gap-2"><Building2 size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">Hersteller & Lifecycle</h2></div></CardHeader>
+                <CardHeader><div className="flex items-center gap-2"><Building2 size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">{t('detail.vendorLifecycle')}</h2></div></CardHeader>
                 <CardBody className="space-y-4">
                   <div className="grid grid-cols-2 gap-y-3 text-sm">
-                    <span className="text-gray-500 dark:text-slate-400">Hersteller / Vendor</span><span className="font-medium dark:text-slate-200">{asset.vendor || '–'}</span>
-                    <span className="text-gray-500 dark:text-slate-400">EOL-Datum</span><span className={`${asset.eol_date && new Date(asset.eol_date) < new Date() ? 'text-red-600 font-bold' : 'dark:text-slate-200'}`}>{asset.eol_date ? format(new Date(asset.eol_date), 'dd.MM.yyyy') : 'Unbefristet'}</span>
-                    <span className="text-gray-500 dark:text-slate-400">Patch-Status</span><Badge value={asset.patch_status} label={patchStatusLabels[asset.patch_status as PatchStatus] || asset.patch_status} />
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.vendor')}</span><span className="font-medium dark:text-slate-200">{asset.vendor || '–'}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.eolDate')}</span><span className={`${asset.eol_date && new Date(asset.eol_date) < new Date() ? 'text-red-600 font-bold' : 'dark:text-slate-200'}`}>{asset.eol_date ? format(new Date(asset.eol_date), 'dd.MM.yyyy', { locale: dateFnsLocale }) : t('detail.unlimited')}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{t('detail.patchStatus')}</span><Badge value={asset.patch_status} label={patchStatusLabels[asset.patch_status as PatchStatus] || asset.patch_status} />
                   </div>
                 </CardBody>
               </Card>
@@ -629,16 +622,16 @@ export const AssetDetail: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><div className="flex items-center gap-2"><User size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">Ownership & Verantwortlichkeiten</h2></div></CardHeader>
+                <CardHeader><div className="flex items-center gap-2"><User size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">{t('detail.ownership')}</h2></div></CardHeader>
                 <CardBody className="space-y-4">
                   <div className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
                     <div className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-xs"><User className="text-blue-600 dark:text-blue-400" size={24}/></div>
                     <div>
-                      <p className="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider text-[10px]">Asset Owner (Business)</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider text-[10px]">{t('detail.assetOwnerBusiness')}</p>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold dark:text-white">{asset.owner?.name}</p>
                         {asset.owner && (
-                          <div className={`w-2 h-2 rounded-full ${isOnline(asset.owner.last_seen_at) ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={isOnline(asset.owner.last_seen_at) ? 'Online' : 'Offline'} />
+                          <div className={`w-2 h-2 rounded-full ${isOnline(asset.owner.last_seen_at) ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={isOnline(asset.owner.last_seen_at) ? t('detail.online') : t('detail.offline')} />
                         )}
                       </div>
                       <p className="text-xs text-blue-500 dark:text-slate-400">{asset.owner?.email} · {asset.owner?.department}</p>
@@ -647,11 +640,11 @@ export const AssetDetail: React.FC = () => {
                   <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-slate-800/20 rounded-xl border border-gray-200 dark:border-slate-800">
                     <div className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-xs"><Server className="text-gray-600 dark:text-slate-400" size={24}/></div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-slate-500 font-bold uppercase tracking-wider text-[10px]">Systemverantwortlicher (Technik)</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-500 font-bold uppercase tracking-wider text-[10px]">{t('detail.systemAssessor')}</p>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold dark:text-white">{asset.assessor?.name}</p>
                         {asset.assessor && (
-                          <div className={`w-2 h-2 rounded-full ${isOnline(asset.assessor.last_seen_at) ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={isOnline(asset.assessor.last_seen_at) ? 'Online' : 'Offline'} />
+                          <div className={`w-2 h-2 rounded-full ${isOnline(asset.assessor.last_seen_at) ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={isOnline(asset.assessor.last_seen_at) ? t('detail.online') : t('detail.offline')} />
                         )}
                       </div>
                       <p className="text-xs text-gray-500 dark:text-slate-400">{asset.assessor?.email}</p>
@@ -661,7 +654,7 @@ export const AssetDetail: React.FC = () => {
               </Card>
 
               <Card>
-                <CardHeader><div className="flex items-center gap-2"><Globe size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">Externer Dienstleister / NIS-2 Supply Chain</h2></div></CardHeader>
+                <CardHeader><div className="flex items-center gap-2"><Globe size={18} className="text-blue-500"/><h2 className="font-semibold dark:text-white">{t('detail.externalVendor')}</h2></div></CardHeader>
                 <CardBody>
                   {asset.vendorContact ? (
                     <div className="space-y-4">
@@ -682,7 +675,7 @@ export const AssetDetail: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-400 dark:text-slate-500 italic">Kein externer Dienstleister zugeordnet.</div>
+                    <div className="text-center py-8 text-gray-400 dark:text-slate-500 italic">{t('detail.noExternalVendor')}</div>
                   )}
                 </CardBody>
               </Card>
@@ -693,18 +686,18 @@ export const AssetDetail: React.FC = () => {
         {tab === 'classification' && (
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <Card className="md:col-span-2">
-                <CardHeader><h2 className="font-semibold dark:text-white">CIA-Rating (Schutzbedarfsfeststellung)</h2></CardHeader>
+                <CardHeader><h2 className="font-semibold dark:text-white">{t('detail.ciaRating')}</h2></CardHeader>
                 <CardBody>
                    {current ? (
                      <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                           <RatingBar label="Vertraulichkeit (C)" value={current.confidentiality}/>
-                           <RatingBar label="Integrität (I)" value={current.integrity}/>
-                           <RatingBar label="Verfügbarkeit (A)" value={current.availability}/>
+                           <RatingBar label={t('detail.confidentiality')} value={current.confidentiality}/>
+                           <RatingBar label={t('detail.integrity')} value={current.integrity}/>
+                           <RatingBar label={t('detail.availability')} value={current.availability}/>
                         </div>
                         <div className="grid grid-cols-2 gap-4 mt-6">
                            <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl">
-                              <p className="text-xs text-gray-400 dark:text-slate-500 uppercase font-bold mb-1">Risiko-Score</p>
+                              <p className="text-xs text-gray-400 dark:text-slate-500 uppercase font-bold mb-1">{t('detail.riskScore')}</p>
                               <p className="text-3xl font-bold dark:text-white">{current.risk_score?.toFixed(1) || '0.0'} <span className="text-sm font-normal text-gray-400">/ 5.0</span></p>
                            </div>
                            <div className={`p-4 rounded-xl flex items-center gap-3 ${current.risk_level === 'critical' || current.risk_level === 'high' ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30' : 'bg-green-50 dark:bg-green-900/10'}`}>
@@ -714,19 +707,19 @@ export const AssetDetail: React.FC = () => {
                         {current.risk_treatment && (
                           <div className="mt-4 p-4 rounded-xl border dark:border-slate-800 bg-white dark:bg-slate-900/30 space-y-3">
                             <div className="flex items-center justify-between">
-                              <p className="text-xs font-bold uppercase text-gray-400 dark:text-slate-500">Risikobehandlung</p>
+                              <p className="text-xs font-bold uppercase text-gray-400 dark:text-slate-500">{t('detail.riskTreatment')}</p>
                               <Badge value={current.risk_treatment === 'accept' ? 'critical' : current.risk_treatment === 'avoid' ? 'high' : current.risk_treatment === 'transfer' ? 'medium' : 'low'} label={treatmentLabels[current.risk_treatment] || current.risk_treatment} />
                             </div>
                             {current.mitigation && <p className="text-sm text-gray-600 dark:text-slate-400">{current.mitigation}</p>}
                             {current.risk_treatment === 'accept' && (
                               <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 space-y-2">
-                                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-xs uppercase"><AlertTriangle size={12} /> Risikoakzeptanz dokumentiert</div>
-                                {current.accepted_by && <p className="text-sm dark:text-slate-300">Akzeptiert durch: <strong>{current.accepted_by}</strong></p>}
-                                {current.accepted_until && <p className="text-sm dark:text-slate-300">Gültig bis: <strong>{format(new Date(current.accepted_until), 'dd.MM.yyyy', { locale: de })}</strong></p>}
+                                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-xs uppercase"><AlertTriangle size={12} /> {t('detail.riskAcceptanceDocumented')}</div>
+                                {current.accepted_by && <p className="text-sm dark:text-slate-300">{t('detail.acceptedBy')}<strong>{current.accepted_by}</strong></p>}
+                                {current.accepted_until && <p className="text-sm dark:text-slate-300">{t('detail.validUntil')}<strong>{format(new Date(current.accepted_until), 'dd.MM.yyyy', { locale: dateFnsLocale })}</strong></p>}
                                 {current.treatment_justification && <p className="text-sm text-gray-600 dark:text-slate-400 italic">„{current.treatment_justification}"</p>}
                                 {current.acceptance_document_id && (
-                                  <button onClick={() => handleViewPdf(`/assets/${id}/documents/${current.acceptance_document_id}/download`)} className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1">
-                                    <FileText size={12} /> Akzeptanz-Dokument anzeigen
+                                  <button onClick={() => handleViewPdf(`/assets/${id}/documents/${current.acceptance_document_id}/download`)} className="flex items-center gap-1.5 text-xs text-blue-650 dark:text-blue-400 hover:underline mt-1">
+                                    <FileText size={12} /> {t('detail.viewAcceptanceDoc')}
                                   </button>
                                 )}
                               </div>
@@ -735,60 +728,60 @@ export const AssetDetail: React.FC = () => {
                         )}
                         {current.notes && (
                           <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/30 border dark:border-slate-800">
-                            <p className="text-xs font-bold uppercase text-gray-400 dark:text-slate-500 mb-1">Feststellungen / Begründung</p>
+                            <p className="text-xs font-bold uppercase text-gray-400 dark:text-slate-500 mb-1">{t('detail.assessmentNotes')}</p>
                             <p className="text-sm text-gray-600 dark:text-slate-400">{current.notes}</p>
                           </div>
                         )}
                         <div className="flex items-center justify-between pt-2 border-t dark:border-slate-800 text-xs text-gray-400">
-                          <span>Bewertet von <strong className="dark:text-slate-300">{current.assessorUser?.name || '–'}</strong></span>
-                          {current.assessed_at && <span>{format(new Date(current.assessed_at), 'dd.MM.yyyy HH:mm', { locale: de })}</span>}
+                          <span>{t('detail.assessedBy')}<strong className="dark:text-slate-300">{current.assessorUser?.name || '–'}</strong></span>
+                          {current.assessed_at && <span>{format(new Date(current.assessed_at), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale })}</span>}
                         </div>
                      </div>
                    ) : (
                      <div className="text-center py-12">
-                        <p className="text-gray-400 dark:text-slate-500 mb-4 italic">Keine Schutzbedarfsfeststellung vorhanden.</p>
-                        {!isViewer && canAssess && <Button onClick={() => setAssessModalOpen(true)}><Shield size={16}/>Jetzt bewerten</Button>}
+                        <p className="text-gray-400 dark:text-slate-500 mb-4 italic">{t('detail.noAssessment')}</p>
+                        {!isViewer && canAssess && <Button onClick={() => setAssessModalOpen(true)}><Shield size={16}/>{t('detail.assessment')}</Button>}
                      </div>
                    )}
                 </CardBody>
              </Card>
              <Card>
-                <CardHeader><h2 className="font-semibold dark:text-white">BCM &amp; Kritikalität</h2></CardHeader>
+                <CardHeader><h2 className="font-semibold dark:text-white">{t('detail.bcmTitle')}</h2></CardHeader>
                 <CardBody className="space-y-4">
                    <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
-                         RTO (Wiederanlaufzeit)
-                         <InfoTooltip text="Recovery Time Objective: Die angestrebte Zeitdauer, innerhalb derer ein IT-System oder Geschäftsprozess nach einem Ausfall wiederhergestellt sein muss." />
+                         {t('detail.rto')}
+                         <InfoTooltip text={t('detail.rtoTooltip')} />
                       </span>
-                      <span className="text-xl font-mono dark:text-slate-200">{asset.rto || 'Nicht definiert'}</span>
+                      <span className="text-xl font-mono dark:text-slate-200">{asset.rto || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
-                         RPO (Datenverlust-Toleranz)
-                         <InfoTooltip text="Recovery Point Objective: Der maximal tolerierbare Datenverlust bzw. der Zeitraum zwischen dem letzten Backup und einem Ausfall." />
+                         {t('detail.rpo')}
+                         <InfoTooltip text={t('detail.rpoTooltip')} />
                       </span>
-                      <span className="text-xl font-mono dark:text-slate-200">{asset.rpo || 'Nicht definiert'}</span>
+                      <span className="text-xl font-mono dark:text-slate-200">{asset.rpo || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
-                         Dienstbereitstellungszeit (SDO)
-                         <InfoTooltip text="Service Delivery Objective: Das angestrebte Leistungsniveau (z. B. Mindestkapazität), das im Notbetrieb während des Ausfalls aufrechterhalten werden muss." />
+                         {t('detail.sdo')}
+                         <InfoTooltip text={t('detail.sdoTooltip')} />
                       </span>
-                      <span className="text-xl font-mono dark:text-slate-200">{asset.sdo || 'Nicht definiert'}</span>
+                      <span className="text-xl font-mono dark:text-slate-200">{asset.sdo || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
-                         Maximal tolerierbare Ausfallzeit (MTO)
-                         <InfoTooltip text="Maximum Tolerable Outage: Die maximale Zeitdauer, die ein System ausfallen darf, bevor die Existenz der Organisation gefährdet ist." />
+                         {t('detail.mto')}
+                         <InfoTooltip text={t('detail.mtoTooltip')} />
                       </span>
-                      <span className="text-xl font-mono dark:text-slate-200">{asset.mto || 'Nicht definiert'}</span>
+                      <span className="text-xl font-mono dark:text-slate-200">{asset.mto || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
-                         Angriffskennzahlen (IoA)
-                         <InfoTooltip text="Indicators of Attack: Indikatoren oder Kennzahlen, die auf einen laufenden oder bevorstehenden Cyberangriff auf das Asset hinweisen." />
+                         {t('detail.ioa')}
+                         <InfoTooltip text={t('detail.ioaTooltip')} />
                       </span>
-                      <span className="text-xl font-mono dark:text-slate-200">{asset.ioa || 'Nicht definiert'}</span>
+                      <span className="text-xl font-mono dark:text-slate-200">{asset.ioa || t('detail.notDefined')}</span>
                    </div>
                 </CardBody>
              </Card>
