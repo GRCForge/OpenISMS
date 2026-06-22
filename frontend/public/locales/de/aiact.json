@@ -1,16 +1,16 @@
 {
-  "title": "EU AI Act – KI-Systemregister",
-  "subtitle": "Verzeichnis eingesetzter KI-Systeme gemäß EU Artificial Intelligence Act · {{count}} Einträge",
-  "newButton": "KI-System erfassen",
+  "title": "EU AI Akt – KI Systemregister",
+  "subtitle": "Registry von eingesetzten KI-Systemen gemäß dem EU Artificial Intelligence Act · {{count}} Einträge",
+  "newButton": "KI-System hinzufügen",
   "riskCategory": {
     "prohibited": "Verboten (Art. 5)",
-    "high_risk": "Hohes Risiko (Anhang III)",
+    "high_risk": "Hochrisiko (Anhang III)",
     "limited": "Begrenztes Risiko",
     "minimal": "Minimales Risiko"
   },
   "conformityStatus": {
     "not_assessed": "Nicht bewertet",
-    "in_assessment": "In Bewertung",
+    "in_assessment": "In Prüfung",
     "compliant": "Konform",
     "non_compliant": "Nicht konform"
   },
@@ -21,45 +21,45 @@
     "nonCompliant": "Nicht konform"
   },
   "filter": {
-    "searchPlaceholder": "KI-System, Anwendungsfall oder Anbieter suchen...",
+    "searchPlaceholder": "Suche KI System, Fall oder Anbieter verwenden...",
     "allRiskCategories": "Alle Risikokategorien",
-    "allConformity": "Alle Konformitäten"
+    "allConformity": "Alle Konformitätsstatus"
   },
   "table": {
-    "name": "KI-System",
+    "name": "AI System",
     "riskCategory": "Risikokategorie",
-    "conformity": "Konformität",
+    "conformity": "Übereinstimmung",
     "provider": "Anbieter",
-    "owner": "Verantwortlich",
-    "lastReview": "Letzte Prüfung"
+    "owner": "Besitzer",
+    "lastReview": "Letzte Überprüfung"
   },
   "empty": {
     "title": "Keine KI-Systeme gefunden",
-    "createButton": "KI-System erfassen"
+    "createButton": "KI-System hinzufügen"
   },
   "modal": {
     "editTitle": "KI-System bearbeiten",
-    "newTitle": "KI-System erfassen",
-    "nameLabel": "Name des KI-Systems",
-    "namePlaceholder": "z. B. Dokumentenklassifizierung, Chatbot Support",
+    "newTitle": "KI-System hinzufügen",
+    "nameLabel": "KI-Systemname",
+    "namePlaceholder": "z.B. Dokumentenklassifizierung, Support-Chatbot",
     "descriptionLabel": "Beschreibung",
-    "descriptionPlaceholder": "Kurzbeschreibung des KI-Systems und seiner Funktionsweise",
+    "descriptionPlaceholder": "Kurze Beschreibung des KI-Systems und seiner Funktionalität",
     "riskCategoryLabel": "Risikokategorie (EU AI Act)",
     "conformityLabel": "Konformitätsstatus",
-    "useCaseLabel": "Anwendungsfall",
-    "useCasePlaceholder": "Beschreibung des Einsatzszenarios",
+    "useCaseLabel": "Gehäuse verwenden",
+    "useCasePlaceholder": "Beschreibung des Bereitstellungsszenarios",
     "providerLabel": "Anbieter / Hersteller",
-    "providerPlaceholder": "z. B. OpenAI, Microsoft, internes System",
-    "deployedSinceLabel": "Im Einsatz seit",
+    "providerPlaceholder": "z.B. OpenAI, Microsoft, internes System",
+    "deployedSinceLabel": "Bereitgestellt seit",
     "locationLabel": "Standort / Region",
-    "locationPlaceholder": "z. B. Cloud Region, RZ...",
+    "locationPlaceholder": "z.B. Cloud-Region, Datenzentrum...",
     "lastReviewLabel": "Letzte Überprüfung",
     "docsUrlLabel": "Dokumentations-URL",
-    "ownerLabel": "Verantwortliche Person",
-    "vendorLabel": "Zugeordneter Dienstleister (aus Register)",
+    "ownerLabel": "Besitzer",
+    "vendorLabel": "Zugewiesener Anbieter (von Register)",
     "notesLabel": "Notizen",
     "noOwner": "– niemand –",
-    "noVendor": "– kein Dienstleister –",
+    "noVendor": "– kein Lieferant –",
     "cancel": "Abbrechen",
     "save": "Speichern...",
     "update": "Aktualisieren",
@@ -67,26 +67,26 @@
   },
   "docs": {
     "modalTitle": "Dokumente: {{name}}",
-    "sectionTitle": "Hinterlegte Dokumente",
-    "empty": "Noch keine Dokumente hinterlegt.",
+    "sectionTitle": "Gespeicherte Dokumente",
+    "empty": "Noch keine Dokumente gespeichert.",
     "uploadTitle": "Neues Dokument hochladen",
     "categoryLabel": "Dokumententyp",
     "descriptionLabel": "Beschreibung (optional)",
-    "descriptionPlaceholder": "Kurze Anmerkung zum Dokument...",
+    "descriptionPlaceholder": "Kurze Notiz zum Dokument...",
     "uploadButton": "Hochladen",
-    "uploading": "Wird hochgeladen...",
-    "downloadTitle": "Herunterladen",
+    "uploading": "Hochladen...",
+    "downloadTitle": "Download",
     "deleteTitle": "Löschen",
     "categories": {
       "ai_documentation": "KI-Dokumentation / Beschreibung",
       "risk_report": "Risikobewertung",
       "contract": "Vertrag / DPA",
       "certificate": "Zertifikat",
-      "other": "Sonstiges"
+      "other": "Andere"
     }
   },
   "docLink": "Technische Dokumentation öffnen",
-  "manageDocsTitle": "Dokumente verwalten (Nachweise)",
+  "manageDocsTitle": "Dokumente verwalten (Beweis)",
   "toast": {
     "uploadSuccess": "Dokument erfolgreich hochgeladen",
     "uploadError": "Fehler beim Hochladen des Dokuments",
@@ -96,6 +96,6 @@
     "removeError": "Fehler"
   },
   "confirm": {
-    "delete": "„{{name}}“ wirklich löschen?"
+    "delete": "\"{{name}} \"wirklich löschen?"
   }
 }
