@@ -1,4 +1,4 @@
-import writeXlsxFile, { type Cell, type SheetData } from 'write-excel-file';
+import writeXlsxFile, { type Cell, type SheetData } from 'write-excel-file/browser';
 
 type Row = Record<string, unknown>;
 
@@ -55,8 +55,7 @@ export const exportToExcel = async (data: Row[], filename: string, sheetName = '
   await writeXlsxFile(buildRows(data), {
     columns: buildColumns(data),
     sheet: sheetName.slice(0, 31),
-    fileName: `${filename}.xlsx`,
-  });
+  }).toFile(`${filename}.xlsx`);
 };
 
 export const exportToMultiSheetExcel = async (
@@ -66,11 +65,10 @@ export const exportToMultiSheetExcel = async (
   const filled = sheets.filter(s => s.data.length);
   if (!filled.length) return;
   await writeXlsxFile(
-    filled.map(s => buildRows(s.data)),
-    {
-      columns: filled.map(s => buildColumns(s.data)),
-      sheets: filled.map(s => s.name.slice(0, 31)),
-      fileName: `${filename}.xlsx`,
-    },
-  );
+    filled.map(s => ({
+      data: buildRows(s.data),
+      sheet: s.name.slice(0, 31),
+      columns: buildColumns(s.data),
+    })),
+  ).toFile(`${filename}.xlsx`);
 };
