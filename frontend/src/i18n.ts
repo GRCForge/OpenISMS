@@ -9,6 +9,7 @@ const NAMESPACES = [
   'tasks', 'compliance', 'users', 'vendors', 'admin',
   'groups', 'reminders', 'assessments', 'controls',
   'auditlog', 'legalrequirements', 'topology',
+  'vendorcontacts', 'import', 'cves', 'dataflows',
 ];
 
 i18n

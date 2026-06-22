@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, Download, CheckCircle, AlertCircle, ChevronRight, Table, Settings2 } from 'lucide-react';
 import api from '../lib/api';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
@@ -17,6 +18,7 @@ interface PreviewData {
 }
 
 export const Import: React.FC = () => {
+  const { t } = useTranslation('import');
   const toast = useToast();
   const [entityType, setEntityType] = useState<EntityType>('asset');
   const [file, setFile] = useState<File | null>(null);
@@ -46,7 +48,7 @@ export const Import: React.FC = () => {
       setMapping(data.mapping);
       setStep(2);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Vorschau fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('toast.previewError'));
     } finally { setLoading(false); }
   };
 
@@ -62,7 +64,7 @@ export const Import: React.FC = () => {
       setResult(data);
       setStep(3);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Import fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('toast.importError'));
     } finally { setLoading(false); }
   };
 
@@ -77,7 +79,7 @@ export const Import: React.FC = () => {
       link.click();
       link.parentNode?.removeChild(link);
     } catch (err) {
-      toast.error('Fehler beim Herunterladen der Vorlage');
+      toast.error(t('toast.downloadError'));
     }
   };
 
@@ -85,21 +87,20 @@ export const Import: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold dark:text-white">Datenimport</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">Assets, Benutzer, Dienstleister oder Risiken importieren</p>
+          <h1 className="text-2xl font-bold dark:text-white">{t('title')}</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          {step > 1 && <Button variant="secondary" size="sm" onClick={() => setStep(step - 1)}>Zurück</Button>}
-          <Button variant="secondary" size="sm" onClick={downloadTemplate}><Download size={14} />Vorlage (.csv)</Button>
+          {step > 1 && <Button variant="secondary" size="sm" onClick={() => setStep(step - 1)}>{t('back')}</Button>}
+          <Button variant="secondary" size="sm" onClick={downloadTemplate}><Download size={14} />{t('template')}</Button>
         </div>
       </div>
 
-      {/* Stepper */}
       <div className="flex items-center gap-4 mb-8">
         {[
-          { step: 1, label: 'Upload', icon: Upload },
-          { step: 2, label: 'Mapping', icon: Settings2 },
-          { step: 3, label: 'Ergebnis', icon: CheckCircle },
+          { step: 1, label: t('steps.upload'), icon: Upload },
+          { step: 2, label: t('steps.mapping'), icon: Settings2 },
+          { step: 3, label: t('steps.result'), icon: CheckCircle },
         ].map((s, i) => (
           <React.Fragment key={s.step}>
             <div className={`flex items-center gap-2 ${step >= s.step ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
@@ -118,16 +119,16 @@ export const Import: React.FC = () => {
           <CardBody className="space-y-6 p-8">
             <div className="max-w-md mx-auto space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-slate-200">Was möchten Sie importieren?</label>
+                <label className="text-sm font-medium dark:text-slate-200">{t('step1.whatToImport')}</label>
                 <Select
                   value={entityType}
                   onChange={(e) => setEntityType(e.target.value as EntityType)}
                   options={[
-                    { label: 'Assets (Inventar)', value: 'asset' },
-                    { label: 'Benutzer (Mitarbeiter)', value: 'user' },
-                    { label: 'Dienstleister (Firmen)', value: 'vendor' },
-                    { label: 'Risiken (Register)', value: 'risk' },
-                    { label: 'Firmen + Kontakte (Outlook)', value: 'vendor_contact' },
+                    { label: t('entityTypes.asset'), value: 'asset' },
+                    { label: t('entityTypes.user'), value: 'user' },
+                    { label: t('entityTypes.vendor'), value: 'vendor' },
+                    { label: t('entityTypes.risk'), value: 'risk' },
+                    { label: t('entityTypes.vendor_contact'), value: 'vendor_contact' },
                   ]}
                 />
               </div>
@@ -147,19 +148,19 @@ export const Import: React.FC = () => {
                 {file ? (
                   <div className="space-y-1">
                     <p className="font-bold text-gray-800 dark:text-slate-200">{file.name}</p>
-                    <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-xs text-gray-500">{t('step1.fileSizeKb', { size: (file.size / 1024).toFixed(1) })}</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <p className="font-bold text-gray-700 dark:text-slate-300">CSV- oder Excel-Datei wählen</p>
-                    <p className="text-xs text-gray-400">Klicken oder per Drag & Drop herziehen</p>
+                    <p className="font-bold text-gray-700 dark:text-slate-300">{t('step1.chooseFile')}</p>
+                    <p className="text-xs text-gray-400">{t('step1.dropHint')}</p>
                   </div>
                 )}
                 <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={e => e.target.files?.[0] && handleFileSelection(e.target.files[0])} />
               </div>
 
               <Button onClick={getPreview} disabled={!file || loading} className="w-full justify-center py-6 text-lg">
-                {loading ? 'Analysiere Datei...' : 'Datei analysieren'}
+                {loading ? t('step1.analyzing') : t('step1.analyze')}
               </Button>
             </div>
           </CardBody>
@@ -170,7 +171,7 @@ export const Import: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardHeader><div className="flex items-center gap-2"><Table size={18} className="text-blue-500" /><h2 className="font-bold dark:text-white">Vorschau (erste 5 Zeilen)</h2></div></CardHeader>
+              <CardHeader><div className="flex items-center gap-2"><Table size={18} className="text-blue-500" /><h2 className="font-bold dark:text-white">{t('step2.previewTitle')}</h2></div></CardHeader>
               <CardBody className="p-0 overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead>
@@ -190,9 +191,9 @@ export const Import: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader><div className="flex items-center gap-2"><Settings2 size={18} className="text-purple-500" /><h2 className="font-bold dark:text-white">Feld-Mapping</h2></div></CardHeader>
+              <CardHeader><div className="flex items-center gap-2"><Settings2 size={18} className="text-purple-500" /><h2 className="font-bold dark:text-white">{t('step2.mappingTitle')}</h2></div></CardHeader>
               <CardBody className="space-y-4">
-                <p className="text-sm text-gray-500 mb-4">Ordnen Sie die Spalten Ihrer Datei den ISMS-Feldern zu.</p>
+                <p className="text-sm text-gray-500 mb-4">{t('step2.mappingHint')}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                   {preview.fields.map(field => (
                     <div key={field.key} className="space-y-1">
@@ -203,7 +204,7 @@ export const Import: React.FC = () => {
                         value={mapping[field.key] || ''}
                         onChange={(e) => setMapping({ ...mapping, [field.key]: e.target.value })}
                         options={[
-                          { label: '-- Nicht importieren --', value: '' },
+                          { label: t('step2.notImport'), value: '' },
                           ...preview.headers.map(h => ({ label: h, value: h }))
                         ]}
                       />
@@ -216,25 +217,25 @@ export const Import: React.FC = () => {
 
           <div className="space-y-4">
             <Card>
-              <CardHeader><h2 className="font-bold dark:text-white">Zusammenfassung</h2></CardHeader>
+              <CardHeader><h2 className="font-bold dark:text-white">{t('step2.summaryTitle')}</h2></CardHeader>
               <CardBody className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Datei:</span>
+                    <span className="text-gray-500">{t('step2.file')}</span>
                     <span className="font-medium dark:text-slate-200">{file?.name}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Zeilen:</span>
+                    <span className="text-gray-500">{t('step2.rows')}</span>
                     <span className="font-medium dark:text-slate-200">{preview.totalRows}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Import-Typ:</span>
+                    <span className="text-gray-500">{t('step2.importType')}</span>
                     <span className="font-medium text-blue-600 dark:text-blue-400 uppercase text-xs font-bold">{entityType}</span>
                   </div>
                 </div>
                 <div className="pt-4 border-t dark:border-slate-800">
                   <Button onClick={executeImport} disabled={loading} className="w-full justify-center py-4">
-                    {loading ? 'Importiere...' : `${preview.totalRows} Datensätze importieren`}
+                    {loading ? t('step2.importing') : t('step2.importButton', { count: preview.totalRows })}
                   </Button>
                 </div>
               </CardBody>
@@ -250,19 +251,19 @@ export const Import: React.FC = () => {
               <CheckCircle size={40} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold dark:text-white">Import abgeschlossen</h2>
-              <p className="text-gray-500">{result.created} Datensätze wurden erfolgreich angelegt.</p>
+              <h2 className="text-2xl font-bold dark:text-white">{t('step3.done')}</h2>
+              <p className="text-gray-500">{t('step3.doneSubtitle', { count: result.created })}</p>
             </div>
 
             {result.errors.length > 0 && (
               <div className="max-w-2xl mx-auto text-left space-y-2">
                 <p className="text-sm font-bold text-red-500 flex items-center gap-2">
-                  <AlertCircle size={14} /> {result.errors.length} Fehler aufgetreten:
+                  <AlertCircle size={14} /> {t('step3.errorCount', { count: result.errors.length })}
                 </p>
                 <div className="max-h-60 overflow-y-auto space-y-1 pr-2 custom-scrollbar">
                   {result.errors.map((e, i) => (
                     <div key={i} className="text-xs bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-2 rounded-lg border border-red-100 dark:border-red-900/30">
-                      Zeile {e.row}: {e.error}
+                      {t('step3.rowError', { row: e.row })} {e.error}
                     </div>
                   ))}
                 </div>
@@ -270,8 +271,8 @@ export const Import: React.FC = () => {
             )}
 
             <div className="flex justify-center gap-3">
-              <Button onClick={() => setStep(1)}>Weiteren Import starten</Button>
-              <Button variant="secondary" onClick={() => window.history.back()}>Zurück zur Übersicht</Button>
+              <Button onClick={() => setStep(1)}>{t('step3.startNew')}</Button>
+              <Button variant="secondary" onClick={() => window.history.back()}>{t('step3.backToOverview')}</Button>
             </div>
           </CardBody>
         </Card>

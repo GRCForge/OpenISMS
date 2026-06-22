@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ExternalLink, ShieldAlert, AlertTriangle, Bug, Server, Shield, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { Card, CardBody } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -25,6 +26,7 @@ interface CveItem {
 }
 
 export const Cves: React.FC = () => {
+  const { t } = useTranslation('cves');
   const [cves, setCves] = useState<CveItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -85,8 +87,8 @@ export const Cves: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold dark:text-white">Schwachstellen (CVE)</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">Aggregierte Sicherheitslücken aller erfassten IT-Assets</p>
+          <h1 className="text-2xl font-bold dark:text-white">{t('title')}</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -97,7 +99,7 @@ export const Cves: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-red-500 shrink-0"><ShieldAlert className="text-white" size={18} /></div>
             <div>
               <p className="text-2xl font-bold dark:text-white">{stats.critical}</p>
-              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">Kritisch (≥ 9.0)</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">{t('stats.critical')}</p>
             </div>
           </CardBody>
         </Card>
@@ -106,7 +108,7 @@ export const Cves: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-orange-500 shrink-0"><AlertTriangle className="text-white" size={18} /></div>
             <div>
               <p className="text-2xl font-bold dark:text-white">{stats.high}</p>
-              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">Hoch (7.0–8.9)</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">{t('stats.high')}</p>
             </div>
           </CardBody>
         </Card>
@@ -115,7 +117,7 @@ export const Cves: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-yellow-500 shrink-0"><AlertTriangle className="text-white" size={18} /></div>
             <div>
               <p className="text-2xl font-bold dark:text-white">{stats.medium}</p>
-              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">Mittel (4.0–6.9)</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">{t('stats.medium')}</p>
             </div>
           </CardBody>
         </Card>
@@ -124,7 +126,7 @@ export const Cves: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-blue-500 shrink-0"><Bug className="text-white" size={18} /></div>
             <div>
               <p className="text-2xl font-bold dark:text-white">{stats.low}</p>
-              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">Niedrig (0.1–3.9)</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">{t('stats.low')}</p>
             </div>
           </CardBody>
         </Card>
@@ -133,7 +135,7 @@ export const Cves: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-slate-500 shrink-0"><Shield className="text-white" size={18} /></div>
             <div>
               <p className="text-2xl font-bold dark:text-white">{stats.total}</p>
-              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">Gesamtanzahl</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">{t('stats.total')}</p>
             </div>
           </CardBody>
         </Card>
@@ -143,7 +145,7 @@ export const Cves: React.FC = () => {
         <FilterBar
           search={search}
           onSearch={setSearch}
-          searchPlaceholder="CVE ID, Beschreibung oder Asset durchsuchen..."
+          searchPlaceholder={t('searchPlaceholder')}
           activeCount={[severityFilter, sourceFilter].filter(Boolean).length}
           onReset={() => { setSearch(''); setSeverityFilter(''); setSourceFilter(''); }}
         >
@@ -152,11 +154,11 @@ export const Cves: React.FC = () => {
             value={severityFilter}
             onChange={e => setSeverityFilter(e.target.value)}
             options={[
-              { value: '', label: 'Alle Schweregrade' },
-              { value: 'critical', label: 'Kritisch' },
-              { value: 'high', label: 'Hoch' },
-              { value: 'medium', label: 'Mittel' },
-              { value: 'low', label: 'Gering' }
+              { value: '', label: t('filters.allSeverities') },
+              { value: 'critical', label: t('filters.critical') },
+              { value: 'high', label: t('filters.high') },
+              { value: 'medium', label: t('filters.medium') },
+              { value: 'low', label: t('filters.low') },
             ]}
           />
           <Select
@@ -164,8 +166,8 @@ export const Cves: React.FC = () => {
             value={sourceFilter}
             onChange={e => setSourceFilter(e.target.value)}
             options={[
-              { value: '', label: 'Alle Datenquellen' },
-              ...sources.map(src => ({ value: src, label: src.toUpperCase() }))
+              { value: '', label: t('filters.allSources') },
+              ...sources.map(src => ({ value: src, label: src.toUpperCase() })),
             ]}
           />
         </FilterBar>
@@ -176,20 +178,20 @@ export const Cves: React.FC = () => {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center text-gray-400 dark:text-slate-500">
-            Keine Schwachstellen unter den gegebenen Filterkriterien gefunden.
+            {t('empty')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <Thead>
                 <tr>
-                  <Th className="w-40">CVE-ID</Th>
-                  <Th className="w-24">CVSS-Score</Th>
-                  <Th className="w-56">Betroffene Assets</Th>
-                  <Th>Beschreibung</Th>
-                  <Th className="w-32">Quelle</Th>
-                  <Th className="w-28">Veröffentlicht</Th>
-                  <Th className="w-16 text-center">Aktionen</Th>
+                  <Th className="w-40">{t('table.id')}</Th>
+                  <Th className="w-24">{t('table.score')}</Th>
+                  <Th className="w-56">{t('table.affectedAssets')}</Th>
+                  <Th>{t('table.description')}</Th>
+                  <Th className="w-32">{t('table.source')}</Th>
+                  <Th className="w-28">{t('table.published')}</Th>
+                  <Th className="w-16 text-center">{t('table.actions')}</Th>
                 </tr>
               </Thead>
               <Tbody>
@@ -240,7 +242,7 @@ export const Cves: React.FC = () => {
                         </div>
                       </Td>
                       <Td>
-                        <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed font-sans">{c.description || 'Keine Beschreibung verfügbar'}</p>
+                        <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed font-sans">{c.description || t('noDescription')}</p>
                       </Td>
                       <Td className="text-xs font-bold whitespace-nowrap">
                         {c.source ? (
@@ -248,7 +250,7 @@ export const Cves: React.FC = () => {
                             href={sourceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title={`Quelle (${c.source.toUpperCase()}) öffnen`}
+                            title={t('sourceTitle', { source: c.source.toUpperCase() })}
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] uppercase font-bold transition-all border ${
                               c.source === 'osv'     ? 'bg-green-50/50 dark:bg-green-950/20 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/40' :
                               c.source === 'nvd-cpe' || c.source === 'nvd' ? 'bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40' :
@@ -270,7 +272,7 @@ export const Cves: React.FC = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1 rounded-md text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors inline-flex items-center justify-center"
-                          title="Details zur Quelle öffnen"
+                          title={t('sourceTitle', { source: c.source.toUpperCase() })}
                         >
                           <ExternalLink size={14} />
                         </a>

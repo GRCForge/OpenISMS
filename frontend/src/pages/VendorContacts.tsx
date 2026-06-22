@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserPlus, Pencil, Trash2, Mail, Phone, Building2 } from 'lucide-react';
 import { FilterBar } from '../components/ui/FilterBar';
 import api from '../lib/api';
@@ -13,24 +14,25 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
-const typeOptions = [
-  { value: 'software', label: 'Software-Hersteller' },
-  { value: 'cloud', label: 'Cloud-Dienstleister / SaaS' },
-  { value: 'hardware', label: 'Hardware-Lieferant' },
-  { value: 'consulting', label: 'Beratung / Consulting' },
-  { value: 'hosting', label: 'Rechenzentrum / Hosting' },
-  { value: 'logistics', label: 'Logistik' },
-  { value: 'other', label: 'Sonstiges' },
-];
-
 const emptyContact = { name: '', email: '', phone: '', role: '', notes: '', vendor_id: '' };
 const emptyVendor = { name: '', type: 'software' as any };
 
 export const VendorContacts: React.FC = () => {
+  const { t } = useTranslation('vendorcontacts');
   const { user } = useAuth();
   const canWrite = hasWriteAccess(user?.role);
   const toast = useToast();
   const canEdit = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'it-staff';
+
+  const typeOptions = [
+    { value: 'software', label: t('types.software') },
+    { value: 'cloud', label: t('types.cloud') },
+    { value: 'hardware', label: t('types.hardware') },
+    { value: 'consulting', label: t('types.consulting') },
+    { value: 'hosting', label: t('types.hosting') },
+    { value: 'logistics', label: t('types.logistics') },
+    { value: 'other', label: t('types.other') },
+  ];
 
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [contacts, setContacts] = useState<(VendorContact & { vendor?: Vendor })[]>([]);
@@ -45,7 +47,6 @@ export const VendorContacts: React.FC = () => {
   const [form, setForm] = useState<Record<string, string>>(emptyContact);
   const [saving, setSaving] = useState(false);
 
-  // New vendor inline state
   const [isNewVendor, setIsNewVendor] = useState(false);
   const [newVendorForm, setNewVendorForm] = useState(emptyVendor);
 
@@ -61,7 +62,7 @@ export const VendorContacts: React.FC = () => {
       });
       setContacts(allContacts);
     } catch {
-      toast.error('Kontaktdaten konnten nicht geladen werden');
+      toast.error(t('toast.loadError'));
     } finally {
       setLoading(false);
     }
@@ -75,16 +76,14 @@ export const VendorContacts: React.FC = () => {
     try {
       let targetVendorId = form.vendor_id;
 
-      // 1. Create vendor if requested
       if (isNewVendor) {
-        if (!newVendorForm.name) throw new Error('Firmenname fehlt');
+        if (!newVendorForm.name) throw new Error(t('form.newCompanyName'));
         const vRes = await api.post('/vendors', newVendorForm);
         targetVendorId = String(vRes.data.id);
       }
 
-      if (!targetVendorId) throw new Error('Bitte ein Unternehmen auswählen');
+      if (!targetVendorId) throw new Error(t('form.selectCompany'));
 
-      // 2. Create/Update contact
       if (editContact) {
         await api.put(`/vendors/${targetVendorId}/contacts/${editContact.id}`, form);
       } else {
@@ -96,22 +95,22 @@ export const VendorContacts: React.FC = () => {
       setNewVendorForm(emptyVendor);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || err.message || t('toast.saveError'));
     } finally { setSaving(false); }
   };
 
   const deleteContact = async (vId: number, cId: number) => {
-    if (!confirm('Ansprechpartner wirklich löschen?')) return;
+    if (!confirm(t('confirm.delete'))) return;
     try {
       await api.delete(`/vendors/${vId}/contacts/${cId}`);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Löschen fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('toast.deleteError'));
     }
   };
 
   const filtered = contacts.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
                          (c.role || '').toLowerCase().includes(search.toLowerCase()) ||
                          (c.email || '').toLowerCase().includes(search.toLowerCase());
     const matchesVendor = !vendorFilter || String(c.vendor_id) === vendorFilter;
@@ -128,16 +127,16 @@ export const VendorContacts: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold dark:text-white">Ansprechpartner</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">{contacts.length} Kontakte über {vendors.length} Firmen</p>
+          <h1 className="text-2xl font-bold dark:text-white">{t('title')}</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitle', { count: contacts.length, vendors: vendors.length })}</p>
         </div>
         {canEdit && (
-          <Button onClick={() => { setEditContact(null); setForm(emptyContact); setIsNewVendor(false); setModalOpen(true); }}><UserPlus size={16} />Kontakt anlegen</Button>
+          <Button onClick={() => { setEditContact(null); setForm(emptyContact); setIsNewVendor(false); setModalOpen(true); }}><UserPlus size={16} />{t('new')}</Button>
         )}
       </div>
 
       <FilterBar
-        search={search} onSearch={setSearch} searchPlaceholder="Name, E-Mail oder Rolle suchen..."
+        search={search} onSearch={setSearch} searchPlaceholder={t('searchPlaceholder')}
         activeCount={[vendorFilter, typeFilter, roleFilter].filter(Boolean).length}
         onReset={() => { setSearch(''); setVendorFilter(''); setTypeFilter(''); setRoleFilter(''); }}>
         <Select
@@ -145,7 +144,7 @@ export const VendorContacts: React.FC = () => {
           value={vendorFilter}
           onChange={e => setVendorFilter(e.target.value)}
           options={[
-            { value: '', label: 'Alle Firmen' },
+            { value: '', label: t('filters.allCompanies') },
             ...vendors.map(v => ({ value: String(v.id), label: v.name }))
           ]}
         />
@@ -154,7 +153,7 @@ export const VendorContacts: React.FC = () => {
           value={typeFilter}
           onChange={e => setTypeFilter(e.target.value)}
           options={[
-            { value: '', label: 'Alle Firmen-Typen' },
+            { value: '', label: t('filters.allTypes') },
             ...typeOptions
           ]}
         />
@@ -163,7 +162,7 @@ export const VendorContacts: React.FC = () => {
           value={roleFilter}
           onChange={e => setRoleFilter(e.target.value)}
           options={[
-            { value: '', label: 'Alle Rollen' },
+            { value: '', label: t('filters.allRoles') },
             ...uniqueRoles.map(r => ({ value: r!, label: r! }))
           ]}
         />
@@ -172,7 +171,7 @@ export const VendorContacts: React.FC = () => {
       <Card>
         <Table>
           <Thead>
-            <tr><Th>Name</Th><Th>Firma</Th><Th className="hidden sm:table-cell">Funktion / Rolle</Th><Th className="hidden min-[480px]:table-cell">Kontakt</Th><Th className="text-right">Aktionen</Th></tr>
+            <tr><Th>{t('table.name')}</Th><Th>{t('table.company')}</Th><Th className="hidden sm:table-cell">{t('table.role')}</Th><Th className="hidden min-[480px]:table-cell">{t('table.contact')}</Th><Th className="text-right">{t('table.actions')}</Th></tr>
           </Thead>
           <Tbody>
             {filtered.map(c => (
@@ -212,55 +211,55 @@ export const VendorContacts: React.FC = () => {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-400 dark:text-slate-500">Keine Ansprechpartner gefunden</td></tr>
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-400 dark:text-slate-500">{t('empty')}</td></tr>
             )}
           </Tbody>
         </Table>
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editContact ? 'Ansprechpartner bearbeiten' : 'Neuen Ansprechpartner anlegen'} size="xl">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editContact ? t('modal.editTitle') : t('modal.newTitle')} size="xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4 p-4 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border dark:border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-bold dark:text-slate-200 uppercase tracking-wider text-[10px]">Zugehöriges Unternehmen</label>
+              <label className="text-sm font-bold dark:text-slate-200 uppercase tracking-wider text-[10px]">{t('form.company')}</label>
               {!editContact && (
                 <button type="button" onClick={() => setIsNewVendor(!isNewVendor)} className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
-                  {isNewVendor ? 'Existierende Firma wählen' : 'Neue Firma anlegen'}
+                  {isNewVendor ? t('form.switchToExisting') : t('form.switchToNew')}
                 </button>
               )}
             </div>
-            
+
             {isNewVendor && !editContact ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-                <Input label="Name der Firma *" value={newVendorForm.name} onChange={e => setNewVendorForm({ ...newVendorForm, name: e.target.value })} required placeholder="Firma GmbH" />
-                <Select label="Typ *" value={newVendorForm.type} onChange={e => setNewVendorForm({ ...newVendorForm, type: e.target.value as any })}
+                <Input label={t('form.newCompanyName')} value={newVendorForm.name} onChange={e => setNewVendorForm({ ...newVendorForm, name: e.target.value })} required placeholder={t('form.newCompanyNamePlaceholder')} />
+                <Select label={t('form.type')} value={newVendorForm.type} onChange={e => setNewVendorForm({ ...newVendorForm, type: e.target.value as any })}
                   options={typeOptions} />
               </div>
             ) : (
-              <Select value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} 
-                options={[{ value: '', label: 'Firma auswählen...' }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]} required />
+              <Select value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))}
+                options={[{ value: '', label: t('form.selectCompany') }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]} required />
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-2">
             <div className="md:col-span-2">
-              <Input label="Vollständiger Name des Kontakts *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="z. B. Erika Musterfrau" />
+              <Input label={t('form.fullName')} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder={t('form.fullNamePlaceholder')} />
             </div>
-            <Input label="Funktion / Rolle" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="z. B. Key Account Manager" />
-            <Input label="Abteilung (extern)" value={form.department || ''} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="z. B. Vertrieb, Technik" />
-            
-            <Input label="E-Mail-Adresse" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@firma.de" />
-            <Input label="Telefonnummer" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+49 123 456789" />
-            
+            <Input label={t('form.functionRole')} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder={t('form.functionRolePlaceholder')} />
+            <Input label={t('form.department')} value={form.department || ''} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder={t('form.departmentPlaceholder')} />
+
+            <Input label={t('form.email')} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@firma.de" />
+            <Input label={t('form.phone')} value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+49 123 456789" />
+
             <div className="md:col-span-2 flex flex-col gap-1">
-              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen zum Kontakt</label>
-              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Verfügbarkeiten, Eskalationsweg, etc." />
+              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.notes')}</label>
+              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder={t('form.notesPlaceholder')} />
             </div>
           </div>
 
           <div className="flex gap-3 pt-4 border-t dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" disabled={saving || !canWrite} className="flex-1 justify-center">{saving ? 'Speichern...' : (editContact ? 'Kontakt aktualisieren' : 'Kontakt anlegen')}</Button>
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">{t('form.cancel')}</Button>
+            <Button type="submit" disabled={saving || !canWrite} className="flex-1 justify-center">{saving ? t('form.saving') : (editContact ? t('form.save') : t('form.create'))}</Button>
           </div>
         </form>
       </Modal>
