@@ -1,0 +1,77 @@
+{
+  "title": "Controls & SoA",
+  "subtitle": "Statement of Applicability · ISO 27001 / NIS-2 / BSI · {{count}} controls",
+  "searchPlaceholder": "Search (code/title)…",
+  "new": "New Custom Control",
+  "bulkDeleteBtn_one": "Delete {{count}}",
+  "bulkDeleteBtn_other": "Delete {{count}}",
+  "type": {
+    "organizational": "Organizational",
+    "people": "People",
+    "physical": "Physical",
+    "technological": "Technological"
+  },
+  "status": {
+    "implemented": "Implemented",
+    "planned": "Planned",
+    "not_applicable": "Not Applicable"
+  },
+  "stats": {
+    "implemented": "Implemented",
+    "planned": "Planned",
+    "notApplicable": "Not applicable",
+    "coverage": "Coverage"
+  },
+  "hints": {
+    "iso27001": "ISO 27001 controls come from the <a>ISO 27001 module</a>. Edit status there for full details.",
+    "nis2": "NIS-2 controls come from the <a>NIS-2 module</a>. Edit status there for full details.",
+    "bsi": "BSI requirements come from the <a>BSI module</a>. Edit status there for full details."
+  },
+  "filters": {
+    "allFrameworks": "All Frameworks",
+    "allStatus": "All Status"
+  },
+  "table": {
+    "code": "Code",
+    "control": "Control",
+    "framework": "Framework",
+    "reference": "Reference",
+    "status": "Status"
+  },
+  "form": {
+    "basicInfo": "Basic Information",
+    "title": "Title",
+    "type": "Type",
+    "description": "Description",
+    "soaStatus": "SoA Status",
+    "justification": "Applicability Justification (SoA)",
+    "justificationPlaceholder": "Why (not) applicable or how implemented?",
+    "linkedPolicies": "Linked Policies",
+    "linkedPoliciesHint": "Link this control to policies from your library that describe this TOM in detail.",
+    "noPolicies": "No policies available.",
+    "noCode": "No code"
+  },
+  "createModal": {
+    "title": "Create Custom Control",
+    "code": "Code (optional)",
+    "codePlaceholder": "e.g. ORG-01"
+  },
+  "buttons": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create"
+  },
+  "empty": {
+    "noResults": "No controls found"
+  },
+  "confirm": {
+    "delete": "Delete control \"{{title}}\"?",
+    "bulkDelete": "Really delete the {{count}} selected custom controls?"
+  },
+  "toast": {
+    "bulkDeleted_one": "{{count}} control deleted",
+    "bulkDeleted_other": "{{count}} controls deleted",
+    "deleteError": "Error deleting",
+    "error": "Error"
+  }
+}
