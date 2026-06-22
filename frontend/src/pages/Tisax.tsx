@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Shield, Plus, Trash2, Pencil, CalendarCheck, ListChecks, Target, CheckCircle2, Gauge, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import type { User } from '../types';
 import { Card, CardBody } from '../components/ui/Card';
@@ -32,14 +33,6 @@ interface TisaxItem {
   notes: string;
 }
 
-const statusLabels: Record<TisaxStatus, string> = {
-  preparation: 'Vorbereitung',
-  requested: 'Angefragt',
-  scheduled: 'Terminiert',
-  audit_done: 'Audit abgeschlossen',
-  label_received: 'Label erhalten',
-};
-
 const statusColors: Record<TisaxStatus, string> = {
   preparation: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300',
   requested: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -62,13 +55,6 @@ interface TisaxRequirement {
   notes?: string;
 }
 
-const reqStatusLabels: Record<ReqStatus, string> = {
-  open: 'Offen',
-  in_progress: 'In Umsetzung',
-  implemented: 'Umgesetzt',
-  not_applicable: 'Nicht anwendbar',
-};
-
 const reqStatusColors: Record<ReqStatus, string> = {
   open: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300',
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -77,10 +63,18 @@ const reqStatusColors: Record<ReqStatus, string> = {
 };
 
 const RequirementsTab: React.FC = () => {
+  const { t } = useTranslation('tisax');
   const { user } = useAuth();
   const toast = useToast();
   const canWrite = hasWriteAccess(user?.role);
   const canManage = user?.role === 'admin' || user?.role === 'assessor';
+
+  const reqStatusLabels: Record<ReqStatus, string> = {
+    open: t('reqStatus.open'),
+    in_progress: t('reqStatus.in_progress'),
+    implemented: t('reqStatus.implemented'),
+    not_applicable: t('reqStatus.not_applicable'),
+  };
 
   const [reqs, setReqs] = useState<TisaxRequirement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +98,7 @@ const RequirementsTab: React.FC = () => {
       await load();
     } catch (err: any) {
       if (err.response?.status === 409) await load();
-      else toast.error(err.response?.data?.error || 'Fehler beim Laden des Katalogs');
+      else toast.error(err.response?.data?.error || t('toast.catalogLoadError'));
     } finally {
       setSeeding(false);
     }
@@ -117,7 +111,7 @@ const RequirementsTab: React.FC = () => {
     setReqs(rs => rs.map(r => (r.id === req.id ? { ...r, maturity_level: newLevel } : r)));
     api.put(`/tisax/requirements/${req.id}`, { maturity_level: newLevel }).catch((err: any) => {
       setReqs(prev);
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toast.saveError'));
     });
   };
 
@@ -135,19 +129,19 @@ const RequirementsTab: React.FC = () => {
       setReqs(rs => rs.map(r => (r.id === editReq.id ? { ...r, ...editForm } : r)));
       setEditReq(null);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toast.saveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const removeReq = async (r: TisaxRequirement) => {
-    if (!confirm(`Anforderung ${r.ref} „${r.title}" wirklich löschen?`)) return;
+    if (!confirm(t('confirm.deleteRequirement', { ref: r.ref, title: r.title }))) return;
     try {
       await api.delete(`/tisax/requirements/${r.id}`);
       setReqs(rs => rs.filter(x => x.id !== r.id));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toast.error'));
     }
   };
 
@@ -181,13 +175,13 @@ const RequirementsTab: React.FC = () => {
       <CardBody>
         <div className="py-16 text-center">
           <ListChecks size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-          <p className="text-gray-500 dark:text-slate-400 font-medium">Noch keine VDA-ISA-Anforderungen vorhanden</p>
+          <p className="text-gray-500 dark:text-slate-400 font-medium">{t('requirementsTab.empty.title')}</p>
           <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">
-            Lade den integrierten VDA-ISA-Katalog, um mit der Reifegrad-Selbstbewertung zu starten.
+            {t('requirementsTab.empty.subtitle')}
           </p>
           {canManage && (
             <Button onClick={seed} disabled={seeding} className="mt-4">
-              <Download size={16} />{seeding ? 'Lade Katalog...' : 'VDA-ISA-Katalog laden'}
+              <Download size={16} />{seeding ? t('requirementsTab.empty.loadingCatalog') : t('requirementsTab.empty.loadCatalog')}
             </Button>
           )}
         </div>
@@ -199,10 +193,10 @@ const RequirementsTab: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Anforderungen', value: stats.total, color: 'bg-blue-500', icon: ListChecks },
-          { label: 'Bewertet', value: stats.assessed, color: 'bg-yellow-500', icon: CheckCircle2 },
-          { label: 'Ziel erreicht', value: stats.reached, color: 'bg-green-600', icon: Target },
-          { label: 'Ø Reifegrad', value: stats.avg, color: 'bg-purple-600', icon: Gauge },
+          { label: t('requirementsTab.stats.requirements'), value: stats.total, color: 'bg-blue-500', icon: ListChecks },
+          { label: t('requirementsTab.stats.assessed'), value: stats.assessed, color: 'bg-yellow-500', icon: CheckCircle2 },
+          { label: t('requirementsTab.stats.targetReached'), value: stats.reached, color: 'bg-green-600', icon: Target },
+          { label: t('requirementsTab.stats.avgMaturity'), value: stats.avg, color: 'bg-purple-600', icon: Gauge },
         ].map(s => (
           <Card key={s.label}>
             <CardBody className="flex items-center gap-3 py-4">
@@ -227,7 +221,7 @@ const RequirementsTab: React.FC = () => {
               <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-100 dark:border-slate-800">
                 <h2 className="font-semibold text-sm dark:text-white">{chapter}</h2>
                 <span className="text-xs text-gray-500 dark:text-slate-400 shrink-0">
-                  {reached}/{relevant.length} Ziel erreicht
+                  {t('requirementsTab.chapter.targetReached', { reached, total: relevant.length })}
                 </span>
               </div>
               <div className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -260,7 +254,7 @@ const RequirementsTab: React.FC = () => {
                                 type="button"
                                 disabled={!canWrite || na}
                                 onClick={() => setLevel(r, n)}
-                                title={selected ? 'Bewertung entfernen' : `Reifegrad ${n}`}
+                                title={selected ? t('requirementsTab.maturity.remove') : t('requirementsTab.maturity.level', { level: n })}
                                 className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors disabled:cursor-not-allowed ${
                                   selected
                                     ? n >= r.target_level
@@ -274,7 +268,7 @@ const RequirementsTab: React.FC = () => {
                             );
                           })}
                         </div>
-                        <span className="text-[11px] text-gray-400 dark:text-slate-500 w-11">Ziel: {r.target_level}</span>
+                        <span className="text-[11px] text-gray-400 dark:text-slate-500 w-11">{t('requirementsTab.maturity.target', { target: r.target_level })}</span>
                         {canWrite && (
                           <div className="flex gap-1">
                             <button
@@ -310,14 +304,14 @@ const RequirementsTab: React.FC = () => {
       >
         <form onSubmit={saveEdit} className="space-y-4">
           <Select
-            label="Status"
+            label={t('requirementsTab.editModal.statusLabel')}
             value={editForm.status}
             onChange={e => setEditForm({ ...editForm, status: e.target.value as ReqStatus })}
             options={Object.entries(reqStatusLabels).map(([v, l]) => ({ value: v, label: l }))}
             disabled={!canWrite}
           />
           <Input
-            label="Ziel-Reifegrad"
+            label={t('requirementsTab.editModal.targetLevel')}
             type="number"
             min={1}
             max={5}
@@ -326,7 +320,7 @@ const RequirementsTab: React.FC = () => {
             disabled={!canWrite}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('requirementsTab.editModal.notes')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={3}
@@ -337,11 +331,11 @@ const RequirementsTab: React.FC = () => {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setEditReq(null)} className="flex-1 justify-center">
-              Abbrechen
+              {t('requirementsTab.editModal.cancel')}
             </Button>
             {canWrite && (
               <Button type="submit" disabled={saving} className="flex-1 justify-center">
-                {saving ? 'Speichern...' : 'Speichern'}
+                {saving ? t('requirementsTab.editModal.saving') : t('requirementsTab.editModal.save')}
               </Button>
             )}
           </div>
@@ -364,9 +358,18 @@ const emptyForm = {
 };
 
 export const Tisax: React.FC = () => {
+  const { t } = useTranslation('tisax');
   const { user } = useAuth();
   const toast = useToast();
   const canWrite = hasWriteAccess(user?.role);
+
+  const statusLabels: Record<TisaxStatus, string> = {
+    preparation: t('status.preparation'),
+    requested: t('status.requested'),
+    scheduled: t('status.scheduled'),
+    audit_done: t('status.audit_done'),
+    label_received: t('status.label_received'),
+  };
 
   const [tab, setTab] = useState<'assessments' | 'requirements'>('assessments');
   const [items, setItems] = useState<TisaxItem[]>([]);
@@ -436,19 +439,19 @@ export const Tisax: React.FC = () => {
       setModalOpen(false);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toast.saveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (i: TisaxItem) => {
-    if (!confirm(`„${i.scope_description}" wirklich löschen?`)) return;
+    if (!confirm(t('confirm.delete', { name: i.scope_description }))) return;
     try {
       await api.delete(`/tisax/${i.id}`);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toast.error'));
     }
   };
 
@@ -466,20 +469,20 @@ export const Tisax: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
-            <Shield size={24} className="text-blue-600" />TISAX Assessments
+            <Shield size={24} className="text-blue-600" />{t('title')}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">
-            Trusted Information Security Assessment Exchange · {items.length} Einträge
+            {t('subtitle', { count: items.length })}
           </p>
         </div>
-        {canWrite && tab === 'assessments' && <Button onClick={openNew}><Plus size={16} />Assessment erfassen</Button>}
+        {canWrite && tab === 'assessments' && <Button onClick={openNew}><Plus size={16} />{t('button.newAssessment')}</Button>}
       </div>
 
       <div className="border-b border-gray-200 dark:border-slate-800">
         <nav className="flex gap-1 -mb-px overflow-x-auto no-scrollbar scroll-smooth">
           {([
-            { key: 'assessments' as const, label: 'Assessments', icon: Shield },
-            { key: 'requirements' as const, label: 'VDA-ISA-Anforderungen', icon: ListChecks },
+            { key: 'assessments' as const, label: t('tabs.assessments'), icon: Shield },
+            { key: 'requirements' as const, label: t('tabs.requirements'), icon: ListChecks },
           ]).map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
@@ -496,10 +499,10 @@ export const Tisax: React.FC = () => {
       {tab === 'assessments' && (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Gesamt', value: stats.total, color: 'bg-blue-500' },
-          { label: 'Aktiv', value: stats.active, color: 'bg-yellow-500' },
-          { label: 'Label erhalten', value: stats.labelReceived, color: 'bg-green-600' },
-          { label: 'Überfällig', value: stats.overdue, color: 'bg-red-600' },
+          { label: t('stats.total'), value: stats.total, color: 'bg-blue-500' },
+          { label: t('stats.active'), value: stats.active, color: 'bg-yellow-500' },
+          { label: t('stats.labelReceived'), value: stats.labelReceived, color: 'bg-green-600' },
+          { label: t('stats.overdue'), value: stats.overdue, color: 'bg-red-600' },
         ].map(s => (
           <Card key={s.label}>
             <CardBody className="flex items-center gap-3 py-4">
@@ -518,7 +521,7 @@ export const Tisax: React.FC = () => {
       <FilterBar
         search={search}
         onSearch={setSearch}
-        searchPlaceholder="Scope oder Prüfgesellschaft suchen..."
+        searchPlaceholder={t('filter.searchPlaceholder')}
         activeCount={[statusFilter].filter(Boolean).length}
         onReset={() => { setSearch(''); setStatusFilter(''); }}
       >
@@ -526,7 +529,7 @@ export const Tisax: React.FC = () => {
           className="w-44"
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
-          options={[{ value: '', label: 'Alle Status' }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]}
+          options={[{ value: '', label: t('filter.allStatuses') }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]}
         />
       </FilterBar>
 
@@ -535,12 +538,12 @@ export const Tisax: React.FC = () => {
           <Table>
             <Thead>
               <tr>
-                <Th>Scope</Th>
-                <Th>Level</Th>
-                <Th>Label</Th>
-                <Th>Status</Th>
-                <Th>Assessment-Datum</Th>
-                <Th>Gültig bis</Th>
+                <Th>{t('table.scope')}</Th>
+                <Th>{t('table.level')}</Th>
+                <Th>{t('table.label')}</Th>
+                <Th>{t('table.status')}</Th>
+                <Th>{t('table.assessmentDate')}</Th>
+                <Th>{t('table.validUntil')}</Th>
                 <Th>{''}</Th>
               </tr>
             </Thead>
@@ -609,13 +612,13 @@ export const Tisax: React.FC = () => {
                   <td colSpan={7}>
                     <div className="py-16 text-center">
                       <Shield size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-                      <p className="text-gray-500 dark:text-slate-400 font-medium">Keine TISAX-Assessments gefunden</p>
+                      <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
                       {canWrite && (
                         <button
                           onClick={openNew}
                           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
-                          <Plus size={15} /> Assessment erfassen
+                          <Plus size={15} /> {t('button.newAssessment')}
                         </button>
                       )}
                     </div>
@@ -630,35 +633,35 @@ export const Tisax: React.FC = () => {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editId ? 'TISAX Assessment bearbeiten' : 'TISAX Assessment erfassen'}
+        title={editId ? t('modal.editTitle') : t('modal.newTitle')}
         size="lg"
       >
         <form onSubmit={save} className="space-y-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Scope-Beschreibung *</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.scopeDescriptionLabel')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={3}
               value={form.scope_description}
               onChange={e => setForm({ ...form, scope_description: e.target.value })}
-              placeholder="Beschreibung des TISAX-Scopes und der zu bewertenden Standorte / Bereiche"
+              placeholder={t('modal.scopeDescriptionPlaceholder')}
               required
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              label="Assessment Level"
+              label={t('modal.assessmentLevelLabel')}
               value={form.assessment_level}
               onChange={e => setForm({ ...form, assessment_level: e.target.value as AssessmentLevel })}
               options={[
-                { value: 'AL2', label: 'AL2 – Hoher Schutzbedarf' },
-                { value: 'AL3', label: 'AL3 – Sehr hoher Schutzbedarf' },
+                { value: 'AL2', label: t('modal.assessmentLevelOptions.AL2') },
+                { value: 'AL3', label: t('modal.assessmentLevelOptions.AL3') },
               ]}
               disabled={!canWrite}
             />
             <Select
-              label="Status"
+              label={t('modal.statusLabel')}
               value={form.status}
               onChange={e => setForm({ ...form, status: e.target.value as TisaxStatus })}
               options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))}
@@ -667,30 +670,30 @@ export const Tisax: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Angefordertes Label"
+              label={t('modal.labelRequestedLabel')}
               value={form.label_requested}
               onChange={e => setForm({ ...form, label_requested: e.target.value })}
-              placeholder="z. B. TISAX Label – Information High"
+              placeholder={t('modal.labelRequestedPlaceholder')}
               disabled={!canWrite}
             />
             <Input
-              label="Prüfgesellschaft"
+              label={t('modal.auditorCompanyLabel')}
               value={form.auditor_company}
               onChange={e => setForm({ ...form, auditor_company: e.target.value })}
-              placeholder="Name des zugelassenen Prüfdienstleisters"
+              placeholder={t('modal.auditorCompanyPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Assessment-Datum"
+              label={t('modal.assessmentDateLabel')}
               type="date"
               value={form.assessment_date}
               onChange={e => setForm({ ...form, assessment_date: e.target.value })}
               disabled={!canWrite}
             />
             <Input
-              label="Label gültig bis"
+              label={t('modal.labelValidUntilLabel')}
               type="date"
               value={form.label_valid_until}
               onChange={e => setForm({ ...form, label_valid_until: e.target.value })}
@@ -698,14 +701,14 @@ export const Tisax: React.FC = () => {
             />
           </div>
           <SearchableSelect
-            label="Verantwortliche Person"
+            label={t('modal.ownerLabel')}
             value={form.owner_id}
             onChange={val => setForm({ ...form, owner_id: val })}
-            options={[{ value: '', label: '– niemand –' }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]}
+            options={[{ value: '', label: t('modal.noOwner') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]}
             disabled={!canWrite}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.notesLabel')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
@@ -716,11 +719,11 @@ export const Tisax: React.FC = () => {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">
-              Abbrechen
+              {t('modal.cancel')}
             </Button>
             {canWrite && (
               <Button type="submit" disabled={saving} className="flex-1 justify-center">
-                {saving ? 'Speichern...' : (editId ? 'Aktualisieren' : 'Anlegen')}
+                {saving ? t('modal.saving') : (editId ? t('modal.update') : t('modal.create'))}
               </Button>
             )}
           </div>

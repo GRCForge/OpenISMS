@@ -1,9 +1,9 @@
 {
-  "title": "Administration",
+  "title": "Verwaltung",
   "sections": {
-    "users":   "Benutzerverwaltung",
+    "users": "Benutzerverwaltung",
     "modules": "Modulkonfiguration",
-    "system":  "Systemeinstellungen",
-    "audit":   "Audit-Log"
+    "system": "Systemeinstellungen",
+    "audit": "Audit-Log"
   }
 }

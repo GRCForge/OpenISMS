@@ -1,0 +1,143 @@
+{
+  "groups": {
+    "cockpit": "Cockpit",
+    "governance": "Governance",
+    "operations": "Operations",
+    "resources": "Resources",
+    "system": "System"
+  },
+  "items": {
+    "dashboard": {
+      "label": "Dashboard",
+      "hint": "Security status at a glance"
+    },
+    "my": {
+      "label": "My Area",
+      "hint": "Your tasks"
+    },
+    "myEmployee": {
+      "label": "My Training",
+      "hint": "Your assigned training"
+    },
+    "report": {
+      "label": "Reports",
+      "hint": "Management reports"
+    },
+    "compliance": {
+      "label": "Compliance",
+      "hint": "ISO 27001 · NIS-2 · GDPR"
+    },
+    "controls": {
+      "label": "Controls",
+      "hint": "SoA & Controls"
+    },
+    "policies": {
+      "label": "Documents",
+      "hint": "Policies & Templates"
+    },
+    "vvt": {
+      "label": "Privacy",
+      "hint": "RoPA (Art. 30 GDPR)"
+    },
+    "subjectRequests": {
+      "label": "Data Subject Rights",
+      "hint": "Requests Art. 15–22 GDPR"
+    },
+    "legalRequirements": {
+      "label": "Legal Register",
+      "hint": "Legal requirements"
+    },
+    "iso27001": {
+      "label": "ISO 27001",
+      "hint": "Annex A Controls & SoA"
+    },
+    "bsiGrundschutz": {
+      "label": "BSI Grundschutz",
+      "hint": "IT-Grundschutz Compendium"
+    },
+    "nis2": {
+      "label": "NIS-2",
+      "hint": "Art. 21 Security measures"
+    },
+    "c5": {
+      "label": "BSI C5:2026",
+      "hint": "Cloud Controls Catalogue"
+    },
+    "tisax": {
+      "label": "TISAX",
+      "hint": "Automotive Security Assessment"
+    },
+    "aiAct": {
+      "label": "EU AI Act",
+      "hint": "AI System Register"
+    },
+    "assets": {
+      "label": "Assets",
+      "hint": "Inventory & Classification"
+    },
+    "discovery": {
+      "label": "Discovery",
+      "hint": "Network & Agents"
+    },
+    "risks": {
+      "label": "Risks",
+      "hint": "ISO 27005 Register"
+    },
+    "incidents": {
+      "label": "Incidents",
+      "hint": "Incident Management"
+    },
+    "tasks": {
+      "label": "Tasks",
+      "hint": "Security measures"
+    },
+    "dora": {
+      "label": "DORA",
+      "hint": "ICT Third-party Register"
+    },
+    "pentests": {
+      "label": "Pentests",
+      "hint": "Pentest Tracking & Findings"
+    },
+    "vendors": {
+      "label": "Service Providers",
+      "hint": "Company directory"
+    },
+    "contacts": {
+      "label": "Contacts",
+      "hint": "Company contacts"
+    },
+    "topology": {
+      "label": "Topology",
+      "hint": "Visualization"
+    },
+    "assessments": {
+      "label": "Assessments",
+      "hint": "CIA assessments"
+    },
+    "reminders": {
+      "label": "Reviews",
+      "hint": "Due reviews"
+    },
+    "bcm": {
+      "label": "BCM",
+      "hint": "Business Continuity Management"
+    },
+    "import": {
+      "label": "Import",
+      "hint": "CSV Bulk Upload"
+    },
+    "admin": {
+      "label": "Admin",
+      "hint": "Settings"
+    }
+  },
+  "search": "Search…",
+  "theme": {
+    "dark": "Enable dark mode",
+    "light": "Enable light mode"
+  },
+  "version": "OpenISMS v{{version}} · © 2026 Maximilian Herz",
+  "overdueReviews_one": "{{count}} overdue review",
+  "overdueReviews_other": "{{count}} overdue reviews"
+}

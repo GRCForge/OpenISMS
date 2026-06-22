@@ -1,37 +1,37 @@
 {
-  "title": "Vorfälle & Pannen",
+  "title": "Störungen & Verstöße",
   "new": "Vorfall melden",
-  "subtitle": "Security Incident Management & DSGVO Meldewesen · {{count}} Vorfälle",
-  "searchPlaceholder": "Vorfall suchen…",
+  "subtitle": "Security Incident Management & GDPR Berichterstattung · {{count}} Vorfälle",
+  "searchPlaceholder": "Vorfälle durchsuchen…",
   "severity": {
-    "low": "Gering",
+    "low": "Niedrig",
     "medium": "Mittel",
     "high": "Hoch",
     "critical": "Kritisch"
   },
   "status": {
     "reported": "Gemeldet",
-    "investigating": "In Untersuchung",
-    "contained": "Eingedämmt",
-    "resolved": "Behoben",
+    "investigating": "Untersuchung",
+    "contained": "Enthält",
+    "resolved": "Gelöst",
     "closed": "Geschlossen"
   },
   "categories": {
-    "malware": "Schadsoftware",
+    "malware": "Malware",
     "phishing": "Phishing",
-    "data_breach": "Datenschutzverletzung",
+    "data_breach": "Datenbruch",
     "dos": "DoS / DDoS",
-    "unauthorized_access": "Unbefugter Zugriff",
+    "unauthorized_access": "Unberechtigter Zugriff",
     "misconfiguration": "Fehlkonfiguration",
     "loss_theft": "Verlust / Diebstahl",
-    "social_engineering": "Social Engineering",
-    "other": "Sonstiges"
+    "social_engineering": "Sozialtechnik",
+    "other": "Andere"
   },
   "nis2": {
-    "overdueWarning": "Frühwarnung überfällig",
-    "earlyWarningOpen": "24h-Frühwarnung offen",
-    "reportingOverdue": "72h-Meldung überfällig",
-    "reportingOpen": "72h-Meldung offen",
+    "overdueWarning": "Frühzeitige Warnung überfällig",
+    "earlyWarningOpen": "24h Frühwarnung geöffnet",
+    "reportingOverdue": "72h Bericht überfällig",
+    "reportingOpen": "72h Bericht offen",
     "reported": "Gemeldet"
   },
   "gdpr": {
@@ -40,9 +40,9 @@
     "remaining": "Art. 33: {{hours}}h verbleibend"
   },
   "stats": {
-    "open": "Offen",
+    "open": "Öffnen",
     "criticalHigh": "Hoch / Kritisch",
-    "gdprRelevance": "DSGVO Relevanz",
+    "gdprRelevance": "GDPR Relevanz",
     "total": "Gesamt"
   },
   "filters": {
@@ -50,30 +50,30 @@
     "allSeverities": "Alle Schweregrade",
     "allTypes": "Alle Typen",
     "security": "Sicherheit",
-    "gdpr": "DSGVO"
+    "gdpr": "DDR"
   },
   "table": {
-    "ref": "Ref",
+    "ref": "Referenz",
     "incident": "Vorfall",
     "type": "Typ",
     "severity": "Schweregrad",
     "status": "Status",
     "detected": "Erkannt",
-    "deadline": "Frist"
+    "deadline": "Deadline"
   },
   "empty": {
     "title": "Keine Vorfälle gefunden"
   },
   "modal": {
-    "editTitle": "Vorfall bearbeiten",
+    "editTitle": "Ticket bearbeiten",
     "newTitle": "Vorfall melden",
-    "docsTitle": "Nachweise verwalten: {{ref}}"
+    "docsTitle": "Manage Evidence: {{ref}}"
   },
   "form": {
     "securityIncident": "Sicherheitsvorfall",
-    "gdprIncident": "DSGVO-Vorfall / Panne",
+    "gdprIncident": "DSGVO-Vorfall / Datenschutzverletzung",
     "title": "Titel *",
-    "titlePlaceholder": "Kurzbezeichnung des Vorfalls...",
+    "titlePlaceholder": "Kurze Beschreibung des Vorfalls...",
     "description": "Beschreibung",
     "descriptionPlaceholder": "Was ist passiert? Wer hat es gemeldet?",
     "category": "Kategorie",
@@ -82,71 +82,71 @@
     "assignee": "Zugewiesen an",
     "noAssignee": "– niemand –",
     "detectedAt": "Erkannt am",
-    "occurredAt": "Eingetreten am",
-    "nis2Reportable": "NIS-2 meldepflichtig (Art. 23)",
-    "earlyWarning": "Frühwarnung (24h) am",
-    "notification72h": "Meldung (72h) am",
-    "impact": "Auswirkung / Schaden",
-    "impactPlaceholder": "Finanziell, Reputation, Betriebsfähigkeit...",
-    "rootCause": "Ursache (Root Cause)",
+    "occurredAt": "Aufgestiegen am",
+    "nis2Reportable": "NIS-2-Meldepflicht (Art. 23)",
+    "earlyWarning": "Frühe Warnung (24h) um",
+    "notification72h": "Benachrichtigung (72h) um",
+    "impact": "Einschlag / Schaden",
+    "impactPlaceholder": "Finanzen, Reputation, operative Fähigkeit...",
+    "rootCause": "Wurzelgrund",
     "correctiveActions": "Korrekturmaßnahmen",
-    "dataBreachDetails": "Details zur Datenpanne (DSGVO Art. 33/34)",
-    "dataBreachPlaceholder": "Art und Umfang der betroffenen Daten, Kategorien, geschätzte Anzahl betroffener Personen…",
-    "gdprArt33": "DSGVO Art. 33 — 72h Meldepflicht an Aufsichtsbehörde",
-    "gdprDiscoveredAt": "Kenntnisnahme (Fristbeginn)",
-    "gdprNotifiedAt": "Meldung eingereicht am",
+    "dataBreachDetails": "Einzelheiten zur Datenschutzverletzung (DSGVO Art. 33/34)",
+    "dataBreachPlaceholder": "Typ und Umfang der betroffenen Daten, Kategorien, geschätzte Anzahl der betroffenen Personen…",
+    "gdprArt33": "DPR Art. 33 — 72h Berichtspflicht gegenüber der Aufsichtsbehörde",
+    "gdprDiscoveredAt": "Sicherheitslücke entdeckt (Beginn der Frist)",
+    "gdprNotifiedAt": "Benachrichtigung gesendet am",
     "gdprDeadlineOverdue": "Frist abgelaufen ({{hours}}h überfällig)",
-    "gdprDeadlineLeft": "Frist läuft ab in {{hours}}h — {{deadline}}",
+    "gdprDeadlineLeft": "Deadline läuft in {{hours}}h ab — {{deadline}}",
     "affectedAssets": "Betroffene Assets",
-    "assetFilter": "Asset filtern...",
+    "assetFilter": "Assets filtern...",
     "noAssetsLoaded": "Keine Assets geladen.",
     "noAssetsFound": "Keine Assets gefunden",
     "linkedRisks": "Verknüpfte Risiken",
-    "riskFilter": "Risiko filtern...",
+    "riskFilter": "Risiken filtern...",
     "noRisksLoaded": "Keine Risiken geladen.",
     "noRisksFound": "Keine Risiken gefunden"
   },
   "buttons": {
     "cancel": "Abbrechen",
-    "save": "Vorfall speichern",
+    "save": "Ticket speichern",
     "saving": "Speichern…"
   },
   "delete": {
-    "modalTitle": "Vorfall löschen (Begründung erforderlich)",
-    "description": "Sicherheitsvorfälle dürfen aus Compliance-Gründen nur mit einer Begründung gelöscht (ausgeblendet) werden. Der Vorgang wird im Audit-Log archiviert.",
-    "reasonLabel": "Begründung für das Löschen *",
-    "reasonPlaceholder": "z. B. Falschmeldung, Duplikat zu INC-0002...",
-    "confirmButton": "Vorfall löschen"
+    "modalTitle": "Ticket löschen (Grund erforderlich)",
+    "description": "Sicherheitsvorfälle dürfen nur aus Gründen der Einhaltung (versteckt) gelöscht werden. Die Aktion wird im Audit-Log archiviert.",
+    "reasonLabel": "Löschgrund *",
+    "reasonPlaceholder": "z.B. Falsche Alarm, Duplikat von INC-0002...",
+    "confirmButton": "Ticket löschen"
   },
   "docs": {
-    "manageTitle": "Dokumente verwalten (Nachweise)",
-    "uploadTitle": "Nachweis hochladen",
+    "manageTitle": "Dokumente verwalten (Beweis)",
+    "uploadTitle": "Beweise hochladen",
     "category": "Kategorie *",
     "description": "Beschreibung",
-    "descriptionPlaceholder": "z. B. Logfiles, Bericht des externen Auditors...",
+    "descriptionPlaceholder": "z.B. Protokolldateien, Bericht von externem Auditor...",
     "fileLabel": "Datei auswählen *",
-    "uploading": "Wird hochgeladen...",
+    "uploading": "Hochladen...",
     "addDocument": "Dokument hinzufügen",
-    "listTitle": "Vorhandene Nachweise",
-    "empty": "Keine Nachweise hinterlegt.",
-    "uploadedAt": "Hochgeladen am {{date}} von {{uploader}} · {{size}} MB",
+    "listTitle": "Vorhandene Beweise",
+    "empty": "Keine Beweise gespeichert.",
+    "uploadedAt": "Hochgeladen auf {{date}} von {{uploader}} · {{size}} MB",
     "noDescription": "Keine Beschreibung",
     "unknownUploader": "Unbekannt",
-    "download": "Herunterladen",
+    "download": "Download",
     "catReport": "Bericht",
-    "catAcceptance": "Freigabe",
-    "catOther": "Sonstiges",
+    "catAcceptance": "Akzeptanz",
+    "catOther": "Andere",
     "catRiskReport": "Untersuchungsbericht",
-    "catRiskAcceptance": "Freigabe / Abnahme"
+    "catRiskAcceptance": "Annahme / Genehmigung"
   },
   "toast": {
-    "deleted": "Vorfall gelöscht",
+    "deleted": "Ticket gelöscht",
     "errorDelete": "Fehler beim Löschen",
-    "docUploaded": "Nachweis erfolgreich hochgeladen",
+    "docUploaded": "Beweise erfolgreich hochgeladen",
     "errorUpload": "Fehler beim Hochladen des Dokuments",
     "docDeleted": "Dokument gelöscht",
     "errorDeleteDoc": "Fehler beim Löschen des Dokuments",
-    "classificationRequired": "Mindestens eine Klassifizierung (Sicherheit oder DSGVO) muss ausgewählt sein.",
+    "classificationRequired": "Mindestens eine Klassifikation (Sicherheit oder GDPR) muss ausgewählt werden.",
     "errorSaving": "Fehler beim Speichern"
   },
   "confirm": {

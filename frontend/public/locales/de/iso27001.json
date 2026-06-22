@@ -1,58 +1,58 @@
 {
-  "title": "ISO 27001:2022 — Statement of Applicability",
-  "subtitle": "Annex A Controls · {{count}} Controls",
+  "title": "ISO 27001:2022 – Erklärung zur Anwendbarkeit",
+  "subtitle": "Anhang A Kontrollen · {{count}} Kontrollen",
   "status": {
-    "not_started": "Offen",
-    "in_progress": "In Umsetzung",
-    "implemented": "Umgesetzt",
+    "not_started": "Öffnen",
+    "in_progress": "In Bearbeitung",
+    "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
   },
   "theme": {
-    "Organizational": "Organisatorische Controls",
-    "People": "Personenbezogene Controls",
-    "Physical": "Physische Controls",
-    "Technological": "Technologische Controls"
+    "Organizational": "Organisationskontrolle",
+    "People": "Personen-Steuerung",
+    "Physical": "Körperliche Steuerung",
+    "Technological": "Technologische Kontrollen"
   },
   "stats": {
-    "total": "Controls gesamt",
-    "applicable": "Anwendbar",
-    "implemented": "Umgesetzt",
+    "total": "Gesamtzahl der Kontrollen",
+    "applicable": "Verwendbar",
+    "implemented": "Implementiert",
     "compliance": "Compliance"
   },
   "filter": {
-    "searchPlaceholder": "Control-Referenz oder Titel suchen...",
+    "searchPlaceholder": "Referenz oder Titel kontrollieren...",
     "allStatus": "Alle Status",
-    "allControls": "Alle Controls",
-    "applicableOnly": "Nur anwendbare"
+    "allControls": "Alle Steuerelemente",
+    "applicableOnly": "Nur anwendbar"
   },
   "table": {
     "ref": "Ref.",
-    "control": "Control",
-    "applicable": "Anwendbar",
+    "control": "Steuerung",
+    "applicable": "Verwendbar",
     "status": "Status",
     "lastReview": "Letzte Prüfung",
-    "controlCount": "{{count}} Controls"
+    "controlCount": "{{count}} Steuerelemente"
   },
   "empty": {
-    "title": "Noch keine ISO-27001-Controls vorhanden",
-    "description": "Lade den integrierten Annex-A-Katalog, um mit der Statement of Applicability zu starten.",
-    "loadButton": "Annex A laden",
-    "loading": "Lade Katalog..."
+    "title": "Noch keine ISO 27001 kontrolliert",
+    "description": "Laden Sie den integrierten Anhang A Katalog, um die Erklärung der Anwendbarkeit zu starten.",
+    "loadButton": "Anhang A laden",
+    "loading": "Katalog wird geladen..."
   },
-  "filterEmpty": "Keine Controls entsprechen den Filterkriterien.",
+  "filterEmpty": "Keine Steuerelemente entsprechen den Filterkriterien.",
   "modal": {
-    "status": "Umsetzungsstatus",
-    "applicable": "Control anwendbar",
+    "status": "Implementierungsstatus",
+    "applicable": "Kontrolle anwendbar",
     "justification": "Begründung (Anwendbarkeit)",
-    "justificationPlaceholder": "Warum ist dieses Control anwendbar oder ausgeschlossen?",
-    "evidence": "Nachweis / Evidence",
-    "evidencePlaceholder": "Referenz auf Dokumente, Richtlinien oder Maßnahmen",
+    "justificationPlaceholder": "Warum ist diese Kontrolle anwendbar oder ausgeschlossen?",
+    "evidence": "Beweise",
+    "evidencePlaceholder": "Verweis auf Dokumente, Richtlinien oder Maßnahmen",
     "responsible": "Verantwortliche Person",
     "nobody": "– niemand –",
     "lastReview": "Letzte Prüfung",
     "notes": "Notizen",
     "crossRefs": "Querverweise",
-    "description": "Control-Beschreibung (ISO/IEC 27001:2022)",
+    "description": "Kontrollbeschreibung (ISO/IEC 27001:2022)",
     "cancel": "Abbrechen",
     "save": "Speichern",
     "saving": "Speichern..."

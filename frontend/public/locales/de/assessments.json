@@ -1,14 +1,14 @@
 {
-  "title": "Alle Bewertungen",
-  "searchPlaceholder": "Asset suchen...",
+  "title": "Alle Prüfungen",
+  "searchPlaceholder": "Suche Asset...",
   "subtitle": "{{filtered}} von {{total}} Bewertungen",
   "filters": {
     "allRisks": "Alle Risiken",
-    "currentOnly": "Nur aktuelle"
+    "currentOnly": "Nur aktuell"
   },
   "trend": {
-    "up": "Risiko gestiegen",
-    "down": "Risiko gesunken",
+    "up": "Risiko erhöht",
+    "down": "Risiko verringert",
     "same": "Unverändert"
   },
   "table": {
@@ -17,21 +17,21 @@
     "confidentiality": "C",
     "integrity": "I",
     "availability": "A",
-    "score": "Score",
+    "score": "Punktzahl",
     "risk": "Risiko",
     "trend": "Trend",
-    "assessor": "Bewerter",
+    "assessor": "Assessor",
     "date": "Datum",
-    "nextReview": "Nächste Prüfung",
+    "nextReview": "Nächste Bewertung",
     "status": "Status"
   },
   "statusCurrent": "Aktuell",
   "statusOutdated": "Veraltet",
   "unknown": "Unbekannt",
   "templates": {
-    "title": "Assessment-Vorlagen & SBF-Templates",
+    "title": "Prüfungsvorlagen & SBF Vorlagen",
     "manage": "Verwalten",
-    "download": "Herunterladen"
+    "download": "Download"
   },
   "empty": {
     "noResults": "Keine Bewertungen gefunden"
@@ -44,18 +44,18 @@
     "confidentiality": "Vertraulichkeit (C)",
     "integrity": "Integrität (I)",
     "availability": "Verfügbarkeit (A)",
-    "riskScore": "Risiko-Score",
+    "riskScore": "Risikowert",
     "riskLevel": "Risiko-Level",
-    "assessor": "Bewerter",
+    "assessor": "Assessor",
     "assessedAt": "Bewertet am",
-    "nextReview": "Nächste Prüfung",
+    "nextReview": "Nächste Bewertung",
     "current": "Aktuell",
     "notes": "Notizen",
-    "mitigation": "Maßnahmen",
+    "mitigation": "Abmilderung",
     "yes": "Ja",
     "no": "Nein",
-    "filename": "bewertungen",
-    "sheetName": "Bewertungen"
+    "filename": "Bewertungen",
+    "sheetName": "Assessments"
   },
   "toast": {
     "downloadError": "Download fehlgeschlagen"

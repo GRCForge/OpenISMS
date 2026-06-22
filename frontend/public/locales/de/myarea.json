@@ -1,31 +1,31 @@
 {
   "title": "Mein Bereich",
   "welcome": "Willkommen, {{name}}",
-  "openItems": "{{count}} offene Punkte",
-  "noPasskey": "Kein Passkey",
+  "openItems": "{{count}} offene Elemente",
+  "noPasskey": "Kein Passwort",
   "employee": {
-    "title": "Meine Schulungen",
-    "subtitle": "Hier siehst du eine Übersicht deiner absolvierten Schulungen. Du kannst Einträge beanstanden, falls du an einer anderen Schulung teilgenommen hast oder die Angaben fehlerhaft sind.",
-    "required": "Pflicht",
-    "completedAt": "Absolviert am:",
+    "title": "Meine Trainings",
+    "subtitle": "Hier siehst du einen Überblick über deine abgeschlossenen Trainings. Du kannst Einträge bewerten, wenn du ein anderes Training besucht hast oder die Informationen falsch sind.",
+    "required": "Benötigt",
+    "completedAt": "Abgeschlossen am:",
     "expiresAt": "Gültig bis:",
-    "contested": "Beanstandet",
-    "contest": "Beanstanden",
-    "empty": "Keine Schulungseinträge vorhanden",
-    "emptyDescription": "Es wurden noch keine Schulungsteilnahmen für dein Konto hinterlegt."
+    "contested": "Gefecht",
+    "contest": "Wettbewerb",
+    "empty": "Keine Trainingseinträge gefunden",
+    "emptyDescription": "Es wurden noch keine Schulungsteilnehmer für Ihr Konto registriert."
   },
   "contestModal": {
-    "title": "Schulungsteilnahme beanstanden",
-    "hint": "Falls du an dieser Schulung nicht teilgenommen hast, das Datum falsch ist oder du eine andere Schulung besucht hast, kannst du dies hier begründen. Ein Compliance-Mitarbeiter wird deine Anfrage prüfen.",
-    "hintTitle": "Hinweis zur Beanstandung",
-    "selectedTraining": "Ausgewählte Schulung",
+    "title": "Training Rekord des Wettbewerbs",
+    "hint": "Wenn Sie nicht an diesem Training teilgenommen haben, ist das Datum falsch, oder Sie haben eine andere Ausbildung besucht, können Sie dies hier erklären. Ein Compliance-Offizier wird Ihre Anfrage überprüfen.",
+    "hintTitle": "Hinweis zu Wettbewerben",
+    "selectedTraining": "Ausgewähltes Training",
     "registeredDate": "Registriertes Datum:",
-    "reasonLabel": "Begründung / Korrekturhinweis",
+    "reasonLabel": "Begründung / Korrekturnotiz",
     "reasonRequired": "*",
-    "reasonPlaceholder": "z.B. 'Ich habe an diesem Tag nicht an dieser Schulung teilgenommen, sondern an der Datenschutz-Schulung B.'",
+    "reasonPlaceholder": "z.B. \"Ich habe zu diesem Zeitpunkt nicht an dieser Ausbildung teilgenommen, sondern stattdessen an der Data Protection Training B teilgenommen.\"",
     "cancel": "Abbrechen",
-    "submit": "Beanstandung absenden",
-    "submitting": "Wird übermittelt..."
+    "submit": "Wettbewerb abschicken",
+    "submitting": "Wird gesendet..."
   },
   "tasks": {
     "title": "Meine Aufgaben",
@@ -33,14 +33,14 @@
     "allTasks": "Alle Aufgaben",
     "manageAll": "Alle Aufgaben verwalten",
     "empty": "Keine offenen Aufgaben",
-    "emptyDescription": "Super! Alles erledigt.",
-    "overdueWarning_one": "{{count}} Aufgabe überfällig",
-    "overdueWarning_other": "{{count}} Aufgaben überfällig",
-    "overdueSuffix": "⚠ Überfällig ·",
+    "emptyDescription": "Super! Alles getan.",
+    "overdueSuffix": "⚠ Überfällig",
     "dueLabel": "Fällig",
     "markDone": "Als erledigt markieren",
-    "setInProgress": "In Bearbeitung setzen",
-    "done": "Erledigt"
+    "setInProgress": "Setze in Bearbeitung",
+    "done": "Fertig",
+    "overdueWarning_one": "{{count}} Aufgabe überfällig",
+    "overdueWarning_other": "{{count}} überfällige Aufgaben"
   },
   "priority": {
     "critical": "Kritisch",
@@ -49,29 +49,29 @@
     "low": "Niedrig"
   },
   "sections": {
-    "title": "Handlungsbedarf",
-    "showMore": "+{{count}} weitere → Alle anzeigen"
+    "title": "Aktion erforderlich",
+    "showMore": "+{{count}} mehr → Alle anzeigen"
   },
   "allClear": {
-    "title": "Alles im grünen Bereich",
-    "description": "Keine offenen Aufgaben oder Handlungsbedarfe für deine Rolle."
+    "title": "Alles klar",
+    "description": "Keine offenen Aufgaben oder Aktionselemente für Ihre Rolle."
   },
   "passkey": {
-    "title": "Kein Passkey hinterlegt",
-    "description": "Erhöhe die Sicherheit deines Kontos mit einem Passkey. Klicke auf dein Profilbild und wähle „Passkey hinzufügen“."
+    "title": "Kein Passwort konfiguriert",
+    "description": "Verbessern Sie Ihre Kontosicherheit mit einem Passwort. Klicken Sie auf Ihr Profilbild und wählen Sie \"Passwort hinzufügen\"."
   },
   "roles": {
-    "admin": "System-Administrator",
-    "assessor": "Auditor & Bewerter",
+    "admin": "Systemadministrator",
+    "assessor": "Auditor & Assessor",
     "it-staff": "IT-Mitarbeiter",
     "dpo": "Datenschutzbeauftragter",
-    "owner": "Asset-Verantwortlicher",
+    "owner": "Asset-Besitzer",
     "viewer": "Gast",
     "employee": "Mitarbeiter"
   },
   "toast": {
-    "contestSuccess": "Beanstandung erfolgreich eingereicht.",
-    "contestError": "Fehler beim Einreichen der Beanstandung.",
+    "contestSuccess": "Wettbewerb erfolgreich eingereicht.",
+    "contestError": "Fehler beim Senden des Wettbewerbs.",
     "taskError": "Fehler beim Aktualisieren der Aufgabe"
   }
 }

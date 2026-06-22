@@ -1,0 +1,109 @@
+{
+  "title": "TISAX Assessments",
+  "subtitle": "Trusted Information Security Assessment Exchange · {{count}} Einträge",
+  "status": {
+    "preparation": "Vorbereitung",
+    "requested": "Angefragt",
+    "scheduled": "Terminiert",
+    "audit_done": "Audit abgeschlossen",
+    "label_received": "Label erhalten"
+  },
+  "reqStatus": {
+    "open": "Offen",
+    "in_progress": "In Umsetzung",
+    "implemented": "Umgesetzt",
+    "not_applicable": "Nicht anwendbar"
+  },
+  "button": {
+    "newAssessment": "Assessment erfassen"
+  },
+  "tabs": {
+    "assessments": "Assessments",
+    "requirements": "VDA-ISA-Anforderungen"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "active": "Aktiv",
+    "labelReceived": "Label erhalten",
+    "overdue": "Überfällig"
+  },
+  "filter": {
+    "searchPlaceholder": "Scope oder Prüfgesellschaft suchen...",
+    "allStatuses": "Alle Status"
+  },
+  "table": {
+    "scope": "Scope",
+    "level": "Level",
+    "label": "Label",
+    "status": "Status",
+    "assessmentDate": "Assessment-Datum",
+    "validUntil": "Gültig bis"
+  },
+  "empty": {
+    "title": "Keine TISAX-Assessments gefunden"
+  },
+  "confirm": {
+    "delete": "„{{name}}“ wirklich löschen?",
+    "deleteRequirement": "Anforderung {{ref}} „{{title}}“ wirklich löschen?"
+  },
+  "toast": {
+    "catalogLoadError": "Fehler beim Laden des Katalogs",
+    "saveError": "Fehler beim Speichern",
+    "error": "Fehler"
+  },
+  "requirementsTab": {
+    "stats": {
+      "requirements": "Anforderungen",
+      "assessed": "Bewertet",
+      "targetReached": "Ziel erreicht",
+      "avgMaturity": "Ø Reifegrad"
+    },
+    "empty": {
+      "title": "Noch keine VDA-ISA-Anforderungen vorhanden",
+      "subtitle": "Lade den integrierten VDA-ISA-Katalog, um mit der Reifegrad-Selbstbewertung zu starten.",
+      "loadCatalog": "VDA-ISA-Katalog laden",
+      "loadingCatalog": "Lade Katalog..."
+    },
+    "chapter": {
+      "targetReached": "{{reached}}/{{total}} Ziel erreicht"
+    },
+    "maturity": {
+      "remove": "Bewertung entfernen",
+      "level": "Reifegrad {{level}}",
+      "target": "Ziel: {{target}}"
+    },
+    "editModal": {
+      "statusLabel": "Status",
+      "targetLevel": "Ziel-Reifegrad",
+      "notes": "Notizen",
+      "cancel": "Abbrechen",
+      "saving": "Speichern...",
+      "save": "Speichern"
+    }
+  },
+  "modal": {
+    "editTitle": "TISAX Assessment bearbeiten",
+    "newTitle": "TISAX Assessment erfassen",
+    "scopeDescriptionLabel": "Scope-Beschreibung *",
+    "scopeDescriptionPlaceholder": "Beschreibung des TISAX-Scopes und der zu bewertenden Standorte / Bereiche",
+    "assessmentLevelLabel": "Assessment Level",
+    "assessmentLevelOptions": {
+      "AL2": "AL2 – Hoher Schutzbedarf",
+      "AL3": "AL3 – Sehr hoher Schutzbedarf"
+    },
+    "statusLabel": "Status",
+    "labelRequestedLabel": "Angefordertes Label",
+    "labelRequestedPlaceholder": "z. B. TISAX Label – Information High",
+    "auditorCompanyLabel": "Prüfgesellschaft",
+    "auditorCompanyPlaceholder": "Name des zugelassenen Prüfdienstleisters",
+    "assessmentDateLabel": "Assessment-Datum",
+    "labelValidUntilLabel": "Label gültig bis",
+    "ownerLabel": "Verantwortliche Person",
+    "noOwner": "– niemand –",
+    "notesLabel": "Notizen",
+    "cancel": "Abbrechen",
+    "saving": "Speichern...",
+    "update": "Aktualisieren",
+    "create": "Anlegen"
+  }
+}

@@ -1,88 +1,88 @@
 {
-  "title": "Betroffenenrechte",
-  "subtitle": "Anträge nach Art. 15–22 DSGVO · 30-Tage-Frist",
-  "newButton": "Neuer Antrag",
+  "title": "Betreff Rechte",
+  "subtitle": "Anfragen nach Art. 15–22 DPR · 30-Tage-Frist",
+  "newButton": "Neue Anfrage",
   "type": {
-    "access": "Auskunft (Art. 15)",
+    "access": "Zugang (Art. 15)",
     "rectification": "Berichtigung (Art. 16)",
-    "erasure": "Löschung (Art. 17)",
+    "erasure": "Löschen (Art. 17)",
     "restriction": "Einschränkung (Art. 18)",
-    "portability": "Datenübertragbarkeit (Art. 20)",
-    "objection": "Widerspruch (Art. 21)",
-    "withdraw_consent": "Einwilligung widerrufen (Art. 7)"
+    "portability": "Portabilität (Art. 20)",
+    "objection": "Einwand (Art. 21)",
+    "withdraw_consent": "Einwilligung zurückziehen (Art. 7)"
   },
   "typeShort": {
-    "access": "Auskunft",
-    "rectification": "Berichtigung",
-    "erasure": "Löschung",
+    "access": "Zugang",
+    "rectification": "Korrektur",
+    "erasure": "Löschen",
     "restriction": "Einschränkung",
     "portability": "Portabilität",
-    "objection": "Widerspruch",
-    "withdraw_consent": "Widerruf"
+    "objection": "Einwand",
+    "withdraw_consent": "Abhebung"
   },
   "status": {
-    "received": "Eingegangen",
+    "received": "Erhalten",
     "in_progress": "In Bearbeitung",
     "completed": "Abgeschlossen",
     "rejected": "Abgelehnt",
-    "extended": "Verlängert"
+    "extended": "Erweitert"
   },
   "stats": {
-    "received": "Eingegangen",
+    "received": "Erhalten",
     "inProgress": "In Bearbeitung",
     "overdue": "Überfällig",
     "completedMonth": "Abgeschlossen (Monat)"
   },
   "deadline": {
-    "overdue": "überfällig",
-    "extended": "(verlängert)",
-    "label": "Frist:"
+    "overdue": "verspätet",
+    "extended": "(erweitert)",
+    "label": "Deadline:"
   },
   "filter": {
-    "searchPlaceholder": "Suchen nach Name, Ref, E-Mail…",
-    "allTypes": "Alle Arten",
+    "searchPlaceholder": "Suche nach Namen, Referenz, E-Mail…",
+    "allTypes": "Alle Typen",
     "allStatus": "Alle Status",
-    "reset": "Zurücksetzen"
+    "reset": "Reset"
   },
   "table": {
-    "ref": "Ref",
-    "requester": "Antragsteller",
-    "type": "Art",
+    "ref": "Referenz",
+    "requester": "Anfrage",
+    "type": "Typ",
     "status": "Status",
-    "deadline": "Frist",
+    "deadline": "Deadline",
     "handler": "Bearbeiter"
   },
   "empty": {
-    "filterTitle": "Keine Anträge für die gewählten Filter.",
+    "filterTitle": "Keine Anfragen stimmen mit den ausgewählten Filtern überein.",
     "filterReset": "Filter zurücksetzen",
-    "title": "Noch keine Betroffenenanträge",
-    "description": "Anträge auf Auskunft, Löschung und weitere Rechte nach Art. 15–22 DSGVO erfassen.",
-    "createButton": "Ersten Antrag anlegen"
+    "title": "Noch keine Betreffanfragen",
+    "description": "Aufzeichnungsanfragen nach Zugriff, Löschung und anderen Rechten gemäß §15–22 GDPR.",
+    "createButton": "Erstelle erste Anfrage"
   },
   "modal": {
-    "editTitle": "Antrag bearbeiten",
-    "newTitle": "Neuer Betroffenenantrag",
-    "typeLabel": "Art des Antrags *",
+    "editTitle": "Anfrage bearbeiten",
+    "newTitle": "Neue Betreffanfrage",
+    "typeLabel": "Anfragetyp *",
     "statusLabel": "Status",
     "requesterName": "Name des Antragstellers *",
     "requesterEmail": "E-Mail des Antragstellers",
-    "idVerified": "Identität des Antragstellers verifiziert",
-    "receivedDate": "Eingang *",
+    "idVerified": "Identität des Antragstellers überprüft",
+    "receivedDate": "Erhalten *",
     "dueDate": "Frist (Standard: +30 Tage)",
     "extendedUntil": "Verlängert bis (max. 90 Tage)",
-    "extensionReason": "Begründung der Verlängerung",
-    "description": "Beschreibung / Antragsinhalt",
+    "extensionReason": "Grund der Erweiterung",
+    "description": "Beschreibung / Inhalt anfordern",
     "handler": "Bearbeiter",
-    "unassigned": "Nicht zugewiesen",
+    "unassigned": "Nicht zugeordnet",
     "decision": "Entscheidung / Antwort",
     "notes": "Interne Notizen",
     "cancel": "Abbrechen",
     "save": "Speichern",
-    "create": "Antrag anlegen"
+    "create": "Anfrage erstellen"
   },
   "alert": {
     "saveError": "Fehler beim Speichern",
-    "deleteConfirm": "Antrag wirklich löschen?",
+    "deleteConfirm": "Diese Anfrage wirklich löschen?",
     "deleteError": "Fehler beim Löschen"
   }
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LifeBuoy, Plus, Trash2, Pencil, CalendarCheck, ClipboardCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../lib/api';
@@ -14,6 +15,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+
 
 type BcmCriticality = 'critical' | 'important' | 'normal';
 type BcmStatus = 'documented' | 'tested' | 'approved';
@@ -35,11 +37,7 @@ interface BcmItem {
   owner?: { id: number; name: string };
 }
 
-const criticalityLabels: Record<BcmCriticality, string> = {
-  critical: 'Kritisch',
-  important: 'Wichtig',
-  normal: 'Normal',
-};
+
 
 const criticalityColors: Record<BcmCriticality, string> = {
   critical: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
@@ -47,11 +45,7 @@ const criticalityColors: Record<BcmCriticality, string> = {
   normal: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
 };
 
-const statusLabels: Record<BcmStatus, string> = {
-  documented: 'Dokumentiert',
-  tested: 'Getestet',
-  approved: 'Genehmigt',
-};
+
 
 const statusColors: Record<BcmStatus, string> = {
   documented: 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400',
@@ -76,19 +70,9 @@ interface BcmExercise {
   notes?: string;
 }
 
-const exerciseTypeLabels: Record<BcmExerciseType, string> = {
-  tabletop: 'Tabletop-Übung',
-  simulation: 'Simulation',
-  technical_recovery: 'Technischer Wiederanlauf',
-  full_failover: 'Voll-Failover',
-};
 
-const exerciseResultLabels: Record<BcmExerciseResult, string> = {
-  pending: 'Ausstehend',
-  passed: 'Bestanden',
-  passed_with_findings: 'Bestanden mit Findings',
-  failed: 'Nicht bestanden',
-};
+
+
 
 const exerciseResultColors: Record<BcmExerciseResult, string> = {
   pending: 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400',
@@ -125,9 +109,36 @@ const emptyForm = {
 };
 
 export const Bcm: React.FC = () => {
+  const { t } = useTranslation('bcm');
   const { user } = useAuth();
   const toast = useToast();
   const canWrite = hasWriteAccess(user?.role);
+
+  const criticalityLabels = useMemo<Record<BcmCriticality, string>>(() => ({
+    critical: t('criticality.critical'),
+    important: t('criticality.important'),
+    normal: t('criticality.normal'),
+  }), [t]);
+
+  const statusLabels = useMemo<Record<BcmStatus, string>>(() => ({
+    documented: t('status.documented'),
+    tested: t('status.tested'),
+    approved: t('status.approved'),
+  }), [t]);
+
+  const exerciseTypeLabels = useMemo<Record<BcmExerciseType, string>>(() => ({
+    tabletop: t('exerciseType.tabletop'),
+    simulation: t('exerciseType.simulation'),
+    technical_recovery: t('exerciseType.technical_recovery'),
+    full_failover: t('exerciseType.full_failover'),
+  }), [t]);
+
+  const exerciseResultLabels = useMemo<Record<BcmExerciseResult, string>>(() => ({
+    pending: t('exerciseResult.pending'),
+    passed: t('exerciseResult.passed'),
+    passed_with_findings: t('exerciseResult.passed_with_findings'),
+    failed: t('exerciseResult.failed'),
+  }), [t]);
   const canDelete = user?.role === 'admin' || user?.role === 'assessor';
 
   const [tab, setTab] = useState<'processes' | 'exercises'>('processes');
@@ -213,19 +224,19 @@ export const Bcm: React.FC = () => {
       setModalOpen(false);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('errors.saveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (i: BcmItem) => {
-    if (!confirm(`„${i.name}" wirklich löschen?`)) return;
+    if (!confirm(t('confirm.deleteProcess', { name: i.name }))) return;
     try {
       await api.delete(`/bcm/${i.id}`);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('errors.generic'));
     }
   };
 
@@ -269,19 +280,19 @@ export const Bcm: React.FC = () => {
       setExerciseModalOpen(false);
       loadExercises();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('errors.saveError'));
     } finally {
       setExerciseSaving(false);
     }
   };
 
   const removeExercise = async (ex: BcmExercise) => {
-    if (!confirm(`„${ex.title}" wirklich löschen?`)) return;
+    if (!confirm(t('confirm.deleteExercise', { title: ex.title }))) return;
     try {
       await api.delete(`/bcm/exercises/${ex.id}`);
       loadExercises();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('errors.generic'));
     }
   };
 
@@ -297,23 +308,23 @@ export const Bcm: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
             <LifeBuoy size={24} className="text-blue-600" />
-            {tab === 'processes' ? 'BCM – Prozessregister' : 'BCM – Übungsprotokoll'}
+            {tab === 'processes' ? t('title.processes') : t('title.exercises')}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">
             {tab === 'processes'
-              ? `Business Continuity Management – kritische Geschäftsprozesse und Wiederanlaufstrategien · ${items.length} Einträge`
-              : `Notfall- und Wiederanlaufübungen · ${exercises.length} Einträge`}
+              ? t('subtitle.processes', { count: items.length })
+              : t('subtitle.exercises', { count: exercises.length })}
           </p>
         </div>
-        {canWrite && tab === 'processes' && <Button onClick={openNew}><Plus size={16} />Prozess erfassen</Button>}
-        {canWrite && tab === 'exercises' && <Button onClick={openNewExercise}><Plus size={16} />Übung erfassen</Button>}
+        {canWrite && tab === 'processes' && <Button onClick={openNew}><Plus size={16} />{t('button.addProcess')}</Button>}
+        {canWrite && tab === 'exercises' && <Button onClick={openNewExercise}><Plus size={16} />{t('button.addExercise')}</Button>}
       </div>
 
       <div className="border-b border-gray-200 dark:border-slate-800">
         <nav className="flex gap-1 -mb-px overflow-x-auto no-scrollbar scroll-smooth">
           {([
-            { key: 'processes' as const, label: 'Prozesse (BIA)', icon: LifeBuoy },
-            { key: 'exercises' as const, label: 'Übungsprotokoll', icon: ClipboardCheck },
+            { key: 'processes' as const, label: t('tab.processes'), icon: LifeBuoy },
+            { key: 'exercises' as const, label: t('tab.exercises'), icon: ClipboardCheck },
           ]).map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
@@ -328,10 +339,10 @@ export const Bcm: React.FC = () => {
       {tab === 'processes' && (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Gesamt', value: stats.total, color: 'bg-blue-500' },
-          { label: 'Kritische Prozesse', value: stats.critical, color: 'bg-red-500' },
-          { label: 'Test überfällig', value: stats.testOverdue, color: 'bg-orange-500' },
-          { label: 'Genehmigt', value: stats.approved, color: 'bg-green-600' },
+          { label: t('stats.total'), value: stats.total, color: 'bg-blue-500' },
+          { label: t('stats.critical'), value: stats.critical, color: 'bg-red-500' },
+          { label: t('stats.testOverdue'), value: stats.testOverdue, color: 'bg-orange-500' },
+          { label: t('stats.approved'), value: stats.approved, color: 'bg-green-600' },
         ].map(s => (
           <Card key={s.label}>
             <CardBody className="flex items-center gap-3 py-4">
@@ -350,7 +361,7 @@ export const Bcm: React.FC = () => {
       <FilterBar
         search={search}
         onSearch={setSearch}
-        searchPlaceholder="Prozess oder Wiederanlaufstrategie suchen..."
+        searchPlaceholder={t('filter.searchPlaceholder')}
         activeCount={[critFilter, statusFilter].filter(Boolean).length}
         onReset={() => { setSearch(''); setCritFilter(''); setStatusFilter(''); }}
       >
@@ -358,13 +369,13 @@ export const Bcm: React.FC = () => {
           className="w-44"
           value={critFilter}
           onChange={e => setCritFilter(e.target.value)}
-          options={[{ value: '', label: 'Alle Kritikalitäten' }, ...Object.entries(criticalityLabels).map(([v, l]) => ({ value: v, label: l }))]}
+          options={[{ value: '', label: t('filter.allCriticalities') }, ...Object.entries(criticalityLabels).map(([v, l]) => ({ value: v, label: l }))]}
         />
         <Select
           className="w-40"
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
-          options={[{ value: '', label: 'Alle Status' }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]}
+          options={[{ value: '', label: t('filter.allStatus') }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]}
         />
       </FilterBar>
 
@@ -373,12 +384,12 @@ export const Bcm: React.FC = () => {
           <Table>
             <Thead>
               <tr>
-                <Th>Prozess</Th>
-                <Th>Kritikalität</Th>
-                <Th>RTO / RPO</Th>
-                <Th>Status</Th>
-                <Th>Verantwortlich</Th>
-                <Th>Nächster Test</Th>
+                <Th>{t('table.process')}</Th>
+                <Th>{t('table.criticality')}</Th>
+                <Th>{t('table.rto_rpo')}</Th>
+                <Th>{t('table.status')}</Th>
+                <Th>{t('table.owner')}</Th>
+                <Th>{t('table.nextTest')}</Th>
                 <Th>{''}</Th>
               </tr>
             </Thead>
@@ -401,9 +412,9 @@ export const Bcm: React.FC = () => {
                   <Td>
                     {(i.rto_hours != null || i.rpo_hours != null) ? (
                       <span className="text-xs text-gray-500 font-mono">
-                        {i.rto_hours != null ? `RTO ${i.rto_hours}h` : ''}
+                        {i.rto_hours != null ? t('rtoFormat', { count: i.rto_hours }) : ''}
                         {i.rto_hours != null && i.rpo_hours != null ? ' / ' : ''}
-                        {i.rpo_hours != null ? `RPO ${i.rpo_hours}h` : ''}
+                        {i.rpo_hours != null ? t('rpoFormat', { count: i.rpo_hours }) : ''}
                       </span>
                     ) : <span className="text-gray-300">–</span>}
                   </Td>
@@ -451,13 +462,13 @@ export const Bcm: React.FC = () => {
                   <td colSpan={7}>
                     <div className="py-16 text-center">
                       <LifeBuoy size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-                      <p className="text-gray-500 dark:text-slate-400 font-medium">Keine BCM-Prozesse gefunden</p>
+                      <p className="text-gray-500 dark:text-slate-400 font-medium">{t('noProcesses')}</p>
                       {canWrite && (
                         <button
                           onClick={openNew}
                           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
-                          <Plus size={15} /> Prozess erfassen
+                          <Plus size={15} /> {t('button.addProcess')}
                         </button>
                       )}
                     </div>
@@ -473,10 +484,10 @@ export const Bcm: React.FC = () => {
       {tab === 'exercises' && (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Übungen gesamt', value: exerciseStats.total, color: 'bg-blue-500' },
-          { label: 'Bestanden', value: exerciseStats.passed, color: 'bg-green-600' },
-          { label: 'Mit Findings', value: exerciseStats.withFindings, color: 'bg-amber-500' },
-          { label: 'Nicht bestanden', value: exerciseStats.failed, color: 'bg-red-500' },
+          { label: t('stats.exercisesTotal'), value: exerciseStats.total, color: 'bg-blue-500' },
+          { label: t('stats.passed'), value: exerciseStats.passed, color: 'bg-green-600' },
+          { label: t('stats.withFindings'), value: exerciseStats.withFindings, color: 'bg-amber-500' },
+          { label: t('stats.failed'), value: exerciseStats.failed, color: 'bg-red-500' },
         ].map(s => (
           <Card key={s.label}>
             <CardBody className="flex items-center gap-3 py-4">
@@ -497,11 +508,11 @@ export const Bcm: React.FC = () => {
           <Table>
             <Thead>
               <tr>
-                <Th>Titel</Th>
-                <Th>Übungsart</Th>
-                <Th>Prozess</Th>
-                <Th>Datum</Th>
-                <Th>Ergebnis</Th>
+                <Th>{t('table.title')}</Th>
+                <Th>{t('table.exerciseType')}</Th>
+                <Th>{t('table.process')}</Th>
+                <Th>{t('table.date')}</Th>
+                <Th>{t('table.result')}</Th>
                 <Th>{''}</Th>
               </tr>
             </Thead>
@@ -555,13 +566,13 @@ export const Bcm: React.FC = () => {
                   <td colSpan={6}>
                     <div className="py-16 text-center">
                       <ClipboardCheck size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-                      <p className="text-gray-500 dark:text-slate-400 font-medium">Keine Übungen gefunden</p>
+                      <p className="text-gray-500 dark:text-slate-400 font-medium">{t('noExercises')}</p>
                       {canWrite && (
                         <button
                           onClick={openNewExercise}
                           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
-                          <Plus size={15} /> Übung erfassen
+                          <Plus size={15} /> {t('button.addExercise')}
                         </button>
                       )}
                     </div>
@@ -577,44 +588,44 @@ export const Bcm: React.FC = () => {
       <Modal
         open={exerciseModalOpen}
         onClose={() => setExerciseModalOpen(false)}
-        title={exerciseEditId ? 'Übung bearbeiten' : 'Übung erfassen'}
+        title={exerciseEditId ? t('modal.editExercise') : t('modal.addExercise')}
         size="lg"
       >
         <form onSubmit={saveExercise} className="space-y-4">
           <Input
-            label="Titel *"
+            label={t('form.titleRequired')}
             value={exerciseForm.title}
             onChange={e => setExerciseForm({ ...exerciseForm, title: e.target.value })}
             required
-            placeholder="z. B. Notfallübung Rechenzentrumsausfall"
+            placeholder={t('form.titlePlaceholder')}
             disabled={!canWrite}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              label="Übungsart"
+              label={t('form.exerciseType')}
               value={exerciseForm.exercise_type}
               onChange={e => setExerciseForm({ ...exerciseForm, exercise_type: e.target.value as BcmExerciseType })}
               options={Object.entries(exerciseTypeLabels).map(([v, l]) => ({ value: v, label: l }))}
               disabled={!canWrite}
             />
             <Select
-              label="Prozess"
+              label={t('form.process')}
               value={exerciseForm.process_id}
               onChange={e => setExerciseForm({ ...exerciseForm, process_id: e.target.value })}
-              options={[{ value: '', label: '— Kein Prozess —' }, ...items.map(p => ({ value: String(p.id), label: p.name }))]}
+              options={[{ value: '', label: t('form.noProcess') }, ...items.map(p => ({ value: String(p.id), label: p.name }))]}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Übungsdatum"
+              label={t('form.exerciseDate')}
               type="date"
               value={exerciseForm.exercise_date}
               onChange={e => setExerciseForm({ ...exerciseForm, exercise_date: e.target.value })}
               disabled={!canWrite}
             />
             <Select
-              label="Ergebnis"
+              label={t('form.result')}
               value={exerciseForm.result}
               onChange={e => setExerciseForm({ ...exerciseForm, result: e.target.value as BcmExerciseResult })}
               options={Object.entries(exerciseResultLabels).map(([v, l]) => ({ value: v, label: l }))}
@@ -622,36 +633,36 @@ export const Bcm: React.FC = () => {
             />
           </div>
           <Input
-            label="Teilnehmer"
+            label={t('form.participants')}
             value={exerciseForm.participants}
             onChange={e => setExerciseForm({ ...exerciseForm, participants: e.target.value })}
-            placeholder="z. B. IT-Team, Notfallstab, Fachbereiche"
+            placeholder={t('form.participantsPlaceholder')}
             disabled={!canWrite}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Findings</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.findings')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={exerciseForm.findings}
               onChange={e => setExerciseForm({ ...exerciseForm, findings: e.target.value })}
-              placeholder="Festgestellte Schwachstellen und Auffälligkeiten"
+              placeholder={t('form.findingsPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Maßnahmen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.actions')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={exerciseForm.actions}
               onChange={e => setExerciseForm({ ...exerciseForm, actions: e.target.value })}
-              placeholder="Abgeleitete Verbesserungsmaßnahmen"
+              placeholder={t('form.actionsPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.notes')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
@@ -662,11 +673,11 @@ export const Bcm: React.FC = () => {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setExerciseModalOpen(false)} className="flex-1 justify-center">
-              Abbrechen
+              {t('button.cancel')}
             </Button>
             {canWrite && (
               <Button type="submit" disabled={exerciseSaving} className="flex-1 justify-center">
-                {exerciseSaving ? 'Speichern...' : (exerciseEditId ? 'Aktualisieren' : 'Anlegen')}
+                {exerciseSaving ? t('button.saving') : (exerciseEditId ? t('button.update') : t('button.create'))}
               </Button>
             )}
           </div>
@@ -676,39 +687,39 @@ export const Bcm: React.FC = () => {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editId ? 'BCM-Prozess bearbeiten' : 'BCM-Prozess erfassen'}
+        title={editId ? t('modal.editProcess') : t('modal.addProcess')}
         size="lg"
       >
         <form onSubmit={save} className="space-y-4">
           <Input
-            label="Prozessname *"
+            label={t('form.processNameRequired')}
             value={form.name}
             onChange={e => setForm({ ...form, name: e.target.value })}
             required
-            placeholder="z. B. Auftragsabwicklung, IT-Notfallbetrieb"
+            placeholder={t('form.processNamePlaceholder')}
             disabled={!canWrite}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Beschreibung</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.description')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              placeholder="Kurzbeschreibung des Geschäftsprozesses"
+              placeholder={t('form.descriptionPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              label="Kritikalität"
+              label={t('form.criticality')}
               value={form.criticality}
               onChange={e => setForm({ ...form, criticality: e.target.value as BcmCriticality })}
               options={Object.entries(criticalityLabels).map(([v, l]) => ({ value: v, label: l }))}
               disabled={!canWrite}
             />
             <Select
-              label="Status"
+              label={t('form.status')}
               value={form.status}
               onChange={e => setForm({ ...form, status: e.target.value as BcmStatus })}
               options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))}
@@ -717,63 +728,63 @@ export const Bcm: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="RTO (Stunden)"
+              label={t('form.rto')}
               type="number"
               min={0}
               value={form.rto_hours}
               onChange={e => setForm({ ...form, rto_hours: e.target.value })}
-              placeholder="Recovery Time Objective in Stunden"
+              placeholder={t('form.rtoPlaceholder')}
               disabled={!canWrite}
             />
             <Input
-              label="RPO (Stunden)"
+              label={t('form.rpo')}
               type="number"
               min={0}
               value={form.rpo_hours}
               onChange={e => setForm({ ...form, rpo_hours: e.target.value })}
-              placeholder="Recovery Point Objective in Stunden"
+              placeholder={t('form.rpoPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <SearchableSelect
-            label="Verantwortliche Person"
+            label={t('form.owner')}
             value={form.owner_id}
             onChange={val => setForm({ ...form, owner_id: val })}
-            options={[{ value: '', label: '– niemand –' }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]}
+            options={[{ value: '', label: t('form.noOwner') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]}
             disabled={!canWrite}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Abhängigkeiten</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.dependencies')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={form.dependencies}
               onChange={e => setForm({ ...form, dependencies: e.target.value })}
-              placeholder="Systeme, Ressourcen und Prozesse, von denen dieser Prozess abhängt"
+              placeholder={t('form.dependenciesPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Wiederanlaufstrategie</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.recoveryStrategy')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
               value={form.recovery_strategy}
               onChange={e => setForm({ ...form, recovery_strategy: e.target.value })}
-              placeholder="Beschreibung der Notfall- und Wiederanlaufmaßnahmen"
+              placeholder={t('form.recoveryStrategyPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Letzter Test"
+              label={t('form.lastTest')}
               type="date"
               value={form.last_test_date}
               onChange={e => setForm({ ...form, last_test_date: e.target.value })}
               disabled={!canWrite}
             />
             <Input
-              label="Nächster Test"
+              label={t('form.nextTest')}
               type="date"
               value={form.next_test_date}
               onChange={e => setForm({ ...form, next_test_date: e.target.value })}
@@ -781,7 +792,7 @@ export const Bcm: React.FC = () => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Notizen</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('form.notes')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               rows={2}
@@ -792,11 +803,11 @@ export const Bcm: React.FC = () => {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">
-              Abbrechen
+              {t('button.cancel')}
             </Button>
             {canWrite && (
               <Button type="submit" disabled={saving} className="flex-1 justify-center">
-                {saving ? 'Speichern...' : (editId ? 'Aktualisieren' : 'Anlegen')}
+                {saving ? t('button.saving') : (editId ? t('button.update') : t('button.create'))}
               </Button>
             )}
           </div>
