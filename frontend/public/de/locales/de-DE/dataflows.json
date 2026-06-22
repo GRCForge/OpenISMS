@@ -1,74 +1,74 @@
 {
-  "title": "Data Flow Diagram",
-  "subtitle": "{{count}} data flows documented",
-  "listView": "List",
-  "diagramView": "Diagram",
-  "new": "Data Flow",
-  "searchPlaceholder": "Search data flow...",
+  "title": "Datenflussdiagramm",
+  "subtitle": "{{count}} Datenströme dokumentiert",
+  "listView": "Liste",
+  "diagramView": "Diagramm",
+  "new": "Datenfluss",
+  "searchPlaceholder": "Datenfluss suchen...",
   "filters": {
-    "allStatus": "All Status"
+    "allStatus": "Alle Status"
   },
   "status": {
-    "active": "Active",
-    "inactive": "Inactive",
-    "planned": "Planned"
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "planned": "Geplant"
   },
   "mechanisms": {
     "api": "REST / API",
-    "file": "File Transfer",
-    "database": "Database Connection",
-    "manual": "Manual",
-    "email": "Email",
+    "file": "Dateiübertragung",
+    "database": "Datenbankverbindung",
+    "manual": "Manuell",
+    "email": "E-Mail",
     "sftp": "SFTP",
-    "message_queue": "Message Queue",
-    "other": "Other"
+    "message_queue": "Nachrichtenwarteschlange",
+    "other": "Andere"
   },
   "diagram": {
-    "personalData": "Personal Data",
-    "encrypted": "Encrypted",
+    "personalData": "Persönliche Daten",
+    "encrypted": "Verschlüsselt",
     "standard": "Standard",
-    "encryptedIcon": "🔒 = Encrypted",
-    "noFlows": "No active data flows for diagram"
+    "encryptedIcon": "🔒 = Verschlüsselt",
+    "noFlows": "Keine aktiven Datenströme für Diagramm"
   },
   "empty": {
-    "title": "No data flows documented",
-    "description": "Document data flows between systems and services.",
-    "firstFlow": "Create First Data Flow"
+    "title": "Keine Datenströme dokumentiert",
+    "description": "Dokumentendaten fließen zwischen Systemen und Diensten.",
+    "firstFlow": "Ersten Datenfluss erstellen"
   },
   "card": {
-    "encrypted": "Encrypted",
-    "unencrypted": "Unencrypted",
-    "personalData": "Personal Data",
-    "frequency": "Frequency: {{freq}}"
+    "encrypted": "Verschlüsselt",
+    "unencrypted": "Unverschlüsselt",
+    "personalData": "Persönliche Daten",
+    "frequency": "Frequenz: {{freq}}"
   },
   "modal": {
-    "editTitle": "Edit Data Flow",
-    "newTitle": "New Data Flow"
+    "editTitle": "Datenfluss bearbeiten",
+    "newTitle": "Neuer Datenfluss"
   },
   "form": {
     "name": "Name *",
-    "namePlaceholder": "e.g. CRM → ERP Customer Data Sync",
-    "source": "Source System",
-    "target": "Target System",
-    "externalSystem": "External System / manual",
-    "mechanism": "Transfer Mechanism",
+    "namePlaceholder": "z.B. CRM → ERP Kundendatensynchronisation",
+    "source": "Quellsystem",
+    "target": "Zielsystem",
+    "externalSystem": "Externes System / Handbuch",
+    "mechanism": "Übertragungsmechanismus",
     "status": "Status",
-    "dataCategoriesLabel": "Data Categories (comma-separated)",
-    "dataCategoriesPlaceholder": "Customer data, Orders, Email addresses, ...",
-    "frequency": "Transfer Frequency",
-    "frequencyPlaceholder": "e.g. Daily 02:00, Real-time, Weekly",
-    "encryptionCheck": "Transfer encrypted (TLS/SFTP/etc.)",
-    "personalDataCheck": "Contains personal data (GDPR-relevant)",
-    "notes": "Notes",
-    "cancel": "Cancel",
-    "save": "Save",
-    "saving": "Saving..."
+    "dataCategoriesLabel": "Datenkategorien (durch Komma getrennt)",
+    "dataCategoriesPlaceholder": "Kundendaten, Bestellungen, E-Mail-Adressen, ...",
+    "frequency": "Übertragungshäufigkeit",
+    "frequencyPlaceholder": "z.B. Täglich 02:00, Echtzeit, wöchentlich",
+    "encryptionCheck": "Übertragung verschlüsselt (TLS/SFTP/etc.)",
+    "personalDataCheck": "Enthält persönliche Daten (GDPR-relevant)",
+    "notes": "Notizen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saving": "Speichern..."
   },
   "confirm": {
-    "delete": "Delete this data flow?"
+    "delete": "Diesen Datenfluss löschen?"
   },
   "toast": {
-    "saveError": "Error saving",
-    "deleteError": "Delete failed"
+    "saveError": "Fehler beim Speichern",
+    "deleteError": "Löschen fehlgeschlagen"
   }
 }
