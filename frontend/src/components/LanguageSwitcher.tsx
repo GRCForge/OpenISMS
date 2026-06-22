@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe } from 'lucide-react';
 
 const LANGUAGES = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -29,8 +28,8 @@ export const LanguageSwitcher: React.FC = () => {
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-xs font-medium w-full"
         title={current.label}
       >
-        <Globe size={13} className="shrink-0" />
-        <span>{current.flag} {current.code.toUpperCase()}</span>
+        <span className="text-base leading-none">{current.flag}</span>
+        <span>{current.code.toUpperCase()}</span>
       </button>
 
       {open && (

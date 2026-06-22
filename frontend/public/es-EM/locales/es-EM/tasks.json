@@ -1,0 +1,102 @@
+{
+  "title": "Tasks & Measures",
+  "subtitle_one": "{{count}} task total",
+  "subtitle_other": "{{count}} tasks total",
+  "new": "New Task",
+  "searchPlaceholder": "Search tasks...",
+  "selectTask": "Select",
+  "status": {
+    "open": "Open",
+    "in_progress": "In Progress",
+    "done": "Done",
+    "cancelled": "Cancelled"
+  },
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "types": {
+    "asset": "Asset",
+    "risk": "Risk",
+    "incident": "Incident",
+    "training": "Training",
+    "subject_request": "Data Subject Request",
+    "ai_system": "AI System",
+    "_manual": "Manual"
+  },
+  "filters": {
+    "allStatus": "All Status",
+    "allPriorities": "All Priorities",
+    "allTypes": "All Types",
+    "myTasks": "My Tasks",
+    "next4Weeks": "Next 4 Weeks",
+    "allFuture": "All (incl. future)",
+    "showAllHint": "By default only tasks within the next 4 weeks are shown"
+  },
+  "stats": {
+    "open": "Open",
+    "inProgress": "In Progress",
+    "done": "Done",
+    "overdue": "Overdue"
+  },
+  "overdue": "Due:",
+  "toAsset": "To Asset",
+  "form": {
+    "titleLabel": "Title *",
+    "description": "Description",
+    "descriptionPlaceholder": "Task details...",
+    "status": "Status",
+    "priority": "Priority",
+    "dueDate": "Due date",
+    "assignmentSection": "Assignment",
+    "assignGroup": "Assign to group",
+    "noGroup": "No group",
+    "assignPerson": "Assign to person",
+    "unassigned": "Unassigned",
+    "members": "members",
+    "groupNotice": "All group members will be notified. Whoever completes it first closes the task for all.",
+    "editTitle": "Edit Task",
+    "newTitle": "New Task",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "bulk": {
+    "selected_one": "{{count}} task selected",
+    "selected_other": "{{count}} tasks selected",
+    "markDone": "Mark as done",
+    "delete": "Delete",
+    "deselect": "Deselect"
+  },
+  "orphan": {
+    "check": "Clean up",
+    "checking": "Checking...",
+    "purge_one": "Delete {{count}} orphaned task",
+    "purge_other": "Delete {{count}} orphaned tasks",
+    "noneFound": "No orphaned tasks found.",
+    "confirmPurge_one": "Delete {{count}} orphaned task? This task points to an object that no longer exists.",
+    "confirmPurge_other": "Delete {{count}} orphaned tasks? These tasks point to objects that no longer exist.",
+    "purgedSuccess_one": "{{count}} orphaned task deleted.",
+    "purgedSuccess_other": "{{count}} orphaned tasks deleted.",
+    "checkError": "Error checking",
+    "purgeError": "Error deleting"
+  },
+  "empty": {
+    "title": "No tasks found",
+    "subtitle": "Create tasks for security measures and improvements.",
+    "createFirst": "Create first task"
+  },
+  "selectAll": "Select all {{count}}",
+  "deselectAll": "Deselect all",
+  "deleteConfirm": "Really delete task?",
+  "deleteSelected_one": "Really delete {{count}} task?",
+  "deleteSelected_other": "Really delete {{count}} tasks?",
+  "markDoneSuccess_one": "{{count}} task marked as done",
+  "markDoneSuccess_other": "{{count}} tasks marked as done",
+  "deleteSuccess_one": "{{count}} task deleted",
+  "deleteSuccess_other": "{{count}} tasks deleted",
+  "saveError": "Error saving",
+  "deleteFailed": "Delete failed",
+  "updateError": "Error updating"
+}

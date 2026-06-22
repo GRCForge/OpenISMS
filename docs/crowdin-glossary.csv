@@ -1,0 +1,74 @@
+term,description,part_of_speech,do_not_translate,case_sensitive
+Asset,A resource managed within the ISMS (hardware, software, data, process, service, personnel).,noun,false,false
+Asset Owner,The business-side person responsible for an asset.,noun,false,false
+Assessor,The technical responsible person who performs risk assessments for an asset.,noun,false,false
+Risk Assessment,Evaluation of threats, vulnerabilities and potential impacts for an asset.,noun,false,false
+Protection Assessment,Structured evaluation of an asset's confidentiality, integrity and availability needs (CIA).,noun,false,false
+Risk Score,Numeric score (1–5) calculated from the CIA assessment.,noun,false,false
+Risk Level,Categorised risk result: low, medium, high, critical.,noun,false,false
+Risk Treatment,Action taken after risk assessment: mitigate, accept, transfer or avoid.,noun,false,false
+Risk Acceptance,Formal decision to accept a residual risk, requires documented justification.,noun,false,false
+Residual Risk,The risk remaining after controls are applied.,noun,false,false
+Inherent Risk,The raw risk before any controls are applied.,noun,false,false
+Control,A measure or safeguard implemented to reduce risk.,noun,false,false
+Vulnerability,A weakness in a system that can be exploited by a threat.,noun,false,false
+CVE,"Common Vulnerabilities and Exposures — a public identifier for a specific security flaw. Do not translate the acronym.",noun,true,true
+CVSS,"Common Vulnerability Scoring System — a standard for rating vulnerability severity. Do not translate the acronym.",noun,true,true
+CPE,"Common Platform Enumeration — a standardised naming scheme for software, hardware and operating systems.",noun,true,true
+Incident,A security event that has actually occurred and negatively affects assets or operations.,noun,false,false
+Compliance,Adherence to applicable laws, regulations and internal policies.,noun,false,false
+Framework,A structured set of standards or best practices (e.g. ISO 27001).,noun,false,false
+Policy,A formal management document that defines requirements for a specific area.,noun,false,false
+Guideline,A non-mandatory recommendation document providing guidance.,noun,false,false
+Procedure,A step-by-step instruction document for performing a process.,noun,false,false
+Certificate,A formal attestation of compliance or qualification issued by an authority.,noun,false,false
+Vendor,An external organisation supplying products or services.,noun,false,false
+Service Provider,An external party providing ongoing services within the supply chain.,noun,false,false
+Supply Chain,The network of external suppliers and service providers relevant to NIS-2 compliance.,noun,false,false
+Topology,The logical structure showing relationships and dependencies between assets.,noun,false,false
+Lifecycle,The phases an asset passes through: evaluation, production, maintenance, archived.,noun,false,false
+Decommissioning,The process of permanently retiring an asset from active operation.,noun,false,false
+Patch Status,The current state of security updates applied to an asset (up-to-date, pending, critical).,noun,false,false
+End of Life (EOL),The date after which no security updates are provided for a product.,noun,false,false
+Hardening,"Applying security configuration guidelines (e.g. CIS benchmarks, BSI SiSyP) to reduce attack surface.",noun,false,false
+CIA Triad,"The three core dimensions of information security: Confidentiality, Integrity, Availability.",noun,false,false
+Confidentiality,Ensuring information is accessible only to authorised entities.,noun,false,false
+Integrity,Ensuring information is accurate and complete and has not been tampered with.,noun,false,false
+Availability,Ensuring authorised users have access to information when needed.,noun,false,false
+Recovery Time Objective (RTO),Target time to restore a system after failure. Do not translate the abbreviation.,noun,true,true
+Recovery Point Objective (RPO),Maximum tolerable data loss expressed as time. Do not translate the abbreviation.,noun,true,true
+Service Delivery Objective (SDO),Target service level to maintain during emergency operations. Do not translate the abbreviation.,noun,true,true
+Maximum Tolerable Outage (MTO),Maximum duration a system can be down before critical business impact occurs. Do not translate the abbreviation.,noun,true,true
+Business Continuity Management (BCM),Processes ensuring critical operations continue during and after a disruptive event.,noun,false,false
+Business Impact Analysis (BIA),Assessment of the effects that interruptions to operations would have.,noun,false,false
+Indicators of Attack (IoA),Observable signals that suggest an attack is underway or imminent. Do not translate the abbreviation.,noun,false,true
+Processing Activity,A specific use of personal data; recorded in the Record of Processing Activities (VVT).,noun,false,false
+Record of Processing Activities (VVT),GDPR-mandated register of all data processing activities. Use 'VVT' as the abbreviation in German context.,noun,false,true
+Data Protection Impact Assessment (DPIA),GDPR Art. 35 — formal assessment when processing is likely to result in high risk to individuals.,noun,false,false
+Data Controller,The entity that determines the purposes and means of personal data processing.,noun,false,false
+Data Processor,An entity that processes personal data on behalf of the controller.,noun,false,false
+Data Processing Agreement (DPA),Contract between controller and processor required under GDPR Art. 28.,noun,false,false
+Technical and Organisational Measures (TOMs),Security measures implemented to protect personal data. Use the abbreviation TOMs.,noun,false,false
+GDPR,"General Data Protection Regulation (EU). Use 'DSGVO' in German, 'GDPR' in English.",noun,false,true
+DSGVO,Datenschutz-Grundverordnung — German name for the GDPR. Use in German-language contexts only.,noun,false,true
+NIS-2,EU Directive 2022/2555 on the security of network and information systems. Keep the hyphen.,noun,true,true
+ISO 27001,International standard for information security management systems. Do not translate.,noun,true,true
+BSI,Bundesamt für Sicherheit in der Informationstechnik — German Federal Office for Information Security.,noun,true,true
+BSI IT-Grundschutz,BSI standard for baseline protection of IT systems. Do not translate.,noun,true,true
+BSI C5,BSI Cloud Computing Compliance Controls Catalogue. Do not translate.,noun,true,true
+TISAX,Trusted Information Security Assessment Exchange — automotive industry security standard.,noun,true,true
+DORA,"Digital Operational Resilience Act — EU regulation for financial entities. Keep as 'DORA', do not translate.",noun,true,true
+EU AI Act,EU Regulation on Artificial Intelligence. Do not translate.,noun,true,true
+Dashboard,The main overview screen of the application. Do not translate.,noun,true,false
+Module,A feature that can be enabled or disabled in the application settings.,noun,false,false
+Role,"A set of permissions assigned to a user (admin, editor, viewer, auditor, etc.).",noun,false,false
+Permission,A specific access right granted to a role.,noun,false,false
+Audit Log,A chronological record of user actions and system events.,noun,false,false
+Reminder,A scheduled notification to review or update a record.,noun,false,false
+Review,A periodic evaluation to check currency and accuracy of a record.,noun,false,false
+Management Report,A high-level summary report for management.,noun,false,false
+Subject Request,A request from a data subject to exercise their rights under GDPR.,noun,false,false
+Data Flow,A documented flow of personal or sensitive data between systems or parties.,noun,false,false
+Penetration Test,A simulated cyberattack to identify security weaknesses.,noun,false,false
+CISO,Chief Information Security Officer. Do not translate the acronym.,noun,true,true
+DPO,Data Protection Officer. Do not translate the acronym.,noun,true,true

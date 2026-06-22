@@ -1,0 +1,49 @@
+{
+  "title": "Erinnerungen & Bewertungen",
+  "searchPlaceholder": "Suche Asset...",
+  "overdueCount": "{{count}} überfällig",
+  "pendingCount": "{{count}} ausstehend",
+  "status": {
+    "pending": "Ausstehend",
+    "acknowledged": "Bestätigt",
+    "overdue": "Überfällig",
+    "completed": "Abgeschlossen"
+  },
+  "filters": {
+    "allStatus": "Alle Status",
+    "showDistantFuture": "Auch weit Zukunft"
+  },
+  "overdueAlertBold": "{{count}} asset(s)",
+  "overdueAlertRest": " haben überfällige Sicherheitsbewertungen. Bitte aktualisieren Sie sofort.",
+  "table": {
+    "asset": "Asset",
+    "classification": "Klassifizierung",
+    "dueDate": "Fälligkeitsdatum",
+    "status": "Status",
+    "actions": "Aktionen"
+  },
+  "overdueBadge": "Überfällig!",
+  "actions": {
+    "assess": "Bewertung",
+    "acknowledge": "Bestätigen"
+  },
+  "empty": {
+    "noResults": "Keine Erinnerungen gefunden"
+  },
+  "export": {
+    "id": "ID",
+    "asset": "Asset",
+    "assetType": "Asset-Typ",
+    "classification": "Klassifizierung",
+    "dueDate": "Fälligkeitsdatum",
+    "status": "Status",
+    "acknowledgedAt": "Bestätigt am",
+    "notes": "Notizen",
+    "filename": "Erinnerungen",
+    "sheetName": "Erinnerungen"
+  },
+  "toast": {
+    "acknowledgeError": "Fehler beim Bestätigen"
+  },
+  "unknown": "Unbekannt"
+}

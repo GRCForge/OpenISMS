@@ -1,0 +1,32 @@
+{
+  "title": "Vulnerabilities (CVE)",
+  "subtitle": "Aggregated security vulnerabilities across all recorded IT assets",
+  "stats": {
+    "critical": "Critical (≥ 9.0)",
+    "high": "High (7.0–8.9)",
+    "medium": "Medium (4.0–6.9)",
+    "low": "Low (0.1–3.9)",
+    "total": "Total"
+  },
+  "filters": {
+    "allSeverities": "All Severities",
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "allSources": "All Sources"
+  },
+  "searchPlaceholder": "Search CVE ID, description or asset...",
+  "table": {
+    "id": "CVE ID",
+    "score": "CVSS Score",
+    "affectedAssets": "Affected Assets",
+    "description": "Description",
+    "source": "Source",
+    "published": "Published",
+    "actions": "Actions"
+  },
+  "empty": "No vulnerabilities found for the given filter criteria.",
+  "noDescription": "No description available",
+  "sourceTitle": "Open source ({{source}})"
+}

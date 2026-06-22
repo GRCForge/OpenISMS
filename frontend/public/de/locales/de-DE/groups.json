@@ -1,0 +1,51 @@
+{
+  "title": "Gruppen & Teams",
+  "subtitle_one": "{{count}} Gruppe · Aufgaben zuweisen, @mention und zusammen abschließen",
+  "subtitle_other": "{{count}} Gruppen · Aufgaben zuweisen, @mention und zusammen abschließen",
+  "new": "Neue Gruppe",
+  "adminOnly": "Nur Administratoren können Gruppen verwalten.",
+  "manageMembers": "Mitglieder verwalten",
+  "noMembers": "Keine Mitglieder",
+  "memberCount_one": "{{count}} Mitglied",
+  "memberCount_other": "{{count}} Mitglieder",
+  "mentionHint": "Erwähnen Sie in Aufgaben & Kommentare als <code>@{{name}}</code>",
+  "empty": {
+    "title": "Noch keine Gruppen",
+    "subtitle": "Erstellen Sie Gruppen, um Teams Aufgaben zuzuweisen und @Erwähnungs-Gruppen in Kommentaren.",
+    "createFirst": "Erste Gruppe erstellen"
+  },
+  "modal": {
+    "editTitle": "Gruppe bearbeiten",
+    "newTitle": "Neue Gruppe"
+  },
+  "form": {
+    "name": "Name *",
+    "namePlaceholder": "z.B. IT-Team, ISMS Core Team",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Kurze Beschreibung der Gruppe...",
+    "color": "Farbe",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saving": "Speichern..."
+  },
+  "members": {
+    "modalTitle": "Mitglieder: {{name}}",
+    "empty": "Noch keine Mitglieder",
+    "remove": "Entfernen",
+    "addTitle": "Mitglied hinzufügen",
+    "selectUser": "Benutzer auswählen..."
+  },
+  "confirm": {
+    "delete": "Gruppe \"{{name}} \"wirklich löschen?"
+  },
+  "toast": {
+    "updated": "Gruppe aktualisiert",
+    "created": "Gruppe erstellt",
+    "saveError": "Fehler beim Speichern",
+    "deleted": "Gruppe gelöscht",
+    "deleteFailed": "Löschen fehlgeschlagen",
+    "memberAdded": "Mitglied hinzugefügt",
+    "memberRemoved": "Mitglied entfernt",
+    "error": "Fehler"
+  }
+}
