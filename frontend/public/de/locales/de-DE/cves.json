@@ -1,32 +1,32 @@
 {
-  "title": "Vulnerabilities (CVE)",
-  "subtitle": "Aggregated security vulnerabilities across all recorded IT assets",
+  "title": "Schwachstellen (CVE)",
+  "subtitle": "Aggregierte Sicherheitslücken für alle aufgezeichneten IT-Assets",
   "stats": {
-    "critical": "Critical (≥ 9.0)",
-    "high": "High (7.0–8.9)",
-    "medium": "Medium (4.0–6.9)",
-    "low": "Low (0.1–3.9)",
-    "total": "Total"
+    "critical": "Kritisch (<unk> 9.0)",
+    "high": "Hoch (7.0–8.9)",
+    "medium": "Mittel (4.0–6.9)",
+    "low": "Niedrig (0.1–3.9)",
+    "total": "Gesamt"
   },
   "filters": {
-    "allSeverities": "All Severities",
-    "critical": "Critical",
-    "high": "High",
-    "medium": "Medium",
-    "low": "Low",
-    "allSources": "All Sources"
+    "allSeverities": "Alle Schweregrade",
+    "critical": "Kritisch",
+    "high": "Hoch",
+    "medium": "Mittel",
+    "low": "Niedrig",
+    "allSources": "Alle Quellen"
   },
-  "searchPlaceholder": "Search CVE ID, description or asset...",
+  "searchPlaceholder": "Suche CVE-ID, Beschreibung oder Asset...",
   "table": {
-    "id": "CVE ID",
-    "score": "CVSS Score",
-    "affectedAssets": "Affected Assets",
-    "description": "Description",
-    "source": "Source",
-    "published": "Published",
-    "actions": "Actions"
+    "id": "CVE-ID",
+    "score": "CVSS Punktzahl",
+    "affectedAssets": "Betroffene Assets",
+    "description": "Beschreibung",
+    "source": "Quelle",
+    "published": "Veröffentlicht",
+    "actions": "Aktionen"
   },
-  "empty": "No vulnerabilities found for the given filter criteria.",
-  "noDescription": "No description available",
-  "sourceTitle": "Open source ({{source}})"
+  "empty": "Keine Verwundbarkeiten für die angegebenen Filterkriterien gefunden.",
+  "noDescription": "Keine Beschreibung verfügbar",
+  "sourceTitle": "Open Source ({{source}})"
 }
