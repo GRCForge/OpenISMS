@@ -9,6 +9,7 @@ set -euo pipefail
 INSTALL_DIR="${INSTALL_DIR:-/opt/isms}"
 SERVICE_USER="${SERVICE_USER:-isms}"
 NODE_VERSION="26"
+FORCE_UNINSTALL=false
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()    { echo -e "${GREEN}[INFO]${NC} $*"; }
@@ -109,6 +110,69 @@ ensure_env_secrets() {
   ensure_env_secret ENCRYPTION_KEY "$file"
 }
 
+usage() {
+  cat <<EOF
+Usage: $0 [install|update|uninstall|1|2|3] [OPTION]
+  install [1|2]    run installer interactively, optionally choose Docker (1) or Systemd (2)
+  update           update detected installation
+  uninstall [-y]   remove OpenISMS service and Docker containers
+  1 [1|2|3]        Docker Compose install, optionally choose setup mode
+  2                Systemd install
+  3                Update existing installation
+EOF
+}
+
+parse_cli_args() {
+  if [[ $# -eq 0 ]]; then
+    return
+  fi
+
+  local action="${1,,}"
+  case "$action" in
+    help|-h|--help)
+      usage
+      exit 0
+      ;;
+    install)
+      case "${2:-}" in
+        1|docker) MODE=1 ;;
+        2|systemd) MODE=2 ;;
+        "") MODE="" ;;
+        *) error "Unknown install option: ${2}. Use 1 (Docker) or 2 (Systemd)." ;;
+      esac
+      ;;
+    update|up|upgrade)
+      MODE=3
+      ;;
+    uninstall|remove|rm)
+      MODE=4
+      if [[ "${2,,}" == "-y" || "${2,,}" == "--yes" ]]; then
+        FORCE_UNINSTALL=true
+      fi
+      ;;
+    1|2|3)
+      MODE="$action"
+      if [[ "$MODE" == "1" && "${2:-}" =~ ^[123]$ ]]; then
+        DOCKER_SETUP="${2}"
+      fi
+      ;;
+    docker)
+      MODE=1
+      if [[ "${2:-}" =~ ^[123]$ ]]; then
+        DOCKER_SETUP="${2}"
+      fi
+      ;;
+    systemd)
+      MODE=2
+      ;;
+    *)
+      error "Unknown action: ${1}. Valid options: install|update|uninstall|1|2|3"
+      ;;
+  esac
+}
+
+parse_cli_args "$@"
+
 ###############################################################################
 # Mode selection
 ###############################################################################
@@ -127,12 +191,13 @@ if systemctl is-active --quiet isms-backend || systemctl is-active --quiet openi
 echo "Choose action:"
 echo "  1) Docker Compose  (new install / restart)"
 echo "  2) Systemd service (new install / bare-metal)"
-if $IS_DOCKER || $IS_SYSTEMD; then
-  echo "  3) Update existing installation (Git Pull + Rebuild)"
-fi
+echo "  3) Update existing installation (Git Pull + Rebuild)"
+echo "  4) Uninstall existing installation"
 echo ""
-read -rp "Action [1/2/3]: " MODE
-MODE="${MODE:-1}"
+if [[ -z "${MODE:-}" ]]; then
+  read -rp "Action [1/2/3/4]: " MODE
+  MODE="${MODE:-1}"
+fi
 
 ###############################################################################
 # Mode 3: Update
@@ -263,6 +328,57 @@ PYEOF
 fi
 
 ###############################################################################
+# Mode 4: Uninstall
+###############################################################################
+if [[ "$MODE" == "4" ]]; then
+  need_root
+
+  if ! $FORCE_UNINSTALL; then
+    echo ""
+    read -rp "This will remove OpenISMS files and services. Continue? [y/N]: " CONFIRM
+    CONFIRM="${CONFIRM:-n}"
+    if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+      info "Uninstall aborted."
+      exit 0
+    fi
+  fi
+
+  info "Uninstalling OpenISMS..."
+
+  if command -v docker &>/dev/null && docker compose version &>/dev/null; then
+    if docker compose ps --format json 2>/dev/null | grep -q '"Project":"isms"'; then
+      info "Stopping Docker Compose project..."
+      docker compose down || true
+    fi
+  fi
+
+  if systemctl list-unit-files --type=service | grep -qw openisms.service || [[ -f /etc/systemd/system/openisms.service ]]; then
+    info "Stopping and removing openisms systemd service..."
+    systemctl stop openisms 2>/dev/null || true
+    systemctl disable openisms 2>/dev/null || true
+    rm -f /etc/systemd/system/openisms.service
+    systemctl daemon-reload
+  fi
+
+  if [[ -d "$INSTALL_DIR" ]]; then
+    rm -rf "$INSTALL_DIR"
+    info "Removed install directory $INSTALL_DIR"
+  fi
+
+  if [[ -L /etc/nginx/sites-enabled/isms || -f /etc/nginx/sites-enabled/isms ]]; then
+    rm -f /etc/nginx/sites-enabled/isms
+    info "Removed nginx enabled symlink"
+  fi
+  if [[ -f /etc/nginx/sites-available/isms ]]; then
+    rm -f /etc/nginx/sites-available/isms
+    info "Removed nginx site configuration"
+  fi
+
+  info "Uninstall complete."
+  exit 0
+fi
+
+###############################################################################
 # Mode 1: Docker Compose
 ###############################################################################
 if [[ "$MODE" == "1" ]]; then
@@ -284,14 +400,16 @@ if [[ "$MODE" == "1" ]]; then
   # Auto-generate strong secrets so the app doesn't boot with placeholders.
   ensure_env_secrets .env
 
-  echo ""
-  echo "Choose Docker setup:"
-  echo "  1) Full Setup (App + MySQL) - Recommended for new deployments"
-  echo "  2) Single Container (local build, requires external DB)"
-  echo "  3) GHCR Pull (pre-built image from GitHub, requires external DB)"
-  echo ""
-  read -rp "Setup [1/2/3]: " DOCKER_SETUP
-  DOCKER_SETUP="${DOCKER_SETUP:-1}"
+  if [[ -z "${DOCKER_SETUP:-}" ]]; then
+    echo ""
+    echo "Choose Docker setup:"
+    echo "  1) Full Setup (App + MySQL) - Recommended for new deployments"
+    echo "  2) Single Container (local build, requires external DB)"
+    echo "  3) GHCR Pull (pre-built image from GitHub, requires external DB)"
+    echo ""
+    read -rp "Setup [1/2/3]: " DOCKER_SETUP
+    DOCKER_SETUP="${DOCKER_SETUP:-1}"
+  fi
 
   if [[ "$DOCKER_SETUP" == "1" ]]; then
     info "Starting full-stack deployment (building locally)..."
