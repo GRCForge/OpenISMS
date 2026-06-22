@@ -79,7 +79,8 @@
       "vendor": "Microsoft, SAP, etc.",
       "location": "DC Süd, AWS, etc.",
       "select": "Auswählen...",
-      "own": "— Eigene Operation / Intern —"
+      "own": "— Eigene Operation / Intern —",
+      "pleaseSelect": "– bitte wählen –"
     },
     "save": "Asset speichern",
     "saving": "Speichern...",
@@ -91,7 +92,11 @@
     "bulkDeleted_one": "{{count}} Asset gelöscht",
     "bulkDeleted_other": "{{count}} Assets gelöscht",
     "bulkDeleteConfirm_one": "Möchten Sie die {{count}} ausgewählten Assets wirklich löschen bzw. außer Betrieb nehmen?",
-    "bulkDeleteConfirm_other": "Möchten Sie die {{count}} ausgewählten Assets wirklich löschen bzw. außer Betrieb nehmen?"
+    "bulkDeleteConfirm_other": "Möchten Sie die {{count}} ausgewählten Assets wirklich löschen bzw. außer Betrieb nehmen?",
+    "nvdNoCpe": "Kein CPE-Eintrag in NVD gefunden. Bitte Hersteller/Name prüfen oder Suchbegriff anpassen.",
+    "cpeResolveFailed": "CPE-Auflösung fehlgeschlagen",
+    "cveSearchImpossible": "CVE-Suche nicht möglich (fehlende Asset-Daten).",
+    "linkFailed": "Fehler beim Verknüpfen"
   },
   "yn": {
     "yes": "Ja",
@@ -400,6 +405,14 @@
     "vvtPurposeLabelClean": "Verarbeitungszweck",
     "vvtRetentionLabel": "Löschfrist",
     "vvtTomsLabel": "Technische & organisatorische Maßnahmen (TOMs)",
-    "vvtTomsDefault": "Siehe IT-Sicherheitskonzept"
+    "vvtTomsDefault": "Siehe IT-Sicherheitskonzept",
+    "cveDetailsOpen": "CVE-Details auf externer Seite öffnen",
+    "cveSourceOpen": "Quelle ({{source}}) öffnen",
+    "cvePageOpen": "Externe CVE-Seite öffnen",
+    "incident": "Vorfall",
+    "serviceProvider": "Dienstleister",
+    "findingsJustification": "Feststellungen / Begründung",
+    "findingsPlaceholder": "Begründung der Einstufung…",
+    "incidentsTitle": "Asset-bezogene Vorfälle"
   }
 }

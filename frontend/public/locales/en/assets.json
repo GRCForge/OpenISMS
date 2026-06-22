@@ -85,7 +85,8 @@
       "vendor":      "Microsoft, SAP, etc.",
       "location":    "DC South, AWS, etc.",
       "select":      "Select...",
-      "own":         "— Own operation / Internal —"
+      "own":         "— Own operation / Internal —",
+      "pleaseSelect": "— please select —"
     },
     "save":          "Save Asset",
     "saving":        "Saving...",
@@ -97,7 +98,11 @@
     "bulkDeleteConfirm_one":  "Do you really want to delete / decommission {{count}} selected asset?",
     "bulkDeleteConfirm_other":"Do you really want to delete / decommission {{count}} selected assets?",
     "errorDeleting": "Error deleting",
-    "errorSaving":   "Error saving"
+    "errorSaving":   "Error saving",
+    "nvdNoCpe": "No CPE entry found in NVD. Please check manufacturer/name or adjust search term.",
+    "cpeResolveFailed": "CPE resolution failed",
+    "cveSearchImpossible": "CVE search not possible (missing asset data).",
+    "linkFailed": "Error linking"
   },
   "yn": {
     "yes": "Yes",
@@ -107,7 +112,7 @@
     "back": "Back",
     "assessment": "Assess Now",
     "assess": "Assess",
-    "editBasics": "Edit Stammdaten",
+    "editBasics": "Edit General Info",
     "editCompliance": "Edit Compliance",
     "editSecurity": "Edit Security",
     "ratingLabels": ["", "Very Low (1)", "Low (2)", "Medium (3)", "High (4)", "Very High (5)"],
@@ -400,6 +405,14 @@
     "vvtPurposeLabelClean": "Processing Purpose",
     "vvtRetentionLabel": "Retention Period",
     "vvtTomsLabel": "Technical & Organizational Measures (TOMs)",
-    "vvtTomsDefault": "Refer to IT Security Concept"
+    "vvtTomsDefault": "Refer to IT Security Concept",
+    "cveDetailsOpen": "Open CVE details on external page",
+    "cveSourceOpen": "Open source ({{source}})",
+    "cvePageOpen": "Open external CVE page",
+    "incident": "Incident",
+    "serviceProvider": "Service Provider",
+    "findingsJustification": "Findings / Justification",
+    "findingsPlaceholder": "Justification for classification...",
+    "incidentsTitle": "Asset-related Incidents"
   }
 }

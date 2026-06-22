@@ -172,7 +172,7 @@ export const AssetDetail: React.FC = () => {
       const { data } = await api.post(`/assets/${id}/cpe-suggestions`, { query: customQuery });
       const suggestions: { cpe: string; title: string }[] = data.suggestions || [];
       if (!suggestions.length) {
-        toast.error('Kein CPE-Eintrag in NVD gefunden. Bitte Hersteller/Name prüfen oder Suchbegriff anpassen.');
+        toast.error(t('toast.nvdNoCpe'));
         return;
       }
       if (suggestions.length === 1) {
@@ -182,7 +182,7 @@ export const AssetDetail: React.FC = () => {
       }
       // Multiple results — show picker
       setCpeSuggestions(suggestions);
-    } catch (err: any) { toast.error(err.response?.data?.error || 'CPE-Auflösung fehlgeschlagen'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.cpeResolveFailed')); }
     finally { setCpeResolving(false); }
   };
 
@@ -191,12 +191,12 @@ export const AssetDetail: React.FC = () => {
     try {
       const { data } = await api.post(`/assets/${id}/refresh-cves`);
       if (data.skipped) {
-        toast.error(data.reason || 'CVE-Suche nicht möglich (fehlende Asset-Daten).');
+        toast.error(data.reason || t('toast.cveSearchImpossible'));
       } else {
-        toast.success(`CVE-Scan abgeschlossen: ${data.counts.critical} kritisch, ${data.counts.high} hoch, ${data.counts.medium} mittel, ${data.counts.low} gering (Quelle: ${data.source.toUpperCase()})`);
+        toast.success(t('toast.cveScanSuccess', { critical: data.counts.critical, high: data.counts.high, medium: data.counts.medium, low: data.counts.low, source: data.source.toUpperCase() }));
         loadAsset();
       }
-    } catch (err: any) { toast.error(err.response?.data?.error || 'CVE-Aktualisierung fehlgeschlagen'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.cveRefreshFailed')); }
     finally { setCveRefreshing(false); }
   };
 
@@ -208,7 +208,7 @@ export const AssetDetail: React.FC = () => {
       await api.put(`/assets/${id}`, { ...asset, vvt_ids: [...currentIds, vvtId] });
       setVvtAddModalOpen(false);
       loadAsset();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Fehler beim Verknüpfen'); }
+    } catch (err: any) { toast.error(err.response?.data?.error || t('toast.linkFailed')); }
     finally { setSaving(false); }
   };
 
@@ -494,7 +494,7 @@ export const AssetDetail: React.FC = () => {
 
     const vvtList = (asset.vvtEntries as any[]) || [];
     vvtList.slice(0, 5).forEach((v: any, i: number) => {
-      chart += `  VVT${i}["📋 ${esc(v.name)}"]\n  class VVT${i} dsgvo;\n  C -.DSGVO.-> VVT${i}\n`;
+      chart += `  VVT${i}["📋 ${esc(v.name)}"]\n  class VVT${i} dsgvo;\n  C -.${t('detail.vvtDsgvo')}.-> VVT${i}\n`;
     });
     if (vvtList.length > 5) chart += `  VVTMORE["… +${vvtList.length - 5} VVT"]\n  class VVTMORE dsgvo;\n  C -.DSGVO.-> VVTMORE\n`;
 
@@ -504,11 +504,11 @@ export const AssetDetail: React.FC = () => {
 
     const incList = (asset.incidents as any[]) || [];
     incList.slice(0, 5).forEach((n: any, i: number) => {
-      chart += `  INC${i}["🚨 ${esc(n.title)}"]\n  class INC${i} incidentn;\n  C -.Vorfall.-> INC${i}\n`;
+      chart += `  INC${i}["🚨 ${esc(n.title)}"]\n  class INC${i} incidentn;\n  C -.${t('detail.incident')}.-> INC${i}\n`;
     });
 
     if (asset.vendorContact) {
-      chart += `  VND["🏢 ${esc((asset.vendorContact as any).name)}"]\n  class VND vendorn;\n  C -.Dienstleister.-> VND\n`;
+      chart += `  VND["🏢 ${esc((asset.vendorContact as any).name)}"]\n  class VND vendorn;\n  C -.${t('detail.serviceProvider')}.-> VND\n`;
     }
 
     return chart;
@@ -799,12 +799,12 @@ export const AssetDetail: React.FC = () => {
                    </div>
                    <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                      {[
-                       { color: 'bg-blue-500', label: 'Aktuelles Asset' },
-                       { color: 'bg-blue-100 border border-blue-300', label: 'Vorfahren' },
-                       { color: 'bg-green-100 border border-green-300', label: 'Kinder/Enkel' },
-                       { color: 'bg-purple-100 border border-purple-300', label: 'VVT/DSGVO' },
-                       { color: 'bg-red-100 border border-red-300', label: 'Risiken' },
-                       { color: 'bg-orange-100 border border-orange-300', label: 'Vorfälle' },
+                       { color: 'bg-blue-500', label: t('detail.currentAsset') },
+                       { color: 'bg-blue-100 border border-blue-300', label: t('detail.ancestors') },
+                       { color: 'bg-green-100 border border-green-300', label: t('detail.childrenGrandchildren') },
+                       { color: 'bg-purple-100 border border-purple-300', label: t('detail.vvtDsgvo') },
+                       { color: 'bg-red-100 border border-red-300', label: t('detail.risks') },
+                       { color: 'bg-orange-100 border border-orange-300', label: t('detail.incidents') },
                      ].map(({ color, label }) => (
                        <span key={label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400">
                          <span className={`w-3 h-3 rounded-sm shrink-0 ${color}`} />{label}
@@ -816,7 +816,7 @@ export const AssetDetail: React.FC = () => {
                <CardBody>
                  <Mermaid chart={generateMermaid()} className="min-h-[300px]" />
                  <p className="text-xs text-center text-gray-400 dark:text-slate-500 mt-2">
-                   Tipp: Auf Knoten klicken um zum jeweiligen Asset zu navigieren. Übergeordnetes Asset in den Stammdaten festlegen.
+                   {t('detail.topologyTip')}
                  </p>
                </CardBody>
              </Card>
@@ -829,9 +829,9 @@ export const AssetDetail: React.FC = () => {
                    <CardHeader>
                      <div className="flex items-center gap-2">
                        <Share2 size={18} className="text-blue-500" />
-                       <h2 className="font-semibold dark:text-white">Abhängige Assets ({children.length})</h2>
+                       <h2 className="font-semibold dark:text-white">{t('detail.dependentAssets', { count: children.length })}</h2>
                      </div>
-                     <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Assets, die dieses Asset als übergeordnetes System (Parent) nutzen.</p>
+                     <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('detail.dependentAssetsSubtitle')}</p>
                    </CardHeader>
                    <CardBody className="p-0">
                      <div className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -926,7 +926,7 @@ export const AssetDetail: React.FC = () => {
                            )}
                            {!asset.cpe && !asset.package_name && (asset.vendor || asset.name) && (
                              <button onClick={() => resolveCPE()} disabled={cpeResolving} className="text-xs underline text-blue-500 dark:text-blue-400 hover:text-blue-700 disabled:opacity-50">
-                               {cpeResolving ? 'Wird aufgelöst…' : 'CPE auto-auflösen'}
+                               {cpeResolving ? t('detail.cpeResolving') : t('detail.cpeAutoResolve')}
                              </button>
                            )}
                          </div>
@@ -935,9 +935,9 @@ export const AssetDetail: React.FC = () => {
                          {!asset.cve_last_checked && (
                            <div className="text-sm text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800 rounded-lg p-3">
                              {(asset.vendor || asset.name || asset.package_name) ? (
-                               <span>Noch kein Scan durchgeführt — klicken Sie auf „CVEs aktualisieren".</span>
+                               <span>{t('detail.noScanHint')}</span>
                              ) : (
-                               <span className="text-orange-600 dark:text-orange-400">Kein Hersteller, Paketname oder CPE hinterlegt. Bitte ergänzen Sie die Felder im Security-Edit-Dialog.</span>
+                               <span className="text-orange-600 dark:text-orange-400">{t('detail.missingInfoHint')}</span>
                              )}
                            </div>
                          )}
@@ -970,7 +970,7 @@ export const AssetDetail: React.FC = () => {
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                                          title="CVE-Details auf externer Seite öffnen"
+                                          title={t('detail.cveDetailsOpen')}
                                         >
                                           {cve.id}
                                           <ExternalLink size={11} className="inline-block shrink-0" />
@@ -986,7 +986,7 @@ export const AssetDetail: React.FC = () => {
                                             href={sourceUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            title={`Quelle (${cve.source.toUpperCase()}) öffnen`}
+                                            title={t('detail.cveSourceOpen', { source: cve.source.toUpperCase() })}
                                             className={`mt-1 text-[10px] px-1.5 py-0.5 rounded w-fit uppercase font-bold inline-flex items-center gap-0.5 transition-all ${
                                               cve.source === 'osv'     ? 'bg-green-150 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' :
                                               cve.source === 'nvd-cpe' ? 'bg-blue-150 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50' :
@@ -1009,7 +1009,7 @@ export const AssetDetail: React.FC = () => {
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-900/50 shadow-sm transition-all inline-flex items-center justify-center"
-                                          title="Externe CVE-Seite öffnen"
+                                          title={t('detail.cvePageOpen')}
                                         >
                                           <ExternalLink size={14} />
                                         </a>
@@ -1023,7 +1023,7 @@ export const AssetDetail: React.FC = () => {
                        </>
                      ) : (
                        <p className="text-sm text-gray-400 dark:text-slate-500 italic py-6 text-center">
-                         Das Schwachstellen-Modul (CVE) ist derzeit deaktiviert. Sie können es im Admin-Bereich unter "Module" aktivieren.
+                         {t('detail.vulnModuleDisabled')}
                        </p>
                      )}
 
@@ -1063,10 +1063,10 @@ export const AssetDetail: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BookOpen size={18} className="text-blue-500"/>
-                  <h2 className="font-semibold dark:text-white">Zugeordnete Verarbeitungstätigkeiten (VVT)</h2>
+                  <h2 className="font-semibold dark:text-white">{t('detail.vvtTitle')}</h2>
                 </div>
                 {!isViewer && (isDpo || isAssessor) && (
-                  <Button size="sm" onClick={() => { setVvtCreateMode(false); setVvtAddModalOpen(true); }}><Plus size={14}/>VVT erfassen / verknüpfen</Button>
+                  <Button size="sm" onClick={() => { setVvtCreateMode(false); setVvtAddModalOpen(true); }}><Plus size={14}/>{t('detail.vvtAddButton')}</Button>
                 )}
               </div>
             </CardHeader>
@@ -1090,7 +1090,7 @@ export const AssetDetail: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-4">
                         <Button size="sm" variant="secondary" onClick={() => setVvtViewEntry(v)}><Eye size={14}/> Details</Button>
-                        <Link to="/vvt"><Button size="sm" variant="ghost" title="Im VVT-Verzeichnis öffnen"><ArrowRight size={14}/></Button></Link>
+                        <Link to="/vvt"><Button size="sm" variant="ghost" title={t('detail.vvtDirectoryOpen')}><ArrowRight size={14}/></Button></Link>
                       </div>
                     </div>
                   ))}
@@ -1102,10 +1102,10 @@ export const AssetDetail: React.FC = () => {
 
         {tab === 'incidents' && (
           <Card>
-            <CardHeader><div className="flex items-center gap-2"><AlertOctagon size={18} className="text-red-500"/><h2 className="font-semibold dark:text-white">Asset-bezogene Vorfälle</h2></div></CardHeader>
+            <CardHeader><div className="flex items-center gap-2"><AlertOctagon size={18} className="text-red-500"/><h2 className="font-semibold dark:text-white">{t('detail.incidentsTitle')}</h2></div></CardHeader>
             <CardBody className="p-0">
               {(!asset.incidents || asset.incidents.length === 0) ? (
-                <p className="text-sm text-gray-400 dark:text-slate-500 italic p-6 text-center">Keine Vorfälle für dieses Asset bekannt.</p>
+                <p className="text-sm text-gray-400 dark:text-slate-500 italic p-6 text-center">{t('detail.noIncidents')}</p>
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-slate-800">
                   {asset.incidents.map((i: any) => (
@@ -1129,10 +1129,10 @@ export const AssetDetail: React.FC = () => {
         {tab === 'compliance' && (
           <div className="space-y-6">
             <Card>
-              <CardHeader><div className="flex items-center justify-between"><div className="flex items-center gap-2"><AlertTriangle size={18} className="text-red-500"/><h2 className="font-semibold dark:text-white">Verknüpfte Risiken ({linkedRisks.length})</h2></div><Link to="/risks" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Zum Risikoregister →</Link></div></CardHeader>
+              <CardHeader><div className="flex items-center justify-between"><div className="flex items-center gap-2"><AlertTriangle size={18} className="text-red-500"/><h2 className="font-semibold dark:text-white">{t('detail.relatedRisks', { count: linkedRisks.length })}</h2></div><Link to="/risks" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('detail.toRiskRegister')}</Link></div></CardHeader>
               <CardBody className="p-0">
                 {linkedRisks.length === 0 ? (
-                  <p className="text-sm text-gray-400 dark:text-slate-500 italic p-6 text-center">Keine Risiken mit diesem Asset verknüpft.</p>
+                  <p className="text-sm text-gray-400 dark:text-slate-500 italic p-6 text-center">{t('detail.noLinkedRisks')}</p>
                 ) : (
                   <div className="divide-y divide-gray-100 dark:divide-slate-800">
                     {linkedRisks.map((r: any) => (
@@ -1168,7 +1168,7 @@ export const AssetDetail: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Verknüpfte Datenschutz-Nachweise</p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">{t('detail.linkedGdprPolicies')}</p>
                     <div className="divide-y dark:divide-slate-800 border dark:border-slate-800 rounded-lg overflow-hidden">
                       {visiblePolicies.filter((p: any) => p.category === 'dpa' || p.title.toLowerCase().includes('datenschutz')).length > 0 ? (
                         visiblePolicies.filter((p: any) => p.category === 'dpa' || p.title.toLowerCase().includes('datenschutz')).map((p: any) => (
@@ -1181,7 +1181,7 @@ export const AssetDetail: React.FC = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="p-4 text-center text-xs text-gray-400 italic">Keine expliziten Datenschutz-Dokumente verknüpft.</div>
+                        <div className="p-4 text-center text-xs text-gray-400 italic">{t('detail.noGdprPolicies')}</div>
                       )}
                     </div>
                   </div>
@@ -1224,7 +1224,7 @@ export const AssetDetail: React.FC = () => {
               <Card>
                 <CardBody className="p-0">
                   {(!visiblePolicies || visiblePolicies.length === 0) ? (
-                    <div className="text-center py-8 text-gray-400 dark:text-slate-500 italic text-sm">Keine Dokumente aus der Bibliothek verknüpft.</div>
+                    <div className="text-center py-8 text-gray-400 dark:text-slate-500 italic text-sm">{t('detail.noDocLibrary')}</div>
                   ) : (
                     <div className="divide-y divide-gray-100 dark:divide-slate-800 text-sm">
                       {visiblePolicies.map((p: any) => (
@@ -1235,7 +1235,7 @@ export const AssetDetail: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate dark:text-slate-200">{p.title}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{p.code || 'Kein Kürzel'}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{p.code || t('detail.noFolderDoc')}</span>
                               <span className="text-gray-300">·</span>
                               <Badge value={p.category} label={catLabels[p.category] || p.category} />
                               <span className="text-gray-300">·</span>
@@ -1312,7 +1312,7 @@ export const AssetDetail: React.FC = () => {
                             )}
                             <a href={`/api/assets/${id}/documents/${doc.id}/download`} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary" title="Herunterladen"><Download size={14} /></Button></a>
                             {!isViewer && (user?.role === 'admin' || user?.id === doc.uploader?.id) && (
-                              <Button size="sm" variant="danger" title="Löschen" onClick={async () => { if (confirm('Datei wirklich löschen?')) { await api.delete(`/assets/${id}/documents/${doc.id}`); loadDocs(); } }}><Trash2 size={14}/></Button>
+                              <Button size="sm" variant="danger" title="Löschen" onClick={async () => { if (confirm(t('detail.deleteFileConfirm'))) { await api.delete(`/assets/${id}/documents/${doc.id}`); loadDocs(); } }}><Trash2 size={14}/></Button>
                             )}
                           </div>
                         </div>
@@ -1347,7 +1347,7 @@ export const AssetDetail: React.FC = () => {
                              </div>
                           </div>
                           {!isViewer && (user?.role === 'admin' || user?.id === c.user_id) && (
-                            <button onClick={async () => { if(confirm('Kommentar wirklich löschen?')) { await api.delete(`/assets/${id}/comments/${c.id}`); loadComments(); } }} className="text-gray-400 hover:text-red-500 transition-colors self-start"><Trash2 size={14}/></button>
+                            <button onClick={async () => { if(confirm(t('detail.deleteCommentConfirm'))) { await api.delete(`/assets/${id}/comments/${c.id}`); loadComments(); } }} className="text-gray-400 hover:text-red-500 transition-colors self-start"><Trash2 size={14}/></button>
                           )}
                        </div>
 
@@ -1368,7 +1368,7 @@ export const AssetDetail: React.FC = () => {
                                  </div>
                                </div>
                                {!isViewer && (user?.role === 'admin' || user?.id === reply.user_id) && (
-                                  <button onClick={async () => { if(confirm('Antwort wirklich löschen?')) { await api.delete(`/assets/${id}/comments/${reply.id}`); loadComments(); } }} className="text-gray-300 hover:text-red-500 transition-colors self-start"><Trash2 size={12}/></button>
+                                  <button onClick={async () => { if(confirm(t('detail.deleteReplyConfirm'))) { await api.delete(`/assets/${id}/comments/${reply.id}`); loadComments(); } }} className="text-gray-300 hover:text-red-500 transition-colors self-start"><Trash2 size={12}/></button>
                                )}
                              </div>
                            ))}
@@ -1404,7 +1404,7 @@ export const AssetDetail: React.FC = () => {
                            }, 50);
                          }}
                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500"
-                         title="Nutzer erwähnen"
+                         title={t('detail.mentionUser')}
                        >
                          <AtSign size={16} />
                        </button>
@@ -1414,7 +1414,7 @@ export const AssetDetail: React.FC = () => {
                         ref={commentInputRef}
                         className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-4 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden transition-all shadow-xs"
                         rows={4}
-                        placeholder="Schreiben Sie einen Kommentar... (Markdown unterstützt, @Nutzer für Erwähnung)"
+                        placeholder={t('detail.markdownHint')}
                         value={comment}
                         onChange={e => {
                           setComment(e.target.value);
@@ -1459,7 +1459,7 @@ export const AssetDetail: React.FC = () => {
                       />
                       {mentionSearch !== null && (
                         <div className="absolute left-4 bottom-full mb-1 w-64 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 p-2 max-h-48 overflow-y-auto animate-fade-in">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase px-2 mb-1">Benutzer erwähnen</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase px-2 mb-1">{t('detail.mentionTitle')}</p>
                           {activeUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).map((u, i) => (
                             <button
                               key={u.id}
@@ -1495,9 +1495,9 @@ export const AssetDetail: React.FC = () => {
                     <div className="flex flex-col sm:flex-row justify-between items-center mt-3 gap-3">
                        <div className="flex items-center gap-3 w-full sm:w-auto">
                           <Input type="date" label="Termin-Bezug" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} className="!py-1" />
-                          <p className="text-[10px] text-gray-400 italic hidden sm:block">Nutzen Sie @Nutzername für Erwähnungen.</p>
+                          <p className="text-[10px] text-gray-400 italic hidden sm:block">{t('detail.mentionTip')}</p>
                        </div>
-                       <Button type="submit" disabled={!comment.trim() || saving} className="w-full sm:w-auto">{saving ? 'Speichern...' : 'Kommentar posten'}</Button>
+                       <Button type="submit" disabled={!comment.trim() || saving} className="w-full sm:w-auto">{saving ? t('common:status.saving') : t('detail.postComment')}</Button>
                     </div>
                   </form>
                 )}
@@ -1506,112 +1506,112 @@ export const AssetDetail: React.FC = () => {
         )}
       </div>
 
-      <Modal open={docModalOpen} onClose={() => setDocModalOpen(false)} title="Dokument hochladen" size="md">
+      <Modal open={docModalOpen} onClose={() => setDocModalOpen(false)} title={t('detail.uploadDoc')} size="md">
         <form onSubmit={handleUpload} className="space-y-4">
-          <Select label="Kategorie *" value={docForm.category} onChange={e => setDocForm({ ...docForm, category: e.target.value })} options={Object.entries(catLabels).map(([v, l]) => ({ value: v, label: l }))} required />
-          <Input label="Beschreibung" value={docForm.description} onChange={e => setDocForm({ ...docForm, description: e.target.value })} placeholder="Optional..." />
+          <Select label={t('detail.category')} value={docForm.category} onChange={e => setDocForm({ ...docForm, category: e.target.value })} options={Object.entries(catLabels).map(([v, l]) => ({ value: v, label: l }))} required />
+          <Input label={t('detail.description')} value={docForm.description} onChange={e => setDocForm({ ...docForm, description: e.target.value })} placeholder={t('detail.optional')} />
           <div className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed dark:border-slate-700">
              <input type="file" onChange={e => setDocFile(e.target.files?.[0] || null)} required className="text-sm dark:text-slate-300" />
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setDocModalOpen(false)} className="flex-1">Abbrechen</Button>
-            <Button type="submit" disabled={saving || !docFile} className="flex-1">{saving ? 'Hochladen...' : 'Jetzt hochladen'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setDocModalOpen(false)} className="flex-1">{t('detail.cancel')}</Button>
+            <Button type="submit" disabled={saving || !docFile} className="flex-1">{saving ? t('detail.uploading') : t('detail.nowUpload')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Modal 1: Stammdaten & Governance */}
-      <Modal open={editSection === 'basics'} onClose={() => setEditSection(null)} title="Stammdaten bearbeiten" size="xl">
+      <Modal open={editSection === 'basics'} onClose={() => setEditSection(null)} title={t('detail.editBasicsTitle')} size="xl">
         <form onSubmit={handleEdit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <Input label="Asset-Name *" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
+              <Input label={t('form.name') + ' *'} value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
             </div>
-            <Select label="Asset-Typ *" value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} options={Object.entries(typeLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Select label={t('form.type') + ' *'} value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} options={Object.entries(typeLabels).map(([v, l]) => ({ value: v, label: l }))} />
           </div>
           
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Beschreibung / Einsatzzweck</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} placeholder="Kurze Beschreibung des Assets und dessen Funktion im Unternehmen..." />
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.descriptionUsage')}</label>
+            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} placeholder={t('detail.descriptionPlaceholder')} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select label="Klassifizierung *" value={editForm.classification || 'internal'} onChange={e => setEditForm({ ...editForm, classification: e.target.value })} options={Object.entries(classLabels).map(([v, l]) => ({ value: v, label: l }))} />
-            <Select label="Hosting *" value={editForm.hosting_type} onChange={e => setEditForm({ ...editForm, hosting_type: e.target.value })} options={Object.entries(hostingLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Select label={t('detail.classification')} value={editForm.classification || 'internal'} onChange={e => setEditForm({ ...editForm, classification: e.target.value })} options={Object.entries(classLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Select label={t('detail.hosting')} value={editForm.hosting_type} onChange={e => setEditForm({ ...editForm, hosting_type: e.target.value })} options={Object.entries(hostingLabels).map(([v, l]) => ({ value: v, label: l }))} />
             <InputSelect
-              label="Standort"
+              label={t('detail.location')}
               value={editForm.location || ''}
               onChange={val => setEditForm({ ...editForm, location: val })}
               options={locations}
-              placeholder="z. B. Rechenzentrum A, Cloud Region..."
+              placeholder={t('detail.locationPlaceholder')}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select label="Lebenszyklus *" value={editForm.lifecycle_status} onChange={e => setEditForm({ ...editForm, lifecycle_status: e.target.value })} options={Object.entries(lifecycleLabels).map(([v, l]) => ({ value: v, label: l }))} />
-            <Select label="Betriebs-Status *" value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} options={[{ value: 'active', label: 'Aktiv' }, { value: 'inactive', label: 'Inaktiv' }, { value: 'decommissioned', label: 'Außer Betrieb' }]} />
-            <Input label="Version / Revision" value={editForm.version || ''} onChange={e => setEditForm({ ...editForm, version: e.target.value })} placeholder="z. B. 2.4.1" />
+            <Select label={t('detail.lifecycle')} value={editForm.lifecycle_status} onChange={e => setEditForm({ ...editForm, lifecycle_status: e.target.value })} options={Object.entries(lifecycleLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Select label={t('detail.status')} value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} options={[{ value: 'active', label: t('status.active') }, { value: 'inactive', label: t('status.inactive') }, { value: 'decommissioned', label: t('status.decommissioned') }]} />
+            <Input label={t('detail.version')} value={editForm.version || ''} onChange={e => setEditForm({ ...editForm, version: e.target.value })} placeholder={t('detail.versionPlaceholder')} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input label="Hersteller / Vendor" value={editForm.vendor || ''} onChange={e => setEditForm({ ...editForm, vendor: e.target.value })} placeholder="z. B. Microsoft, Cisco..." />
-            <Select label="Asset Owner *" value={String(editForm.owner_id || '')} onChange={e => setEditForm({ ...editForm, owner_id: e.target.value })} options={activeUsers.map(u => ({ value: String(u.id), label: u.name }))} />
-            <Select label="Systemverantwortlicher *" value={String(editForm.assessor_id || '')} onChange={e => setEditForm({ ...editForm, assessor_id: e.target.value })} options={activeUsers.map(u => ({ value: String(u.id), label: u.name }))} />
+            <Input label={t('detail.vendor')} value={editForm.vendor || ''} onChange={e => setEditForm({ ...editForm, vendor: e.target.value })} placeholder={t('detail.vendorPlaceholder')} />
+            <Select label={t('detail.owner')} value={String(editForm.owner_id || '')} onChange={e => setEditForm({ ...editForm, owner_id: e.target.value })} options={activeUsers.map(u => ({ value: String(u.id), label: u.name }))} />
+            <Select label={t('detail.assessor')} value={String(editForm.assessor_id || '')} onChange={e => setEditForm({ ...editForm, assessor_id: e.target.value })} options={activeUsers.map(u => ({ value: String(u.id), label: u.name }))} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select label="Dienstleister (Supply Chain)" value={String(editForm.vendor_id || '')} onChange={e => setEditForm({ ...editForm, vendor_id: e.target.value })} options={[{ value: '', label: 'Kein Dienstleister' }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]} />
-            <SearchableSelect label="Übergeordnetes Asset (Topologie)" value={String(editForm.parent_id || '')} onChange={v => setEditForm({ ...editForm, parent_id: v })} placeholder="Eigenständig (Top-Level)" options={[{ value: '', label: 'Eigenständig (Top-Level)' }, ...allAssets.filter(a => a.id !== asset.id).map(a => ({ value: String(a.id), label: a.name }))]} />
+            <Select label={t('detail.supplyChain')} value={String(editForm.vendor_id || '')} onChange={e => setEditForm({ ...editForm, vendor_id: e.target.value })} options={[{ value: '', label: t('detail.noSupplyChain') }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]} />
+            <SearchableSelect label={t('detail.parentAsset')} value={String(editForm.parent_id || '')} onChange={v => setEditForm({ ...editForm, parent_id: v })} placeholder={t('detail.standalone')} options={[{ value: '', label: t('detail.standalone') }, ...allAssets.filter(a => a.id !== asset.id).map(a => ({ value: String(a.id), label: a.name }))]} />
           </div>
 
           <div className="flex gap-3 pt-4 sticky bottom-0 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={() => setEditSection(null)} className="flex-1">Abbrechen</Button>
-            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? 'Speichern…' : 'Speichern'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setEditSection(null)} className="flex-1">{t('detail.cancel')}</Button>
+            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? t('common:status.saving') : t('common:actions.save')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Modal 2: Compliance & Datenschutz */}
-      <Modal open={editSection === 'compliance'} onClose={() => setEditSection(null)} title="Compliance & Datenschutz bearbeiten" size="xl">
+      <Modal open={editSection === 'compliance'} onClose={() => setEditSection(null)} title={t('detail.editComplianceTitle')} size="xl">
         <form onSubmit={handleEdit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Input label="RTO (Wiederanlaufzeit)" value={editForm.rto || ''} onChange={e => setEditForm({ ...editForm, rto: e.target.value })} placeholder="z. B. 4h" />
-              <p className="text-[10px] text-gray-400 mt-1">Recovery Time Objective: Maximale Ausfallzeit.</p>
+              <Input label={t('detail.rto')} value={editForm.rto || ''} onChange={e => setEditForm({ ...editForm, rto: e.target.value })} placeholder={t('detail.rtoPlaceholder')} />
+              <p className="text-[10px] text-gray-400 mt-1">{t('detail.rtoSub')}</p>
             </div>
             <div>
-              <Input label="RPO (Datenverlust-Toleranz)" value={editForm.rpo || ''} onChange={e => setEditForm({ ...editForm, rpo: e.target.value })} placeholder="z. B. 1h" />
-              <p className="text-[10px] text-gray-400 mt-1">Recovery Point Objective: Max. Datenverlust.</p>
+              <Input label={t('detail.rpo')} value={editForm.rpo || ''} onChange={e => setEditForm({ ...editForm, rpo: e.target.value })} placeholder={t('detail.rpoPlaceholder')} />
+              <p className="text-[10px] text-gray-400 mt-1">{t('detail.rpoSub')}</p>
             </div>
             <div>
-              <Input label="SDO (Dienstbereitstellungszeit)" value={editForm.sdo || ''} onChange={e => setEditForm({ ...editForm, sdo: e.target.value })} placeholder="z. B. 24h oder 50%" />
-              <p className="text-[10px] text-gray-400 mt-1">Service Delivery Objective: Dienstbereitstellungszeit im Notbetrieb.</p>
+              <Input label={t('detail.sdo')} value={editForm.sdo || ''} onChange={e => setEditForm({ ...editForm, sdo: e.target.value })} placeholder={t('detail.sdoPlaceholder')} />
+              <p className="text-[10px] text-gray-400 mt-1">{t('detail.sdoSub')}</p>
             </div>
             <div>
-              <Input label="MTO (Maximal tolerierbare Ausfallzeit)" value={editForm.mto || ''} onChange={e => setEditForm({ ...editForm, mto: e.target.value })} placeholder="z. B. 48h" />
-              <p className="text-[10px] text-gray-400 mt-1">Maximum Tolerable Outage: Maximal tolerierbare Ausfallzeit.</p>
+              <Input label={t('detail.mto')} value={editForm.mto || ''} onChange={e => setEditForm({ ...editForm, mto: e.target.value })} placeholder={t('detail.mtoPlaceholder')} />
+              <p className="text-[10px] text-gray-400 mt-1">{t('detail.mtoSub')}</p>
             </div>
             <div>
-              <Input label="IoA (Angriffskennzahlen)" value={editForm.ioa || ''} onChange={e => setEditForm({ ...editForm, ioa: e.target.value })} placeholder="z. B. Login-Fehlversuche, Traffic-Spikes" />
-              <p className="text-[10px] text-gray-400 mt-1">Indicators of Attack: Angriffskennzahlen.</p>
+              <Input label={t('detail.ioa')} value={editForm.ioa || ''} onChange={e => setEditForm({ ...editForm, ioa: e.target.value })} placeholder={t('detail.ioaPlaceholder')} />
+              <p className="text-[10px] text-gray-400 mt-1">{t('detail.ioaSub')}</p>
             </div>
             <div>
-              <Select label="Daten-Kategorie" value={editForm.data_category || 'none'} onChange={e => setEditForm({ ...editForm, data_category: e.target.value })} options={Object.entries(dataCatLabels).map(([v, l]) => ({ value: v, label: l }))} />
-              <p className="text-[10px] text-gray-400 mt-1">„Besonders" = Art. 9 DSGVO.</p>
+              <Select label={t('detail.dataCategory')} value={editForm.data_category || 'none'} onChange={e => setEditForm({ ...editForm, data_category: e.target.value })} options={Object.entries(dataCatLabels).map(([v, l]) => ({ value: v, label: l }))} />
+              <p className="text-[10px] text-gray-400 mt-1">{t('detail.dataCatSub')}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Status & Pflichten</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.statusDuties')}</label>
               <div className="space-y-3">
-                <Select label="VVT-Status (DSGVO)" value={editForm.vvt_status || 'none'} onChange={e => setEditForm({ ...editForm, vvt_status: e.target.value })} options={Object.entries(vvtLabels).map(([v, l]) => ({ value: v, label: l }))} />
+                <Select label={t('detail.vvtStatus')} value={editForm.vvt_status || 'none'} onChange={e => setEditForm({ ...editForm, vvt_status: e.target.value })} options={Object.entries(vvtLabels).map(([v, l]) => ({ value: v, label: l }))} />
                 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Verknüpfte VVT-Einträge</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.linkedVvtEntries')}</label>
                   <div className="max-h-40 overflow-y-auto bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg p-2 space-y-1 custom-scrollbar">
                     {vvtEntriesList.length === 0 ? (
-                      <p className="text-xs text-gray-400 p-2">Keine VVT-Einträge gefunden.</p>
+                      <p className="text-xs text-gray-400 p-2">{t('detail.noVvtEntries')}</p>
                     ) : vvtEntriesList.map(v => (
                       <label key={v.id} className="flex items-center gap-2 p-1.5 hover:bg-gray-50 dark:hover:bg-slate-700 rounded cursor-pointer">
                         <input 
@@ -1632,11 +1632,11 @@ export const AssetDetail: React.FC = () => {
                 <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/30 border dark:border-slate-800 space-y-3">
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={!!editForm.dsfa_required} onChange={e => setEditForm({ ...editForm, dsfa_required: e.target.checked })} className="w-4 h-4 rounded text-blue-600" />
-                    <span className="text-sm font-bold dark:text-slate-300">DSFA erforderlich (Art. 35)</span>
+                    <span className="text-sm font-bold dark:text-slate-300">{t('detail.dsfaRequiredTitle')}</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={!!editForm.nis2_relevant} onChange={e => setEditForm({ ...editForm, nis2_relevant: e.target.checked })} className="w-4 h-4 rounded text-orange-600" />
-                    <span className="text-sm font-bold dark:text-slate-300">NIS-2 relevant</span>
+                    <span className="text-sm font-bold dark:text-slate-300">{t('detail.nis2RelevantLabel')}</span>
                   </label>
                 </div>
               </div>
@@ -1651,56 +1651,56 @@ export const AssetDetail: React.FC = () => {
       </Modal>
 
       {/* Modal 3: Security Status */}
-      <Modal open={editSection === 'security'} onClose={() => setEditSection(null)} title="Security Status bearbeiten" size="xl">
+      <Modal open={editSection === 'security'} onClose={() => setEditSection(null)} title={t('detail.editSecurityTitle')} size="xl">
         <form onSubmit={handleEdit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select label="Patch-Status" value={editForm.patch_status || 'up-to-date'} onChange={e => setEditForm({ ...editForm, patch_status: e.target.value })} options={Object.entries(patchStatusLabels).map(([v, l]) => ({ value: v, label: l }))} />
-            <Input label="EOL-Datum" type="date" value={editForm.eol_date ? String(editForm.eol_date).split('T')[0] : ''} onChange={e => setEditForm({ ...editForm, eol_date: e.target.value })} />
+            <Select label={t('detail.patchStatus')} value={editForm.patch_status || 'up-to-date'} onChange={e => setEditForm({ ...editForm, patch_status: e.target.value })} options={Object.entries(patchStatusLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Input label={t('detail.eolDate')} type="date" value={editForm.eol_date ? String(editForm.eol_date).split('T')[0] : ''} onChange={e => setEditForm({ ...editForm, eol_date: e.target.value })} />
             <label className="flex items-center gap-3 p-3 rounded-xl border bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30 cursor-pointer h-[58px] mt-6">
               <input type="checkbox" checked={!!editForm.hardening_status} onChange={e => setEditForm({ ...editForm, hardening_status: e.target.checked })} className="w-4 h-4 rounded text-green-600" />
-              <span className="text-sm font-medium text-green-800 dark:text-green-400 leading-tight">Hardening (CIS/BSI) erfüllt</span>
+              <span className="text-sm font-medium text-green-800 dark:text-green-400 leading-tight">{t('detail.hardeningConform')}</span>
             </label>
           </div>
           
           {isEnabled('discovery') && (
             <>
               <div className="p-4 rounded-xl border dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/10">
-                <h3 className="text-xs font-bold uppercase text-gray-500 mb-3">Schwachstellen (CVE)</h3>
+                <h3 className="text-xs font-bold uppercase text-gray-500 mb-3">{t('detail.vulnManagement')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                  <Input label="Kritisch" type="number" value={editForm.cve_critical ?? 0} onChange={e => setEditForm({ ...editForm, cve_critical: parseInt(e.target.value) || 0 })} />
-                  <Input label="Hoch" type="number" value={editForm.cve_high ?? 0} onChange={e => setEditForm({ ...editForm, cve_high: parseInt(e.target.value) || 0 })} />
-                  <Input label="Mittel" type="number" value={editForm.cve_medium ?? 0} onChange={e => setEditForm({ ...editForm, cve_medium: parseInt(e.target.value) || 0 })} />
-                  <Input label="Niedrig" type="number" value={editForm.cve_low ?? 0} onChange={e => setEditForm({ ...editForm, cve_low: parseInt(e.target.value) || 0 })} />
+                  <Input label={t('common:severity.critical')} type="number" value={editForm.cve_critical ?? 0} onChange={e => setEditForm({ ...editForm, cve_critical: parseInt(e.target.value) || 0 })} />
+                  <Input label={t('common:severity.high')} type="number" value={editForm.cve_high ?? 0} onChange={e => setEditForm({ ...editForm, cve_high: parseInt(e.target.value) || 0 })} />
+                  <Input label={t('common:severity.medium')} type="number" value={editForm.cve_medium ?? 0} onChange={e => setEditForm({ ...editForm, cve_medium: parseInt(e.target.value) || 0 })} />
+                  <Input label={t('common:severity.low')} type="number" value={editForm.cve_low ?? 0} onChange={e => setEditForm({ ...editForm, cve_low: parseInt(e.target.value) || 0 })} />
                 </div>
                 <Input
-                  label="CVE-Suchanfrage (optional, überschreibt Keyword-Suche)"
+                  label={t('detail.cveSearchQueryLabel')}
                   value={editForm.cve_search_query || ''}
                   onChange={e => setEditForm({ ...editForm, cve_search_query: e.target.value })}
-                  placeholder={`Automatisch: ${[asset.vendor, asset.version].filter(Boolean).join(' ') || asset.name || '—'}`}
+                  placeholder={t('detail.automatic') + ': ' + ([asset.vendor, asset.version].filter(Boolean).join(' ') || asset.name || '—')}
                 />
               </div>
 
               <div className="p-4 rounded-xl border dark:border-slate-800 bg-blue-50/30 dark:bg-blue-900/5 space-y-3">
-                <h3 className="text-xs font-bold uppercase text-blue-600 dark:text-blue-400 mb-1">Phase 1 — CPE (NVD, versions-genau)</h3>
+                <h3 className="text-xs font-bold uppercase text-blue-600 dark:text-blue-400 mb-1">{t('detail.cpePhase1')}</h3>
                 
                 <div className="flex gap-2 items-end">
                   <div className="flex-1">
                     <Input
-                      label="NVD-Katalog nach Produkt/Gerät durchsuchen (z. B. 'unifi udm pro')"
+                      label={t('detail.nvdSearch')}
                       value={cpeSearchQuery}
                       onChange={e => setCpeSearchQuery(e.target.value)}
-                      placeholder="Gerätename oder Begriff eingeben..."
+                      placeholder={t('detail.devicePlaceholder')}
                     />
                   </div>
                   <Button type="button" variant="secondary" size="sm" onClick={() => resolveCPE(cpeSearchQuery)} disabled={cpeResolving || cpeSearchQuery.trim().length < 3} className="mb-0.5 whitespace-nowrap">
-                    {cpeResolving ? 'Wird gesucht…' : 'CPE Suchen'}
+                    {cpeResolving ? t('detail.searching') : t('detail.cpeSearch')}
                   </Button>
                 </div>
 
                 <div className="flex gap-2 items-end border-t dark:border-slate-800 pt-3">
                   <div className="flex-1">
                     <Input
-                      label="CPE 2.3 (auto-aufgelöst oder manuell)"
+                      label={t('detail.cpeManual')}
                       value={editForm.cpe || ''}
                       onChange={e => setEditForm({ ...editForm, cpe: e.target.value })}
                       placeholder="cpe:2.3:a:vendor:product"
@@ -1712,7 +1712,7 @@ export const AssetDetail: React.FC = () => {
                     )}
                   </div>
                   <Button type="button" variant="secondary" size="sm" onClick={() => resolveCPE()} disabled={cpeResolving} className="mb-0.5 whitespace-nowrap">
-                    {cpeResolving ? 'Wird gesucht…' : 'Auto-auflösen'}
+                    {cpeResolving ? t('detail.searching') : t('detail.automatic')}
                   </Button>
                 </div>
 
@@ -1721,13 +1721,13 @@ export const AssetDetail: React.FC = () => {
                   <div className="border border-blue-200 dark:border-blue-800 rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 bg-blue-100 dark:bg-blue-900/40">
                       <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-                        {cpeSuggestions.length} Treffer gefunden — bitte das passende Produkt wählen:
+                        {t('detail.cpeMatchesFound', { count: cpeSuggestions.length })}
                       </span>
                       <button
                         type="button"
                         onClick={() => setCpeSuggestions([])}
                         className="text-blue-400 hover:text-blue-700 dark:hover:text-blue-200 text-xs px-1"
-                        aria-label="Schließen"
+                        aria-label={t('common:actions.close')}
                       >✕</button>
                     </div>
                     <ul className="divide-y divide-blue-100 dark:divide-blue-900/30 max-h-64 overflow-y-auto">
@@ -1740,7 +1740,7 @@ export const AssetDetail: React.FC = () => {
                           >
                             <div className="flex items-center gap-2">
                               {i === 0 && (
-                                <span className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500 text-white">Bester Treffer</span>
+                                <span className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500 text-white">{t('detail.bestMatch')}</span>
                               )}
                               <span className="font-medium text-sm text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300">
                                 {s.title}
@@ -1756,26 +1756,26 @@ export const AssetDetail: React.FC = () => {
 
                 {asset.cpe_resolved_at && (
                   <p className="text-xs text-gray-400 dark:text-slate-500">
-                    Zuletzt aufgelöst: {format(new Date(asset.cpe_resolved_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+                    Zuletzt aufgelöst: {format(new Date(asset.cpe_resolved_at), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale })}
                   </p>
                 )}
               </div>
 
               <div className="p-4 rounded-xl border dark:border-slate-800 bg-green-50/30 dark:bg-green-900/5 space-y-3">
-                <h3 className="text-xs font-bold uppercase text-green-600 dark:text-green-400 mb-1">Phase 2 — OSV.dev (Open-Source-Pakete, exakt)</h3>
+                <h3 className="text-xs font-bold uppercase text-green-600 dark:text-green-400 mb-1">{t('detail.osvdevTitle')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Paketname"
+                    label={t('detail.packageName')}
                     value={editForm.package_name || ''}
                     onChange={e => setEditForm({ ...editForm, package_name: e.target.value })}
                     placeholder="z. B. lodash, django, log4j"
                   />
                   <Select
-                    label="Ökosystem"
+                    label={t('detail.ecosystem')}
                     value={editForm.package_ecosystem || ''}
                     onChange={e => setEditForm({ ...editForm, package_ecosystem: e.target.value })}
                     options={[
-                      { value: '', label: '— kein Paket —' },
+                      { value: '', label: t('detail.noPackage') },
                       { value: 'npm', label: 'npm (Node.js)' },
                       { value: 'PyPI', label: 'PyPI (Python)' },
                       { value: 'Maven', label: 'Maven (Java)' },
@@ -1794,8 +1794,8 @@ export const AssetDetail: React.FC = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Backup-Plan" value={editForm.backup_plan || ''} onChange={e => setEditForm({ ...editForm, backup_plan: e.target.value })} placeholder="z. B. Veeam Backup v12" />
-            <Input label="Letzter Restore-Test" type="date" value={editForm.last_restore_test ? String(editForm.last_restore_test).split('T')[0] : ''} onChange={e => setEditForm({ ...editForm, last_restore_test: e.target.value })} />
+            <Input label={t('detail.backupPlan')} value={editForm.backup_plan || ''} onChange={e => setEditForm({ ...editForm, backup_plan: e.target.value })} placeholder={t('detail.backupPlaceholder')} />
+            <Input label={t('detail.restoreTest')} type="date" value={editForm.last_restore_test ? String(editForm.last_restore_test).split('T')[0] : ''} onChange={e => setEditForm({ ...editForm, last_restore_test: e.target.value })} />
           </div>
 
           <div className="flex gap-3 pt-4 sticky bottom-0 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
@@ -1805,22 +1805,22 @@ export const AssetDetail: React.FC = () => {
         </form>
       </Modal>
 
-      <Modal open={linkDocModalOpen} onClose={() => setLinkDocModalOpen(false)} title="Dokument verlinken" size="md">
+      <Modal open={linkDocModalOpen} onClose={() => setLinkDocModalOpen(false)} title={t('detail.linkDocTitle')} size="md">
          <div className="space-y-4">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Wählen Sie ein Dokument aus, um es als Link in den Kommentar einzufügen:</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">{t('detail.linkDocHint')}</p>
             <div className="space-y-2 max-h-64 overflow-y-auto">
                {(asset.policies || []).length === 0 && documents.length === 0 && (
-                 <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 italic">Keine Dokumente vorhanden.</p>
+                 <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 italic">{t('detail.noDocsAvailable')}</p>
                )}
                {(asset.policies || []).map((p: any) => (
                  <button key={`pol-${p.id}`} onClick={() => {
-                   insertAtCursor(`[${p.title || 'Richtlinie'}](/api/policies/${p.id}/download)`);
+                   insertAtCursor(`[${p.title || t('detail.policyLabel')}](/api/policies/${p.id}/download)`);
                    setLinkDocModalOpen(false);
                  }} className="w-full text-left p-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg border dark:border-slate-800 flex items-center gap-3 transition-colors">
                     <BookOpen size={16} className="text-purple-500 flex-shrink-0"/>
                     <div>
-                      <span className="text-sm font-medium dark:text-slate-300 block">{p.title || 'Richtlinie'}</span>
-                      <span className="text-xs text-gray-400 dark:text-slate-500">Richtlinie</span>
+                      <span className="text-sm font-medium dark:text-slate-300 block">{p.title || t('detail.policyLabel')}</span>
+                      <span className="text-xs text-gray-400 dark:text-slate-500">{t('detail.policyLabel')}</span>
                     </div>
                  </button>
                ))}
@@ -1837,44 +1837,44 @@ export const AssetDetail: React.FC = () => {
                  </button>
                ))}
             </div>
-            <Button variant="secondary" onClick={() => setLinkDocModalOpen(false)} className="w-full">Abbrechen</Button>
+            <Button variant="secondary" onClick={() => setLinkDocModalOpen(false)} className="w-full">{t('detail.cancel')}</Button>
          </div>
       </Modal>
 
-      <Modal open={assessModalOpen} onClose={() => setAssessModalOpen(false)} title="Schutzbedarfsfeststellung" size="md">
+      <Modal open={assessModalOpen} onClose={() => setAssessModalOpen(false)} title={t('detail.ciaRatingTitle')} size="md">
         <form onSubmit={handleAssess} className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
           <section className="p-3 rounded-xl border dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/20 space-y-3">
-            <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400">CIA-Bewertung</h3>
-            {([['confidentiality', 'Vertraulichkeit (C)'], ['integrity', 'Integrität (I)'], ['availability', 'Verfügbarkeit (A)']] as const).map(([field, label]) => (
+            <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400">{t('detail.ciaAssessment')}</h3>
+            {([['confidentiality', t('detail.confidentiality')], ['integrity', t('detail.integrity')], ['availability', t('detail.availability')]] as const).map(([field, label]) => (
               <Select key={field} label={label} value={assessForm[field]} onChange={e => setAssessForm(f => ({ ...f, [field]: e.target.value }))} options={[1,2,3,4,5].map(n => ({ value: String(n), label: ratingLabels[n] }))} />
             ))}
           </section>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Feststellungen / Begründung</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder="Begründung der Einstufung…" value={assessForm.notes} onChange={e => setAssessForm(f => ({ ...f, notes: e.target.value }))} />
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.findingsJustification')}</label>
+            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder={t('detail.findingsPlaceholder')} value={assessForm.notes} onChange={e => setAssessForm(f => ({ ...f, notes: e.target.value }))} />
           </div>
 
           <section className="p-3 rounded-xl border dark:border-slate-800 space-y-3">
-            <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400">Risikobehandlung</h3>
-            <Select label="Maßnahme" value={assessForm.risk_treatment} onChange={e => setAssessForm(f => ({ ...f, risk_treatment: e.target.value }))} options={Object.entries(treatmentLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400">{t('detail.riskTreatment')}</h3>
+            <Select label={t('detail.mitigationAction')} value={assessForm.risk_treatment} onChange={e => setAssessForm(f => ({ ...f, risk_treatment: e.target.value }))} options={Object.entries(treatmentLabels).map(([v, l]) => ({ value: v, label: l }))} />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Maßnahmenplan / Begründung</label>
-              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder="Geplante Maßnahmen oder Begründung…" value={assessForm.mitigation} onChange={e => setAssessForm(f => ({ ...f, mitigation: e.target.value }))} />
+              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.mitigationNotesLabel')}</label>
+              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder={t('detail.mitigationPlaceholder')} value={assessForm.mitigation} onChange={e => setAssessForm(f => ({ ...f, mitigation: e.target.value }))} />
             </div>
           </section>
 
           {assessForm.risk_treatment === 'accept' && (
             <section className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-900/10 space-y-3">
-              <h3 className="text-xs font-bold uppercase text-amber-700 dark:text-amber-400 flex items-center gap-1.5"><AlertTriangle size={13} /> Risikoakzeptanz – Pflichtfelder</h3>
+              <h3 className="text-xs font-bold uppercase text-amber-700 dark:text-amber-400 flex items-center gap-1.5"><AlertTriangle size={13} /> {t('detail.riskAcceptanceFields')}</h3>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Begründung der Akzeptanz <span className="text-red-500 font-bold ml-1">*</span></label>
-                <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} required placeholder="Warum wird das Risiko akzeptiert?" value={assessForm.treatment_justification} onChange={e => setAssessForm(f => ({ ...f, treatment_justification: e.target.value }))} />
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.acceptanceJustificationLabel')} <span className="text-red-500 font-bold ml-1">*</span></label>
+                <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} required placeholder={t('detail.acceptanceJustificationPlaceholder')} value={assessForm.treatment_justification} onChange={e => setAssessForm(f => ({ ...f, treatment_justification: e.target.value }))} />
               </div>
-              <Input label="Akzeptiert durch (Name / Funktion) *" value={assessForm.accepted_by} onChange={e => setAssessForm(f => ({ ...f, accepted_by: e.target.value }))} placeholder="z. B. Max Mustermann, CISO" required={assessForm.risk_treatment === 'accept'} />
-              <Input label="Gültig bis" type="date" value={assessForm.accepted_until} onChange={e => setAssessForm(f => ({ ...f, accepted_until: e.target.value }))} />
+              <Input label={t('detail.acceptedByNameRole')} value={assessForm.accepted_by} onChange={e => setAssessForm(f => ({ ...f, accepted_by: e.target.value }))} placeholder={t('detail.acceptedByPlaceholder')} required={assessForm.risk_treatment === 'accept'} />
+              <Input label={t('detail.validUntilLabel')} type="date" value={assessForm.accepted_until} onChange={e => setAssessForm(f => ({ ...f, accepted_until: e.target.value }))} />
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Unterschriebenes Akzeptanz-Dokument <span className="text-red-500 font-bold ml-1">*</span> <span className="text-xs text-red-500">(Pflicht)</span></label>
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.signedAcceptanceDoc')} <span className="text-red-500 font-bold ml-1">*</span> <span className="text-xs text-red-500">{t('detail.requiredField')}</span></label>
                 <input type="file" accept=".pdf,.docx,.doc" onChange={e => setRaDocFile(e.target.files?.[0] ?? null)} className="text-sm text-gray-600 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/30 dark:file:text-blue-300 hover:file:bg-blue-100" />
                 {raDocFile && <p className="text-xs text-green-600 dark:text-green-400">{raDocFile.name} ausgewählt</p>}
               </div>
@@ -1882,7 +1882,7 @@ export const AssetDetail: React.FC = () => {
           )}
 
           <div className="flex gap-3 pt-2 sticky bottom-0 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={() => { setAssessModalOpen(false); setRaDocFile(null); }} className="flex-1">Abbrechen</Button>
+            <Button type="button" variant="secondary" onClick={() => { setAssessModalOpen(false); setRaDocFile(null); }} className="flex-1">{t('detail.cancel')}</Button>
             <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? 'Speichern…' : 'Bewertung speichern'}</Button>
           </div>
         </form>
@@ -1894,12 +1894,12 @@ export const AssetDetail: React.FC = () => {
       </Modal>
 
       {/* VVT Add / Create Modal */}
-      <Modal open={vvtAddModalOpen} onClose={() => setVvtAddModalOpen(false)} title={vvtCreateMode ? 'Neue Verarbeitungstätigkeit anlegen' : 'VVT verknüpfen'} size="xl">
+      <Modal open={vvtAddModalOpen} onClose={() => setVvtAddModalOpen(false)} title={vvtCreateMode ? t('detail.vvtCreateTitle') : t('detail.vvtLinkTitle')} size="xl">
         {!vvtCreateMode ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Wählen Sie einen bestehenden Eintrag aus oder legen Sie einen neuen an:</p>
-              <Button size="sm" onClick={() => setVvtCreateMode(true)}><Plus size={14}/>Neuen Eintrag erstellen</Button>
+              <p className="text-sm text-gray-500">{t('detail.vvtChooseHint')}</p>
+              <Button size="sm" onClick={() => setVvtCreateMode(true)}><Plus size={14}/>{t('detail.vvtCreateButton')}</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
               {vvtEntriesList
@@ -1914,95 +1914,95 @@ export const AssetDetail: React.FC = () => {
                 </button>
               ))}
               {vvtEntriesList.filter(v => !asset.vvtEntries?.some((ex: any) => ex.id === v.id)).length === 0 && (
-                <div className="col-span-2 text-center py-12 text-gray-400 italic">Keine weiteren VVTs zum Verknüpfen verfügbar.</div>
+                <div className="col-span-2 text-center py-12 text-gray-400 italic">{t('detail.vvtNoMoreVvts')}</div>
               )}
             </div>
             <div className="pt-4 border-t dark:border-slate-800 flex justify-end">
-              <Button variant="secondary" onClick={() => setVvtAddModalOpen(false)}>Abbrechen</Button>
+              <Button variant="secondary" onClick={() => setVvtAddModalOpen(false)}>{t('detail.cancel')}</Button>
             </div>
           </div>
         ) : (
           <form onSubmit={handleVvtCreate} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div className="md:col-span-2">
-                <Input label="Name der Tätigkeit *" value={vvtForm.name} onChange={v => setVvtForm({ ...vvtForm, name: v.target.value })} required placeholder="z. B. Personalverwaltung, Kunden-Newsletter..." />
+                <Input label={t('detail.vvtNameLabel')} value={vvtForm.name} onChange={v => setVvtForm({ ...vvtForm, name: v.target.value })} required placeholder={t('detail.vvtNamePlaceholder')} />
               </div>
               <div className="md:col-span-2 flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Zweck der Verarbeitung</label>
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.vvtPurposeLabel')}</label>
                 <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.purpose} onChange={e => setVvtForm({ ...vvtForm, purpose: e.target.value })} />
               </div>
-              <Input label="Rechtsgrundlage" value={vvtForm.legal_basis} onChange={v => setVvtForm({ ...vvtForm, legal_basis: v.target.value })} />
-              <Select label="Status" value={vvtForm.status} onChange={v => setVvtForm({ ...vvtForm, status: v.target.value as any })} options={[{value: 'draft', label: 'Entwurf'}, {value: 'active', label: 'Aktiv'}, {value: 'archived', label: 'Archiviert'}]} />
+              <Input label={t('detail.vvtLegalBasisLabel')} value={vvtForm.legal_basis} onChange={v => setVvtForm({ ...vvtForm, legal_basis: v.target.value })} />
+              <Select label="Status" value={vvtForm.status} onChange={v => setVvtForm({ ...vvtForm, status: v.target.value as any })} options={[{value: 'draft', label: t('detail.vvtDraft')}, {value: 'active', label: t('detail.vvtActive')}, {value: 'archived', label: t('detail.vvtArchived')}]} />
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Datenkategorien</label>
-                  <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_categories} onChange={e => setVvtForm({ ...vvtForm, data_categories: e.target.value })} placeholder="Name, E-Mail, etc." />
+                  <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.vvtDataCategoriesLabel')}</label>
+                  <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_categories} onChange={e => setVvtForm({ ...vvtForm, data_categories: e.target.value })} placeholder={t('detail.vvtDataCategoriesPlaceholder')} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Betroffene Personen</label>
-                  <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_subjects} onChange={e => setVvtForm({ ...vvtForm, data_subjects: e.target.value })} placeholder="Kunden, Mitarbeiter..." />
+                  <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.vvtDataSubjectsLabel')}</label>
+                  <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_subjects} onChange={e => setVvtForm({ ...vvtForm, data_subjects: e.target.value })} placeholder={t('detail.vvtDataSubjectsPlaceholder')} />
                 </div>
               </div>
-              <Select label="Interner Verantwortlicher" value={vvtForm.responsible_id} onChange={v => setVvtForm({ ...vvtForm, responsible_id: v.target.value })} options={[{ value: '', label: '– bitte wählen –' }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />
-              <Select label="Haupt-Auftragsverarbeiter" value={vvtForm.processor_id} onChange={v => setVvtForm({ ...vvtForm, processor_id: v.target.value })} options={[{ value: '', label: 'Keiner (Eigenverarbeitung)' }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]} />
+              <Select label={t('detail.vvtResponsibleLabel')} value={vvtForm.responsible_id} onChange={v => setVvtForm({ ...vvtForm, responsible_id: v.target.value })} options={[{ value: '', label: t('form.placeholders.pleaseSelect') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />
+              <Select label={t('detail.vvtProcessorLabel')} value={vvtForm.processor_id} onChange={v => setVvtForm({ ...vvtForm, processor_id: v.target.value })} options={[{ value: '', label: t('detail.vvtNoProcessor') }, ...vendors.map(v => ({ value: String(v.id), label: v.name }))]} />
             </div>
             <div className="flex gap-3 pt-4 border-t dark:border-slate-800 sticky bottom-0 bg-white dark:bg-slate-900">
-              <Button type="button" variant="secondary" onClick={() => setVvtCreateMode(false)} className="flex-1">Zurück zur Auswahl</Button>
-              <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? 'Speichern...' : 'VVT erstellen & verknüpfen'}</Button>
+              <Button type="button" variant="secondary" onClick={() => setVvtCreateMode(false)} className="flex-1">{t('detail.vvtBackToChoose')}</Button>
+              <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? t('common:status.saving') : t('detail.vvtCreateAndLink')}</Button>
             </div>
           </form>
         )}
       </Modal>
 
       {/* VVT View Details Modal */}
-      <Modal open={!!vvtViewEntry} onClose={() => setVvtViewEntry(null)} title="VVT Details" size="lg">
+      <Modal open={!!vvtViewEntry} onClose={() => setVvtViewEntry(null)} title={t('detail.vvtDetailsTitle')} size="lg">
         {vvtViewEntry && (
           <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl border dark:border-slate-800">
-                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Bezeichnung</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{t('detail.vvtNameLabelClean')}</p>
                 <p className="text-sm font-bold dark:text-slate-200">{vvtViewEntry.name}</p>
               </div>
               <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl border dark:border-slate-800">
-                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Status</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{t('common:fields.status')}</p>
                 <Badge value={vvtViewEntry.status === 'active' ? 'active' : 'evaluation'} label={vvtViewEntry.status} />
               </div>
             </div>
 
             <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl border dark:border-slate-800">
-              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Verarbeitungszweck</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{t('detail.vvtPurposeLabelClean')}</p>
               <p className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed">{vvtViewEntry.purpose || '–'}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase">Rechtsgrundlage</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtLegalBasisLabel')}</p>
                 <p className="text-xs dark:text-slate-300">{vvtViewEntry.legal_basis || '–'}</p>
               </div>
               <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase">Löschfrist</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtRetentionLabel')}</p>
                 <p className="text-xs dark:text-slate-300">{vvtViewEntry.retention_period || '–'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">Datenkategorien</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtDataCategoriesLabel')}</p>
                   <p className="text-xs dark:text-slate-300">{vvtViewEntry.data_categories || '–'}</p>
                </div>
                <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">Betroffene Personen</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtDataSubjectsLabel')}</p>
                   <p className="text-xs dark:text-slate-300">{vvtViewEntry.data_subjects || '–'}</p>
                </div>
             </div>
 
             <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
-               <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-2">Technische & organisatorische Maßnahmen (TOMs)</p>
-               <p className="text-xs text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{vvtViewEntry.security_measures || 'Siehe IT-Sicherheitskonzept'}</p>
+               <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-2">{t('detail.vvtTomsLabel')}</p>
+               <p className="text-xs text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{vvtViewEntry.security_measures || t('detail.vvtTomsDefault')}</p>
             </div>
 
             <div className="flex justify-end pt-4 border-t dark:border-slate-800">
-               <Button onClick={() => setVvtViewEntry(null)}>Schließen</Button>
+               <Button onClick={() => setVvtViewEntry(null)}>{t('common:actions.close')}</Button>
             </div>
           </div>
         )}
