@@ -1,0 +1,224 @@
+{
+  "riskLabels": {
+    "low": "Gering",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "critical": "Kritisch"
+  },
+  "classLabels": {
+    "public": "Öffentlich",
+    "internal": "Intern",
+    "confidential": "Vertraulich",
+    "secret": "Geheim"
+  },
+  "treatmentLabels": {
+    "mitigate": "Reduzieren",
+    "accept": "Akzeptieren",
+    "transfer": "Übertragen",
+    "avoid": "Vermeiden"
+  },
+  "riskStatusLabels": {
+    "open": "Offen",
+    "in_treatment": "In Behandlung",
+    "accepted": "Akzeptiert",
+    "closed": "Geschlossen"
+  },
+  "toast": {
+    "loadError": "{{count}} Datenbereiche konnten nicht geladen werden.",
+    "success": "Management-Review freigegeben",
+    "error": "Fehler"
+  },
+  "healthStatus": {
+    "good": "Gut",
+    "needsImprovement": "Verbesserungsbedarf",
+    "critical": "Kritisch"
+  },
+  "controlPieLabels": {
+    "implemented": "Umgesetzt",
+    "planned": "Geplant",
+    "na": "N/A"
+  },
+  "taskPieLabels": {
+    "open": "Offen",
+    "inProgress": "In Bearbeitung",
+    "done": "Erledigt"
+  },
+  "excel": {
+    "headers": {
+      "kpi": "Kennzahl",
+      "value": "Wert",
+      "note": "Hinweis",
+      "ref": "Ref",
+      "title": "Titel",
+      "inherentRisk": "Inhärentes Risiko",
+      "treatment": "Behandlung",
+      "status": "Status",
+      "asset": "Asset",
+      "type": "Typ",
+      "classification": "Klassifizierung",
+      "riskLevel": "Risiko-Level",
+      "owner": "Owner"
+    },
+    "summary": {
+      "healthScore": "ISMS Health Score",
+      "totalAssets": "Erfasste Assets",
+      "assessedAssets": "Assets bewertet",
+      "criticalRisks": "Kritische Risiken",
+      "immediateMeasures": "Sofortmaßnahmen",
+      "highRisks": "Hohe Risiken",
+      "openRisks": "Offene Risiken (Register)",
+      "controlImplementation": "Control-Umsetzung",
+      "overdueReviews": "Überfällige Reviews",
+      "openIncidents": "Offene Vorfälle",
+      "mttr": "MTTR (Tage)",
+      "last90days": "letzte 90 Tage",
+      "taskCompletionRate": "Aufgaben-Erledigungsrate",
+      "activeVvt": "VVT-Einträge aktiv",
+      "dsfaRequired": "{{count}} DSFA-pflichtig",
+      "reportDate": "Berichtsdatum"
+    },
+    "notAssessed": "Nicht bewertet",
+    "sheets": {
+      "summary": "Managementübersicht",
+      "assets": "Asset-Register",
+      "risks": "Risikoregister"
+    }
+  },
+  "tabs": {
+    "overview": "Übersicht",
+    "trends": "Entwicklung",
+    "details": "Details"
+  },
+  "header": {
+    "title": "Management Report",
+    "asOf": "Stand {{date}}",
+    "released": "Freigegeben {{date}}",
+    "signOff": "Review freigeben",
+    "reloadTitle": "Daten neu laden",
+    "refresh": "Aktualisieren",
+    "excelExport": "Excel-Export"
+  },
+  "overview": {
+    "controls": "Maßnahmen",
+    "assessment": "Bewertung"
+  },
+  "kpis": {
+    "openHighRisks": {
+      "label": "Offene Hochrisiken",
+      "sub": "{{critical}} kritisch · {{high}} hoch"
+    },
+    "controlImplementation": {
+      "label": "Control-Umsetzung"
+    },
+    "assetAssessment": {
+      "label": "Asset-Bewertung"
+    },
+    "overdueReviews": {
+      "label": "Überfällige Reviews"
+    },
+    "openIncidents": {
+      "label": "Offene Vorfälle",
+      "sub": "{{count}} gesamt"
+    },
+    "mttr": {
+      "label": "MTTR (Tage)",
+      "sub": "Ø Entstörungszeit (90d)"
+    },
+    "tasksCompleted": {
+      "label": "Aufgaben erledigt",
+      "sub": "{{done}} von {{total}}"
+    },
+    "nis2Assets": {
+      "label": "NIS-2 Assets"
+    },
+    "vvtEntries": {
+      "label": "VVT-Einträge",
+      "sub": "{{count}} DSFA-pflichtig"
+    }
+  },
+  "charts": {
+    "riskDistribution": {
+      "title": "Risikoverteilung (SBF)",
+      "empty": "Keine Bewertungen"
+    },
+    "controlStatus": {
+      "title": "Maßnahmen-Status",
+      "empty": "Keine Maßnahmen"
+    },
+    "taskStatus": {
+      "title": "Aufgaben-Status",
+      "empty": "Keine Aufgaben"
+    }
+  },
+  "alerts": {
+    "expiringAcceptances": "Risikoakzeptanzen ablaufend (≤ 60 Tage)",
+    "until": "bis {{date}}",
+    "today": "Heute!",
+    "elevatedRiskAssets": "Assets mit erhöhtem Risiko",
+    "assetFallback": "Asset"
+  },
+  "kpiStatus": {
+    "onTarget": "Im Ziel",
+    "warning": "Warnung",
+    "critical": "Kritisch"
+  },
+  "kpis.target": "Ziel: {{target}}",
+  "trends": {
+    "noData": "Keine Trend-Daten verfügbar",
+    "noDataSub": "Daten werden mit zunehmenden Einträgen automatisch befüllt."
+  },
+  "trendCharts": {
+    "incidentsAndRisks": "Vorfälle & neue Risiken — letzte 12 Monate",
+    "incidents": "Vorfälle",
+    "criticalIncidents": "Kritische Vorfälle",
+    "newRisks": "Neue Risiken",
+    "newAssets": "Neue Assets",
+    "completedTasks": "Erledigt",
+    "newAssetsTitle": "Neue Assets pro Monat",
+    "completedTasksTitle": "Erledigte Aufgaben pro Monat",
+    "current": "Aktuell: {{value}}",
+    "targetLabel": "Ziel: {{target}}",
+    "targetRefLine": "Ziel {{target}}"
+  },
+  "details": {
+    "nis2AssetsTitle": "NIS-2-relevante Assets ({{count}})",
+    "notAssessed": "Nicht bewertet",
+    "privacyOverview": "Datenschutz-Übersicht (Art. 30 DSGVO)",
+    "riskAcceptancesTitle": "Risikoakzeptanzen (SBF)",
+    "untilLabel": "bis {{date}}",
+    "overdueAssessmentsTitle": "Überfällige Sicherheitsbewertungen",
+    "due": "Fällig: {{date}}",
+    "daysOverdue": "{{count}} Tage überfällig",
+    "overdueLabel": "Überfällig"
+  },
+  "privacy": {
+    "processingActivities": {
+      "label": "Verarbeitungstätigkeiten",
+      "sub": "{{count}} aktiv"
+    },
+    "specialCategories": {
+      "label": "Art. 9 — Besondere Kategorien",
+      "sub": "Erhöhte Schutzpflicht"
+    },
+    "thirdCountryTransfers": {
+      "label": "Drittlandübermittlungen",
+      "sub": "Art. 44 DSGVO"
+    },
+    "dsfaRequired": {
+      "label": "DSFA-pflichtig (Art. 35)",
+      "sub": "Datenschutz-Folgenabschätzung"
+    },
+    "dsfaRequiredTitle": "DSFA-pflichtige Tätigkeiten (Art. 35)"
+  },
+  "signOffModal": {
+    "title": "Management-Review Freigabe",
+    "description": "Hiermit bestätigen Sie die Kenntnisnahme des aktuellen Management-Reports gemäß ISO 27001 Kap. 9.3.",
+    "reportDate": "Berichtsstand: {{date}}",
+    "healthScore": "ISMS Health Score: {{score}}/100 — {{label}}",
+    "notes": "Anmerkungen (optional)",
+    "placeholder": "Beschlüsse, Maßnahmen, Kommentare...",
+    "cancel": "Abbrechen",
+    "saving": "Speichern...",
+    "approve": "Freigabe erteilen"
+  }
+}
