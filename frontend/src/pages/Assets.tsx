@@ -70,13 +70,6 @@ export const Assets: React.FC = () => {
     { value: 'decommissioned', label: t('assets:status.decommissioned') },
   ];
 
-  const hostingOptions = [
-    { value: 'on-premise',    label: t('assets:hosting.on-premise') },
-    { value: 'cloud_public',  label: t('assets:hosting.cloud_public') },
-    { value: 'cloud_private', label: t('assets:hosting.cloud_private') },
-    { value: 'hybrid',        label: t('assets:hosting.hybrid') },
-  ];
-
   const lifecycleOptions = [
     { value: 'evaluation', label: t('assets:lifecycle.evaluation') },
     { value: 'production', label: t('assets:lifecycle.production') },
