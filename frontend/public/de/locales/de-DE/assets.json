@@ -1,0 +1,106 @@
+{
+  "title": "Assets",
+  "subtitle_one": "{{count}} asset",
+  "subtitle_other": "{{count}} assets",
+  "new": "New Asset",
+  "edit": "Edit Asset",
+  "searchPlaceholder": "Search assets...",
+  "noFilter": "No assets matching these filters",
+  "countLabel_one": "{{count}} entry",
+  "countLabel_other": "{{count}} entries",
+  "bulkDelete_one": "Delete {{count}}",
+  "bulkDelete_other": "Delete {{count}}",
+  "types": {
+    "application": "Application",
+    "software": "Software",
+    "hardware": "Hardware",
+    "service": "Service",
+    "data": "Data",
+    "information": "Information/Data",
+    "process": "Process",
+    "personal": "Personnel",
+    "ai_application": "AI Application (AI Act)",
+    "ai_agent": "AI Agent / Autonomous System",
+    "other": "Other"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "decommissioned": "Decommissioned",
+    "all": "All (incl. decommissioned)",
+    "onlyActive": "Active only",
+    "onlyInactive": "Inactive only",
+    "activeAssets": "Active Assets"
+  },
+  "hosting": {
+    "on-premise": "On-Premise",
+    "cloud_public": "Cloud Public",
+    "cloud_private": "Cloud Private",
+    "hybrid": "Hybrid"
+  },
+  "lifecycle": {
+    "evaluation": "Evaluation",
+    "production": "Production",
+    "maintenance": "Maintenance",
+    "archived": "Archived"
+  },
+  "filters": {
+    "allTypes": "All Types",
+    "allFrameworks": "All Frameworks",
+    "allClassifications": "All Classifications",
+    "allHosting": "All Hosting",
+    "allLifecycle": "All Lifecycle",
+    "allStatus": "Active Assets"
+  },
+  "empty": {
+    "title": "No assets found",
+    "subtitle": "Create assets to manage your IT landscape and evaluate risks.",
+    "createFirst": "Create first asset"
+  },
+  "table": {
+    "name": "Name",
+    "type": "Type",
+    "classification": "Classification",
+    "owner": "Owner",
+    "status": "Status"
+  },
+  "form": {
+    "name": "Asset Name",
+    "description": "Description",
+    "type": "Asset Type",
+    "classification": "Protection Class",
+    "owner": "Owner (Business Owner)",
+    "assessor": "Technical Responsible (Assessor)",
+    "version": "Version / Revision",
+    "vendor": "Manufacturer / Vendor",
+    "location": "Location / Region",
+    "externalVendor": "External Service Provider (Supply Chain)",
+    "frameworks": "Relevant Frameworks",
+    "dsfa": "DPIA required?",
+    "nis2": "NIS-2 relevant?",
+    "placeholders": {
+      "name": "e.g. ERP system, customer database...",
+      "description": "Brief description of intended use...",
+      "version": "v1.0.0",
+      "vendor": "Microsoft, SAP, etc.",
+      "location": "DC South, AWS, etc.",
+      "select": "Select...",
+      "own": "— Own operation / Internal —"
+    },
+    "save": "Save Asset",
+    "saving": "Saving...",
+    "requiredOwner": "Please select owner and technical responsible."
+  },
+  "toast": {
+    "bulkDeleted_one": "{{count}} asset deleted",
+    "bulkDeleted_other": "{{count}} assets deleted",
+    "bulkDeleteConfirm_one": "Do you really want to delete / decommission {{count}} selected asset?",
+    "bulkDeleteConfirm_other": "Do you really want to delete / decommission {{count}} selected assets?",
+    "errorDeleting": "Error deleting",
+    "errorSaving": "Error saving"
+  },
+  "yn": {
+    "yes": "Yes",
+    "no": "No"
+  }
+}
