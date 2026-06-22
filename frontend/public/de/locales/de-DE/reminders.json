@@ -1,49 +1,49 @@
 {
-  "title": "Reminders & Reviews",
-  "searchPlaceholder": "Search asset...",
-  "overdueCount": "{{count}} overdue",
-  "pendingCount": "{{count}} pending",
+  "title": "Erinnerungen & Bewertungen",
+  "searchPlaceholder": "Suche Asset...",
+  "overdueCount": "{{count}} überfällig",
+  "pendingCount": "{{count}} ausstehend",
   "status": {
-    "pending": "Pending",
-    "acknowledged": "Acknowledged",
-    "overdue": "Overdue",
-    "completed": "Completed"
+    "pending": "Ausstehend",
+    "acknowledged": "Bestätigt",
+    "overdue": "Überfällig",
+    "completed": "Abgeschlossen"
   },
   "filters": {
-    "allStatus": "All Status",
-    "showDistantFuture": "Also far future"
+    "allStatus": "Alle Status",
+    "showDistantFuture": "Auch weit Zukunft"
   },
   "overdueAlertBold": "{{count}} asset(s)",
-  "overdueAlertRest": " have overdue security assessments. Please update promptly.",
+  "overdueAlertRest": " haben überfällige Sicherheitsbewertungen. Bitte aktualisieren Sie sofort.",
   "table": {
     "asset": "Asset",
-    "classification": "Classification",
-    "dueDate": "Due Date",
+    "classification": "Klassifizierung",
+    "dueDate": "Fälligkeitsdatum",
     "status": "Status",
-    "actions": "Actions"
+    "actions": "Aktionen"
   },
-  "overdueBadge": "Overdue!",
+  "overdueBadge": "Überfällig!",
   "actions": {
-    "assess": "Assess",
-    "acknowledge": "Acknowledge"
+    "assess": "Bewertung",
+    "acknowledge": "Bestätigen"
   },
   "empty": {
-    "noResults": "No reminders found"
+    "noResults": "Keine Erinnerungen gefunden"
   },
   "export": {
     "id": "ID",
     "asset": "Asset",
-    "assetType": "Asset Type",
-    "classification": "Classification",
-    "dueDate": "Due Date",
+    "assetType": "Asset-Typ",
+    "classification": "Klassifizierung",
+    "dueDate": "Fälligkeitsdatum",
     "status": "Status",
-    "acknowledgedAt": "Acknowledged At",
-    "notes": "Notes",
-    "filename": "reminders",
-    "sheetName": "Reminders"
+    "acknowledgedAt": "Bestätigt am",
+    "notes": "Notizen",
+    "filename": "Erinnerungen",
+    "sheetName": "Erinnerungen"
   },
   "toast": {
-    "acknowledgeError": "Error acknowledging"
+    "acknowledgeError": "Fehler beim Bestätigen"
   },
-  "unknown": "Unknown"
+  "unknown": "Unbekannt"
 }
