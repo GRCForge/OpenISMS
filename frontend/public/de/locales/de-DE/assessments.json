@@ -1,63 +1,63 @@
 {
-  "title": "All Assessments",
-  "searchPlaceholder": "Search asset...",
-  "subtitle": "{{filtered}} of {{total}} assessments",
+  "title": "Alle Prüfungen",
+  "searchPlaceholder": "Suche Asset...",
+  "subtitle": "{{filtered}} von {{total}} Bewertungen",
   "filters": {
-    "allRisks": "All Risks",
-    "currentOnly": "Current only"
+    "allRisks": "Alle Risiken",
+    "currentOnly": "Nur aktuell"
   },
   "trend": {
-    "up": "Risk increased",
-    "down": "Risk decreased",
-    "same": "Unchanged"
+    "up": "Risiko erhöht",
+    "down": "Risiko verringert",
+    "same": "Unverändert"
   },
   "table": {
     "asset": "Asset",
-    "classification": "Class",
+    "classification": "Klasse",
     "confidentiality": "C",
     "integrity": "I",
     "availability": "A",
-    "score": "Score",
-    "risk": "Risk",
+    "score": "Punktzahl",
+    "risk": "Risiko",
     "trend": "Trend",
     "assessor": "Assessor",
-    "date": "Date",
-    "nextReview": "Next Review",
+    "date": "Datum",
+    "nextReview": "Nächste Bewertung",
     "status": "Status"
   },
-  "statusCurrent": "Current",
-  "statusOutdated": "Outdated",
-  "unknown": "Unknown",
+  "statusCurrent": "Aktuell",
+  "statusOutdated": "Veraltet",
+  "unknown": "Unbekannt",
   "templates": {
-    "title": "Assessment Templates & SBF Templates",
-    "manage": "Manage",
+    "title": "Prüfungsvorlagen & SBF Vorlagen",
+    "manage": "Verwalten",
     "download": "Download"
   },
   "empty": {
-    "noResults": "No assessments found"
+    "noResults": "Keine Bewertungen gefunden"
   },
   "export": {
     "id": "ID",
     "asset": "Asset",
-    "assetType": "Asset Type",
-    "classification": "Classification",
-    "confidentiality": "Confidentiality (C)",
-    "integrity": "Integrity (I)",
-    "availability": "Availability (A)",
-    "riskScore": "Risk Score",
-    "riskLevel": "Risk Level",
+    "assetType": "Asset-Typ",
+    "classification": "Klassifizierung",
+    "confidentiality": "Vertraulichkeit (C)",
+    "integrity": "Integrität (I)",
+    "availability": "Verfügbarkeit (A)",
+    "riskScore": "Risikowert",
+    "riskLevel": "Risiko-Level",
     "assessor": "Assessor",
-    "assessedAt": "Assessed At",
-    "nextReview": "Next Review",
-    "current": "Current",
-    "notes": "Notes",
-    "mitigation": "Mitigation",
-    "yes": "Yes",
-    "no": "No",
-    "filename": "assessments",
+    "assessedAt": "Bewertet am",
+    "nextReview": "Nächste Bewertung",
+    "current": "Aktuell",
+    "notes": "Notizen",
+    "mitigation": "Abmilderung",
+    "yes": "Ja",
+    "no": "Nein",
+    "filename": "Bewertungen",
     "sheetName": "Assessments"
   },
   "toast": {
-    "downloadError": "Download failed"
+    "downloadError": "Download fehlgeschlagen"
   }
 }
