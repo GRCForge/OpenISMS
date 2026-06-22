@@ -303,7 +303,7 @@ export const Layout: React.FC = () => {
         <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-900 dark:bg-black text-white flex flex-col transform transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-900 dark:bg-slate-900 text-white flex flex-col transform transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         {/* Logo & Theme Toggle */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/60">
           <div className="flex items-center gap-3">
@@ -393,7 +393,7 @@ export const Layout: React.FC = () => {
                 <div className={`w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform ${user?.avatar_url ? 'hidden' : ''}`}>
                   {user?.name?.charAt(0).toUpperCase()}
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-900 dark:border-black rounded-full shadow-xs" />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-900 rounded-full shadow-xs" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold leading-none truncate group-hover:text-blue-400 transition-colors">{user?.name}</p>
