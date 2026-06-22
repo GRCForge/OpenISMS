@@ -1,19 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Building2, Plus, Pencil, Trash2, Globe, ShieldCheck, ExternalLink, ShieldAlert, User, Clock, CheckCircle, Paperclip, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { de, enUS } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
-
-const typeLabels: Record<string, string> = {
-  software: 'Software',
-  cloud: 'SaaS / Cloud',
-  hardware: 'Hardware',
-  consulting: 'Beratung',
-  hosting: 'Hosting',
-  logistics: 'Logistik',
-  other: 'Sonstiges',
-  it_provider: 'IT-Dienstleister'
-};
 import type { Vendor, RiskLevel } from '../types';
 import { Card, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -26,19 +17,33 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { hasWriteAccess } from '../lib/permissions';
 
-const typeOptions = [
-  { value: 'software', label: 'Software-Hersteller' },
-  { value: 'cloud', label: 'Cloud-Dienstleister / SaaS' },
-  { value: 'hardware', label: 'Hardware-Lieferant' },
-  { value: 'consulting', label: 'Beratung / Consulting' },
-  { value: 'hosting', label: 'Rechenzentrum / Hosting' },
-  { value: 'logistics', label: 'Logistik' },
-  { value: 'other', label: 'Sonstiges' },
-];
-
 const emptyVendor = { name: '', type: 'software', website: '', phone: '', address: '', notes: '' };
 
 export const Vendors: React.FC = () => {
+  const { t, i18n } = useTranslation(['vendors', 'common']);
+  const dateFnsLocale = i18n.language === 'de' ? de : enUS;
+
+  const typeLabels: Record<string, string> = {
+    software: t('vendors:types.software'),
+    cloud: t('vendors:types.cloud'),
+    hardware: t('vendors:types.hardware'),
+    consulting: t('vendors:types.consulting'),
+    hosting: t('vendors:types.hosting'),
+    logistics: t('vendors:types.logistics'),
+    other: t('vendors:types.other'),
+    it_provider: t('vendors:types.it_provider'),
+  };
+
+  const typeOptions = [
+    { value: 'software', label: t('vendors:types.software') },
+    { value: 'cloud', label: t('vendors:types.cloud') },
+    { value: 'hardware', label: t('vendors:types.hardware') },
+    { value: 'consulting', label: t('vendors:types.consulting') },
+    { value: 'hosting', label: t('vendors:types.hosting') },
+    { value: 'logistics', label: t('vendors:types.logistics') },
+    { value: 'other', label: t('vendors:types.other') },
+  ];
+
   const { user } = useAuth();
   const canWrite = hasWriteAccess(user?.role);
   const toast = useToast();
@@ -49,7 +54,7 @@ export const Vendors: React.FC = () => {
   const [riskFilter, setRiskFilter] = useState('');
   const [dpaFilter, setDpaFilter] = useState('');
   const [certFilter, setCertFilter] = useState('');
-  
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [form, setForm] = useState(emptyVendor);
@@ -107,26 +112,26 @@ export const Vendors: React.FC = () => {
       await api.post(`/vendors/${selectedVendorForDocs.id}/documents`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      toast.success('Dokument erfolgreich hochgeladen');
+      toast.success(t('vendors:toast.docUploaded'));
       setDocFile(null);
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       loadDocs(selectedVendorForDocs.id);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Hochladen des Dokuments');
+      toast.error(err.response?.data?.error || t('vendors:toast.docUploadError'));
     } finally {
       setUploadingDoc(false);
     }
   };
 
   const handleDocDelete = async (docId: number) => {
-    if (!selectedVendorForDocs || !confirm('Dokument wirklich löschen?')) return;
+    if (!selectedVendorForDocs || !confirm(t('vendors:confirm.deleteDoc'))) return;
     try {
       await api.delete(`/vendors/${selectedVendorForDocs.id}/documents/${docId}`);
-      toast.success('Dokument gelöscht');
+      toast.success(t('vendors:toast.docDeleted'));
       loadDocs(selectedVendorForDocs.id);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Löschen des Dokuments');
+      toast.error(err.response?.data?.error || t('vendors:toast.docDeleteError'));
     }
   };
 
@@ -138,9 +143,9 @@ export const Vendors: React.FC = () => {
     const matchType = !typeFilter || v.type === typeFilter;
     const matchRisk = !riskFilter || v.risk_level === riskFilter;
     const matchDpa = !dpaFilter || (dpaFilter === 'signed' ? v.dpa_signed : !v.dpa_signed);
-    const matchCert = !certFilter || 
-      (certFilter === 'iso' ? v.iso27001_certified : 
-       certFilter === 'soc2' ? v.soc2_certified : 
+    const matchCert = !certFilter ||
+      (certFilter === 'iso' ? v.iso27001_certified :
+       certFilter === 'soc2' ? v.soc2_certified :
        certFilter === 'any' ? (v.iso27001_certified || v.soc2_certified) : true);
 
     return matchSearch && matchType && matchRisk && matchDpa && matchCert;
@@ -158,7 +163,7 @@ export const Vendors: React.FC = () => {
       setModalOpen(false);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('vendors:toast.saveError'));
     } finally { setSaving(false); }
   };
 
@@ -192,17 +197,17 @@ export const Vendors: React.FC = () => {
       setAssessModalOpen(false);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern der Bewertung');
+      toast.error(err.response?.data?.error || t('vendors:toast.assessError'));
     } finally { setAssessing(false); }
   };
 
   const remove = async (v: Vendor) => {
-    if (!confirm(`Unternehmen "${v.name}" wirklich löschen?`)) return;
+    if (!confirm(t('vendors:confirm.delete', { name: v.name }))) return;
     try {
       await api.delete(`/vendors/${v.id}`);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Löschen');
+      toast.error(err.response?.data?.error || t('vendors:toast.deleteError'));
     }
   };
 
@@ -212,16 +217,16 @@ export const Vendors: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold dark:text-white">Dienstleister & Lieferanten</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">Zentrales Lieferantenverzeichnis</p>
+          <h1 className="text-2xl font-bold dark:text-white">{t('vendors:title')}</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('vendors:subtitle')}</p>
         </div>
-        {canWrite && <Button onClick={() => { setEditVendor(null); setForm(emptyVendor); setModalOpen(true); }}><Plus size={16} />Firma anlegen</Button>}
+        {canWrite && <Button onClick={() => { setEditVendor(null); setForm(emptyVendor); setModalOpen(true); }}><Plus size={16} />{t('vendors:new')}</Button>}
       </div>
 
       <FilterBar
         search={search}
         onSearch={setSearch}
-        searchPlaceholder="Unternehmen suchen..."
+        searchPlaceholder={t('vendors:searchPlaceholder')}
         activeCount={[typeFilter, riskFilter, dpaFilter, certFilter].filter(Boolean).length}
         onReset={() => { setSearch(''); setTypeFilter(''); setRiskFilter(''); setDpaFilter(''); setCertFilter(''); }}
       >
@@ -229,7 +234,7 @@ export const Vendors: React.FC = () => {
           value={typeFilter}
           onChange={e => setTypeFilter(e.target.value)}
           options={[
-            { value: '', label: 'Alle Typen' },
+            { value: '', label: t('vendors:filters.allTypes') },
             ...Object.entries(typeLabels).map(([v, l]) => ({ value: v, label: l }))
           ]}
         />
@@ -237,30 +242,30 @@ export const Vendors: React.FC = () => {
           value={riskFilter}
           onChange={e => setRiskFilter(e.target.value)}
           options={[
-            { value: '', label: 'Alle Risiken' },
-            { value: 'low', label: 'Gering' },
-            { value: 'medium', label: 'Mittel' },
-            { value: 'high', label: 'Hoch' },
-            { value: 'critical', label: 'Kritisch' },
+            { value: '', label: t('vendors:filters.allRisks') },
+            { value: 'low', label: t('vendors:riskLevels.low') },
+            { value: 'medium', label: t('vendors:riskLevels.medium') },
+            { value: 'high', label: t('vendors:riskLevels.high') },
+            { value: 'critical', label: t('vendors:riskLevels.critical') },
           ]}
         />
         <Select
           value={dpaFilter}
           onChange={e => setDpaFilter(e.target.value)}
           options={[
-            { value: '', label: 'Alle AVV-Stati' },
-            { value: 'signed', label: 'AVV unterzeichnet' },
-            { value: 'unsigned', label: 'AVV ausstehend' },
+            { value: '', label: t('vendors:filters.allDpa') },
+            { value: 'signed', label: t('vendors:filters.dpaSigned') },
+            { value: 'unsigned', label: t('vendors:filters.dpaPending') },
           ]}
         />
         <Select
           value={certFilter}
           onChange={e => setCertFilter(e.target.value)}
           options={[
-            { value: '', label: 'Alle Zertifikate' },
-            { value: 'any', label: 'Zertifiziert (ISO/SOC2)' },
-            { value: 'iso', label: 'ISO 27001 zertifiziert' },
-            { value: 'soc2', label: 'SOC 2 Testat' },
+            { value: '', label: t('vendors:filters.allCerts') },
+            { value: 'any', label: t('vendors:filters.certified') },
+            { value: 'iso', label: t('vendors:filters.iso27001Cert') },
+            { value: 'soc2', label: t('vendors:filters.soc2') },
           ]}
         />
       </FilterBar>
@@ -273,14 +278,12 @@ export const Vendors: React.FC = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
                     {(() => {
-                      // Nur valide http(s)-Hostnames an den Favicon-Dienst geben —
-                      // schützt vor javascript:-URLs und Render-Crash durch new URL()
                       let host: string | null = null;
                       if (v.website) {
                         try {
                           const u = new URL(/^https?:\/\//i.test(v.website) ? v.website : `https://${v.website}`);
                           if (u.protocol === 'http:' || u.protocol === 'https:') host = u.hostname;
-                        } catch { /* ungültige URL → Fallback-Icon */ }
+                        } catch { /* invalid URL → fallback icon */ }
                       }
                       return host ? (
                         <img
@@ -299,7 +302,7 @@ export const Vendors: React.FC = () => {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <Badge value={v.risk_level || 'medium'} label={v.risk_level?.toUpperCase() || 'MODERAT'} />
-                    {v.data_processor && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">Auftragsverarbeiter</span>}
+                    {v.data_processor && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">{t('vendors:card.dataProcessor')}</span>}
                   </div>
                 </div>
 
@@ -314,35 +317,35 @@ export const Vendors: React.FC = () => {
                   )}
                   <Link to={`/contacts?vendor=${v.id}`} className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
                     <User size={14} className="text-gray-400" />
-                    <span>{v.contacts?.length || 0} Ansprechpartner</span>
+                    <span>{t('vendors:card.contacts', { count: v.contacts?.length || 0 })}</span>
                     <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 </div>
 
                 <div className="flex items-center gap-3 pt-4 border-t dark:border-slate-800 mt-auto">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Audit</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('vendors:card.audit')}</p>
                     <div className="flex items-center gap-1.5">
                       <Clock size={14} className={v.next_review_date && new Date(v.next_review_date) < new Date() ? 'text-red-500' : 'text-gray-400'} />
                       <span className={`text-sm truncate ${v.next_review_date && new Date(v.next_review_date) < new Date() ? 'text-red-600 font-bold' : 'dark:text-slate-300'}`}>
-                        {v.next_review_date ? format(new Date(v.next_review_date), 'dd.MM.yyyy') : '–'}
+                        {v.next_review_date ? format(new Date(v.next_review_date), 'P', { locale: dateFnsLocale }) : '–'}
                       </span>
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => openAssess(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title="Risikobewertung">
+                    <button onClick={() => openAssess(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title={t('vendors:card.riskAssessmentTitle')}>
                       <ShieldCheck size={18} />
                     </button>
-                    <button onClick={() => openDocs(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title="Dokumente verwalten (AVV, Zertifikate)">
+                    <button onClick={() => openDocs(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title={t('vendors:card.docsTitle')}>
                       <Paperclip size={18} />
                     </button>
                     {canWrite && (
-                      <button onClick={() => { setEditVendor(v); setForm({ name: v.name, type: v.type, website: v.website || '', phone: v.phone || '', address: v.address || '', notes: v.notes || '' }); setModalOpen(true); }} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title="Bearbeiten">
+                      <button onClick={() => { setEditVendor(v); setForm({ name: v.name, type: v.type, website: v.website || '', phone: v.phone || '', address: v.address || '', notes: v.notes || '' }); setModalOpen(true); }} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title={t('vendors:card.editTitle')}>
                         <Pencil size={18} />
                       </button>
                     )}
                     {canWrite && (
-                      <button onClick={() => remove(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-red-600 transition-colors" title="Löschen">
+                      <button onClick={() => remove(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-red-600 transition-colors" title={t('vendors:card.deleteTitle')}>
                         <Trash2 size={18} />
                       </button>
                     )}
@@ -352,17 +355,17 @@ export const Vendors: React.FC = () => {
 
               {/* Status Bar */}
               <div className="flex divide-x divide-gray-100 dark:divide-slate-800 border-t dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 mt-auto">
-                <div className="flex-1 py-3 px-2 flex flex-col items-center gap-1" title="AVV unterzeichnet">
+                <div className="flex-1 py-3 px-2 flex flex-col items-center gap-1" title={t('vendors:filters.dpaSigned')}>
                   <ShieldCheck size={16} className={v.dpa_signed ? 'text-green-500' : 'text-gray-300'} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">AVV</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('vendors:card.dpaLabel')}</span>
                 </div>
                 <div className="flex-1 py-3 px-2 flex flex-col items-center gap-1" title="ISO 27001">
                   <ShieldAlert size={16} className={v.iso27001_certified ? 'text-blue-500' : 'text-gray-300'} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">ISO</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('vendors:card.isoLabel')}</span>
                 </div>
-                <div className="flex-1 py-3 px-2 flex flex-col items-center gap-1" title="DSGVO-konform">
+                <div className="flex-1 py-3 px-2 flex flex-col items-center gap-1" title={t('vendors:assess.gdprCompliantCheck')}>
                   <CheckCircle size={16} className={v.gdpr_compliant ? 'text-green-500' : 'text-gray-300'} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">DSGVO</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('vendors:card.gdprLabel')}</span>
                 </div>
               </div>
             </CardBody>
@@ -371,78 +374,78 @@ export const Vendors: React.FC = () => {
       </div>
 
       {/* Create/Edit Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editVendor ? 'Firma bearbeiten' : 'Neue Firma anlegen'} size="xl">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editVendor ? t('vendors:modal.editTitle') : t('vendors:modal.newTitle')} size="xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             <div className="md:col-span-2">
-              <Input label="Unternehmensname *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="z. B. Amazon Web Services, Microsoft Deutschland..." />
+              <Input label={t('vendors:modal.name')} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder={t('vendors:modal.namePlaceholder')} />
             </div>
-            <Select label="Branche / Typ *" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} options={typeOptions} />
-            <Input label="Website" value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder="https://www.firma.de" />
-            
-            <Input label="Zentrale Telefonnummer" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+49 123 456789" />
-            <Input label="Hauptsitz / Adresse" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Straße, PLZ Ort, Land" />
-            
+            <Select label={t('vendors:modal.type')} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} options={typeOptions} />
+            <Input label={t('vendors:modal.website')} value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder={t('vendors:modal.websitePlaceholder')} />
+
+            <Input label={t('vendors:modal.phone')} value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={t('vendors:modal.phonePlaceholder')} />
+            <Input label={t('vendors:modal.address')} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder={t('vendors:modal.addressPlaceholder')} />
+
             <div className="md:col-span-2 flex flex-col gap-1">
-              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Interne Notizen / Kurzbeschreibung</label>
-              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={3} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Besonderheiten, Vertragsnummern, kritische Abhängigkeiten..." />
+              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('vendors:modal.notes')}</label>
+              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={3} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder={t('vendors:modal.notesPlaceholder')} />
             </div>
           </div>
-          
+
           <div className="flex gap-3 pt-4 border-t dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" disabled={saving || !canWrite} className="flex-1 justify-center">{saving ? 'Speichern...' : 'Unternehmensdaten speichern'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1 justify-center">{t('vendors:modal.cancel')}</Button>
+            <Button type="submit" disabled={saving || !canWrite} className="flex-1 justify-center">{saving ? t('vendors:modal.saving') : t('vendors:modal.save')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Risk Assessment Modal */}
-      <Modal open={assessModalOpen} onClose={() => setAssessModalOpen(false)} title={`Risikobewertung: ${assessVendor?.name || ''}`} size="xl">
+      <Modal open={assessModalOpen} onClose={() => setAssessModalOpen(false)} title={t('vendors:assess.title', { name: assessVendor?.name || '' })} size="xl">
         <form onSubmit={handleAssess} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-            
+
             <section className="p-4 rounded-xl border dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/20 space-y-4">
-              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">Risiko-Einstufung</h3>
+              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('vendors:assess.riskSection')}</h3>
               <div className="grid grid-cols-1 gap-4">
                 <Select
-                  label="Risikostufe"
+                  label={t('vendors:assess.riskLevel')}
                   value={assessForm.risk_level}
                   onChange={e => setAssessForm(f => ({ ...f, risk_level: e.target.value as RiskLevel }))}
                   options={[
-                    { value: 'low', label: 'Gering (Low Risk)' },
-                    { value: 'medium', label: 'Mittel (Standard)' },
-                    { value: 'high', label: 'Hoch (Critical Vendor)' },
-                    { value: 'critical', label: 'Kritisch (Immediate Action)' },
+                    { value: 'low', label: t('vendors:assess.riskLow') },
+                    { value: 'medium', label: t('vendors:assess.riskMedium') },
+                    { value: 'high', label: t('vendors:assess.riskHigh') },
+                    { value: 'critical', label: t('vendors:assess.riskCritical') },
                   ]}
                 />
                 <Input
-                  label="Risikopunktzahl (0–100)"
+                  label={t('vendors:assess.riskScore')}
                   type="number"
                   min="0" max="100"
                   value={assessForm.risk_score}
                   onChange={e => setAssessForm(f => ({ ...f, risk_score: e.target.value }))}
-                  placeholder="Eigene Gewichtung..."
+                  placeholder={t('vendors:assess.riskScorePlaceholder')}
                 />
               </div>
             </section>
 
             <section className="p-4 rounded-xl border dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/20 space-y-4">
-              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">Termine & Fristen</h3>
+              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('vendors:assess.datesSection')}</h3>
               <div className="grid grid-cols-1 gap-4">
-                <Input label="Nächstes Audit / Review" type="date" value={assessForm.next_review_date} onChange={e => setAssessForm(f => ({ ...f, next_review_date: e.target.value }))} />
-                <Input label="AVV unterzeichnet am" type="date" value={assessForm.dpa_signed_at} onChange={e => setAssessForm(f => ({ ...f, dpa_signed_at: e.target.value }))} />
+                <Input label={t('vendors:assess.nextAudit')} type="date" value={assessForm.next_review_date} onChange={e => setAssessForm(f => ({ ...f, next_review_date: e.target.value }))} />
+                <Input label={t('vendors:assess.dpaSignedAt')} type="date" value={assessForm.dpa_signed_at} onChange={e => setAssessForm(f => ({ ...f, dpa_signed_at: e.target.value }))} />
               </div>
             </section>
 
             <div className="md:col-span-2">
-              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider mb-3">Compliance-Checks</h3>
+              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider mb-3">{t('vendors:assess.complianceSection')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[
-                  { key: 'data_processor', label: 'Auftragsverarbeiter (Art. 28)' },
-                  { key: 'dpa_signed', label: 'AVV liegt unterzeichnet vor' },
-                  { key: 'gdpr_compliant', label: 'DSGVO-konform bestätigt' },
-                  { key: 'iso27001_certified', label: 'ISO 27001 zertifiziert' },
-                  { key: 'soc2_certified', label: 'SOC 2 Typ II Testat' },
+                  { key: 'data_processor', label: t('vendors:assess.dataProcessorCheck') },
+                  { key: 'dpa_signed', label: t('vendors:assess.dpaSignedCheck') },
+                  { key: 'gdpr_compliant', label: t('vendors:assess.gdprCompliantCheck') },
+                  { key: 'iso27001_certified', label: t('vendors:assess.iso27001Check') },
+                  { key: 'soc2_certified', label: t('vendors:assess.soc2Check') },
                 ].map(({key, label}) => (
                   <label key={key} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${assessForm[key as keyof typeof assessForm] ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-slate-800 hover:border-gray-300'}`}>
                     <input
@@ -458,49 +461,49 @@ export const Vendors: React.FC = () => {
             </div>
 
             <div className="md:col-span-2 flex flex-col gap-1">
-              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Sub-Dienstleister-Risiken (Kaskaden)</label>
-              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={assessForm.fourth_party_risks} onChange={e => setAssessForm(f => ({ ...f, fourth_party_risks: e.target.value }))} placeholder="Nutzt dieser Dienstleister kritische Unter-Auftragnehmer (z.B. AWS, Google Cloud, Cloudflare)?" />
+              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('vendors:assess.fourthPartyRisks')}</label>
+              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={assessForm.fourth_party_risks} onChange={e => setAssessForm(f => ({ ...f, fourth_party_risks: e.target.value }))} placeholder={t('vendors:assess.fourthPartyPlaceholder')} />
             </div>
 
             <div className="md:col-span-2 flex flex-col gap-1">
-              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Zusammenfassung der Bewertung</label>
-              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={3} value={assessForm.assessment_notes} onChange={e => setAssessForm(f => ({ ...f, assessment_notes: e.target.value }))} placeholder="Beobachtungen, notwendige Nachbesserungen, Zusammenfassung der Sorgfaltspflichtprüfung..." />
+              <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('vendors:assess.assessmentNotes')}</label>
+              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={3} value={assessForm.assessment_notes} onChange={e => setAssessForm(f => ({ ...f, assessment_notes: e.target.value }))} placeholder={t('vendors:assess.assessmentNotesPlaceholder')} />
             </div>
           </div>
 
           <div className="flex gap-3 pt-4 border-t dark:border-slate-800 sticky bottom-0 bg-white dark:bg-slate-900">
-            <Button type="button" variant="secondary" onClick={() => setAssessModalOpen(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" disabled={assessing || !canWrite} className="flex-1 justify-center">{assessing ? 'Speichern...' : 'Risikobewertung abschließen'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setAssessModalOpen(false)} className="flex-1 justify-center">{t('vendors:assess.cancel')}</Button>
+            <Button type="submit" disabled={assessing || !canWrite} className="flex-1 justify-center">{assessing ? t('vendors:assess.saving') : t('vendors:assess.save')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Vendor Documents Modal */}
-      <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)} title={`Dokumente verwalten: ${selectedVendorForDocs?.name || ''}`} size="xl">
+      <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)} title={t('vendors:docs.title', { name: selectedVendorForDocs?.name || '' })} size="xl">
         <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
           {/* Upload Form */}
           <form onSubmit={handleDocUpload} className="p-4 rounded-xl border dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 space-y-4">
-            <h3 className="text-sm font-bold dark:text-white">Dokument hochladen</h3>
+            <h3 className="text-sm font-bold dark:text-white">{t('vendors:docs.upload')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select
-                label="Kategorie *"
+                label={t('vendors:docs.category')}
                 value={docForm.category}
                 onChange={e => setDocForm(f => ({ ...f, category: e.target.value }))}
                 options={[
-                  { value: 'dpa', label: 'Auftragsverarbeitungsvertrag (AVV / DPA)' },
-                  { value: 'contract', label: 'Hauptvertrag / NDA' },
-                  { value: 'certificate', label: 'Zertifikat (z. B. ISO 27001, SOC 2)' },
-                  { value: 'other', label: 'Sonstiges' }
+                  { value: 'dpa', label: t('vendors:docs.catDpa') },
+                  { value: 'contract', label: t('vendors:docs.catContract') },
+                  { value: 'certificate', label: t('vendors:docs.catCertificate') },
+                  { value: 'other', label: t('vendors:docs.catOther') }
                 ]}
               />
               <Input
-                label="Beschreibung"
+                label={t('vendors:docs.description')}
                 value={docForm.description}
                 onChange={e => setDocForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="z. B. Unterzeichneter AVV 2026, ISO-Zertifikat..."
+                placeholder={t('vendors:docs.descriptionPlaceholder')}
               />
               <div className="md:col-span-2 flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Datei auswählen *</label>
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('vendors:docs.file')}</label>
                 <input
                   type="file"
                   onChange={e => setDocFile(e.target.files?.[0] || null)}
@@ -511,16 +514,16 @@ export const Vendors: React.FC = () => {
             </div>
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={uploadingDoc} className="px-6">
-                {uploadingDoc ? 'Wird hochgeladen...' : 'Dokument hinzufügen'}
+                {uploadingDoc ? t('vendors:docs.uploading') : t('vendors:docs.add')}
               </Button>
             </div>
           </form>
 
           {/* List of Documents */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold dark:text-white">Vorhandene Dokumente</h3>
+            <h3 className="text-sm font-bold dark:text-white">{t('vendors:docs.existing')}</h3>
             {vendorDocs.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-6 border border-dashed dark:border-slate-800 rounded-xl">Keine Dokumente hinterlegt.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-6 border border-dashed dark:border-slate-800 rounded-xl">{t('vendors:docs.empty')}</p>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-slate-800 border dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
                 {vendorDocs.map(doc => (
@@ -529,12 +532,16 @@ export const Vendors: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm dark:text-white truncate">{doc.original_name}</span>
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                          {doc.category === 'dpa' ? 'AVV/DPA' : doc.category === 'contract' ? 'Vertrag' : doc.category === 'certificate' ? 'Zertifikat' : 'Sonstiges'}
+                          {doc.category === 'dpa' ? t('vendors:docs.catDpaShort') : doc.category === 'contract' ? t('vendors:docs.catContractShort') : doc.category === 'certificate' ? t('vendors:docs.catCertificateShort') : t('vendors:docs.catOtherShort')}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{doc.description || 'Keine Beschreibung'}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{doc.description || t('vendors:docs.noDescription')}</p>
                       <p className="text-[10px] text-gray-400 mt-0.5">
-                        Hochgeladen am {format(new Date(doc.created_at || Date.now()), 'dd.MM.yyyy HH:mm')} von {doc.uploader?.name || 'Unbekannt'} · {(doc.size / 1024 / 1024).toFixed(2)} MB
+                        {t('vendors:docs.uploadedAt', {
+                          date: format(new Date(doc.created_at || Date.now()), 'Pp', { locale: dateFnsLocale }),
+                          uploader: doc.uploader?.name || 'Unknown',
+                          size: (doc.size / 1024 / 1024).toFixed(2)
+                        })}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -543,7 +550,7 @@ export const Vendors: React.FC = () => {
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors"
-                        title="Herunterladen"
+                        title={t('vendors:docs.download')}
                       >
                         <Download size={18} />
                       </a>
@@ -551,7 +558,7 @@ export const Vendors: React.FC = () => {
                         <button
                           onClick={() => handleDocDelete(doc.id)}
                           className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-red-600 transition-colors"
-                          title="Löschen"
+                          title={t('vendors:docs.delete')}
                         >
                           <Trash2 size={18} />
                         </button>

@@ -1,10 +1,21 @@
 const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
-const { Task, User, Group, GroupMember, Notification } = require('../models');
-const { authenticate, requireWriteAccess } = require('../middleware/auth');
+const { Task, User, Group, GroupMember, Notification, Asset, Risk, Incident, Training, AiSystem, SubjectRequest } = require('../models');
+const { authenticate, requireWriteAccess, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { Op } = require('sequelize');
+
+// Maps each related_type to the model and the condition that means "record still exists/active".
+// Used by the orphan-cleanup endpoints.
+const ORPHAN_CHECKS = {
+  asset:          { model: Asset,          where: {} },
+  risk:           { model: Risk,           where: {} },
+  incident:       { model: Incident,       where: { deleted: { [Op.ne]: true } } },
+  training:       { model: Training,       where: {} },
+  ai_system:      { model: AiSystem,       where: {} },
+  subject_request:{ model: SubjectRequest, where: {} },
+};
 
 router.use(authenticate);
 
@@ -190,6 +201,51 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
     const full = await Task.findByPk(task.id, { include: taskInclude });
     res.json(full);
   } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Count orphaned tasks (admin only) — safe preview before purge
+router.get('/orphaned-count', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    let total = 0;
+    for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
+      const activeTasks = await Task.findAll({
+        where: { related_type: relType, status: { [Op.notIn]: ['done', 'cancelled'] } },
+        attributes: ['id', 'related_id'],
+        raw: true,
+      });
+      if (!activeTasks.length) continue;
+      const ids = [...new Set(activeTasks.map(t => t.related_id))];
+      const existing = await model.findAll({ where: { id: { [Op.in]: ids }, ...where }, attributes: ['id'], raw: true });
+      const existingSet = new Set(existing.map(r => r.id));
+      total += activeTasks.filter(t => !existingSet.has(t.related_id)).length;
+    }
+    res.json({ count: total });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Purge orphaned tasks (admin only) — deletes tasks whose related object no longer exists
+router.delete('/orphaned', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    let purged = 0;
+    for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
+      const activeTasks = await Task.findAll({
+        where: { related_type: relType, status: { [Op.notIn]: ['done', 'cancelled'] } },
+        attributes: ['id', 'related_id'],
+        raw: true,
+      });
+      if (!activeTasks.length) continue;
+      const ids = [...new Set(activeTasks.map(t => t.related_id))];
+      const existing = await model.findAll({ where: { id: { [Op.in]: ids }, ...where }, attributes: ['id'], raw: true });
+      const existingSet = new Set(existing.map(r => r.id));
+      const orphanIds = activeTasks.filter(t => !existingSet.has(t.related_id)).map(t => t.id);
+      if (orphanIds.length) {
+        await Task.destroy({ where: { id: { [Op.in]: orphanIds } } });
+        purged += orphanIds.length;
+      }
+    }
+    await auditFromReq(req, 'delete', 'task', null, 'Purge verwaister Aufgaben', { purged });
+    res.json({ purged });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Delete task

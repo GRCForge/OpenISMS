@@ -1,0 +1,61 @@
+{
+  "title": "Ansprechpartner",
+  "subtitle": "{{count}} Kontakte über {{vendors}} Firmen",
+  "new": "Kontakt anlegen",
+  "searchPlaceholder": "Name, E-Mail oder Rolle suchen...",
+  "filters": {
+    "allCompanies": "Alle Firmen",
+    "allTypes": "Alle Firmen-Typen",
+    "allRoles": "Alle Rollen"
+  },
+  "table": {
+    "name": "Name",
+    "company": "Firma",
+    "role": "Funktion / Rolle",
+    "contact": "Kontakt",
+    "actions": "Aktionen"
+  },
+  "empty": "Keine Ansprechpartner gefunden",
+  "modal": {
+    "editTitle": "Ansprechpartner bearbeiten",
+    "newTitle": "Neuen Ansprechpartner anlegen"
+  },
+  "form": {
+    "company": "Zugehöriges Unternehmen",
+    "switchToNew": "Neue Firma anlegen",
+    "switchToExisting": "Existierende Firma wählen",
+    "newCompanyName": "Name der Firma *",
+    "newCompanyNamePlaceholder": "Firma GmbH",
+    "type": "Typ *",
+    "selectCompany": "Firma auswählen...",
+    "fullName": "Vollständiger Name des Kontakts *",
+    "fullNamePlaceholder": "z. B. Erika Musterfrau",
+    "functionRole": "Funktion / Rolle",
+    "functionRolePlaceholder": "z. B. Key Account Manager",
+    "department": "Abteilung (extern)",
+    "departmentPlaceholder": "z. B. Vertrieb, Technik",
+    "email": "E-Mail-Adresse",
+    "phone": "Telefonnummer",
+    "notes": "Notizen zum Kontakt",
+    "notesPlaceholder": "Verfügbarkeiten, Eskalationsweg, etc.",
+    "cancel": "Abbrechen",
+    "save": "Kontakt aktualisieren",
+    "create": "Kontakt anlegen",
+    "saving": "Speichern..."
+  },
+  "confirm": { "delete": "Ansprechpartner wirklich löschen?" },
+  "toast": {
+    "loadError": "Kontaktdaten konnten nicht geladen werden",
+    "saveError": "Fehler beim Speichern",
+    "deleteError": "Löschen fehlgeschlagen"
+  },
+  "types": {
+    "software": "Software-Hersteller",
+    "cloud": "Cloud-Dienstleister / SaaS",
+    "hardware": "Hardware-Lieferant",
+    "consulting": "Beratung / Consulting",
+    "hosting": "Rechenzentrum / Hosting",
+    "logistics": "Logistik",
+    "other": "Sonstiges"
+  }
+}

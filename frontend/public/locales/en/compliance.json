@@ -1,0 +1,45 @@
+{
+  "title": "Compliance",
+  "trainings": {
+    "title": "Trainings",
+    "new": "New Training",
+    "mandatory": "Mandatory",
+    "optional": "Optional",
+    "status": {
+      "valid":    "Valid",
+      "pending":  "Pending",
+      "expired":  "Expired"
+    }
+  },
+  "kpis": {
+    "title": "KPIs",
+    "new": "New KPI"
+  },
+  "audits": {
+    "title": "Audits",
+    "new": "New Audit",
+    "types": {
+      "internal":      "Internal",
+      "external":      "External",
+      "certification": "Certification"
+    },
+    "status": {
+      "planned":     "Planned",
+      "in_progress": "In Progress",
+      "completed":   "Completed"
+    }
+  },
+  "findings": {
+    "severity": {
+      "observation": "Observation",
+      "minor":       "Minor",
+      "major":       "Major",
+      "critical":    "Critical"
+    },
+    "status": {
+      "open":        "Open",
+      "in_progress": "In Progress",
+      "closed":      "Closed"
+    }
+  }
+}

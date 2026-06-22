@@ -1,0 +1,8 @@
+project_id: "your_project_id"
+api_token: $CROWDIN_PERSONAL_TOKEN
+source_language: en
+base_path: frontend/public
+preserve_hierarchy: true
+files:
+  - source: locales/en/*.json
+    translation: locales/%locale%/%original_file_name%

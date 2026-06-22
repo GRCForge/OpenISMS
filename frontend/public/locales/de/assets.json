@@ -1,0 +1,106 @@
+{
+  "title": "Assets",
+  "subtitle_one":   "{{count}} Asset",
+  "subtitle_other": "{{count}} Assets",
+  "new": "Neues Asset",
+  "edit": "Asset bearbeiten",
+  "searchPlaceholder": "Assets suchen...",
+  "noFilter": "Keine Assets für diese Filter",
+  "countLabel_one": "{{count}} Eintrag",
+  "countLabel_other": "{{count}} Einträge",
+  "bulkDelete_one": "{{count}} Löschen",
+  "bulkDelete_other": "{{count}} Löschen",
+  "types": {
+    "application":   "Anwendung",
+    "software":      "Software",
+    "hardware":      "Hardware",
+    "service":       "Dienst",
+    "data":          "Daten",
+    "information":   "Information/Daten",
+    "process":       "Prozess",
+    "personal":      "Personal",
+    "ai_application":"KI-Anwendung (AI Act)",
+    "ai_agent":      "KI-Agent / Autonomes System",
+    "other":         "Sonstiges"
+  },
+  "status": {
+    "active":          "Aktiv",
+    "inactive":        "Inaktiv",
+    "decommissioned":  "Ausgemustert",
+    "all":             "Alle (inkl. Ausgemustert)",
+    "onlyActive":      "Nur Aktiv",
+    "onlyInactive":    "Nur Inaktiv",
+    "activeAssets":    "Aktive Assets"
+  },
+  "hosting": {
+    "on-premise":    "On-Premise",
+    "cloud_public":  "Cloud Public",
+    "cloud_private": "Cloud Private",
+    "hybrid":        "Hybrid"
+  },
+  "lifecycle": {
+    "evaluation": "In Evaluierung",
+    "production": "Produktion",
+    "maintenance": "Wartung",
+    "archived":   "Archiviert"
+  },
+  "filters": {
+    "allTypes":           "Alle Typen",
+    "allFrameworks":      "Alle Frameworks",
+    "allClassifications": "Alle Klassifizierungen",
+    "allHosting":         "Alle Hosting-Arten",
+    "allLifecycle":       "Alle Phasen",
+    "allStatus":          "Aktive Assets"
+  },
+  "empty": {
+    "title":       "Keine Assets gefunden",
+    "subtitle":    "Legen Sie Assets an, um Ihre IT-Landschaft zu verwalten und Risiken zu bewerten.",
+    "createFirst": "Erstes Asset anlegen"
+  },
+  "table": {
+    "name":           "Name",
+    "type":           "Typ",
+    "classification": "Klassifizierung",
+    "owner":          "Eigentümer",
+    "status":         "Status"
+  },
+  "form": {
+    "name":           "Name des Assets",
+    "description":    "Beschreibung",
+    "type":           "Asset-Typ",
+    "classification": "Schutzbedarf",
+    "owner":          "Eigentümer (Business Owner)",
+    "assessor":       "Techn. Verantwortlicher (Assessor)",
+    "version":        "Version / Revision",
+    "vendor":         "Hersteller / Vendor",
+    "location":       "Standort / Region",
+    "externalVendor": "Externer Dienstleister (Supply Chain)",
+    "frameworks":     "Relevante Frameworks",
+    "dsfa":           "DSFA erforderlich?",
+    "nis2":           "NIS-2 relevant?",
+    "placeholders": {
+      "name":        "z. B. ERP-System, Kundendatenbank...",
+      "description": "Kurze Beschreibung des Verwendungszwecks...",
+      "version":     "v1.0.0",
+      "vendor":      "Microsoft, SAP, etc.",
+      "location":    "RZ Süd, AWS, etc.",
+      "select":      "Auswählen...",
+      "own":         "– Eigenbetrieb / Intern –"
+    },
+    "save":          "Asset speichern",
+    "saving":        "Speichern...",
+    "requiredOwner": "Bitte Eigentümer und technischen Verantwortlichen auswählen."
+  },
+  "toast": {
+    "bulkDeleted_one":        "{{count}} Asset gelöscht",
+    "bulkDeleted_other":      "{{count}} Assets gelöscht",
+    "bulkDeleteConfirm_one":  "Möchten Sie das {{count}} ausgewählte Asset wirklich löschen / außer Betrieb setzen?",
+    "bulkDeleteConfirm_other":"Möchten Sie die {{count}} ausgewählten Assets wirklich löschen / außer Betrieb setzen?",
+    "errorDeleting": "Fehler beim Löschen",
+    "errorSaving":   "Fehler beim Speichern"
+  },
+  "yn": {
+    "yes": "Ja",
+    "no":  "Nein"
+  }
+}

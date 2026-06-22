@@ -1,0 +1,50 @@
+{
+  "groups": {
+    "cockpit": "Cockpit",
+    "governance": "Governance",
+    "operations": "Operations",
+    "resources": "Ressourcen",
+    "system": "System"
+  },
+  "items": {
+    "dashboard":        { "label": "Dashboard",             "hint": "Status auf einen Blick" },
+    "my":               { "label": "Mein Bereich",          "hint": "Deine Aufgaben" },
+    "myEmployee":       { "label": "Meine Schulungen",      "hint": "Deine Schulungen" },
+    "report":           { "label": "Reports",               "hint": "Management Berichte" },
+    "compliance":       { "label": "Compliance",            "hint": "ISO 27001 · NIS-2 · DSGVO" },
+    "controls":         { "label": "Maßnahmen",             "hint": "SoA & Kontrollen" },
+    "policies":         { "label": "Dokumente",             "hint": "Richtlinien & Vorlagen" },
+    "vvt":              { "label": "Datenschutz",           "hint": "VVT (Art. 30 DSGVO)" },
+    "subjectRequests":  { "label": "Betroffenenrechte",     "hint": "Anträge Art. 15–22 DSGVO" },
+    "legalRequirements":{ "label": "Pflichten-Register",    "hint": "Gesetzliche Anforderungen" },
+    "iso27001":         { "label": "ISO 27001",             "hint": "Annex A Controls & SoA" },
+    "bsiGrundschutz":   { "label": "BSI Grundschutz",       "hint": "IT-Grundschutz-Kompendium" },
+    "nis2":             { "label": "NIS-2",                 "hint": "Art. 21 Sicherheitsmaßnahmen" },
+    "c5":               { "label": "BSI C5:2026",           "hint": "Cloud Controls Catalogue" },
+    "tisax":            { "label": "TISAX",                 "hint": "Automotive Security Assessment" },
+    "aiAct":            { "label": "EU AI Act",             "hint": "KI-Systemregister" },
+    "assets":           { "label": "Assets",                "hint": "Inventar & Klassifizierung" },
+    "discovery":        { "label": "Discovery",             "hint": "Netzwerk & Agents" },
+    "risks":            { "label": "Risiken",               "hint": "ISO 27005 Register" },
+    "incidents":        { "label": "Vorfälle",              "hint": "Vorfallmanagement" },
+    "tasks":            { "label": "Aufgaben",              "hint": "Sicherheitsmaßnahmen" },
+    "dora":             { "label": "DORA",                  "hint": "IKT-Drittparteienregister" },
+    "pentests":         { "label": "Pentests",              "hint": "Pentest-Tracking & Findings" },
+    "vendors":          { "label": "Dienstleister",         "hint": "Firmenverzeichnis" },
+    "contacts":         { "label": "Ansprechpartner",       "hint": "Kontakte bei Firmen" },
+    "topology":         { "label": "Topologie",             "hint": "Visualisierung" },
+    "assessments":      { "label": "Assessments",           "hint": "CIA-Bewertungen" },
+    "reminders":        { "label": "Reviews",               "hint": "Fällige Prüfungen" },
+    "bcm":              { "label": "BCM",                   "hint": "Business Continuity Management" },
+    "import":           { "label": "Import",                "hint": "CSV Bulk-Upload" },
+    "admin":            { "label": "Admin",                 "hint": "Einstellungen" }
+  },
+  "overdueReviews_one":   "{{count}} überfälliges Review",
+  "overdueReviews_other": "{{count}} überfällige Reviews",
+  "search": "Suche…",
+  "theme": {
+    "dark": "Dunkelmodus aktivieren",
+    "light": "Hellmodus aktivieren"
+  },
+  "version": "OpenISMS v{{version}} · © 2026 Maximilian Herz"
+}

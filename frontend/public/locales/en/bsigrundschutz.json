@@ -1,0 +1,58 @@
+{
+  "title": "BSI IT-Grundschutz",
+  "subtitle": "IT-Grundschutz Compendium · {{count}} requirements",
+  "status": {
+    "not_started": "Open",
+    "in_progress": "In progress",
+    "implemented": "Implemented",
+    "not_applicable": "Not applicable"
+  },
+  "level": {
+    "basis": "Basic",
+    "standard": "Standard",
+    "erhoehter_schutzbedarf": "High protection"
+  },
+  "stats": {
+    "total": "Total",
+    "implemented": "Implemented",
+    "inProgress": "In progress",
+    "open": "Open"
+  },
+  "filter": {
+    "searchPlaceholder": "Requirement ID, module or title...",
+    "allStatus": "All status",
+    "allLevels": "All protection levels",
+    "allLayers": "All layers"
+  },
+  "table": {
+    "reqId": "Requirement ID",
+    "title": "Title",
+    "level": "Protection level",
+    "status": "Status",
+    "lastReview": "Last review",
+    "reqCount": "{{count}} req."
+  },
+  "empty": {
+    "title": "No BSI IT-Grundschutz requirements yet",
+    "description": "Load the integrated BSI IT-Grundschutz catalogue to start tracking implementation.",
+    "loadButton": "Load BSI catalogue",
+    "loading": "Loading catalogue..."
+  },
+  "filterEmpty": "No requirements match the filter criteria.",
+  "editTitle": "Edit",
+  "modal": {
+    "status": "Implementation status",
+    "responsible": "Responsible person",
+    "nobody": "– nobody –",
+    "lastReview": "Last review",
+    "notes": "Notes",
+    "crossRefs": "Cross-references",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "toast": {
+    "loadError": "Error loading catalogue",
+    "saveError": "Error saving"
+  }
+}

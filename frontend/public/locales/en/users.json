@@ -1,0 +1,105 @@
+{
+  "title": "User Management",
+  "subtitle": "{{count}} registered users",
+  "new": "New User",
+  "createUser": "Create User",
+  "searchPlaceholder": "Search users...",
+  "fields": {
+    "name":       "Name",
+    "email":      "Email",
+    "role":       "Role",
+    "department": "Department",
+    "active":     "Active",
+    "inactive":   "Inactive",
+    "lastLogin":  "Last Login",
+    "twoFactor":  "2FA",
+    "authentication": "Authentication",
+    "status": "Status"
+  },
+  "roleLabels": {
+    "admin": "Administrator",
+    "assessor": "Auditor / Assessor",
+    "it-staff": "IT Staff",
+    "dpo": "Data Protection Officer",
+    "owner": "Asset Owner",
+    "management": "Management",
+    "viewer": "Viewer",
+    "employee": "Employee"
+  },
+  "filters": {
+    "allRoles": "All roles",
+    "allSecurityLevels": "All security levels",
+    "ssoOnly": "SSO users only",
+    "localOnly": "Local users only",
+    "mfaActive": "MFA / Passkey active",
+    "mfaInactive": "MFA inactive (insecure)"
+  },
+  "badges": {
+    "sso": "SSO",
+    "password": "Password",
+    "twoFactorInactive": "2FA inactive",
+    "totpTitle": "Two-factor authentication via app active",
+    "passkeyTitle": "{{count}} passkey(s) registered"
+  },
+  "statusLabels": {
+    "active": "Active",
+    "deactivated": "Deactivated"
+  },
+  "customRolesGroup": "Custom roles",
+  "roleSelect": {
+    "ownRoleNotChangeable": "Own role not changeable",
+    "changeRoleDirectly": "Change role directly"
+  },
+  "form": {
+    "editTitle": "Edit User",
+    "newTitle": "Create New User",
+    "fullName": "Full Name *",
+    "fullNamePlaceholder": "e.g. John Doe",
+    "emailLabel": "Email Address *",
+    "emailPlaceholder": "john.doe@company.com",
+    "departmentLabel": "Department / Team",
+    "departmentPlaceholder": "e.g. IT Operations",
+    "systemRole": "System Role *",
+    "roleOptions": {
+      "admin": "Administrator (Full Access)",
+      "assessor": "Auditor / Assessor",
+      "it-staff": "IT Staff",
+      "dpo": "Data Protection Officer",
+      "owner": "Asset Owner (Responsible)",
+      "viewer": "Viewer (Read-only)"
+    },
+    "initialPassword": "Initial Password *",
+    "accountStatus": "Account Status",
+    "accountStatusHint": "Deactivated users can no longer sign in to the portal.",
+    "active": "Active",
+    "deactivated": "Deactivated",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "createUser": "Create User"
+  },
+  "resetPw": {
+    "title": "Reset Password",
+    "intro": "Set a new password for",
+    "newPassword": "New Password *",
+    "saving": "Saving...",
+    "setPassword": "Set Password",
+    "tooltip": "Reset password",
+    "success": "Password was successfully reset."
+  },
+  "toasts": {
+    "saveError": "Error while saving",
+    "genericError": "Error",
+    "ownRoleWarning": "Your own role cannot be changed.",
+    "roleChangeError": "Role could not be changed",
+    "selfDeleteWarning": "You cannot delete yourself.",
+    "deleteFailed": "Deletion failed"
+  },
+  "confirmDelete": "Really delete this user? All associated data will be retained.",
+  "confirmDeleteShort": "Really delete user?",
+  "actions": {
+    "activate":      "Activate",
+    "deactivate":    "Deactivate",
+    "resetPassword": "Reset Password",
+    "deleteUser":    "Delete User"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Übersicht der Informationssicherheit",
+  "welcome": {
+    "title": "Willkommen bei OpenISMS!",
+    "subtitle": "Starten Sie in wenigen Schritten mit Ihrer Informationssicherheits-Dokumentation.",
+    "steps": {
+      "createAsset":  { "label": "Asset anlegen",           "hint": "Server, Anwendung oder Daten erfassen" },
+      "assess":       { "label": "Schutzbedarf bewerten",   "hint": "Vertraulichkeit, Integrität, Verfügbarkeit" },
+      "risks":        { "label": "Risiken identifizieren",  "hint": "Bedrohungen & Schwachstellen dokumentieren" },
+      "controls":     { "label": "Maßnahmen zuordnen",      "hint": "ISO 27001 Controls & SoA verwalten" }
+    }
+  },
+  "stats": {
+    "totalAssets":      "Assets gesamt",
+    "highCritical":     "Hoch / Kritisch",
+    "overdueReviews":   "Überfällige Reviews",
+    "reviewsIn30Days":  "Reviews in 30 Tagen",
+    "compliance":       "Compliance",
+    "frameworkCoverage":"Framework-Abdeckung",
+    "assessed":         "Bewertet",
+    "assetsAssessed":   "von {{total}} Assets bewertet"
+  },
+  "sections": {
+    "riskDistribution":   "Risikoverteilung",
+    "byClassification":   "Nach Klassifizierung",
+    "noRiskAssessments":  "Noch keine Risikobewertungen",
+    "startAssessment":    "Erste Bewertung starten →",
+    "noActiveAssets":     "Noch keine aktiven Assets",
+    "createAsset":        "Asset anlegen →",
+    "upcomingReviews":    "Anstehende Reviews (nächste 30 Tage)",
+    "all":                "Alle",
+    "noReviews":          "Keine Reviews in den nächsten 30 Tagen",
+    "reviewsScheduled":   "Reviews werden automatisch nach der Erstbewertung geplant.",
+    "complianceFrameworks":"Compliance Frameworks",
+    "details":            "Details",
+    "noFrameworkAssets":  "Noch keine Assets mit Framework-Zuordnung",
+    "assignFrameworks":   "Weisen Sie Assets den Frameworks ISO 27001, NIS-2 oder DSGVO zu.",
+    "minOneFramework":    "Mindestens ein Framework:",
+    "recentActivity":     "Letzte Aktivitäten",
+    "noActivity":         "Noch keine Aktivitäten",
+    "allChangesLogged":   "Alle Änderungen werden hier protokolliert.",
+    "activityText":       "{{actor}} hat \"{{name}}\" ({{type}}) {{action}}"
+  },
+  "entityLabels": {
+    "asset":      "Asset",
+    "assessment": "Bewertung",
+    "user":       "Benutzer",
+    "reminder":   "Erinnerung",
+    "vendor":     "Dienstleister",
+    "document":   "Dokument"
+  },
+  "error":   "Dashboard konnte nicht geladen werden.",
+  "loading": "Dashboard wird geladen"
+}

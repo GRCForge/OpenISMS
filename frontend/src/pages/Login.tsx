@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { KeyRound, Smartphone, Fingerprint } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { IsmsLogo } from '../components/IsmsLogo';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
@@ -9,6 +10,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 
 export const Login: React.FC = () => {
+  const { t } = useTranslation('auth');
   const { user, login, loginWithToken } = useAuth();
   const [params] = useSearchParams();
   const [email, setEmail] = useState('');
@@ -27,13 +29,13 @@ export const Login: React.FC = () => {
   useEffect(() => {
     api.get('/auth/oidc/status').then(r => { setSsoEnabled(r.data.ssoEnabled); if (r.data.name) setSsoName(r.data.name); }).catch(() => {});
     const ssoErr = params.get('error');
-    if (ssoErr === 'sso') setError('Single-Sign-On-Anmeldung fehlgeschlagen.');
-    else if (ssoErr === 'sso_session') setError('SSO-Sitzung ging beim Rücksprung verloren. Prüfen Sie, dass APP_URL exakt der aufgerufenen Domain entspricht und Cookies erlaubt sind.');
+    if (ssoErr === 'sso') setError(t('ssoError'));
+    else if (ssoErr === 'sso_session') setError(t('ssoSessionError'));
     // Check browser passkey support
     if (window.PublicKeyCredential) {
       PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(setPasskeySupported).catch(() => {});
     }
-  }, []);
+  }, [t]);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -50,7 +52,7 @@ export const Login: React.FC = () => {
         await login(email, password);
       }
     } catch {
-      setError('Ungültige Anmeldedaten');
+      setError(t('invalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,7 @@ export const Login: React.FC = () => {
       const { data } = await api.post('/auth/login/totp', { temp_token: tempToken, token: totpCode });
       loginWithToken(data.token);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Ungültiger Code');
+      setError(err.response?.data?.error || t('totp.invalidCode'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ export const Login: React.FC = () => {
       if (err.message?.includes('abgebrochen')) {
         setError('');
       } else {
-        setError(err.response?.data?.error || err.message || 'Passkey-Anmeldung fehlgeschlagen');
+        setError(err.response?.data?.error || err.message || t('passkeyLoginFailed'));
       }
     } finally {
       setLoading(false);
@@ -95,12 +97,12 @@ export const Login: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-md p-8">
           <div className="flex flex-col items-center mb-8">
             <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full mb-4"><Smartphone className="text-blue-600 dark:text-blue-400" size={32} /></div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Zwei-Faktor-Authentifizierung</h1>
-            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1 text-center">Bitte gib den 6-stelligen Code aus deiner Authenticator-App ein.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('totp.title')}</h1>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1 text-center">{t('totp.instruction')}</p>
           </div>
           <form onSubmit={handleTotpSubmit} className="space-y-4">
             <Input
-              label="TOTP-Code"
+              label={t('totp.label')}
               type="text"
               inputMode="numeric"
               pattern="[0-9]{6}"
@@ -109,14 +111,14 @@ export const Login: React.FC = () => {
               onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
               required
               autoFocus
-              placeholder="123456"
+              placeholder={t('totp.placeholder')}
             />
             {error && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
             <Button type="submit" className="w-full justify-center" disabled={loading || totpCode.length !== 6}>
-              {loading ? 'Prüfen...' : 'Bestätigen'}
+              {loading ? t('totp.confirming') : t('totp.confirm')}
             </Button>
             <button type="button" onClick={() => { setTotpPending(false); setTotpCode(''); setError(''); }} className="w-full text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors">
-              ← Zurück zur Anmeldung
+              {t('totp.backToLogin')}
             </button>
           </form>
         </div>
@@ -130,7 +132,7 @@ export const Login: React.FC = () => {
         <div className="flex flex-col items-center mb-8">
           <IsmsLogo size={80} className="rounded-2xl shadow-xl shadow-blue-500/20 mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">OpenISMS</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Information Security Management System</p>
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">{t('subtitle')}</p>
         </div>
 
         {ssoEnabled && (
@@ -149,29 +151,29 @@ export const Login: React.FC = () => {
             className="flex items-center justify-center gap-3 w-full border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-2"
           >
             <Fingerprint size={18} className="text-green-600 dark:text-green-400" />
-            Mit Passkey anmelden
+            {t('passkeyLogin')}
           </button>
         )}
 
         {(ssoEnabled || passkeySupported) && (
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
-            <span className="text-xs text-gray-400 dark:text-slate-500">oder mit Passwort</span>
+            <span className="text-xs text-gray-400 dark:text-slate-500">{t('orWithPassword')}</span>
             <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="E-Mail" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
-          <Input label="Passwort" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <Input label={t('email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
+          <Input label={t('password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required />
           {error && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
           <Button type="submit" className="w-full justify-center" disabled={loading}>
-            {loading ? 'Anmelden...' : 'Anmelden'}
+            {loading ? t('loggingIn') : t('login')}
           </Button>
         </form>
       </div>
       <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-        © 2026 Maximilian Herz · OpenISMS
+        {t('copyright')}
       </p>
     </div>
   );
