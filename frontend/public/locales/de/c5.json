@@ -1,26 +1,26 @@
 {
   "title": "BSI C5:2026",
-  "subtitle": "Cloud Computing Compliance Criteria Catalogue — {{total}} Kriterien · 18 Domains",
-  "subtitleEmpty": "Cloud Computing Compliance Criteria Catalogue — 174 Kriterien in 18 Domains",
+  "subtitle": "Cloud Compliance Kriterien Katalog — {{total}} Kriterien · 18 Domänen",
+  "subtitleEmpty": "Cloud-Compliance-Kriterienkatalog — 174 Kriterien in 18 Domänen",
   "status": {
-    "not_started": "Nicht begonnen",
+    "not_started": "Nicht gestartet",
     "in_progress": "In Bearbeitung",
-    "implemented": "Umgesetzt",
+    "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
   },
   "stats": {
-    "total": "Kriterien gesamt",
-    "implemented": "Umgesetzt",
+    "total": "Gesamte Kriterien",
+    "implemented": "Implementiert",
     "inProgress": "In Bearbeitung",
-    "compliance": "Compliance-Quote"
+    "compliance": "Compliance-Rate"
   },
   "kpi": {
-    "pqc": "Post-Quantum Crypto (PQC)",
+    "pqc": "Post-Quanten-Kryptografie (PQC)",
     "cc": "Confidential Computing (CC)",
-    "sharpen": "Verschärfte Anforderungen",
-    "implemented": "umgesetzt",
-    "sharpenCount": "{{count}} Kriterien mit Sharpen-Variante",
-    "sharpenTooltip": "Verschärfte Anforderung verfügbar"
+    "sharpen": "Strenge Anforderungen",
+    "implemented": "implementiert",
+    "sharpenCount": "{{count}} Kriterien mit der Variante „schärfen“",
+    "sharpenTooltip": "Strenge Anforderung verfügbar"
   },
   "filter": {
     "allDomains": "Alle Domains",
@@ -31,15 +31,15 @@
     "criteriaCount": "{{count}} Kriterien"
   },
   "empty": {
-    "notLoaded": "Der C5:2026-Katalog wurde noch nicht geladen.",
-    "loading": "Lädt…",
+    "notLoaded": "Der C5:2026 Katalog wurde noch nicht geladen.",
+    "loading": "Lade…",
     "loadButton": "Katalog laden (174 Kriterien)"
   },
   "modal": {
-    "status": "Umsetzungsstatus",
+    "status": "Implementierungsstatus",
     "responsible": "Verantwortliche Person",
     "nobody": "— Keine —",
-    "evidence": "Nachweise / Evidence",
+    "evidence": "Beweise",
     "evidencePlaceholder": "Dokumentenreferenzen, Links, Beschreibungen…",
     "lastReview": "Letzte Prüfung",
     "notes": "Notizen",
@@ -47,7 +47,7 @@
     "crossRefs": "Querverweise",
     "cancel": "Abbrechen",
     "save": "Speichern",
-    "saving": "Speichert…",
+    "saving": "Speichern…",
     "edit": "Bearbeiten"
   },
   "toast": {
