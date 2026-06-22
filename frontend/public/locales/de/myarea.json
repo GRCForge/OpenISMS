@@ -1,0 +1,77 @@
+{
+  "title": "Mein Bereich",
+  "welcome": "Willkommen, {{name}}",
+  "openItems": "{{count}} offene Punkte",
+  "noPasskey": "Kein Passkey",
+  "employee": {
+    "title": "Meine Schulungen",
+    "subtitle": "Hier siehst du eine Übersicht deiner absolvierten Schulungen. Du kannst Einträge beanstanden, falls du an einer anderen Schulung teilgenommen hast oder die Angaben fehlerhaft sind.",
+    "required": "Pflicht",
+    "completedAt": "Absolviert am:",
+    "expiresAt": "Gültig bis:",
+    "contested": "Beanstandet",
+    "contest": "Beanstanden",
+    "empty": "Keine Schulungseinträge vorhanden",
+    "emptyDescription": "Es wurden noch keine Schulungsteilnahmen für dein Konto hinterlegt."
+  },
+  "contestModal": {
+    "title": "Schulungsteilnahme beanstanden",
+    "hint": "Falls du an dieser Schulung nicht teilgenommen hast, das Datum falsch ist oder du eine andere Schulung besucht hast, kannst du dies hier begründen. Ein Compliance-Mitarbeiter wird deine Anfrage prüfen.",
+    "hintTitle": "Hinweis zur Beanstandung",
+    "selectedTraining": "Ausgewählte Schulung",
+    "registeredDate": "Registriertes Datum:",
+    "reasonLabel": "Begründung / Korrekturhinweis",
+    "reasonRequired": "*",
+    "reasonPlaceholder": "z.B. 'Ich habe an diesem Tag nicht an dieser Schulung teilgenommen, sondern an der Datenschutz-Schulung B.'",
+    "cancel": "Abbrechen",
+    "submit": "Beanstandung absenden",
+    "submitting": "Wird übermittelt..."
+  },
+  "tasks": {
+    "title": "Meine Aufgaben",
+    "openCount": "({{count}} offen)",
+    "allTasks": "Alle Aufgaben",
+    "manageAll": "Alle Aufgaben verwalten",
+    "empty": "Keine offenen Aufgaben",
+    "emptyDescription": "Super! Alles erledigt.",
+    "overdueWarning_one": "{{count}} Aufgabe überfällig",
+    "overdueWarning_other": "{{count}} Aufgaben überfällig",
+    "overdueSuffix": "⚠ Überfällig ·",
+    "dueLabel": "Fällig",
+    "markDone": "Als erledigt markieren",
+    "setInProgress": "In Bearbeitung setzen",
+    "done": "Erledigt"
+  },
+  "priority": {
+    "critical": "Kritisch",
+    "high": "Hoch",
+    "medium": "Mittel",
+    "low": "Niedrig"
+  },
+  "sections": {
+    "title": "Handlungsbedarf",
+    "showMore": "+{{count}} weitere → Alle anzeigen"
+  },
+  "allClear": {
+    "title": "Alles im grünen Bereich",
+    "description": "Keine offenen Aufgaben oder Handlungsbedarfe für deine Rolle."
+  },
+  "passkey": {
+    "title": "Kein Passkey hinterlegt",
+    "description": "Erhöhe die Sicherheit deines Kontos mit einem Passkey. Klicke auf dein Profilbild und wähle „Passkey hinzufügen“."
+  },
+  "roles": {
+    "admin": "System-Administrator",
+    "assessor": "Auditor & Bewerter",
+    "it-staff": "IT-Mitarbeiter",
+    "dpo": "Datenschutzbeauftragter",
+    "owner": "Asset-Verantwortlicher",
+    "viewer": "Gast",
+    "employee": "Mitarbeiter"
+  },
+  "toast": {
+    "contestSuccess": "Beanstandung erfolgreich eingereicht.",
+    "contestError": "Fehler beim Einreichen der Beanstandung.",
+    "taskError": "Fehler beim Aktualisieren der Aufgabe"
+  }
+}

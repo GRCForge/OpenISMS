@@ -11,6 +11,7 @@ const NAMESPACES = [
   'auditlog', 'legalrequirements', 'topology',
   'vendorcontacts', 'import', 'cves', 'dataflows',
   'c5', 'bsigrundschutz', 'iso27001', 'nis2',
+  'subjectrequests', 'myarea', 'aiact',
 ];
 
 i18n
