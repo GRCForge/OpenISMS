@@ -12,7 +12,7 @@ const NAMESPACES = [
   'vendorcontacts', 'import', 'cves', 'dataflows',
   'c5', 'bsigrundschutz', 'iso27001', 'nis2',
   'subjectrequests', 'myarea', 'aiact', 'bcm', 'dora',
-  'networkdiscovery', 'tisax',
+  'networkdiscovery', 'tisax', 'policylibrary',
 ];
 
 i18n
