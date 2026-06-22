@@ -1,0 +1,69 @@
+{
+  "title": "NIS-2 · Art. 21 Sicherheitsmaßnahmen",
+  "subtitle": "Network and Information Security Directive 2 · {{count}} Maßnahmen",
+  "status": {
+    "not_started": "Offen",
+    "in_progress": "In Umsetzung",
+    "implemented": "Umgesetzt",
+    "not_applicable": "Nicht anwendbar"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "implemented": "Umgesetzt",
+    "inProgress": "In Umsetzung",
+    "open": "Offen"
+  },
+  "entity": {
+    "essential": {
+      "title": "Wesentliche Einrichtungen (Anhang I)",
+      "description": "Energie, Transport, Bankwesen, Finanzmarktinfrastruktur, Gesundheitswesen, Trinkwasser, Abwasser, digitale Infrastruktur, IKT-Dienstleistungen, Weltraum, öffentliche Verwaltung."
+    },
+    "important": {
+      "title": "Wichtige Einrichtungen (Anhang II)",
+      "description": "Post- und Kurierdienste, Abfallwirtschaft, Chemie, Lebensmittel, verarbeitendes Gewerbe, digitale Dienste, Forschung. Alle Art.-21-Maßnahmen gelten für beide Kategorien."
+    }
+  },
+  "filter": {
+    "searchPlaceholder": "Artikel-Referenz, Titel oder Kategorie suchen...",
+    "allStatus": "Alle Status",
+    "allCategories": "Alle Kategorien"
+  },
+  "table": {
+    "article": "Artikel",
+    "measure": "Maßnahme",
+    "status": "Status",
+    "deadline": "Frist",
+    "lastReview": "Letzte Prüfung",
+    "measureCount": "{{count}} Maßnahmen"
+  },
+  "description": {
+    "show": "Beschreibung anzeigen",
+    "hide": "Beschreibung ausblenden",
+    "evidence": "Nachweis: "
+  },
+  "empty": {
+    "title": "Noch keine NIS-2-Maßnahmen vorhanden",
+    "description": "Lade den integrierten NIS-2-Katalog (Art. 21), um mit der Umsetzungsverfolgung zu starten.",
+    "loadButton": "NIS-2-Katalog laden",
+    "loading": "Lade Katalog..."
+  },
+  "filterEmpty": "Keine Maßnahmen entsprechen den Filterkriterien.",
+  "modal": {
+    "status": "Umsetzungsstatus",
+    "responsible": "Verantwortliche Person",
+    "nobody": "– niemand –",
+    "evidence": "Nachweis / Evidence",
+    "evidencePlaceholder": "Referenz auf Dokumente, Richtlinien oder Maßnahmen",
+    "deadline": "Frist (Deadline)",
+    "lastReview": "Letzte Prüfung",
+    "notes": "Notizen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saving": "Speichern...",
+    "edit": "Bearbeiten"
+  },
+  "toast": {
+    "loadError": "Fehler beim Laden des Katalogs",
+    "saveError": "Fehler beim Speichern"
+  }
+}

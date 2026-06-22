@@ -10,6 +10,7 @@ const NAMESPACES = [
   'groups', 'reminders', 'assessments', 'controls',
   'auditlog', 'legalrequirements', 'topology',
   'vendorcontacts', 'import', 'cves', 'dataflows',
+  'c5', 'bsigrundschutz', 'iso27001', 'nis2',
 ];
 
 i18n
