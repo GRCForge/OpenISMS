@@ -13,6 +13,7 @@ const NAMESPACES = [
   'c5', 'bsigrundschutz', 'iso27001', 'nis2',
   'subjectrequests', 'myarea', 'aiact', 'bcm', 'dora',
   'networkdiscovery', 'tisax', 'policylibrary', 'managementreport',
+  'pentests',
 ];
 
 i18n
