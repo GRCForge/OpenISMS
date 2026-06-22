@@ -1,51 +1,51 @@
 {
-  "title": "Data Import",
-  "subtitle": "Import assets, users, vendors or risks",
-  "back": "Back",
-  "template": "Template (.csv)",
+  "title": "Datenimport",
+  "subtitle": "Importiere Assets, Benutzer, Anbieter oder Risiken",
+  "back": "Zurück",
+  "template": "Vorlage (.csv)",
   "steps": {
-    "upload": "Upload",
-    "mapping": "Mapping",
-    "result": "Result"
+    "upload": "Hochladen",
+    "mapping": "Zuordnung",
+    "result": "Ergebnis"
   },
   "step1": {
-    "whatToImport": "What do you want to import?",
-    "chooseFile": "Choose a CSV or Excel file",
-    "dropHint": "Click or drag & drop here",
+    "whatToImport": "Was möchten Sie importieren?",
+    "chooseFile": "CSV- oder Excel-Datei auswählen",
+    "dropHint": "Drag & Drop hier klicken",
     "fileSizeKb": "{{size}} KB",
-    "analyzing": "Analysing file...",
-    "analyze": "Analyse file"
+    "analyzing": "Analysiere Datei...",
+    "analyze": "Datei analysieren"
   },
   "entityTypes": {
-    "asset": "Assets (Inventory)",
-    "user": "Users (Employees)",
-    "vendor": "Vendors (Companies)",
-    "risk": "Risks (Register)",
-    "vendor_contact": "Companies + Contacts (Outlook)"
+    "asset": "Assets (Inventar)",
+    "user": "Benutzer (Employees)",
+    "vendor": "Anbieter (Unternehmen)",
+    "risk": "Risiken (Register)",
+    "vendor_contact": "Unternehmen + Kontakte (Outlook)"
   },
   "step2": {
-    "previewTitle": "Preview (first 5 rows)",
-    "mappingTitle": "Field Mapping",
-    "mappingHint": "Map the columns from your file to the ISMS fields.",
-    "notImport": "-- Do not import --",
+    "previewTitle": "Vorschau (erste 5 Zeilen)",
+    "mappingTitle": "Feldzuordnung",
+    "mappingHint": "Ordnen Sie die Spalten aus Ihrer Datei den ISMS-Feldern zu.",
+    "notImport": "-- Nicht importieren --",
     "summaryTitle": "Summary",
-    "file": "File:",
-    "rows": "Rows:",
-    "importType": "Import type:",
-    "importButton": "Import {{count}} records",
-    "importing": "Importing..."
+    "file": "Datei:",
+    "rows": "Zeilen:",
+    "importType": "Import-Typ:",
+    "importButton": "Importiere {{count}} Einträge",
+    "importing": "Importieren..."
   },
   "step3": {
-    "done": "Import complete",
-    "doneSubtitle": "{{count}} records were created successfully.",
-    "errorCount": "{{count}} errors occurred:",
-    "rowError": "Row {{row}}:",
-    "startNew": "Start another import",
-    "backToOverview": "Back to overview"
+    "done": "Import abgeschlossen",
+    "doneSubtitle": "{{count}} Datensätze wurden erfolgreich erstellt.",
+    "errorCount": "{{count}} Fehler aufgetreten:",
+    "rowError": "Zeile {{row}}:",
+    "startNew": "Einen weiteren Import starten",
+    "backToOverview": "Zurück zur Übersicht"
   },
   "toast": {
-    "previewError": "Preview failed",
-    "importError": "Import failed",
-    "downloadError": "Error downloading template"
+    "previewError": "Vorschau fehlgeschlagen",
+    "importError": "Import fehlgeschlagen",
+    "downloadError": "Fehler beim Herunterladen der Vorlage"
   }
 }
