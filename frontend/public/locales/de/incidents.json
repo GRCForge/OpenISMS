@@ -1,0 +1,155 @@
+{
+  "title": "Vorfälle & Pannen",
+  "new": "Vorfall melden",
+  "subtitle": "Security Incident Management & DSGVO Meldewesen · {{count}} Vorfälle",
+  "searchPlaceholder": "Vorfall suchen…",
+  "severity": {
+    "low": "Gering",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "critical": "Kritisch"
+  },
+  "status": {
+    "reported": "Gemeldet",
+    "investigating": "In Untersuchung",
+    "contained": "Eingedämmt",
+    "resolved": "Behoben",
+    "closed": "Geschlossen"
+  },
+  "categories": {
+    "malware": "Schadsoftware",
+    "phishing": "Phishing",
+    "data_breach": "Datenschutzverletzung",
+    "dos": "DoS / DDoS",
+    "unauthorized_access": "Unbefugter Zugriff",
+    "misconfiguration": "Fehlkonfiguration",
+    "loss_theft": "Verlust / Diebstahl",
+    "social_engineering": "Social Engineering",
+    "other": "Sonstiges"
+  },
+  "nis2": {
+    "overdueWarning": "Frühwarnung überfällig",
+    "earlyWarningOpen": "24h-Frühwarnung offen",
+    "reportingOverdue": "72h-Meldung überfällig",
+    "reportingOpen": "72h-Meldung offen",
+    "reported": "Gemeldet"
+  },
+  "gdpr": {
+    "reported": "Art. 33 gemeldet",
+    "overdue": "Art. 33 überfällig!",
+    "remaining": "Art. 33: {{hours}}h verbleibend"
+  },
+  "stats": {
+    "open": "Offen",
+    "criticalHigh": "Hoch / Kritisch",
+    "gdprRelevance": "DSGVO Relevanz",
+    "total": "Gesamt"
+  },
+  "filters": {
+    "allStatus": "Alle Status",
+    "allSeverities": "Alle Schweregrade",
+    "allTypes": "Alle Typen",
+    "security": "Sicherheit",
+    "gdpr": "DSGVO"
+  },
+  "table": {
+    "ref": "Ref",
+    "incident": "Vorfall",
+    "type": "Typ",
+    "severity": "Schweregrad",
+    "status": "Status",
+    "detected": "Erkannt",
+    "deadline": "Frist"
+  },
+  "empty": {
+    "title": "Keine Vorfälle gefunden"
+  },
+  "modal": {
+    "editTitle": "Vorfall bearbeiten",
+    "newTitle": "Vorfall melden",
+    "docsTitle": "Nachweise verwalten: {{ref}}"
+  },
+  "form": {
+    "securityIncident": "Sicherheitsvorfall",
+    "gdprIncident": "DSGVO-Vorfall / Panne",
+    "title": "Titel *",
+    "titlePlaceholder": "Kurzbezeichnung des Vorfalls...",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Was ist passiert? Wer hat es gemeldet?",
+    "category": "Kategorie",
+    "severity": "Schweregrad",
+    "status": "Aktueller Status",
+    "assignee": "Zugewiesen an",
+    "noAssignee": "– niemand –",
+    "detectedAt": "Erkannt am",
+    "occurredAt": "Eingetreten am",
+    "nis2Reportable": "NIS-2 meldepflichtig (Art. 23)",
+    "earlyWarning": "Frühwarnung (24h) am",
+    "notification72h": "Meldung (72h) am",
+    "impact": "Auswirkung / Schaden",
+    "impactPlaceholder": "Finanziell, Reputation, Betriebsfähigkeit...",
+    "rootCause": "Ursache (Root Cause)",
+    "correctiveActions": "Korrekturmaßnahmen",
+    "dataBreachDetails": "Details zur Datenpanne (DSGVO Art. 33/34)",
+    "dataBreachPlaceholder": "Art und Umfang der betroffenen Daten, Kategorien, geschätzte Anzahl betroffener Personen…",
+    "gdprArt33": "DSGVO Art. 33 — 72h Meldepflicht an Aufsichtsbehörde",
+    "gdprDiscoveredAt": "Kenntnisnahme (Fristbeginn)",
+    "gdprNotifiedAt": "Meldung eingereicht am",
+    "gdprDeadlineOverdue": "Frist abgelaufen ({{hours}}h überfällig)",
+    "gdprDeadlineLeft": "Frist läuft ab in {{hours}}h — {{deadline}}",
+    "affectedAssets": "Betroffene Assets",
+    "assetFilter": "Asset filtern...",
+    "noAssetsLoaded": "Keine Assets geladen.",
+    "noAssetsFound": "Keine Assets gefunden",
+    "linkedRisks": "Verknüpfte Risiken",
+    "riskFilter": "Risiko filtern...",
+    "noRisksLoaded": "Keine Risiken geladen.",
+    "noRisksFound": "Keine Risiken gefunden"
+  },
+  "buttons": {
+    "cancel": "Abbrechen",
+    "save": "Vorfall speichern",
+    "saving": "Speichern…"
+  },
+  "delete": {
+    "modalTitle": "Vorfall löschen (Begründung erforderlich)",
+    "description": "Sicherheitsvorfälle dürfen aus Compliance-Gründen nur mit einer Begründung gelöscht (ausgeblendet) werden. Der Vorgang wird im Audit-Log archiviert.",
+    "reasonLabel": "Begründung für das Löschen *",
+    "reasonPlaceholder": "z. B. Falschmeldung, Duplikat zu INC-0002...",
+    "confirmButton": "Vorfall löschen"
+  },
+  "docs": {
+    "manageTitle": "Dokumente verwalten (Nachweise)",
+    "uploadTitle": "Nachweis hochladen",
+    "category": "Kategorie *",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "z. B. Logfiles, Bericht des externen Auditors...",
+    "fileLabel": "Datei auswählen *",
+    "uploading": "Wird hochgeladen...",
+    "addDocument": "Dokument hinzufügen",
+    "listTitle": "Vorhandene Nachweise",
+    "empty": "Keine Nachweise hinterlegt.",
+    "uploadedAt": "Hochgeladen am {{date}} von {{uploader}} · {{size}} MB",
+    "noDescription": "Keine Beschreibung",
+    "unknownUploader": "Unbekannt",
+    "download": "Herunterladen",
+    "catReport": "Bericht",
+    "catAcceptance": "Freigabe",
+    "catOther": "Sonstiges",
+    "catRiskReport": "Untersuchungsbericht",
+    "catRiskAcceptance": "Freigabe / Abnahme"
+  },
+  "toast": {
+    "deleted": "Vorfall gelöscht",
+    "errorDelete": "Fehler beim Löschen",
+    "docUploaded": "Nachweis erfolgreich hochgeladen",
+    "errorUpload": "Fehler beim Hochladen des Dokuments",
+    "docDeleted": "Dokument gelöscht",
+    "errorDeleteDoc": "Fehler beim Löschen des Dokuments",
+    "classificationRequired": "Mindestens eine Klassifizierung (Sicherheit oder DSGVO) muss ausgewählt sein.",
+    "errorSaving": "Fehler beim Speichern"
+  },
+  "confirm": {
+    "deleteDoc": "Dokument wirklich löschen?"
+  }
+}

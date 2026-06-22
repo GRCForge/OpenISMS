@@ -1,0 +1,70 @@
+{
+  "title": "Data Flow Diagram",
+  "subtitle": "{{count}} data flows documented",
+  "listView": "List",
+  "diagramView": "Diagram",
+  "new": "Data Flow",
+  "searchPlaceholder": "Search data flow...",
+  "filters": { "allStatus": "All Status" },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "planned": "Planned"
+  },
+  "mechanisms": {
+    "api": "REST / API",
+    "file": "File Transfer",
+    "database": "Database Connection",
+    "manual": "Manual",
+    "email": "Email",
+    "sftp": "SFTP",
+    "message_queue": "Message Queue",
+    "other": "Other"
+  },
+  "diagram": {
+    "personalData": "Personal Data",
+    "encrypted": "Encrypted",
+    "standard": "Standard",
+    "encryptedIcon": "🔒 = Encrypted",
+    "noFlows": "No active data flows for diagram"
+  },
+  "empty": {
+    "title": "No data flows documented",
+    "description": "Document data flows between systems and services.",
+    "firstFlow": "Create First Data Flow"
+  },
+  "card": {
+    "encrypted": "Encrypted",
+    "unencrypted": "Unencrypted",
+    "personalData": "Personal Data",
+    "frequency": "Frequency: {{freq}}"
+  },
+  "modal": {
+    "editTitle": "Edit Data Flow",
+    "newTitle": "New Data Flow"
+  },
+  "form": {
+    "name": "Name *",
+    "namePlaceholder": "e.g. CRM → ERP Customer Data Sync",
+    "source": "Source System",
+    "target": "Target System",
+    "externalSystem": "External System / manual",
+    "mechanism": "Transfer Mechanism",
+    "status": "Status",
+    "dataCategoriesLabel": "Data Categories (comma-separated)",
+    "dataCategoriesPlaceholder": "Customer data, Orders, Email addresses, ...",
+    "frequency": "Transfer Frequency",
+    "frequencyPlaceholder": "e.g. Daily 02:00, Real-time, Weekly",
+    "encryptionCheck": "Transfer encrypted (TLS/SFTP/etc.)",
+    "personalDataCheck": "Contains personal data (GDPR-relevant)",
+    "notes": "Notes",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "confirm": { "delete": "Delete this data flow?" },
+  "toast": {
+    "saveError": "Error saving",
+    "deleteError": "Delete failed"
+  }
+}

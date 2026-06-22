@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
-const { SubjectRequest, User } = require('../models');
+const { SubjectRequest, User, Task } = require('../models');
+const { Op } = require('sequelize');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
@@ -87,6 +88,10 @@ router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const request = await SubjectRequest.findByPk(req.params.id);
     if (!request) return res.status(404).json({ error: 'Not found' });
+    await Task.update(
+      { status: 'cancelled' },
+      { where: { related_type: 'subject_request', related_id: request.id, status: { [Op.notIn]: ['done', 'cancelled'] } } }
+    );
     await auditFromReq(req, 'delete', 'subject_request', request.id, request.ref, {});
     await request.destroy();
     res.json({ ok: true });

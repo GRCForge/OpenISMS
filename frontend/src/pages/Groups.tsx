@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Users, Plus, Pencil, Trash2, UserPlus, UserMinus, Tag } from 'lucide-react';
 import api from '../lib/api';
 import type { Group, User } from '../types';
@@ -19,6 +20,7 @@ const emptyForm = { name: '', description: '', color: '#3b82f6' };
 export const Groups: React.FC = () => {
   const { user } = useAuth();
   const toast = useToast();
+  const { t } = useTranslation('groups');
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -59,26 +61,26 @@ export const Groups: React.FC = () => {
     try {
       if (editGroup) {
         await api.put(`/groups/${editGroup.id}`, form);
-        toast.success('Gruppe aktualisiert');
+        toast.success(t('toast.updated'));
       } else {
         await api.post('/groups', form);
-        toast.success('Gruppe erstellt');
+        toast.success(t('toast.created'));
       }
       setModalOpen(false);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toast.saveError'));
     } finally { setSaving(false); }
   };
 
   const handleDelete = async (g: Group) => {
-    if (!confirm(`Gruppe "${g.name}" wirklich löschen?`)) return;
+    if (!confirm(t('confirm.delete', { name: g.name }))) return;
     try {
       await api.delete(`/groups/${g.id}`);
-      toast.success('Gruppe gelöscht');
+      toast.success(t('toast.deleted'));
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Löschen fehlgeschlagen');
+      toast.error(err.response?.data?.error || t('toast.deleteFailed'));
     }
   };
 
@@ -86,33 +88,32 @@ export const Groups: React.FC = () => {
     if (!memberModal || !addUserId) return;
     try {
       await api.post(`/groups/${memberModal.id}/members`, { user_id: Number(addUserId) });
-      toast.success('Mitglied hinzugefügt');
+      toast.success(t('toast.memberAdded'));
       setAddUserId('');
       load();
-      // Refresh memberModal state
       const updated = await api.get(`/groups/${memberModal.id}`);
       setMemberModal(updated.data);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toast.error'));
     }
   };
 
   const handleRemoveMember = async (groupId: number, userId: number) => {
     try {
       await api.delete(`/groups/${groupId}/members/${userId}`);
-      toast.success('Mitglied entfernt');
+      toast.success(t('toast.memberRemoved'));
       load();
       const updated = await api.get(`/groups/${groupId}`);
       setMemberModal(updated.data);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toast.error'));
     }
   };
 
   if (user?.role !== 'admin') {
     return (
       <div className="text-center py-20 text-gray-500 dark:text-slate-400">
-        Nur Administratoren können Gruppen verwalten.
+        {t('adminOnly')}
       </div>
     );
   }
@@ -125,23 +126,21 @@ export const Groups: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
             <Tag size={24} className="text-blue-600" />
-            Gruppen & Teams
+            {t('title')}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">
-            {groups.length} Gruppen · Aufgaben zuweisen, @erwähnen und gemeinsam abschließen
+            {t('subtitle', { count: groups.length })}
           </p>
         </div>
-        <Button onClick={openCreate}><Plus size={16} />Neue Gruppe</Button>
+        <Button onClick={openCreate}><Plus size={16} />{t('new')}</Button>
       </div>
 
       {groups.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
           <Tag size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3" />
-          <p className="text-gray-500 dark:text-slate-400 font-medium">Noch keine Gruppen</p>
-          <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">
-            Erstelle Gruppen um Aufgaben an Teams zuzuweisen und @Gruppen in Kommentaren zu erwähnen.
-          </p>
-          <Button onClick={openCreate} className="mt-4"><Plus size={16} />Erste Gruppe erstellen</Button>
+          <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
+          <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('empty.subtitle')}</p>
+          <Button onClick={openCreate} className="mt-4"><Plus size={16} />{t('empty.createFirst')}</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -156,7 +155,7 @@ export const Groups: React.FC = () => {
                   <button
                     onClick={() => setMemberModal(g)}
                     className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                    title="Mitglieder verwalten"
+                    title={t('manageMembers')}
                   >
                     <Users size={14} />
                   </button>
@@ -181,7 +180,7 @@ export const Groups: React.FC = () => {
 
               <div className="flex items-center gap-2 flex-wrap">
                 {g.members.length === 0 ? (
-                  <span className="text-xs text-gray-400 dark:text-slate-600">Keine Mitglieder</span>
+                  <span className="text-xs text-gray-400 dark:text-slate-600">{t('noMembers')}</span>
                 ) : (
                   <>
                     <div className="flex -space-x-2">
@@ -201,14 +200,18 @@ export const Groups: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">{g.members.length} Mitglied{g.members.length !== 1 ? 'er' : ''}</span>
+                    <span className="text-xs text-gray-400 dark:text-slate-500">{t('memberCount', { count: g.members.length })}</span>
                   </>
                 )}
               </div>
 
               <div className="pt-2 border-t dark:border-slate-700">
                 <p className="text-[11px] text-gray-400 dark:text-slate-600">
-                  In Aufgaben & Kommentaren als <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">@{g.name}</span> erwähnen
+                  <Trans
+                    i18nKey="groups:mentionHint"
+                    values={{ name: g.name }}
+                    components={{ code: <span className="font-mono font-semibold text-blue-600 dark:text-blue-400" /> }}
+                  />
                 </p>
               </div>
             </Card>
@@ -217,28 +220,28 @@ export const Groups: React.FC = () => {
       )}
 
       {/* Create / Edit Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editGroup ? 'Gruppe bearbeiten' : 'Neue Gruppe'} size="md">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t(editGroup ? 'modal.editTitle' : 'modal.newTitle')} size="md">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Name *"
+            label={t('form.name')}
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             required
             autoFocus
-            placeholder="z.B. IT-Team, ISMS-Kernteam"
+            placeholder={t('form.namePlaceholder')}
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Beschreibung</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('form.description')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={2}
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Kurze Beschreibung der Gruppe..."
+              placeholder={t('form.descriptionPlaceholder')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Farbe</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{t('form.color')}</label>
             <div className="flex gap-2 flex-wrap">
               {COLORS.map(c => (
                 <button
@@ -252,8 +255,8 @@ export const Groups: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-3 pt-2 border-t dark:border-slate-700">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1">Abbrechen</Button>
-            <Button type="submit" disabled={saving} className="flex-1">{saving ? 'Speichern...' : 'Speichern'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1">{t('form.cancel')}</Button>
+            <Button type="submit" disabled={saving} className="flex-1">{saving ? t('form.saving') : t('form.save')}</Button>
           </div>
         </form>
       </Modal>
@@ -262,15 +265,14 @@ export const Groups: React.FC = () => {
       <Modal
         open={!!memberModal}
         onClose={() => setMemberModal(null)}
-        title={`Mitglieder: ${memberModal?.name}`}
+        title={t('members.modalTitle', { name: memberModal?.name })}
         size="md"
       >
         {memberModal && (
           <div className="space-y-4">
-            {/* Existing members */}
             <div className="space-y-1 max-h-56 overflow-y-auto">
               {memberModal.members.length === 0 ? (
-                <p className="text-sm text-gray-400 dark:text-slate-600 py-2 text-center">Noch keine Mitglieder</p>
+                <p className="text-sm text-gray-400 dark:text-slate-600 py-2 text-center">{t('members.empty')}</p>
               ) : (
                 memberModal.members.map(m => (
                   <div key={m.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 dark:bg-slate-800/50">
@@ -281,7 +283,7 @@ export const Groups: React.FC = () => {
                     <button
                       onClick={() => handleRemoveMember(memberModal.id, m.id)}
                       className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
-                      title="Entfernen"
+                      title={t('members.remove')}
                     >
                       <UserMinus size={14} />
                     </button>
@@ -290,16 +292,15 @@ export const Groups: React.FC = () => {
               )}
             </div>
 
-            {/* Add member */}
             <div className="pt-3 border-t dark:border-slate-700 space-y-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Mitglied hinzufügen</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-slate-300">{t('members.addTitle')}</p>
               <div className="flex gap-2">
                 <select
                   className="flex-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={addUserId}
                   onChange={e => setAddUserId(e.target.value)}
                 >
-                  <option value="">Benutzer auswählen...</option>
+                  <option value="">{t('members.selectUser')}</option>
                   {allUsers
                     .filter(u => !memberModal.members.some(m => m.id === u.id))
                     .map(u => (

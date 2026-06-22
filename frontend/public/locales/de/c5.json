@@ -1,0 +1,56 @@
+{
+  "title": "BSI C5:2026",
+  "subtitle": "Cloud Computing Compliance Criteria Catalogue — {{total}} Kriterien · 18 Domains",
+  "subtitleEmpty": "Cloud Computing Compliance Criteria Catalogue — 174 Kriterien in 18 Domains",
+  "status": {
+    "not_started": "Nicht begonnen",
+    "in_progress": "In Bearbeitung",
+    "implemented": "Umgesetzt",
+    "not_applicable": "Nicht anwendbar"
+  },
+  "stats": {
+    "total": "Kriterien gesamt",
+    "implemented": "Umgesetzt",
+    "inProgress": "In Bearbeitung",
+    "compliance": "Compliance-Quote"
+  },
+  "kpi": {
+    "pqc": "Post-Quantum Crypto (PQC)",
+    "cc": "Confidential Computing (CC)",
+    "sharpen": "Verschärfte Anforderungen",
+    "implemented": "umgesetzt",
+    "sharpenCount": "{{count}} Kriterien mit Sharpen-Variante",
+    "sharpenTooltip": "Verschärfte Anforderung verfügbar"
+  },
+  "filter": {
+    "allDomains": "Alle Domains",
+    "allStatus": "Alle Status",
+    "reset": "Filter zurücksetzen"
+  },
+  "domain": {
+    "criteriaCount": "{{count}} Kriterien"
+  },
+  "empty": {
+    "notLoaded": "Der C5:2026-Katalog wurde noch nicht geladen.",
+    "loading": "Lädt…",
+    "loadButton": "Katalog laden (174 Kriterien)"
+  },
+  "modal": {
+    "status": "Umsetzungsstatus",
+    "responsible": "Verantwortliche Person",
+    "nobody": "— Keine —",
+    "evidence": "Nachweise / Evidence",
+    "evidencePlaceholder": "Dokumentenreferenzen, Links, Beschreibungen…",
+    "lastReview": "Letzte Prüfung",
+    "notes": "Notizen",
+    "notesPlaceholder": "Interne Notizen, Hinweise…",
+    "crossRefs": "Querverweise",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saving": "Speichert…",
+    "edit": "Bearbeiten"
+  },
+  "toast": {
+    "loadError": "Fehler beim Laden des Katalogs"
+  }
+}

@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
-const { AiSystem, User, Vendor } = require('../models');
+const { AiSystem, User, Vendor, Task } = require('../models');
+const { Op } = require('sequelize');
 const { authenticate, requireWriteAccess, requireRole } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
@@ -49,6 +50,10 @@ router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req
   try {
     const item = await AiSystem.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
+    await Task.update(
+      { status: 'cancelled' },
+      { where: { related_type: 'ai_system', related_id: item.id, status: { [Op.notIn]: ['done', 'cancelled'] } } }
+    );
     await auditFromReq(req, 'delete', 'ai_system', item.id, item.name, {});
     await item.destroy();
     res.json({ ok: true });

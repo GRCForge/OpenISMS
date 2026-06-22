@@ -1,0 +1,43 @@
+{
+  "title": "Asset-Topologie",
+  "subtitle": "Gesamtübersicht aller Assets und ihrer Abhängigkeiten (Parent/Child)",
+  "loadingLabel": "Topologie wird geladen",
+  "typeFilter": "Nach Asset-Typ filtern",
+  "allTypes": "Alle Typen",
+  "directionGroup": "Diagramm-Ausrichtung",
+  "horizontal": "Horizontale Ansicht",
+  "vertical": "Vertikale Ansicht",
+  "types": {
+    "hardware": "Hardware",
+    "software": "Software",
+    "information": "Information/Daten",
+    "process": "Prozess",
+    "service": "Service",
+    "personal": "Personal",
+    "application": "Anwendung",
+    "data": "Daten",
+    "ai_application": "KI-Anwendung (AI Act)",
+    "ai_agent": "KI-Agent",
+    "other": "Sonstiges"
+  },
+  "stats": {
+    "assets": "Assets",
+    "roots": "Wurzel-Systeme",
+    "linked": "Verknüpft",
+    "isolated": "Isoliert"
+  },
+  "graph": {
+    "title": "Abhängigkeitsgraph",
+    "legend": {
+      "critical": "Kritisch",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Gering",
+      "unassessed": "Unbewertet",
+      "ai": "KI-Asset"
+    },
+    "tip": "Tipp: Auf einen Knoten klicken, um zum jeweiligen Asset zu springen.",
+    "noAssets": "Keine Assets vorhanden.",
+    "noDependencies": "Keine Abhängigkeiten erfasst. Verknüpfe Assets über das Feld „Übergeordnetes Asset“."
+  }
+}

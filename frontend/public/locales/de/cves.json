@@ -1,0 +1,32 @@
+{
+  "title": "Schwachstellen (CVE)",
+  "subtitle": "Aggregierte Sicherheitslücken aller erfassten IT-Assets",
+  "stats": {
+    "critical": "Kritisch (≥ 9.0)",
+    "high": "Hoch (7.0–8.9)",
+    "medium": "Mittel (4.0–6.9)",
+    "low": "Niedrig (0.1–3.9)",
+    "total": "Gesamtanzahl"
+  },
+  "filters": {
+    "allSeverities": "Alle Schweregrade",
+    "critical": "Kritisch",
+    "high": "Hoch",
+    "medium": "Mittel",
+    "low": "Gering",
+    "allSources": "Alle Datenquellen"
+  },
+  "searchPlaceholder": "CVE ID, Beschreibung oder Asset durchsuchen...",
+  "table": {
+    "id": "CVE-ID",
+    "score": "CVSS-Score",
+    "affectedAssets": "Betroffene Assets",
+    "description": "Beschreibung",
+    "source": "Quelle",
+    "published": "Veröffentlicht",
+    "actions": "Aktionen"
+  },
+  "empty": "Keine Schwachstellen unter den gegebenen Filterkriterien gefunden.",
+  "noDescription": "Keine Beschreibung verfügbar",
+  "sourceTitle": "Quelle ({{source}}) öffnen"
+}

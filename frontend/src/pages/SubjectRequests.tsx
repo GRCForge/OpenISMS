@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { UserCheck, Plus, Search, Clock, AlertTriangle, Edit2, Trash2, Shield, Filter, RotateCcw, CalendarClock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useKeyShortcut } from '../hooks/useKeyShortcut';
 import api from '../lib/api';
@@ -8,34 +9,6 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
-
-const TYPE_LABELS: Record<SubjectRequestType, string> = {
-  access: 'Auskunft (Art. 15)',
-  rectification: 'Berichtigung (Art. 16)',
-  erasure: 'Löschung (Art. 17)',
-  restriction: 'Einschränkung (Art. 18)',
-  portability: 'Datenübertragbarkeit (Art. 20)',
-  objection: 'Widerspruch (Art. 21)',
-  withdraw_consent: 'Einwilligung widerrufen (Art. 7)',
-};
-
-const TYPE_SHORT: Record<SubjectRequestType, string> = {
-  access: 'Auskunft',
-  rectification: 'Berichtigung',
-  erasure: 'Löschung',
-  restriction: 'Einschränkung',
-  portability: 'Portabilität',
-  objection: 'Widerspruch',
-  withdraw_consent: 'Widerruf',
-};
-
-const STATUS_LABELS: Record<SubjectRequestStatus, string> = {
-  received: 'Eingegangen',
-  in_progress: 'In Bearbeitung',
-  completed: 'Abgeschlossen',
-  rejected: 'Abgelehnt',
-  extended: 'Verlängert',
-};
 
 const STATUS_COLORS: Record<SubjectRequestStatus, string> = {
   received: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -55,11 +28,12 @@ function daysUntilDue(dueDateStr?: string, extendedUntil?: string): number | nul
 }
 
 function DeadlineBadge({ request }: { request: SubjectRequest }) {
+  const { t } = useTranslation('subjectrequests');
   if (request.status === 'completed' || request.status === 'rejected') return null;
   const days = daysUntilDue(request.due_date, request.extended_until);
   if (days === null) return null;
   if (days < 0) {
-    return <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"><AlertTriangle size={10} />{Math.abs(days)}d überfällig</span>;
+    return <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"><AlertTriangle size={10} />{Math.abs(days)}d {t('deadline.overdue')}</span>;
   }
   if (days <= 7) {
     return <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"><Clock size={10} />{days}d</span>;
@@ -87,6 +61,7 @@ const emptyForm = {
 };
 
 export const SubjectRequests: React.FC = () => {
+  const { t } = useTranslation('subjectrequests');
   const { user } = useAuth();
   const [requests, setRequests] = useState<SubjectRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -97,6 +72,35 @@ export const SubjectRequests: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const typeLabels: Record<SubjectRequestType, string> = {
+    access: t('type.access'),
+    rectification: t('type.rectification'),
+    erasure: t('type.erasure'),
+    restriction: t('type.restriction'),
+    portability: t('type.portability'),
+    objection: t('type.objection'),
+    withdraw_consent: t('type.withdraw_consent'),
+  };
+
+  const typeShortLabels: Record<SubjectRequestType, string> = {
+    access: t('typeShort.access'),
+    rectification: t('typeShort.rectification'),
+    erasure: t('typeShort.erasure'),
+    restriction: t('typeShort.restriction'),
+    portability: t('typeShort.portability'),
+    objection: t('typeShort.objection'),
+    withdraw_consent: t('typeShort.withdraw_consent'),
+  };
+
+  const statusLabels: Record<SubjectRequestStatus, string> = {
+    received: t('status.received'),
+    in_progress: t('status.in_progress'),
+    completed: t('status.completed'),
+    rejected: t('status.rejected'),
+    extended: t('status.extended'),
+  };
 
   const canWrite = user?.role === 'admin' || user?.role === 'dpo';
   const canDelete = user?.role === 'admin';
@@ -124,7 +128,7 @@ export const SubjectRequests: React.FC = () => {
   }, { disabled: modalOpen });
 
   useKeyShortcut('/', () => {
-    (document.querySelector('input[placeholder*="Suchen"]') as HTMLInputElement)?.focus();
+    searchRef.current?.focus();
   }, { disabled: modalOpen });
 
   const openEdit = (r: SubjectRequest) => {
@@ -164,17 +168,17 @@ export const SubjectRequests: React.FC = () => {
       setModalOpen(false);
       load();
     } catch (e: any) {
-      alert(e.response?.data?.error || 'Fehler beim Speichern');
+      alert(e.response?.data?.error || t('alert.saveError'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Antrag wirklich löschen?')) return;
+    if (!confirm(t('alert.deleteConfirm'))) return;
     try {
       await api.delete(`/subject-requests/${id}`);
       setRequests(r => r.filter(x => x.id !== id));
     } catch (e: any) {
-      alert(e.response?.data?.error || 'Fehler beim Löschen');
+      alert(e.response?.data?.error || t('alert.deleteError'));
     }
   };
 
@@ -215,13 +219,13 @@ export const SubjectRequests: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <UserCheck className="text-blue-600" size={24} />
-            Betroffenenrechte
+            {t('title')}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Anträge nach Art. 15–22 DSGVO · 30-Tage-Frist</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{t('subtitle')}</p>
         </div>
         {canWrite && (
           <Button onClick={() => { setEditId(null); setForm({ ...emptyForm }); setModalOpen(true); }} className="gap-2 shrink-0">
-            <Plus size={16} />Neuer Antrag
+            <Plus size={16} />{t('newButton')}
             <kbd className="ml-1 font-mono text-[10px] px-1.5 py-0.5 bg-blue-500/20 rounded hidden sm:inline">N</kbd>
           </Button>
         )}
@@ -230,19 +234,19 @@ export const SubjectRequests: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Eingegangen</p>
+          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.received')}</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.open}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">In Bearbeitung</p>
+          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.inProgress')}</p>
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{stats.inProgress}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Überfällig</p>
+          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.overdue')}</p>
           <p className={`text-2xl font-bold mt-1 ${stats.overdue > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{stats.overdue}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Abgeschlossen (Monat)</p>
+          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.completedMonth')}</p>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.completedMonth}</p>
         </div>
       </div>
@@ -252,29 +256,30 @@ export const SubjectRequests: React.FC = () => {
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
+            ref={searchRef}
             type="text"
-            placeholder="Suchen nach Name, Ref, E-Mail…"
+            placeholder={t('filter.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <Select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-          <option value="">Alle Arten</option>
-          {(Object.entries(TYPE_SHORT) as [SubjectRequestType, string][]).map(([k, v]) => (
+          <option value="">{t('filter.allTypes')}</option>
+          {(Object.entries(typeShortLabels) as [SubjectRequestType, string][]).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </Select>
         <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="">Alle Status</option>
-          {(Object.entries(STATUS_LABELS) as [SubjectRequestStatus, string][]).map(([k, v]) => (
+          <option value="">{t('filter.allStatus')}</option>
+          {(Object.entries(statusLabels) as [SubjectRequestStatus, string][]).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </Select>
         {hasFilter && (
           <button onClick={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); }}
             className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 transition-colors">
-            <RotateCcw size={13} />Zurücksetzen
+            <RotateCcw size={13} />{t('filter.reset')}
           </button>
         )}
       </div>
@@ -285,18 +290,18 @@ export const SubjectRequests: React.FC = () => {
           {hasFilter ? (
             <>
               <Filter size={32} className="mx-auto text-gray-300 dark:text-slate-600 mb-3" />
-              <p className="text-gray-500 dark:text-slate-400">Keine Anträge für die gewählten Filter.</p>
+              <p className="text-gray-500 dark:text-slate-400">{t('empty.filterTitle')}</p>
               <button onClick={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); }}
-                className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">Filter zurücksetzen</button>
+                className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">{t('empty.filterReset')}</button>
             </>
           ) : (
             <>
               <UserCheck size={40} className="mx-auto text-gray-300 dark:text-slate-600 mb-3" />
-              <p className="text-lg font-semibold text-gray-700 dark:text-slate-300">Noch keine Betroffenenanträge</p>
-              <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 mb-4">Anträge auf Auskunft, Löschung und weitere Rechte nach Art. 15–22 DSGVO erfassen.</p>
+              <p className="text-lg font-semibold text-gray-700 dark:text-slate-300">{t('empty.title')}</p>
+              <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 mb-4">{t('empty.description')}</p>
               {canWrite && (
                 <Button onClick={() => { setEditId(null); setForm({ ...emptyForm }); setModalOpen(true); }} className="gap-2">
-                  <Plus size={16} />Ersten Antrag anlegen
+                  <Plus size={16} />{t('empty.createButton')}
                 </Button>
               )}
             </>
@@ -313,10 +318,10 @@ export const SubjectRequests: React.FC = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-mono text-gray-400 dark:text-slate-500">{r.ref}</span>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[r.status]}`}>{STATUS_LABELS[r.status]}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[r.status]}`}>{statusLabels[r.status]}</span>
                   </div>
                   <p className="font-semibold text-gray-900 dark:text-white mt-1 truncate">{r.requester_name}</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">{TYPE_SHORT[r.type]}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">{typeShortLabels[r.type]}</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <DeadlineBadge request={r} />
@@ -334,8 +339,8 @@ export const SubjectRequests: React.FC = () => {
               </div>
               {r.due_date && (
                 <div className="mt-2 text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
-                  <CalendarClock size={11} />Frist: {new Date(r.extended_until || r.due_date).toLocaleDateString('de')}
-                  {r.extended_until && <span className="text-purple-500">(verlängert)</span>}
+                  <CalendarClock size={11} />{t('table.deadline')}: {new Date(r.extended_until || r.due_date).toLocaleDateString()}
+                  {r.extended_until && <span className="text-purple-500">{t('deadline.extended')}</span>}
                 </div>
               )}
             </div>
@@ -349,12 +354,12 @@ export const SubjectRequests: React.FC = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50">
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Ref</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Antragsteller</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Art</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Frist</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Bearbeiter</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.ref')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.requester')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.type')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.status')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.deadline')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.handler')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -367,16 +372,16 @@ export const SubjectRequests: React.FC = () => {
                     {r.requester_email && <p className="text-xs text-gray-400 dark:text-slate-500">{r.requester_email}</p>}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs text-gray-600 dark:text-slate-300">{TYPE_SHORT[r.type]}</span>
+                    <span className="text-xs text-gray-600 dark:text-slate-300">{typeShortLabels[r.type]}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[r.status]}`}>{STATUS_LABELS[r.status]}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[r.status]}`}>{statusLabels[r.status]}</span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {(r.due_date || r.extended_until) && (
                         <span className="text-xs text-gray-500 dark:text-slate-400">
-                          {new Date(r.extended_until || r.due_date!).toLocaleDateString('de')}
+                          {new Date(r.extended_until || r.due_date!).toLocaleDateString()}
                         </span>
                       )}
                       <DeadlineBadge request={r} />
@@ -407,77 +412,77 @@ export const SubjectRequests: React.FC = () => {
       )}
 
       {/* Create/Edit Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Antrag bearbeiten' : 'Neuer Betroffenenantrag'} size="lg">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editId ? t('modal.editTitle') : t('modal.newTitle')} size="lg">
         <form onSubmit={handleSave} className="space-y-4 py-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select label="Art des Antrags *" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as SubjectRequestType }))} required>
-              {(Object.entries(TYPE_LABELS) as [SubjectRequestType, string][]).map(([k, v]) => (
+            <Select label={t('modal.typeLabel')} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as SubjectRequestType }))} required>
+              {(Object.entries(typeLabels) as [SubjectRequestType, string][]).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
             </Select>
-            <Select label="Status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as SubjectRequestStatus }))}>
-              {(Object.entries(STATUS_LABELS) as [SubjectRequestStatus, string][]).map(([k, v]) => (
+            <Select label={t('modal.statusLabel')} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as SubjectRequestStatus }))}>
+              {(Object.entries(statusLabels) as [SubjectRequestStatus, string][]).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
             </Select>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Name des Antragstellers *" value={form.requester_name} onChange={e => setForm(f => ({ ...f, requester_name: e.target.value }))} required />
-            <Input label="E-Mail des Antragstellers" type="email" value={form.requester_email} onChange={e => setForm(f => ({ ...f, requester_email: e.target.value }))} />
+            <Input label={t('modal.requesterName')} value={form.requester_name} onChange={e => setForm(f => ({ ...f, requester_name: e.target.value }))} required />
+            <Input label={t('modal.requesterEmail')} type="email" value={form.requester_email} onChange={e => setForm(f => ({ ...f, requester_email: e.target.value }))} />
           </div>
 
           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800/40 rounded-lg border dark:border-slate-700">
             <input type="checkbox" id="id_verified" checked={form.requester_id_verified} onChange={e => setForm(f => ({ ...f, requester_id_verified: e.target.checked }))}
               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
             <label htmlFor="id_verified" className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Shield size={13} className="text-blue-500" />Identität des Antragstellers verifiziert
+              <Shield size={13} className="text-blue-500" />{t('modal.idVerified')}
             </label>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input label="Eingang *" type="date" value={form.received_date} onChange={e => setForm(f => ({ ...f, received_date: e.target.value }))} required />
-            <Input label="Frist (Standard: +30 Tage)" type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
-            <Input label="Verlängert bis (max. 90 Tage)" type="date" value={form.extended_until} onChange={e => setForm(f => ({ ...f, extended_until: e.target.value }))} />
+            <Input label={t('modal.receivedDate')} type="date" value={form.received_date} onChange={e => setForm(f => ({ ...f, received_date: e.target.value }))} required />
+            <Input label={t('modal.dueDate')} type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
+            <Input label={t('modal.extendedUntil')} type="date" value={form.extended_until} onChange={e => setForm(f => ({ ...f, extended_until: e.target.value }))} />
           </div>
 
           {form.extended_until && (
             <div>
-              <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">Begründung der Verlängerung</label>
+              <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">{t('modal.extensionReason')}</label>
               <textarea value={form.extension_reason} onChange={e => setForm(f => ({ ...f, extension_reason: e.target.value }))} rows={2}
                 className="w-full text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">Beschreibung / Antragsinhalt</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">{t('modal.description')}</label>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3}
               className="w-full text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select label="Bearbeiter" value={form.handler_id} onChange={e => setForm(f => ({ ...f, handler_id: e.target.value }))}>
-              <option value="">Nicht zugewiesen</option>
+            <Select label={t('modal.handler')} value={form.handler_id} onChange={e => setForm(f => ({ ...f, handler_id: e.target.value }))}>
+              <option value="">{t('modal.unassigned')}</option>
               {users.filter(u => ['admin', 'dpo', 'assessor'].includes(u.role)).map(u => (
                 <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
               ))}
             </Select>
             <div>
-              <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">Entscheidung / Antwort</label>
+              <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">{t('modal.decision')}</label>
               <textarea value={form.decision} onChange={e => setForm(f => ({ ...f, decision: e.target.value }))} rows={2}
                 className="w-full text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">Interne Notizen</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">{t('modal.notes')}</label>
             <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2}
               className="w-full text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
 
           <div className="flex justify-end gap-3 pt-2 border-t dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Abbrechen</Button>
-            <Button type="submit">{editId ? 'Speichern' : 'Antrag anlegen'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>{t('modal.cancel')}</Button>
+            <Button type="submit">{editId ? t('modal.save') : t('modal.create')}</Button>
           </div>
         </form>
       </Modal>

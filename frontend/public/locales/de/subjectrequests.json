@@ -1,0 +1,88 @@
+{
+  "title": "Betroffenenrechte",
+  "subtitle": "Anträge nach Art. 15–22 DSGVO · 30-Tage-Frist",
+  "newButton": "Neuer Antrag",
+  "type": {
+    "access": "Auskunft (Art. 15)",
+    "rectification": "Berichtigung (Art. 16)",
+    "erasure": "Löschung (Art. 17)",
+    "restriction": "Einschränkung (Art. 18)",
+    "portability": "Datenübertragbarkeit (Art. 20)",
+    "objection": "Widerspruch (Art. 21)",
+    "withdraw_consent": "Einwilligung widerrufen (Art. 7)"
+  },
+  "typeShort": {
+    "access": "Auskunft",
+    "rectification": "Berichtigung",
+    "erasure": "Löschung",
+    "restriction": "Einschränkung",
+    "portability": "Portabilität",
+    "objection": "Widerspruch",
+    "withdraw_consent": "Widerruf"
+  },
+  "status": {
+    "received": "Eingegangen",
+    "in_progress": "In Bearbeitung",
+    "completed": "Abgeschlossen",
+    "rejected": "Abgelehnt",
+    "extended": "Verlängert"
+  },
+  "stats": {
+    "received": "Eingegangen",
+    "inProgress": "In Bearbeitung",
+    "overdue": "Überfällig",
+    "completedMonth": "Abgeschlossen (Monat)"
+  },
+  "deadline": {
+    "overdue": "überfällig",
+    "extended": "(verlängert)",
+    "label": "Frist:"
+  },
+  "filter": {
+    "searchPlaceholder": "Suchen nach Name, Ref, E-Mail…",
+    "allTypes": "Alle Arten",
+    "allStatus": "Alle Status",
+    "reset": "Zurücksetzen"
+  },
+  "table": {
+    "ref": "Ref",
+    "requester": "Antragsteller",
+    "type": "Art",
+    "status": "Status",
+    "deadline": "Frist",
+    "handler": "Bearbeiter"
+  },
+  "empty": {
+    "filterTitle": "Keine Anträge für die gewählten Filter.",
+    "filterReset": "Filter zurücksetzen",
+    "title": "Noch keine Betroffenenanträge",
+    "description": "Anträge auf Auskunft, Löschung und weitere Rechte nach Art. 15–22 DSGVO erfassen.",
+    "createButton": "Ersten Antrag anlegen"
+  },
+  "modal": {
+    "editTitle": "Antrag bearbeiten",
+    "newTitle": "Neuer Betroffenenantrag",
+    "typeLabel": "Art des Antrags *",
+    "statusLabel": "Status",
+    "requesterName": "Name des Antragstellers *",
+    "requesterEmail": "E-Mail des Antragstellers",
+    "idVerified": "Identität des Antragstellers verifiziert",
+    "receivedDate": "Eingang *",
+    "dueDate": "Frist (Standard: +30 Tage)",
+    "extendedUntil": "Verlängert bis (max. 90 Tage)",
+    "extensionReason": "Begründung der Verlängerung",
+    "description": "Beschreibung / Antragsinhalt",
+    "handler": "Bearbeiter",
+    "unassigned": "Nicht zugewiesen",
+    "decision": "Entscheidung / Antwort",
+    "notes": "Interne Notizen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "create": "Antrag anlegen"
+  },
+  "alert": {
+    "saveError": "Fehler beim Speichern",
+    "deleteConfirm": "Antrag wirklich löschen?",
+    "deleteError": "Fehler beim Löschen"
+  }
+}

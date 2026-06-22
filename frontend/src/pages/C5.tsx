@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Shield, ChevronDown, ChevronRight, RefreshCw, CheckCircle, Clock, XCircle, MinusCircle, Pencil, X, Save } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { hasWriteAccess } from '../lib/permissions';
 import api from '../lib/api';
@@ -28,13 +29,6 @@ interface C5Item {
 }
 
 interface User { id: number; name: string; email: string; }
-
-const STATUS_LABELS: Record<string, string> = {
-  not_started: 'Nicht begonnen',
-  in_progress: 'In Bearbeitung',
-  implemented: 'Umgesetzt',
-  not_applicable: 'Nicht anwendbar',
-};
 
 const STATUS_COLORS: Record<string, string> = {
   not_started: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
@@ -72,6 +66,7 @@ const DOMAIN_COLORS: Record<string, string> = {
 };
 
 export const C5: React.FC = () => {
+  const { t } = useTranslation('c5');
   const { user } = useAuth();
   const canWrite = hasWriteAccess(user?.role);
   const [items, setItems] = useState<C5Item[]>([]);
@@ -85,6 +80,13 @@ export const C5: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [filterDomain, setFilterDomain] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+
+  const statusLabels: Record<string, string> = {
+    not_started: t('status.not_started'),
+    in_progress: t('status.in_progress'),
+    implemented: t('status.implemented'),
+    not_applicable: t('status.not_applicable'),
+  };
 
   const load = async () => {
     setLoading(true);
@@ -108,9 +110,10 @@ export const C5: React.FC = () => {
       await load();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string } } };
-      setSeedError(err.response?.data?.error || 'Fehler beim Laden des Katalogs');
+      setSeedError(err.response?.data?.error || t('toast.loadError'));
     } finally {
-      setSeeding(false); }
+      setSeeding(false);
+    }
   };
 
   const grouped = useMemo(() => {
@@ -181,14 +184,14 @@ export const C5: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold dark:text-white">BSI C5:2026</h1>
-        <p className="text-gray-500 dark:text-slate-400 text-sm">Cloud Computing Compliance Criteria Catalogue — 174 Kriterien in 18 Domains</p>
+        <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitleEmpty')}</p>
       </div>
       <Card>
         <CardBody className="text-center py-16 space-y-4">
           <Shield size={48} className="mx-auto text-cyan-400" />
-          <p className="text-gray-500 dark:text-slate-400">Der C5:2026-Katalog wurde noch nicht geladen.</p>
+          <p className="text-gray-500 dark:text-slate-400">{t('empty.notLoaded')}</p>
           {seedError && <p className="text-red-500 text-sm">{seedError}</p>}
-          {canWrite && <Button onClick={seed} disabled={seeding}>{seeding ? 'Lädt…' : 'Katalog laden (174 Kriterien)'}</Button>}
+          {canWrite && <Button onClick={seed} disabled={seeding}>{seeding ? t('empty.loading') : t('empty.loadButton')}</Button>}
         </CardBody>
       </Card>
     </div>
@@ -199,48 +202,46 @@ export const C5: React.FC = () => {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold dark:text-white">BSI C5:2026</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">Cloud Computing Compliance Criteria Catalogue — {stats.total} Kriterien · 18 Domains</p>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitle', { total: stats.total })}</p>
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardBody className="p-4 text-center">
             <p className="text-2xl font-extrabold dark:text-white">{stats.total}</p>
-            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">Kriterien gesamt</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">{t('stats.total')}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody className="p-4 text-center">
             <p className="text-2xl font-extrabold text-green-600 dark:text-green-400">{stats.implemented}</p>
-            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">Umgesetzt</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">{t('stats.implemented')}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody className="p-4 text-center">
             <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{stats.inProgress}</p>
-            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">In Bearbeitung</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">{t('stats.inProgress')}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody className="p-4 text-center">
             <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">{stats.pct}%</p>
-            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">Compliance-Quote</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wide">{t('stats.compliance')}</p>
           </CardBody>
         </Card>
       </div>
 
-      {/* PQC & CC KPI strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-purple-200 dark:border-purple-900/40 bg-purple-50 dark:bg-purple-900/10">
           <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 shrink-0">
             <Shield size={16} className="text-purple-600 dark:text-purple-400" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wide">Post-Quantum Crypto (PQC)</p>
+            <p className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wide">{t('kpi.pqc')}</p>
             <p className="text-sm text-gray-600 dark:text-slate-400">
-              <span className="font-bold text-purple-600 dark:text-purple-400">{stats.pqcDone}/{stats.pqcItems.length}</span> umgesetzt
+              <span className="font-bold text-purple-600 dark:text-purple-400">{stats.pqcDone}/{stats.pqcItems.length}</span> {t('kpi.implemented')}
               <span className="ml-1 text-xs text-gray-400">({stats.pqcItems.map(i => i.criterion_id).join(', ')})</span>
             </p>
           </div>
@@ -250,9 +251,9 @@ export const C5: React.FC = () => {
             <Shield size={16} className="text-cyan-600 dark:text-cyan-400" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-cyan-700 dark:text-cyan-300 uppercase tracking-wide">Confidential Computing (CC)</p>
+            <p className="text-xs font-bold text-cyan-700 dark:text-cyan-300 uppercase tracking-wide">{t('kpi.cc')}</p>
             <p className="text-sm text-gray-600 dark:text-slate-400">
-              <span className="font-bold text-cyan-600 dark:text-cyan-400">{stats.ccDone}/{stats.ccItems.length}</span> umgesetzt
+              <span className="font-bold text-cyan-600 dark:text-cyan-400">{stats.ccDone}/{stats.ccItems.length}</span> {t('kpi.implemented')}
               <span className="ml-1 text-xs text-gray-400">({stats.ccItems.map(i => i.criterion_id).join(', ')})</span>
             </p>
           </div>
@@ -262,52 +263,30 @@ export const C5: React.FC = () => {
             <Shield size={16} className="text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <p className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wide">Verschärfte Anforderungen</p>
-            <p className="text-sm text-gray-600 dark:text-slate-400">
-              <span className="font-bold text-amber-600 dark:text-amber-400">{stats.sharpenItems.length}</span> Kriterien mit Sharpen-Variante
-            </p>
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wide">{t('kpi.sharpen')}</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">{t('kpi.sharpenCount', { count: stats.sharpenItems.length })}</p>
           </div>
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5">
-        <div
-          className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2.5 rounded-full transition-all duration-500"
-          style={{ width: `${stats.pct}%` }}
-        />
+        <div className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2.5 rounded-full transition-all duration-500" style={{ width: `${stats.pct}%` }} />
       </div>
 
-      {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="w-56">
-          <Select
-            value={filterDomain}
-            onChange={e => setFilterDomain(e.target.value)}
-            options={[{ value: '', label: 'Alle Domains' }, ...domains.map(d => ({ value: d, label: `${d} — ${items.find(i => i.domain === d)?.domain_name || ''}` }))]}
-          />
+          <Select value={filterDomain} onChange={e => setFilterDomain(e.target.value)} options={[{ value: '', label: t('filter.allDomains') }, ...domains.map(d => ({ value: d, label: `${d} — ${items.find(i => i.domain === d)?.domain_name || ''}` }))]} />
         </div>
         <div className="w-48">
-          <Select
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-            options={[
-              { value: '', label: 'Alle Status' },
-              { value: 'not_started', label: 'Nicht begonnen' },
-              { value: 'in_progress', label: 'In Bearbeitung' },
-              { value: 'implemented', label: 'Umgesetzt' },
-              { value: 'not_applicable', label: 'Nicht anwendbar' },
-            ]}
-          />
+          <Select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} options={[{ value: '', label: t('filter.allStatus') }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]} />
         </div>
         {(filterDomain || filterStatus) && (
           <Button variant="ghost" size="sm" onClick={() => { setFilterDomain(''); setFilterStatus(''); }}>
-            <X size={14} /> Filter zurücksetzen
+            <X size={14} /> {t('filter.reset')}
           </Button>
         )}
       </div>
 
-      {/* Domain groups */}
       <div className="space-y-3">
         {[...grouped.entries()].map(([domain, { domain_name, items: domainItems }]) => {
           const expanded = expandedDomains.has(domain);
@@ -316,16 +295,12 @@ export const C5: React.FC = () => {
           const applicable = domainItems.length - naCount;
           const domainPct = applicable > 0 ? Math.round((implCount / applicable) * 100) : 100;
           const colorClass = DOMAIN_COLORS[domain] || 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
-
           return (
             <Card key={domain} className="overflow-hidden">
-              <button
-                onClick={() => toggleDomain(domain)}
-                className="w-full flex items-center gap-3 p-4 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors text-left"
-              >
+              <button onClick={() => toggleDomain(domain)} className="w-full flex items-center gap-3 p-4 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors text-left">
                 <span className={`text-xs font-bold px-2 py-0.5 rounded font-mono ${colorClass}`}>{domain}</span>
                 <span className="flex-1 font-semibold dark:text-white text-sm">{domain_name}</span>
-                <span className="text-xs text-gray-500 dark:text-slate-400">{domainItems.length} Kriterien</span>
+                <span className="text-xs text-gray-500 dark:text-slate-400">{t('domain.criteriaCount', { count: domainItems.length })}</span>
                 <div className="flex items-center gap-2 min-w-[80px]">
                   <div className="w-16 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5">
                     <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: `${domainPct}%` }} />
@@ -334,7 +309,6 @@ export const C5: React.FC = () => {
                 </div>
                 {expanded ? <ChevronDown size={16} className="text-gray-400 shrink-0" /> : <ChevronRight size={16} className="text-gray-400 shrink-0" />}
               </button>
-
               {expanded && (
                 <div className="border-t dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800">
                   {domainItems.map(item => (
@@ -342,29 +316,17 @@ export const C5: React.FC = () => {
                       <span className="text-xs font-mono text-gray-500 dark:text-slate-500 w-16 shrink-0">{item.criterion_id}</span>
                       <span className="flex-1 text-sm dark:text-slate-200 min-w-0">{item.title}</span>
                       <div className="flex items-center gap-1 shrink-0">
-                        {item.pqc_relevant && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" title="Post-Quantum Cryptography relevant">PQC</span>
-                        )}
-                        {item.cc_relevant && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300" title="Confidential Computing relevant">CC</span>
-                        )}
-                        {item.has_sharpen && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" title="Verschärfte Anforderung verfügbar">⬆</span>
-                        )}
+                        {item.pqc_relevant && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" title="Post-Quantum Cryptography relevant">PQC</span>}
+                        {item.cc_relevant && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300" title="Confidential Computing relevant">CC</span>}
+                        {item.has_sharpen && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" title={t('kpi.sharpenTooltip')}>⬆</span>}
                       </div>
                       <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded shrink-0 ${STATUS_COLORS[item.implementation_status]}`}>
                         {STATUS_ICON[item.implementation_status]}
-                        {STATUS_LABELS[item.implementation_status]}
+                        {statusLabels[item.implementation_status]}
                       </span>
-                      {item.responsible && (
-                        <span className="text-xs text-gray-400 dark:text-slate-500 shrink-0 hidden md:block">{item.responsible.name}</span>
-                      )}
+                      {item.responsible && <span className="text-xs text-gray-400 dark:text-slate-500 shrink-0 hidden md:block">{item.responsible.name}</span>}
                       {canWrite && (
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors shrink-0"
-                          title="Bearbeiten"
-                        >
+                        <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors shrink-0" title={t('modal.edit')}>
                           <Pencil size={13} />
                         </button>
                       )}
@@ -377,55 +339,26 @@ export const C5: React.FC = () => {
         })}
       </div>
 
-      {/* Edit Modal */}
       {editItem && (
         <Modal open={!!editItem} onClose={() => setEditItem(null)} title={`${editItem.criterion_id} — ${editItem.title}`}>
           <div className="space-y-4">
-            <Select
-              label="Umsetzungsstatus"
-              value={editForm.implementation_status || 'not_started'}
-              onChange={e => setEditForm(f => ({ ...f, implementation_status: e.target.value as C5Item['implementation_status'] }))}
-              options={Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-            />
-            <Select
-              label="Verantwortliche Person"
-              value={String(editForm.responsible_id || '')}
-              onChange={e => setEditForm(f => ({ ...f, responsible_id: e.target.value ? Number(e.target.value) : null }))}
-              options={[{ value: '', label: '— Keine —' }, ...users.map(u => ({ value: String(u.id), label: u.name }))]}
-            />
-            <Input
-              label="Nachweise / Evidence"
-              value={editForm.evidence || ''}
-              onChange={e => setEditForm(f => ({ ...f, evidence: e.target.value }))}
-              placeholder="Dokumentenreferenzen, Links, Beschreibungen…"
-            />
-            <Input
-              label="Letzte Prüfung"
-              type="date"
-              value={editForm.last_review_date || ''}
-              onChange={e => setEditForm(f => ({ ...f, last_review_date: e.target.value }))}
-            />
+            <Select label={t('modal.status')} value={editForm.implementation_status || 'not_started'} onChange={e => setEditForm(f => ({ ...f, implementation_status: e.target.value as C5Item['implementation_status'] }))} options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Select label={t('modal.responsible')} value={String(editForm.responsible_id || '')} onChange={e => setEditForm(f => ({ ...f, responsible_id: e.target.value ? Number(e.target.value) : null }))} options={[{ value: '', label: t('modal.nobody') }, ...users.map(u => ({ value: String(u.id), label: u.name }))]} />
+            <Input label={t('modal.evidence')} value={editForm.evidence || ''} onChange={e => setEditForm(f => ({ ...f, evidence: e.target.value }))} placeholder={t('modal.evidencePlaceholder')} />
+            <Input label={t('modal.lastReview')} type="date" value={editForm.last_review_date || ''} onChange={e => setEditForm(f => ({ ...f, last_review_date: e.target.value }))} />
             <div>
-              <label className="block text-sm font-medium dark:text-slate-200 mb-1">Notizen</label>
-              <textarea
-                value={editForm.notes || ''}
-                onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
-                rows={3}
-                className="w-full border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Interne Notizen, Hinweise…"
-              />
+              <label className="block text-sm font-medium dark:text-slate-200 mb-1">{t('modal.notes')}</label>
+              <textarea value={editForm.notes || ''} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="w-full border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder={t('modal.notesPlaceholder')} />
             </div>
-
             {editItem && (
               <div className="pt-2 border-t border-gray-100 dark:border-slate-800">
-                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2">Querverweise</p>
+                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2">{t('modal.crossRefs')}</p>
                 <ControlMappings framework="c5" ref={editItem.criterion_id} />
               </div>
             )}
-
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="ghost" onClick={() => setEditItem(null)}><X size={14} /> Abbrechen</Button>
-              <Button onClick={saveEdit} disabled={saving || !canWrite}><Save size={14} /> {saving ? 'Speichert…' : 'Speichern'}</Button>
+              <Button variant="ghost" onClick={() => setEditItem(null)}><X size={14} /> {t('modal.cancel')}</Button>
+              <Button onClick={saveEdit} disabled={saving || !canWrite}><Save size={14} /> {saving ? t('modal.saving') : t('modal.save')}</Button>
             </div>
           </div>
         </Modal>

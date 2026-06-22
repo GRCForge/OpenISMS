@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import type { Task } from '../types';
 import { Card } from '../components/ui/Card';
@@ -66,15 +67,14 @@ const priorityColor: Record<string, string> = {
 };
 
 export const MyArea: React.FC = () => {
+  const { t } = useTranslation('myarea');
   const { user } = useAuth();
   const toast = useToast();
-  
-  // Standard states
+
   const [overview, setOverview] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [taskLoading, setTaskLoading] = useState<number | null>(null);
 
-  // Employee-specific states
   const [trainings, setTrainings] = useState<UserTraining[]>([]);
   const [loadingTrainings, setLoadingTrainings] = useState(false);
   const [contestModalOpen, setContestModalOpen] = useState(false);
@@ -111,25 +111,17 @@ export const MyArea: React.FC = () => {
       setOverview(prev => prev ? {
         ...prev,
         my_tasks: status === 'done'
-          ? prev.my_tasks.filter(t => t.id !== taskId)
-          : prev.my_tasks.map(t => t.id === taskId ? { ...t, status } : t),
+          ? prev.my_tasks.filter(task => task.id !== taskId)
+          : prev.my_tasks.map(task => task.id === taskId ? { ...task, status } : task),
       } : prev);
     } catch (e: any) {
-      alert(e?.response?.data?.error || 'Fehler beim Aktualisieren der Aufgabe');
+      alert(e?.response?.data?.error || t('toast.taskError'));
     } finally {
       setTaskLoading(null);
     }
   };
 
-  const roleLabels: Record<string, string> = {
-    admin: 'System-Administrator',
-    assessor: 'Auditor & Bewerter',
-    'it-staff': 'IT-Mitarbeiter',
-    dpo: 'Datenschutzbeauftragter',
-    owner: 'Asset-Verantwortlicher',
-    viewer: 'Gast',
-    employee: 'Mitarbeiter',
-  };
+  const roleLabel = t(`roles.${user?.role || 'viewer'}`);
 
   if (loading) return <div className="flex justify-center pt-20"><Loader2 className="animate-spin text-blue-600" size={28} /></div>;
 
@@ -139,10 +131,10 @@ export const MyArea: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
             <BookOpen size={24} className="text-blue-600" />
-            Meine Schulungen
+            {t('employee.title')}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-            Hier siehst du eine Übersicht deiner absolvierten Schulungen. Du kannst Einträge beanstanden, falls du an einer anderen Schulung teilgenommen hast oder die Angaben fehlerhaft sind.
+            {t('employee.subtitle')}
           </p>
         </div>
 
@@ -153,50 +145,50 @@ export const MyArea: React.FC = () => {
         ) : trainings.length === 0 ? (
           <Card className="p-8 text-center">
             <CheckCircle size={32} className="mx-auto text-green-400 mb-2" />
-            <p className="text-gray-500 dark:text-slate-400 font-medium">Keine Schulungseinträge vorhanden</p>
-            <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">Es wurden noch keine Schulungsteilnahmen für dein Konto hinterlegt.</p>
+            <p className="text-gray-500 dark:text-slate-400 font-medium">{t('employee.empty')}</p>
+            <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('employee.emptyDescription')}</p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {trainings.map(t => (
-              <Card key={t.id} className="p-5 border dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:shadow-md transition-all">
+            {trainings.map(training => (
+              <Card key={training.id} className="p-5 border dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:shadow-md transition-all">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-bold dark:text-white">{t.training_title}</h3>
-                      {t.training?.required && (
+                      <h3 className="text-base font-bold dark:text-white">{training.training_title}</h3>
+                      {training.training?.required && (
                         <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-[10px] font-bold uppercase">
-                          Pflicht
+                          {t('employee.required')}
                         </span>
                       )}
                     </div>
-                    {t.training?.description && (
-                      <p className="text-xs text-gray-500 dark:text-slate-400 max-w-2xl">{t.training.description}</p>
+                    {training.training?.description && (
+                      <p className="text-xs text-gray-500 dark:text-slate-400 max-w-2xl">{training.training.description}</p>
                     )}
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-slate-500 pt-1">
-                      {t.completed_at && (
+                      {training.completed_at && (
                         <span>
-                          Absolviert am: <strong>{format(parseISO(t.completed_at), 'dd.MM.yyyy')}</strong>
+                          {t('employee.completedAt')} <strong>{format(parseISO(training.completed_at), 'dd.MM.yyyy')}</strong>
                         </span>
                       )}
-                      {t.expires_at && (
+                      {training.expires_at && (
                         <span>
-                          Gültig bis: <strong>{format(parseISO(t.expires_at), 'dd.MM.yyyy')}</strong>
+                          {t('employee.expiresAt')} <strong>{format(parseISO(training.expires_at), 'dd.MM.yyyy')}</strong>
                         </span>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    {t.contested ? (
+                    {training.contested ? (
                       <div className="flex flex-col items-end">
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
                           <AlertTriangle size={13} />
-                          Beanstandet
+                          {t('employee.contested')}
                         </span>
-                        {t.contestation_comment && (
-                          <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 max-w-[200px] truncate" title={t.contestation_comment}>
-                            "{t.contestation_comment}"
+                        {training.contestation_comment && (
+                          <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 max-w-[200px] truncate" title={training.contestation_comment}>
+                            "{training.contestation_comment}"
                           </span>
                         )}
                       </div>
@@ -206,13 +198,13 @@ export const MyArea: React.FC = () => {
                         variant="secondary"
                         className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/10 border-amber-200 dark:border-amber-900/30"
                         onClick={() => {
-                          setSelectedTraining(t);
+                          setSelectedTraining(training);
                           setContestComment('');
                           setContestModalOpen(true);
                         }}
                       >
                         <AlertTriangle size={14} className="mr-1" />
-                        Beanstanden
+                        {t('employee.contest')}
                       </Button>
                     )}
                   </div>
@@ -226,37 +218,37 @@ export const MyArea: React.FC = () => {
         <Modal
           open={contestModalOpen}
           onClose={() => setContestModalOpen(false)}
-          title="Schulungsteilnahme beanstanden"
+          title={t('contestModal.title')}
           size="md"
         >
           <div className="space-y-4 py-2">
             <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl text-amber-800 dark:text-amber-300 text-xs">
               <p className="font-semibold flex items-center gap-1.5 mb-1">
                 <AlertTriangle size={14} />
-                Hinweis zur Beanstandung
+                {t('contestModal.hintTitle')}
               </p>
-              Falls du an dieser Schulung nicht teilgenommen hast, das Datum falsch ist oder du eine andere Schulung besucht hast, kannst du dies hier begründen. Ein Compliance-Mitarbeiter wird deine Anfrage prüfen.
+              {t('contestModal.hint')}
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase text-gray-400 mb-1">Ausgewählte Schulung</p>
+              <p className="text-xs font-semibold uppercase text-gray-400 mb-1">{t('contestModal.selectedTraining')}</p>
               <p className="text-sm font-bold dark:text-white">{selectedTraining?.training_title}</p>
               {selectedTraining?.completed_at && (
                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Registriertes Datum: {format(parseISO(selectedTraining.completed_at), 'dd.MM.yyyy')}
+                  {t('contestModal.registeredDate')} {format(parseISO(selectedTraining.completed_at), 'dd.MM.yyyy')}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
               <label htmlFor="contestComment" className="block text-xs font-semibold uppercase text-gray-400">
-                Begründung / Korrekturhinweis <span className="text-red-500">*</span>
+                {t('contestModal.reasonLabel')} <span className="text-red-500">{t('contestModal.reasonRequired')}</span>
               </label>
               <textarea
                 id="contestComment"
                 rows={4}
                 className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                placeholder="z.B. 'Ich habe an diesem Tag nicht an dieser Schulung teilgenommen, sondern an der Datenschutz-Schulung B.'"
+                placeholder={t('contestModal.reasonPlaceholder')}
                 value={contestComment}
                 onChange={e => setContestComment(e.target.value)}
               />
@@ -264,7 +256,7 @@ export const MyArea: React.FC = () => {
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="secondary" onClick={() => setContestModalOpen(false)} disabled={submittingContest}>
-                Abbrechen
+                {t('contestModal.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -273,20 +265,18 @@ export const MyArea: React.FC = () => {
                   setSubmittingContest(true);
                   try {
                     await api.post(`/compliance/trainings/${selectedTraining.id}/contest`, { comment: contestComment });
-                    toast.success('Beanstandung erfolgreich eingereicht.');
-                    
-                    // Update local state
-                    setTrainings(prev => prev.map(t => t.id === selectedTraining.id ? { ...t, contested: true, contestation_comment: contestComment } : t));
+                    toast.success(t('toast.contestSuccess'));
+                    setTrainings(prev => prev.map(tr => tr.id === selectedTraining.id ? { ...tr, contested: true, contestation_comment: contestComment } : tr));
                     setContestModalOpen(false);
                   } catch (e: any) {
-                    toast.error(e.response?.data?.error || 'Fehler beim Einreichen der Beanstandung.');
+                    toast.error(e.response?.data?.error || t('toast.contestError'));
                   } finally {
                     setSubmittingContest(false);
                   }
                 }}
                 disabled={submittingContest || !contestComment.trim()}
               >
-                {submittingContest ? 'Wird übermittelt...' : 'Beanstandung absenden'}
+                {submittingContest ? t('contestModal.submitting') : t('contestModal.submit')}
               </Button>
             </div>
           </div>
@@ -297,7 +287,7 @@ export const MyArea: React.FC = () => {
 
   const tasks = overview?.my_tasks || [];
   const sections = overview?.sections || [];
-  const overdueTasks = tasks.filter(t => t.due_date && isPast(parseISO(t.due_date)));
+  const overdueTasks = tasks.filter(task => task.due_date && isPast(parseISO(task.due_date)));
   const totalActionItems = sections.reduce((sum, s) => sum + s.total, 0);
 
   return (
@@ -307,23 +297,23 @@ export const MyArea: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2">
             <LayoutList size={24} className="text-blue-600" />
-            Mein Bereich
+            {t('title')}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">
-            Willkommen, {user?.name} · <span className="font-medium">{roleLabels[user?.role || 'viewer']}</span>
+            {t('welcome', { name: user?.name })} · <span className="font-medium">{roleLabel}</span>
           </p>
         </div>
         <div className="flex gap-2">
           {totalActionItems > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-semibold">
               <AlertTriangle size={14} />
-              {totalActionItems} offene Punkte
+              {t('openItems', { count: totalActionItems })}
             </div>
           )}
           {!overview?.passkey_count && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm border border-yellow-200 dark:border-yellow-800/50" title="Kein Passkey hinterlegt">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm border border-yellow-200 dark:border-yellow-800/50" title={t('passkey.title')}>
               <Fingerprint size={14} />
-              Kein Passkey
+              {t('noPasskey')}
             </div>
           )}
         </div>
@@ -334,76 +324,76 @@ export const MyArea: React.FC = () => {
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <CheckSquare size={16} className="text-blue-600" />
-            Meine Aufgaben
-            {tasks.length > 0 && <span className="text-xs font-normal text-gray-400">({tasks.length} offen)</span>}
+            {t('tasks.title')}
+            {tasks.length > 0 && <span className="text-xs font-normal text-gray-400">{t('tasks.openCount', { count: tasks.length })}</span>}
           </h2>
           <Link to="/tasks" className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-            Alle Aufgaben <ArrowRight size={14} />
+            {t('tasks.allTasks')} <ArrowRight size={14} />
           </Link>
         </div>
 
         {tasks.length === 0 ? (
           <Card className="p-8 text-center">
             <CheckCircle2 size={32} className="mx-auto text-green-400 mb-2" />
-            <p className="text-gray-500 dark:text-slate-400 font-medium">Keine offenen Aufgaben</p>
-            <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">Super! Alles erledigt.</p>
+            <p className="text-gray-500 dark:text-slate-400 font-medium">{t('tasks.empty')}</p>
+            <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('tasks.emptyDescription')}</p>
           </Card>
         ) : (
           <div className="space-y-2">
             {overdueTasks.length > 0 && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 text-sm text-red-700 dark:text-red-300">
                 <AlertTriangle size={14} className="shrink-0" />
-                <span><strong>{overdueTasks.length} Aufgabe{overdueTasks.length > 1 ? 'n' : ''}</strong> überfällig</span>
+                <strong>{t('tasks.overdueWarning', { count: overdueTasks.length })}</strong>
               </div>
             )}
-            {tasks.map(t => {
-              const isOverdue = t.due_date && isPast(parseISO(t.due_date));
-              const busy = taskLoading === t.id;
+            {tasks.map(task => {
+              const isOverdue = task.due_date && isPast(parseISO(task.due_date));
+              const busy = taskLoading === task.id;
               return (
-                <Card key={t.id} className="p-3 hover:shadow-sm transition-shadow">
+                <Card key={task.id} className="p-3 hover:shadow-sm transition-shadow">
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => quickTaskStatus(t.id, 'done')}
+                      onClick={() => quickTaskStatus(task.id, 'done')}
                       disabled={busy}
-                      title="Als erledigt markieren"
+                      title={t('tasks.markDone')}
                       className="shrink-0 text-gray-300 hover:text-green-500 dark:hover:text-green-400 transition-colors disabled:opacity-40"
                     >
                       {busy ? <Loader2 size={16} className="animate-spin" /> : <Circle size={16} />}
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium dark:text-slate-200 truncate">{t.title}</p>
-                        {t.related_type === 'asset' && t.related_id && (
-                          <Link to={`/assets/${t.related_id}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors" title="Zum Asset springen">
+                        <p className="text-sm font-medium dark:text-slate-200 truncate">{task.title}</p>
+                        {task.related_type === 'asset' && task.related_id && (
+                          <Link to={`/assets/${task.related_id}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors" title="Asset">
                             <Link2 size={12} />
                           </Link>
                         )}
                       </div>
-                      {t.due_date && (
+                      {task.due_date && (
                         <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-400 dark:text-slate-500'}`}>
-                          {isOverdue ? '⚠ Überfällig · ' : ''}
-                          Fällig {format(parseISO(t.due_date), 'd. MMM yyyy', { locale: de })}
+                          {isOverdue ? `${t('tasks.overdueSuffix')} ` : ''}
+                          {t('tasks.dueLabel')} {format(parseISO(task.due_date), 'd. MMM yyyy', { locale: de })}
                         </p>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <span className={`text-xs font-semibold ${priorityColor[t.priority]}`}>
-                        {t.priority === 'critical' ? 'Kritisch' : t.priority === 'high' ? 'Hoch' : t.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                      <span className={`text-xs font-semibold ${priorityColor[task.priority]}`}>
+                        {t(`priority.${task.priority}`)}
                       </span>
-                      {t.status === 'open' && (
+                      {task.status === 'open' && (
                         <button
-                          onClick={() => quickTaskStatus(t.id, 'in_progress')}
+                          onClick={() => quickTaskStatus(task.id, 'in_progress')}
                           disabled={busy}
-                          title="In Bearbeitung setzen"
+                          title={t('tasks.setInProgress')}
                           className="ml-1 p-1 text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 rounded transition-colors disabled:opacity-40"
                         >
                           <PlayCircle size={15} />
                         </button>
                       )}
                       <button
-                        onClick={() => quickTaskStatus(t.id, 'done')}
+                        onClick={() => quickTaskStatus(task.id, 'done')}
                         disabled={busy}
-                        title="Erledigt"
+                        title={t('tasks.done')}
                         className="p-1 text-gray-300 hover:text-green-500 dark:hover:text-green-400 rounded transition-colors disabled:opacity-40"
                       >
                         <Check size={15} />
@@ -414,7 +404,7 @@ export const MyArea: React.FC = () => {
               );
             })}
             <Link to="/tasks" className="flex items-center justify-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline py-2">
-              Alle Aufgaben verwalten <ArrowRight size={14} />
+              {t('tasks.manageAll')} <ArrowRight size={14} />
             </Link>
           </div>
         )}
@@ -425,7 +415,7 @@ export const MyArea: React.FC = () => {
         <section className="space-y-4">
           <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <ShieldAlert size={16} className="text-orange-500" />
-            Handlungsbedarf
+            {t('sections.title')}
           </h2>
           {sections.map((section, i) => (
             <Card key={i} className="overflow-hidden">
@@ -462,7 +452,7 @@ export const MyArea: React.FC = () => {
                 ))}
                 {section.total > section.items.length && (
                   <Link to={section.link} className="flex items-center justify-center gap-1 py-2 text-xs text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                    +{section.total - section.items.length} weitere → Alle anzeigen
+                    {t('sections.showMore', { count: section.total - section.items.length })}
                   </Link>
                 )}
               </div>
@@ -474,8 +464,8 @@ export const MyArea: React.FC = () => {
       {sections.length === 0 && tasks.length === 0 && (
         <Card className="p-12 text-center">
           <CheckCircle2 size={48} className="mx-auto text-green-400 mb-4" />
-          <h3 className="text-lg font-bold dark:text-white mb-2">Alles im grünen Bereich</h3>
-          <p className="text-gray-500 dark:text-slate-400">Keine offenen Aufgaben oder Handlungsbedarfe für deine Rolle.</p>
+          <h3 className="text-lg font-bold dark:text-white mb-2">{t('allClear.title')}</h3>
+          <p className="text-gray-500 dark:text-slate-400">{t('allClear.description')}</p>
         </Card>
       )}
 
@@ -484,9 +474,9 @@ export const MyArea: React.FC = () => {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/40">
           <Fingerprint size={18} className="text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">Kein Passkey hinterlegt</p>
+            <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">{t('passkey.title')}</p>
             <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
-              Erhöhe die Sicherheit deines Kontos mit einem Passkey. Klicke auf dein Profilbild und wähle „Passkey hinzufügen".
+              {t('passkey.description')}
             </p>
           </div>
         </div>
