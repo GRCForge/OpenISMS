@@ -1,45 +1,45 @@
 {
   "title": "Compliance",
   "trainings": {
-    "title": "Schulungen",
-    "new": "Neue Schulung",
-    "mandatory": "Pflichtschulung",
+    "title": "Trainings",
+    "new": "Neues Training",
+    "mandatory": "Obligatorisch",
     "optional": "Optional",
     "status": {
-      "valid":    "Gültig",
-      "pending":  "Ausstehend",
-      "expired":  "Abgelaufen"
+      "valid": "Valid",
+      "pending": "Ausstehend",
+      "expired": "Abgelaufen"
     }
   },
   "kpis": {
     "title": "KPIs",
-    "new": "Neuer KPI"
+    "new": "Neues KPI"
   },
   "audits": {
-    "title": "Audits",
+    "title": "Prüfungen",
     "new": "Neues Audit",
     "types": {
-      "internal":      "Intern",
-      "external":      "Extern",
+      "internal": "Intern",
+      "external": "Externe",
       "certification": "Zertifizierung"
     },
     "status": {
-      "planned":     "Geplant",
+      "planned": "Geplant",
       "in_progress": "In Bearbeitung",
-      "completed":   "Abgeschlossen"
+      "completed": "Abgeschlossen"
     }
   },
   "findings": {
     "severity": {
       "observation": "Beobachtung",
-      "minor":       "Geringfügig",
-      "major":       "Erheblich",
-      "critical":    "Kritisch"
+      "minor": "Geringer",
+      "major": "Major",
+      "critical": "Kritisch"
     },
     "status": {
-      "open":        "Offen",
+      "open": "Öffnen",
       "in_progress": "In Bearbeitung",
-      "closed":      "Geschlossen"
+      "closed": "Geschlossen"
     }
   }
 }
