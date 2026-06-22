@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   CheckCircle, AlertTriangle, ChevronRight, Shield, FileWarning, Lock, Server, UserCheck, GitMerge,
@@ -20,10 +21,7 @@ import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { CrossFrameworkOverview } from '../components/ControlMappings';
 
-const riskLabels: Record<RiskLevel, string> = { low: 'Gering', medium: 'Mittel', high: 'Hoch', critical: 'Kritisch' };
-const classLabels: Record<Classification, string> = { public: 'Öffentlich', internal: 'Intern', confidential: 'Vertraulich', secret: 'Geheim' };
-const vvtLabels: Record<string, string> = { none: 'Nicht verzeichnet', pending: 'In Arbeit', complete: 'Vollständig' };
-const dataCatLabels: Record<string, string> = { none: 'Keine PD', normal: 'Normal (Art. 6)', special: 'Besonders (Art. 9)' };
+
 
 type TopTab = 'frameworks' | 'kpis' | 'audits' | 'trainings';
 type FrameworkTab = 'iso27001' | 'nis2' | 'gdpr' | 'mappings';
@@ -91,10 +89,34 @@ interface UserTraining {
 }
 
 export const Compliance: React.FC = () => {
+  const { t } = useTranslation('compliance');
   const { isEnabled } = useModules();
   const { user } = useAuth();
   const toast = useToast();
   const canWrite = hasWriteAccess(user?.role);
+
+  const riskLabels: Record<RiskLevel, string> = {
+    low: t('riskLevels.low'),
+    medium: t('riskLevels.medium'),
+    high: t('riskLevels.high'),
+    critical: t('riskLevels.critical')
+  };
+  const classLabels: Record<Classification, string> = {
+    public: t('classLabels.public'),
+    internal: t('classLabels.internal'),
+    confidential: t('classLabels.confidential'),
+    secret: t('classLabels.secret')
+  };
+  const vvtLabels: Record<string, string> = {
+    none: t('vvtLabels.none'),
+    pending: t('vvtLabels.pending'),
+    complete: t('vvtLabels.complete')
+  };
+  const dataCatLabels: Record<string, string> = {
+    none: t('dataCatLabels.none'),
+    normal: t('dataCatLabels.normal'),
+    special: t('dataCatLabels.special')
+  };
 
   const [activeTab, setActiveTab] = useState<TopTab>('frameworks');
 
@@ -224,26 +246,26 @@ export const Compliance: React.FC = () => {
       await api.post(`/compliance/audits/${selectedAuditForDocs.id}/documents`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      toast.success('Dokument erfolgreich hochgeladen');
+      toast.success(t('toasts.docUploadSuccess'));
       setDocFile(null);
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       loadDocs(selectedAuditForDocs.id);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Hochladen des Dokuments');
+      toast.error(err.response?.data?.error || t('toasts.docUploadError'));
     } finally {
       setUploadingDoc(false);
     }
   };
 
   const handleDocDelete = async (docId: number) => {
-    if (!selectedAuditForDocs || !confirm('Dokument wirklich löschen?')) return;
+    if (!selectedAuditForDocs || !confirm(t('confirms.deleteDoc'))) return;
     try {
       await api.delete(`/compliance/audits/${selectedAuditForDocs.id}/documents/${docId}`);
-      toast.success('Dokument gelöscht');
+      toast.success(t('toasts.docDeleteSuccess'));
       loadDocs(selectedAuditForDocs.id);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Löschen des Dokuments');
+      toast.error(err.response?.data?.error || t('toasts.docDeleteError'));
     }
   };
 
@@ -301,20 +323,20 @@ export const Compliance: React.FC = () => {
       setKpiModal(false);
       setKpiForm({ title: '', description: '', target: '', status: 'on_target', owner_id: '' });
       loadKpis();
-      toast.success('KPI erfolgreich erstellt');
+      toast.success(t('toasts.kpiCreateSuccess'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Erstellen des KPIs');
+      toast.error(err.response?.data?.error || t('toasts.kpiCreateError'));
     }
   };
 
   const handleDeleteKpi = async (id: number) => {
-    if (!confirm('KPI wirklich löschen?')) return;
+    if (!confirm(t('confirms.deleteKpi'))) return;
     try {
       await api.delete(`/compliance/kpis/${id}`);
       loadKpis();
-      toast.success('KPI gelöscht');
+      toast.success(t('toasts.kpiDeleteSuccess'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Löschen');
+      toast.error(err.response?.data?.error || t('toasts.deleteError'));
     }
   };
 
@@ -326,9 +348,9 @@ export const Compliance: React.FC = () => {
       setMeasureModal(null);
       setMeasureForm({ value: '', measured_at: new Date().toISOString().slice(0, 10), notes: '' });
       loadKpis();
-      toast.success('Messwert hinzugefügt');
+      toast.success(t('toasts.measurementAdded'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toasts.saveError'));
     }
   };
 
@@ -340,20 +362,20 @@ export const Compliance: React.FC = () => {
       setAuditModal(false);
       setAuditForm({ title: '', scope: '', audit_type: 'internal', status: 'planned', auditor: '', start_date: '', end_date: '', report_link: '', notes: '' });
       loadAudits();
-      toast.success('Audit erfolgreich angelegt');
+      toast.success(t('toasts.auditCreateSuccess'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toasts.genericError'));
     }
   };
 
   const handleDeleteAudit = async (id: number) => {
-    if (!confirm('Audit wirklich löschen?')) return;
+    if (!confirm(t('confirms.deleteAudit'))) return;
     try {
       await api.delete(`/compliance/audits/${id}`);
       loadAudits();
-      toast.success('Audit gelöscht');
+      toast.success(t('toasts.auditDeleteSuccess'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toasts.genericError'));
     }
   };
 
@@ -370,9 +392,9 @@ export const Compliance: React.FC = () => {
       setFindingModal(null);
       setFindingForm({ title: '', description: '', severity: 'observation', status: 'open', capa_task_id: '', assignee_id: '' });
       loadAudits();
-      toast.success('Abweichung (Finding) erfasst');
+      toast.success(t('toasts.findingCreateSuccess'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toasts.genericError'));
     }
   };
 
@@ -380,9 +402,9 @@ export const Compliance: React.FC = () => {
     try {
       await api.put(`/compliance/findings/${id}`, { status });
       loadAudits();
-      toast.success('Finding-Status aktualisiert');
+      toast.success(t('toasts.findingStatusUpdated'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toasts.genericError'));
     }
   };
 
@@ -420,7 +442,7 @@ export const Compliance: React.FC = () => {
           certificate_url: trainingForm.certificate_url || null
         };
         await api.put(`/compliance/trainings/${editTrainingId}`, payload);
-        toast.success('Schulungsnachweis aktualisiert');
+        toast.success(t('toasts.trainingUpdated'));
       } else {
         const fd = new FormData();
         fd.append('training_title', trainingForm.training_title);
@@ -434,24 +456,24 @@ export const Compliance: React.FC = () => {
         await api.post('/compliance/trainings/bulk', fd, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        toast.success('Schulungsnachweis(e) eingetragen');
+        toast.success(t('toasts.trainingRecorded'));
       }
       setTrainingModal(false);
       setTrainingForm({ user_ids: [], training_title: '', completed_at: '', expires_at: '', certificate_url: '', file: null });
       loadTrainings();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Eintragen der Schulung');
+      toast.error(err.response?.data?.error || t('toasts.trainingRecordError'));
     }
   };
 
   const handleDeleteTraining = async (id: number) => {
-    if (!confirm('Schulungsnachweis wirklich löschen?')) return;
+    if (!confirm(t('confirms.deleteTrainingRecord'))) return;
     try {
       await api.delete(`/compliance/trainings/${id}`);
       loadTrainings();
-      toast.success('Eintrag gelöscht');
+      toast.success(t('toasts.entryDeleted'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler');
+      toast.error(err.response?.data?.error || t('toasts.genericError'));
     }
   };
 
@@ -484,27 +506,27 @@ export const Compliance: React.FC = () => {
       };
       if (editMasterTrainingId) {
         await api.put(`/compliance/trainings-list/${editMasterTrainingId}`, payload);
-        toast.success('Schulungskatalog aktualisiert');
+        toast.success(t('toasts.trainingCatalogUpdated'));
       } else {
         await api.post('/compliance/trainings-list', payload);
-        toast.success('Schulungskurs hinzugefügt');
+        toast.success(t('toasts.trainingCourseAdded'));
       }
       setMasterTrainingModal(false);
       loadTrainings();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toasts.saveError'));
     }
   };
 
   const handleDeleteMasterTraining = async (id: number) => {
-    if (!confirm('Möchten Sie diesen Schulungskurs und alle zugehörigen Mitarbeiter-Zuweisungen wirklich löschen?')) return;
+    if (!confirm(t('confirms.deleteMasterTraining'))) return;
     try {
       await api.delete(`/compliance/trainings-list/${id}`);
       if (selectedTrainingId === id) setSelectedTrainingId(null);
       loadTrainings();
-      toast.success('Schulung gelöscht');
+      toast.success(t('toasts.trainingDeleted'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Löschen');
+      toast.error(err.response?.data?.error || t('toasts.deleteError'));
     }
   };
 
@@ -542,11 +564,11 @@ export const Compliance: React.FC = () => {
       await api.post('/compliance/trainings/bulk', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      toast.success('Teilnehmer zugewiesen');
+      toast.success(t('toasts.attendeesAssigned'));
       setAssignModal(false);
       loadTrainings();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Zuweisen');
+      toast.error(err.response?.data?.error || t('toasts.assignError'));
     }
   };
 
@@ -571,27 +593,27 @@ export const Compliance: React.FC = () => {
         certificate_url: editAssignmentForm.certificate_url || null
       };
       await api.put(`/compliance/trainings/${editAssignmentId}`, payload);
-      toast.success('Teilnehmerstatus aktualisiert');
+      toast.success(t('toasts.attendeeStatusUpdated'));
       setEditAssignmentModal(false);
       loadTrainings();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Speichern');
+      toast.error(err.response?.data?.error || t('toasts.saveError'));
     }
   };
 
   const handleDeleteAssignment = async (id: number) => {
-    if (!confirm('Zuweisung für diesen Mitarbeiter wirklich löschen?')) return;
+    if (!confirm(t('confirms.deleteAssignment'))) return;
     try {
       await api.delete(`/compliance/trainings/${id}`);
       loadTrainings();
-      toast.success('Zuweisung entfernt');
+      toast.success(t('toasts.assignmentRemoved'));
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Fehler beim Entfernen');
+      toast.error(err.response?.data?.error || t('toasts.removeError'));
     }
   };
 
   if (loading) return (
-    <div className="space-y-6" role="status" aria-label="Compliance wird geladen">
+    <div className="space-y-6" role="status" aria-label={t('loadingCompliance')}>
       <div><Skeleton className="h-7 w-56 mb-1" /><Skeleton className="h-4 w-80" /></div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {Array.from({ length: 3 }).map((_, i) => <SkeletonStatCard key={i} />)}
@@ -604,8 +626,8 @@ export const Compliance: React.FC = () => {
 
   if (!stats) return (
     <div className="p-6 text-gray-500 flex flex-col items-center gap-3 py-20">
-      <p>Fehler beim Laden der Compliance-Daten.</p>
-      <button onClick={loadStats} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">Erneut versuchen</button>
+      <p>{t('loadingError')}</p>
+      <button onClick={loadStats} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">{t('retry')}</button>
     </div>
   );
 
@@ -615,8 +637,8 @@ export const Compliance: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold dark:text-white">Compliance, KPIs & Audits</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">Normenabdeckung, kontinuierliche Verbesserung und Schulungsnachweise</p>
+          <h1 className="text-2xl font-bold dark:text-white">{t('header.title')}</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('header.subtitle')}</p>
         </div>
       </div>
 
@@ -624,10 +646,10 @@ export const Compliance: React.FC = () => {
       <div className="border-b border-gray-200 dark:border-slate-800">
         <nav className="flex gap-1 -mb-px overflow-x-auto no-scrollbar">
           {[
-            { key: 'frameworks' as TopTab, label: 'Normen-Scope (ISO/NIS2/GDPR)', icon: Shield },
-            { key: 'kpis' as TopTab, label: 'KPIs & Wirksamkeit', icon: TrendingUp },
-            { key: 'audits' as TopTab, label: 'Audit & CAPA Module', icon: ClipboardCheck },
-            { key: 'trainings' as TopTab, label: 'Schulungsmatrix', icon: Award },
+            { key: 'frameworks' as TopTab, label: t('tabs.frameworks'), icon: Shield },
+            { key: 'kpis' as TopTab, label: t('tabs.kpis'), icon: TrendingUp },
+            { key: 'audits' as TopTab, label: t('tabs.audits'), icon: ClipboardCheck },
+            { key: 'trainings' as TopTab, label: t('tabs.trainings'), icon: Award },
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -652,19 +674,19 @@ export const Compliance: React.FC = () => {
             <Card className="hover:shadow-md transition-shadow">
               <CardBody className="flex items-center gap-4 p-6">
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl"><Shield size={24} /></div>
-                <div><p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">{stats.total}</p><p className="text-xs text-gray-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-semibold">Assets im ISMS-Scope</p></div>
+                <div><p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">{stats.total}</p><p className="text-xs text-gray-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-semibold">{t('stats.assetsInScope')}</p></div>
               </CardBody>
             </Card>
             <Card className="hover:shadow-md transition-shadow">
               <CardBody className="flex items-center gap-4 p-6">
                 <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-2xl"><AlertTriangle size={24} /></div>
-                <div><p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">{stats.highRisk}</p><p className="text-xs text-gray-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-semibold">Hochrisiko-Assets</p></div>
+                <div><p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">{stats.highRisk}</p><p className="text-xs text-gray-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-semibold">{t('stats.highRiskAssets')}</p></div>
               </CardBody>
             </Card>
             <Card className="hover:shadow-md transition-shadow">
               <CardBody className="flex items-center gap-4 p-6">
                 <div className={`p-3 rounded-2xl ${gaps.length > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'}`}>{gaps.length > 0 ? <FileWarning size={24} /> : <CheckCircle size={24} />}</div>
-                <div><p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">{gaps.length}</p><p className="text-xs text-gray-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-semibold">DSGVO-Lücken (VVT fehlt)</p></div>
+                <div><p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">{gaps.length}</p><p className="text-xs text-gray-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-semibold">{t('stats.gdprGaps')}</p></div>
               </CardBody>
             </Card>
           </div>
@@ -672,7 +694,7 @@ export const Compliance: React.FC = () => {
           {availableFwTabs.length > 1 && (
             <div className="flex flex-wrap gap-2 p-1.5 bg-gray-100/80 dark:bg-slate-800/40 rounded-2xl max-w-xl">
               {availableFwTabs.map(fw => {
-                const label = fw === 'iso27001' ? 'ISO 27001' : fw === 'nis2' ? 'NIS-2' : fw === 'mappings' ? 'Querverweise' : 'DSGVO (GDPR)';
+                const label = fw === 'iso27001' ? 'ISO 27001' : fw === 'nis2' ? 'NIS-2' : fw === 'mappings' ? t('frameworkTabs.mappings') : t('frameworkTabs.gdpr');
                 const icon = fw === 'iso27001' ? <Lock size={15} /> : fw === 'nis2' ? <Server size={15} /> : fw === 'mappings' ? <GitMerge size={15} /> : <UserCheck size={15} />;
                 return (
                   <button key={fw} onClick={() => setActiveFw(fw)}
@@ -690,36 +712,36 @@ export const Compliance: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <Card>
-                  <CardHeader><div className="flex items-center gap-2"><Lock size={16} className="text-blue-500" /><h2 className="font-bold dark:text-white">ISO 27001 Assets ({stats.frameworks.iso27001.count})</h2></div></CardHeader>
+                  <CardHeader><div className="flex items-center gap-2"><Lock size={16} className="text-blue-500" /><h2 className="font-bold dark:text-white">{t('iso27001.assetsTitle')} ({stats.frameworks.iso27001.count})</h2></div></CardHeader>
                   <CardBody className="p-0">
                     {stats.frameworks.iso27001.assets.length > 0 ? (
                       <Table>
-                        <Thead><tr><Th>Asset Name</Th><Th>Typ</Th><Th>Klassifizierung</Th><Th>Risiko</Th><Th className="text-right">Aktionen</Th></tr></Thead>
+                        <Thead><tr><Th>{t('table.assetName')}</Th><Th>{t('table.type')}</Th><Th>{t('table.classification')}</Th><Th>{t('table.risk')}</Th><Th className="text-right">{t('table.actions')}</Th></tr></Thead>
                         <Tbody>
                           {stats.frameworks.iso27001.assets.map((asset: any) => (
                             <tr key={asset.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
                               <Td className="font-semibold text-gray-900 dark:text-slate-100">{asset.name}</Td>
                               <Td><span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-2 py-0.5 rounded uppercase font-medium">{asset.type}</span></Td>
                               <Td><span className="text-xs text-gray-500 dark:text-slate-400">{asset.classification ? (classLabels[asset.classification as keyof typeof classLabels] || asset.classification) : '—'}</span></Td>
-                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-400">Unbewertet</span>}</Td>
-                              <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">Details <ChevronRight size={12} /></Link></Td>
+                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-400">{t('riskLevels.unrated')}</span>}</Td>
+                              <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">{t('actions.details')} <ChevronRight size={12} /></Link></Td>
                             </tr>
                           ))}
                         </Tbody>
                       </Table>
-                    ) : <div className="p-8 text-center text-gray-400 italic">Keine Assets im Scope gefunden.</div>}
+                    ) : <div className="p-8 text-center text-gray-400 italic">{t('iso27001.noAssets')}</div>}
                   </CardBody>
                 </Card>
               </div>
               <div className="space-y-6">
                 <Card>
-                  <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">Framework Info</h2></CardHeader>
+                  <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">{t('frameworkInfo.title')}</h2></CardHeader>
                   <CardBody className="space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">Der Standard <strong>ISO/IEC 27001</strong> definiert die Kriterien für ein robustes Informationssicherheits-Managementsystem (ISMS).</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">Alle aktiven Assets der Organisation unterliegen Risikoanalysen und erfordern die Definition technischer und organisatorischer Maßnahmen (TOMs).</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{t('iso27001.infoText1')}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">{t('iso27001.infoText2')}</p>
                     <div className="pt-4 border-t dark:border-slate-800 space-y-2">
-                      <Link to="/risks" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">Risikomanagement öffnen</Link>
-                      <Link to="/controls" className="w-full justify-center gap-2 flex items-center px-4 py-2 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all shadow-xs">Sicherheitsmaßnahmen (TOMs)</Link>
+                      <Link to="/risks" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.openRisks')}</Link>
+                      <Link to="/controls" className="w-full justify-center gap-2 flex items-center px-4 py-2 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.securityControls')}</Link>
                     </div>
                   </CardBody>
                 </Card>
@@ -731,35 +753,35 @@ export const Compliance: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <Card>
-                  <CardHeader><div className="flex items-center gap-2"><Server size={16} className="text-blue-500" /><h2 className="font-bold dark:text-white">NIS-2 Relevante Assets ({stats.frameworks.nis2.count})</h2></div></CardHeader>
+                  <CardHeader><div className="flex items-center gap-2"><Server size={16} className="text-blue-500" /><h2 className="font-bold dark:text-white">{t('nis2.assetsTitle')} ({stats.frameworks.nis2.count})</h2></div></CardHeader>
                   <CardBody className="p-0">
                     {stats.frameworks.nis2.assets.length > 0 ? (
                       <Table>
-                        <Thead><tr><Th>Asset Name</Th><Th>Typ</Th><Th>Klassifizierung</Th><Th>Risiko</Th><Th className="text-right">Aktionen</Th></tr></Thead>
+                        <Thead><tr><Th>{t('table.assetName')}</Th><Th>{t('table.type')}</Th><Th>{t('table.classification')}</Th><Th>{t('table.risk')}</Th><Th className="text-right">{t('table.actions')}</Th></tr></Thead>
                         <Tbody>
                           {stats.frameworks.nis2.assets.map((asset: any) => (
                             <tr key={asset.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
                               <Td className="font-semibold text-gray-900 dark:text-slate-100">{asset.name}</Td>
                               <Td><span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-2 py-0.5 rounded uppercase font-medium">{asset.type}</span></Td>
                               <Td><span className="text-xs text-gray-500 dark:text-slate-400">{asset.classification ? (classLabels[asset.classification as keyof typeof classLabels] || asset.classification) : '—'}</span></Td>
-                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-400">Unbewertet</span>}</Td>
-                              <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">Details <ChevronRight size={12} /></Link></Td>
+                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-400">{t('riskLevels.unrated')}</span>}</Td>
+                              <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">{t('actions.details')} <ChevronRight size={12} /></Link></Td>
                             </tr>
                           ))}
                         </Tbody>
                       </Table>
-                    ) : <div className="p-8 text-center text-gray-400 italic">Aktuell keine Assets als NIS-2 relevant gekennzeichnet.</div>}
+                    ) : <div className="p-8 text-center text-gray-400 italic">{t('nis2.noAssets')}</div>}
                   </CardBody>
                 </Card>
               </div>
               <div className="space-y-6">
                 <Card>
-                  <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">Framework Info</h2></CardHeader>
+                  <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">{t('frameworkInfo.title')}</h2></CardHeader>
                   <CardBody className="space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">Die <strong>NIS-2-Richtlinie</strong> dient dem Aufbau eines gemeinsamen hohen Cybersicherheitsniveaus in der Europäischen Union.</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">Betreiber kritischer oder wichtiger Einrichtungen müssen angemessene und verhältnismäßige Sicherheitsvorkehrungen treffen.</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{t('nis2.infoText1')}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">{t('nis2.infoText2')}</p>
                     <div className="pt-4 border-t dark:border-slate-800 space-y-2">
-                      <Link to="/incidents" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">Sicherheitsvorfälle verwalten</Link>
+                      <Link to="/incidents" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.manageIncidents')}</Link>
                     </div>
                   </CardBody>
                 </Card>
@@ -773,25 +795,25 @@ export const Compliance: React.FC = () => {
                 <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl flex items-start gap-3">
                   <FileWarning className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={20} />
                   <div>
-                    <h3 className="font-bold text-red-800 dark:text-red-400 text-sm">VVT-Pflichtverletzung: {gaps.length} Lücke(n) erkannt</h3>
-                    <p className="text-xs text-red-700 dark:text-red-400/80 mt-1">Die unten aufgeführten Assets verarbeiten personenbezogene Daten, besitzen aber noch keinen vollständigen VVT-Eintrag. Ein solcher ist rechtlich zwingend erforderlich.</p>
+                    <h3 className="font-bold text-red-800 dark:text-red-400 text-sm">{t('gdpr.gapTitle', { count: gaps.length })}</h3>
+                    <p className="text-xs text-red-700 dark:text-red-400/80 mt-1">{t('gdpr.gapText')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/30 rounded-xl flex items-center gap-3">
                   <CheckCircle className="text-green-600 dark:text-green-400 shrink-0" size={20} />
-                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">Alle Assets mit Personenbezug besitzen einen vollständigen VVT-Eintrag. Keine DSGVO-Lücken festgestellt.</p>
+                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">{t('gdpr.noGaps')}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                   <Card>
-                    <CardHeader><div className="flex items-center gap-2"><UserCheck size={16} className="text-blue-500" /><h2 className="font-bold dark:text-white">Assets mit Personenbezug ({stats.frameworks.gdpr.count})</h2></div></CardHeader>
+                    <CardHeader><div className="flex items-center gap-2"><UserCheck size={16} className="text-blue-500" /><h2 className="font-bold dark:text-white">{t('gdpr.assetsTitle')} ({stats.frameworks.gdpr.count})</h2></div></CardHeader>
                     <CardBody className="p-0">
                       {stats.frameworks.gdpr.assets.length > 0 ? (
                         <Table>
-                          <Thead><tr><Th>Asset Name</Th><Th>Typ</Th><Th>Personenbezug</Th><Th>VVT Status</Th><Th className="text-right">Aktionen</Th></tr></Thead>
+                          <Thead><tr><Th>{t('table.assetName')}</Th><Th>{t('table.type')}</Th><Th>{t('table.personalData')}</Th><Th>{t('table.vvtStatus')}</Th><Th className="text-right">{t('table.actions')}</Th></tr></Thead>
                           <Tbody>
                             {stats.frameworks.gdpr.assets.map((asset: any) => {
                               const gapEntry = gaps.find((g: any) => g.id === asset.id);
@@ -799,26 +821,26 @@ export const Compliance: React.FC = () => {
                                 <tr key={asset.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
                                   <Td className="font-semibold text-gray-900 dark:text-slate-100">{asset.name}</Td>
                                   <Td><span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-2 py-0.5 rounded uppercase font-medium">{asset.type}</span></Td>
-                                  <Td><span className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">{gapEntry ? dataCatLabels[gapEntry.data_category as keyof typeof dataCatLabels] : 'Ja'}</span></Td>
-                                  <Td><span className={`text-xs font-semibold px-2 py-0.5 rounded ${gapEntry ? gapEntry.vvt_status === 'none' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>{gapEntry ? vvtLabels[gapEntry.vvt_status as keyof typeof vvtLabels] : 'Vollständig'}</span></Td>
-                                  <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">Details <ChevronRight size={12} /></Link></Td>
+                                  <Td><span className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">{gapEntry ? dataCatLabels[gapEntry.data_category as keyof typeof dataCatLabels] : t('yes')}</span></Td>
+                                  <Td><span className={`text-xs font-semibold px-2 py-0.5 rounded ${gapEntry ? gapEntry.vvt_status === 'none' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>{gapEntry ? vvtLabels[gapEntry.vvt_status as keyof typeof vvtLabels] : t('vvtLabels.complete')}</span></Td>
+                                  <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">{t('actions.details')} <ChevronRight size={12} /></Link></Td>
                                 </tr>
                               );
                             })}
                           </Tbody>
                         </Table>
-                      ) : <div className="p-8 text-center text-gray-400 italic">Keine Assets mit Personenbezug gefunden.</div>}
+                      ) : <div className="p-8 text-center text-gray-400 italic">{t('gdpr.noAssets')}</div>}
                     </CardBody>
                   </Card>
                 </div>
                 <div className="space-y-6">
                   <Card>
-                    <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">Framework Info</h2></CardHeader>
+                    <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">{t('frameworkInfo.title')}</h2></CardHeader>
                     <CardBody className="space-y-4">
-                      <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">Die <strong>Datenschutz-Grundverordnung (DSGVO)</strong> regelt den Schutz personenbezogener Daten.</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">Jedes Asset mit Personenbezug muss zwingend mit einem Eintrag im Verzeichnis von Verarbeitungstätigkeiten (VVT) dokumentiert sein.</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{t('gdpr.infoText1')}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">{t('gdpr.infoText2')}</p>
                       <div className="pt-4 border-t dark:border-slate-800 space-y-2">
-                        <Link to="/vvt" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">Verzeichnis (VVT) verwalten</Link>
+                        <Link to="/vvt" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.manageVvt')}</Link>
                       </div>
                     </CardBody>
                   </Card>
@@ -833,14 +855,14 @@ export const Compliance: React.FC = () => {
       {activeTab === 'kpis' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="font-bold text-lg dark:text-white flex items-center gap-2"><Activity size={18} className="text-blue-600" />Kennzahlen & Wirksamkeitsmessungen (KPIs)</h2>
-            {canWrite && <Button onClick={() => setKpiModal(true)} size="sm"><Plus size={14} /> KPI definieren</Button>}
+            <h2 className="font-bold text-lg dark:text-white flex items-center gap-2"><Activity size={18} className="text-blue-600" />{t('kpiSection.title')}</h2>
+            {canWrite && <Button onClick={() => setKpiModal(true)} size="sm"><Plus size={14} /> {t('kpiSection.defineBtn')}</Button>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-green-500 rounded-xl text-white"><CheckCircle size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{kpis.filter(k => k.status === 'on_target').length}</p><p className="text-xs text-gray-500">Ziel erreicht / Konform</p></div></CardBody></Card>
-            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-yellow-500 rounded-xl text-white"><AlertTriangle size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{kpis.filter(k => k.status === 'warning').length}</p><p className="text-xs text-gray-500">Warnungen</p></div></CardBody></Card>
-            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-red-600 rounded-xl text-white"><FileWarning size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{kpis.filter(k => k.status === 'critical').length}</p><p className="text-xs text-gray-500">Kritische Abweichungen</p></div></CardBody></Card>
+            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-green-500 rounded-xl text-white"><CheckCircle size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{kpis.filter(k => k.status === 'on_target').length}</p><p className="text-xs text-gray-500">{t('kpiSection.stats.onTarget')}</p></div></CardBody></Card>
+            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-yellow-500 rounded-xl text-white"><AlertTriangle size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{kpis.filter(k => k.status === 'warning').length}</p><p className="text-xs text-gray-500">{t('kpiSection.stats.warning')}</p></div></CardBody></Card>
+            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-red-600 rounded-xl text-white"><FileWarning size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{kpis.filter(k => k.status === 'critical').length}</p><p className="text-xs text-gray-500">{t('kpiSection.stats.critical')}</p></div></CardBody></Card>
           </div>
 
           <Card>
@@ -848,13 +870,13 @@ export const Compliance: React.FC = () => {
               <Table>
                 <Thead>
                   <tr>
-                    <Th>Kennzahl (KPI)</Th>
-                    <Th>Zielwert</Th>
-                    <Th>Aktueller Wert</Th>
-                    <Th>Status</Th>
-                    <Th>Verantwortlich</Th>
-                    <Th>Letzter Trend</Th>
-                    <Th className="text-right">Aktionen</Th>
+                    <Th>{t('table.kpi')}</Th>
+                    <Th>{t('table.targetValue')}</Th>
+                    <Th>{t('table.currentValue')}</Th>
+                    <Th>{t('table.status')}</Th>
+                    <Th>{t('table.owner')}</Th>
+                    <Th>{t('table.latestTrend')}</Th>
+                    <Th className="text-right">{t('table.actions')}</Th>
                   </tr>
                 </Thead>
                 <Tbody>
@@ -873,7 +895,7 @@ export const Compliance: React.FC = () => {
                             kpi.status === 'on_target' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                             kpi.status === 'warning' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                             'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          }`}>{kpi.status === 'on_target' ? 'Ziel erreicht' : kpi.status === 'warning' ? 'Warnung' : 'Kritisch'}</span>
+                          }`}>{kpi.status === 'on_target' ? t('kpiSection.status.on_target') : kpi.status === 'warning' ? t('kpiSection.status.warning') : t('kpiSection.status.critical')}</span>
                         </Td>
                         <Td className="text-xs text-gray-500">{kpi.owner?.name || '—'}</Td>
                         <Td>
@@ -882,12 +904,12 @@ export const Compliance: React.FC = () => {
                               <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-gray-500">
                                 {sortedMeasurements.map(m => m.value).join(' → ')}
                               </span>
-                            ) : <span className="text-xs text-gray-300 italic">Keine Werte</span>}
+                            ) : <span className="text-xs text-gray-300 italic">{t('kpiSection.noValues')}</span>}
                           </div>
                         </Td>
                         <Td className="text-right">
                           <div className="flex gap-2 justify-end">
-                            {canWrite && <Button onClick={() => setMeasureModal(kpi.id)} variant="secondary" size="sm">Wert loggen</Button>}
+                            {canWrite && <Button onClick={() => setMeasureModal(kpi.id)} variant="secondary" size="sm">{t('kpiSection.logValueBtn')}</Button>}
                             {canWrite && <Button onClick={() => handleDeleteKpi(kpi.id)} variant="danger" size="sm"><Trash2 size={12} /></Button>}
                           </div>
                         </Td>
@@ -895,7 +917,7 @@ export const Compliance: React.FC = () => {
                     );
                   })}
                   {kpis.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-8 text-gray-400 italic">Bisher keine KPIs definiert. Definiere Messgrößen zur Wirksamkeitsprüfung Ihrer Controls.</td></tr>
+                    <tr><td colSpan={7} className="text-center py-8 text-gray-400 italic">{t('kpiSection.noKpis')}</td></tr>
                   )}
                 </Tbody>
               </Table>
@@ -908,14 +930,14 @@ export const Compliance: React.FC = () => {
       {activeTab === 'audits' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="font-bold text-lg dark:text-white flex items-center gap-2"><ClipboardCheck size={18} className="text-blue-600" />Audits & Korrekturmaßnahmen (CAPA)</h2>
-            {canWrite && <Button onClick={() => setAuditModal(true)} size="sm"><Plus size={14} /> Audit planen</Button>}
+            <h2 className="font-bold text-lg dark:text-white flex items-center gap-2"><ClipboardCheck size={18} className="text-blue-600" />{t('auditSection.title')}</h2>
+            {canWrite && <Button onClick={() => setAuditModal(true)} size="sm"><Plus size={14} /> {t('auditSection.planBtn')}</Button>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-blue-500 rounded-xl text-white"><Calendar size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{audits.length}</p><p className="text-xs text-gray-500">Audits gesamt</p></div></CardBody></Card>
-            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-red-500 rounded-xl text-white"><FileWarning size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{audits.reduce((acc, a) => acc + (a.findings?.filter(f => f.status === 'open').length || 0), 0)}</p><p className="text-xs text-gray-500">Offene Abweichungen (Findings)</p></div></CardBody></Card>
-            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-green-600 rounded-xl text-white"><CheckCircle size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{audits.reduce((acc, a) => acc + (a.findings?.filter(f => f.status === 'resolved').length || 0), 0)}</p><p className="text-xs text-gray-500">Behobene Findings (CAPA)</p></div></CardBody></Card>
+            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-blue-500 rounded-xl text-white"><Calendar size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{audits.length}</p><p className="text-xs text-gray-500">{t('auditSection.stats.total')}</p></div></CardBody></Card>
+            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-red-500 rounded-xl text-white"><FileWarning size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{audits.reduce((acc, a) => acc + (a.findings?.filter(f => f.status === 'open').length || 0), 0)}</p><p className="text-xs text-gray-500">{t('auditSection.stats.openFindings')}</p></div></CardBody></Card>
+            <Card><CardBody className="flex items-center gap-3 py-4"><div className="p-2 bg-green-600 rounded-xl text-white"><CheckCircle size={18} /></div><div><p className="text-2xl font-bold dark:text-white">{audits.reduce((acc, a) => acc + (a.findings?.filter(f => f.status === 'resolved').length || 0), 0)}</p><p className="text-xs text-gray-500">{t('auditSection.stats.resolvedFindings')}</p></div></CardBody></Card>
           </div>
 
           {audits.map(audit => (
@@ -928,44 +950,44 @@ export const Compliance: React.FC = () => {
                         audit.audit_type === 'certification' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
                         audit.audit_type === 'external' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
                         'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      }`}>{audit.audit_type === 'certification' ? 'Zertifizierung' : audit.audit_type === 'external' ? 'Externes Audit' : 'Internes Audit'}</span>
+                      }`}>{audit.audit_type === 'certification' ? t('auditSection.types.certification') : audit.audit_type === 'external' ? t('auditSection.types.external') : t('auditSection.types.internal')}</span>
                       <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm ${
                         audit.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                         audit.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                         'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-400'
-                      }`}>{audit.status === 'completed' ? 'Abgeschlossen' : audit.status === 'in_progress' ? 'In Durchführung' : 'Geplant'}</span>
+                      }`}>{audit.status === 'completed' ? t('auditSection.status.completed') : audit.status === 'in_progress' ? t('auditSection.status.in_progress') : t('auditSection.status.planned')}</span>
                     </div>
                     <h3 className="font-bold text-gray-950 dark:text-white text-base mt-1.5">{audit.title}</h3>
                     <p className="text-xs text-gray-500">Scope: {audit.scope}</p>
                   </div>
                   <div className="flex gap-2">
-                    {canWrite && <Button onClick={() => setFindingModal(audit.id)} variant="secondary" size="sm"><Plus size={12} /> Finding eintragen</Button>}
+                    {canWrite && <Button onClick={() => setFindingModal(audit.id)} variant="secondary" size="sm"><Plus size={12} /> {t('auditSection.addFindingBtn')}</Button>}
                     {canWrite && (
-                      <Button onClick={() => openDocs(audit)} variant="secondary" size="sm" title="Dokumente verwalten">
-                        <Paperclip size={12} /> Dokumente
+                      <Button onClick={() => openDocs(audit)} variant="secondary" size="sm" title={t('auditSection.docsTitle')}>
+                        <Paperclip size={12} /> {t('auditSection.docsBtn')}
                       </Button>
                     )}
                     {canWrite && audit.status === 'completed' && audit.report_link && (
-                      <a href={audit.report_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-xs font-bold rounded-xl hover:bg-gray-200 shadow-xs"><FileText size={12} /> Externer Bericht ↗</a>
+                      <a href={audit.report_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-xs font-bold rounded-xl hover:bg-gray-200 shadow-xs"><FileText size={12} /> {t('auditSection.externalReport')}</a>
                     )}
                     {canWrite && <Button onClick={() => handleDeleteAudit(audit.id)} variant="danger" size="sm"><Trash2 size={12} /></Button>}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 mt-3 pt-3 border-t dark:border-slate-800/60 font-medium">
-                  <span>Auditor: {audit.auditor || '—'}</span>
-                  <span>Zeitraum: {audit.start_date ? new Date(audit.start_date).toLocaleDateString() : '—'} bis {audit.end_date ? new Date(audit.end_date).toLocaleDateString() : '—'}</span>
+                  <span>{t('auditSection.auditor', { name: audit.auditor || '—' })}</span>
+                  <span>{t('auditSection.period')} {audit.start_date ? new Date(audit.start_date).toLocaleDateString() : '—'} {t('bis')} {audit.end_date ? new Date(audit.end_date).toLocaleDateString() : '—'}</span>
                 </div>
               </CardHeader>
               <CardBody className="p-0">
                 <Table>
                   <Thead>
                     <tr>
-                      <Th className="w-1/4">Abweichung / Finding</Th>
-                      <Th>Schweregrad</Th>
-                      <Th>Status</Th>
-                      <Th>Zugeordnete Person</Th>
-                      <Th>CAPA Maßnahme (Task)</Th>
-                      <Th className="text-right">Aktionen</Th>
+                      <Th className="w-1/4">{t('table.finding')}</Th>
+                      <Th>{t('table.severity')}</Th>
+                      <Th>{t('table.status')}</Th>
+                      <Th>{t('table.assignedPerson')}</Th>
+                      <Th>{t('table.capaTask')}</Th>
+                      <Th className="text-right">{t('table.actions')}</Th>
                     </tr>
                   </Thead>
                   <Tbody>
@@ -980,14 +1002,14 @@ export const Compliance: React.FC = () => {
                             finding.severity === 'major' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                             finding.severity === 'minor' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                             'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          }`}>{finding.severity === 'major' ? 'Hauptabweichung' : finding.severity === 'minor' ? 'Nebenabweichung' : 'Empfehlung'}</span>
+                          }`}>{finding.severity === 'major' ? t('auditSection.severity.major') : finding.severity === 'minor' ? t('auditSection.severity.minor') : t('auditSection.severity.observation')}</span>
                         </Td>
                         <Td>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                             finding.status === 'resolved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                             finding.status === 'wont_fix' ? 'bg-slate-100 text-slate-500' :
                             'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          }`}>{finding.status === 'resolved' ? 'Behoben' : finding.status === 'wont_fix' ? 'Ignoriert' : 'Offen'}</span>
+                          }`}>{finding.status === 'resolved' ? t('auditSection.findingStatus.resolved') : finding.status === 'wont_fix' ? t('auditSection.findingStatus.wont_fix') : t('auditSection.findingStatus.open')}</span>
                         </Td>
                         <Td className="text-xs text-gray-500">{finding.assignee?.name || '—'}</Td>
                         <Td>
@@ -995,20 +1017,20 @@ export const Compliance: React.FC = () => {
                             <Link to="/tasks" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                               <ExternalLink size={11} /> {finding.capaTask.title} ({finding.capaTask.status})
                             </Link>
-                          ) : <span className="text-xs text-gray-400 italic">Kein Task verknüpft</span>}
+                          ) : <span className="text-xs text-gray-400 italic">{t('auditSection.noTaskLinked')}</span>}
                         </Td>
                         <Td className="text-right">
                           {canWrite && finding.status === 'open' && (
                             <div className="flex gap-1 justify-end">
-                              <Button onClick={() => handleUpdateFindingStatus(finding.id, 'resolved')} variant="secondary" size="sm">Als behoben markieren</Button>
-                              <Button onClick={() => handleUpdateFindingStatus(finding.id, 'wont_fix')} variant="secondary" size="sm">Akzeptieren</Button>
+                              <Button onClick={() => handleUpdateFindingStatus(finding.id, 'resolved')} variant="secondary" size="sm">{t('auditSection.markResolvedBtn')}</Button>
+                              <Button onClick={() => handleUpdateFindingStatus(finding.id, 'wont_fix')} variant="secondary" size="sm">{t('auditSection.acceptBtn')}</Button>
                             </div>
                           )}
                         </Td>
                       </tr>
                     ))}
                     {(audit.findings || []).length === 0 && (
-                      <tr><td colSpan={6} className="text-center py-6 text-xs text-gray-400 italic">Keine Abweichungen für dieses Audit verzeichnet. Perfekt!</td></tr>
+                      <tr><td colSpan={6} className="text-center py-6 text-xs text-gray-400 italic">{t('auditSection.noFindings')}</td></tr>
                     )}
                   </Tbody>
                 </Table>
@@ -1017,7 +1039,7 @@ export const Compliance: React.FC = () => {
           ))}
 
           {audits.length === 0 && (
-            <Card><CardBody className="py-12 text-center text-gray-400 italic">Keine Audits geplant. Plane interne und externe Audits zur Absicherung des Informationssicherheitsstandards.</CardBody></Card>
+            <Card><CardBody className="py-12 text-center text-gray-400 italic">{t('auditSection.noAudits')}</CardBody></Card>
           )}
         </div>
       )}
@@ -1028,11 +1050,11 @@ export const Compliance: React.FC = () => {
           <div className="flex justify-between items-center">
             <h2 className="font-bold text-lg dark:text-white flex items-center gap-2">
               <Award size={18} className="text-blue-600" />
-              Mitarbeiter-Schulungsmatrix (Awareness & Training)
+              {t('trainingSection.title')}
             </h2>
             {canWrite && (
               <Button onClick={openNewMasterTraining} size="sm">
-                <Plus size={14} /> Schulung erstellen
+                <Plus size={14} /> {t('trainingSection.createBtn')}
               </Button>
             )}
           </div>
@@ -1048,7 +1070,7 @@ export const Compliance: React.FC = () => {
                   <p className="text-2xl font-bold dark:text-white">
                     {trainings.filter(t => t.completed_at !== null && t.status !== 'expired').length}
                   </p>
-                  <p className="text-xs text-gray-500">Erledigte Nachweise (Aktiv)</p>
+                  <p className="text-xs text-gray-500">{t('trainingSection.stats.completed')}</p>
                 </div>
               </CardBody>
             </Card>
@@ -1061,7 +1083,7 @@ export const Compliance: React.FC = () => {
                   <p className="text-2xl font-bold dark:text-white">
                     {trainings.filter(t => t.completed_at === null).length}
                   </p>
-                  <p className="text-xs text-gray-500">Ausstehende Zuweisungen (Pending)</p>
+                  <p className="text-xs text-gray-500">{t('trainingSection.stats.pending')}</p>
                 </div>
               </CardBody>
             </Card>
@@ -1074,7 +1096,7 @@ export const Compliance: React.FC = () => {
                   <p className="text-2xl font-bold dark:text-white">
                     {trainings.filter(t => t.status === 'expired').length}
                   </p>
-                  <p className="text-xs text-gray-500">Abgelaufene Nachweise</p>
+                  <p className="text-xs text-gray-500">{t('trainingSection.stats.expired')}</p>
                 </div>
               </CardBody>
             </Card>
@@ -1087,9 +1109,9 @@ export const Compliance: React.FC = () => {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex justify-between items-center px-1">
                 <h3 className="font-semibold text-sm text-gray-700 dark:text-slate-300 uppercase tracking-wider">
-                  Schulungskatalog
+                  {t('trainingSection.catalogTitle')}
                 </h3>
-                <span className="text-xs text-gray-500">{trainingsList.length} Kurse</span>
+                <span className="text-xs text-gray-500">{t('trainingSection.coursesCount', { count: trainingsList.length })}</span>
               </div>
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                 {trainingsList.map(course => {
@@ -1110,7 +1132,7 @@ export const Compliance: React.FC = () => {
                             {course.title}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-slate-400 font-mono">
-                            Datum: {new Date(course.date).toLocaleDateString('de')}
+                            {t('date')}: {new Date(course.date).toLocaleDateString('de')}
                           </p>
                           {course.description && (
                             <p className="text-xs text-gray-400 dark:text-slate-500 line-clamp-1">
@@ -1121,15 +1143,15 @@ export const Compliance: React.FC = () => {
                         <div className="flex flex-col items-end gap-1.5 shrink-0">
                           {course.mandatory ? (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-sm font-bold bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 uppercase tracking-wider">
-                              Pflicht
+                              {t('trainingSection.mandatory')}
                             </span>
                           ) : (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-sm font-bold bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400 uppercase tracking-wider">
-                              Freiwillig
+                              {t('trainingSection.optional')}
                             </span>
                           )}
                           <span className="text-[10px] text-gray-500 font-medium">
-                            {course.total_completed} / {course.total_assigned} erledigt
+                            {t('trainingSection.completedOfAssigned', { completed: course.total_completed, assigned: course.total_assigned })}
                           </span>
                         </div>
                       </div>
@@ -1142,7 +1164,7 @@ export const Compliance: React.FC = () => {
                               openEditMasterTraining(course);
                             }}
                             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                            title="Schulung bearbeiten"
+                            title={t('trainingSection.editCourseTitle')}
                           >
                             <Pencil size={13} />
                           </button>
@@ -1152,7 +1174,7 @@ export const Compliance: React.FC = () => {
                               handleDeleteMasterTraining(course.id);
                             }}
                             className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                            title="Schulung löschen"
+                            title={t('trainingSection.deleteCourseTitle')}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -1163,7 +1185,7 @@ export const Compliance: React.FC = () => {
                 })}
                 {trainingsList.length === 0 && (
                   <div className="p-8 text-center text-gray-400 italic bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl animate-pulse">
-                    Keine Schulungen im Katalog. Klicken Sie auf "Schulung erstellen", um zu beginnen.
+                    {t('trainingSection.noCourses')}
                   </div>
                 )}
               </div>
@@ -1195,7 +1217,7 @@ export const Compliance: React.FC = () => {
                       </div>
                       {canWrite && (
                         <Button onClick={openAssignModal} size="sm" className="shrink-0">
-                          <Plus size={14} /> Mitarbeiter zuweisen
+                          <Plus size={14} /> {t('trainingSection.assignAttendeesBtn')}
                         </Button>
                       )}
                     </CardHeader>
@@ -1203,13 +1225,13 @@ export const Compliance: React.FC = () => {
                       <Table>
                         <Thead>
                           <tr>
-                            <Th>Mitarbeiter</Th>
-                            <Th>Abteilung</Th>
-                            <Th>Abschlussdatum</Th>
-                            <Th>Gültig bis</Th>
-                            <Th>Status</Th>
-                            <Th>Zertifikat</Th>
-                            {canWrite && <Th className="text-right">Aktionen</Th>}
+                            <Th>{t('table.employee')}</Th>
+                            <Th>{t('table.department')}</Th>
+                            <Th>{t('table.completionDate')}</Th>
+                            <Th>{t('table.validUntil')}</Th>
+                            <Th>{t('table.status')}</Th>
+                            <Th>{t('table.certificate')}</Th>
+                            {canWrite && <Th className="text-right">{t('table.actions')}</Th>}
                           </tr>
                         </Thead>
                         <Tbody>
@@ -1220,16 +1242,16 @@ export const Compliance: React.FC = () => {
                                 {a.contested && (
                                   <div className="mt-1">
                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-[10px] font-semibold" title={a.contestation_comment || ''}>
-                                      ⚠ Beanstandet: "{a.contestation_comment}"
+                                      {t('trainingSection.contestedPrefix')} "{a.contestation_comment}"
                                     </span>
                                   </div>
                                 )}
                               </Td>
                               <Td className="text-xs text-gray-500">
-                                {a.user?.department || (a.user_id ? '—' : (a.employee_email ? `Extern (${a.employee_email})` : 'Extern'))}
+                                {a.user?.department || (a.user_id ? '—' : (a.employee_email ? t('trainingSection.externalWithEmail', { email: a.employee_email }) : t('trainingSection.external')))}
                               </Td>
                               <Td className="text-xs font-mono text-gray-500">
-                                {a.completed_at ? new Date(a.completed_at).toLocaleDateString('de') : <span className="text-gray-400 italic">ausstehend</span>}
+                                {a.completed_at ? new Date(a.completed_at).toLocaleDateString('de') : <span className="text-gray-400 italic">{t('trainingSection.attendeeStatus.pending')}</span>}
                               </Td>
                               <Td className="text-xs font-mono text-gray-500">
                                 {a.expires_at ? new Date(a.expires_at).toLocaleDateString('de') : <span className="text-gray-300 italic">—</span>}
@@ -1241,25 +1263,25 @@ export const Compliance: React.FC = () => {
                                   a.status === 'warning' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                                   'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                 }`}>
-                                  {a.completed_at === null ? 'Ausstehend' : a.status === 'valid' ? 'Aktiv' : a.status === 'warning' ? 'Ablaufend' : 'Abgelaufen'}
+                                  {a.completed_at === null ? t('trainingSection.attendeeStatus.pending') : a.status === 'valid' ? t('trainingSection.attendeeStatus.valid') : a.status === 'warning' ? t('trainingSection.attendeeStatus.warning') : t('trainingSection.attendeeStatus.expired')}
                                 </span>
                               </Td>
                               <Td>
                                 {a.certificate_url ? (
                                   <a href={a.certificate_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 text-xs font-semibold hover:underline inline-flex items-center gap-1">
-                                    <FileText size={12} /> Nachweis ↗
+                                    <FileText size={12} /> {t('trainingSection.certificateLink')}
                                   </a>
                                 ) : (
-                                  <span className="text-gray-300 italic text-xs">Kein Upload</span>
+                                  <span className="text-gray-300 italic text-xs">{t('trainingSection.noUpload')}</span>
                                 )}
                               </Td>
                               {canWrite && (
                                 <Td className="text-right">
                                   <div className="flex justify-end gap-1.5">
-                                    <Button onClick={() => openEditAssignment(a)} variant="secondary" size="sm" title="Nachweis pflegen / Status ändern">
+                                    <Button onClick={() => openEditAssignment(a)} variant="secondary" size="sm" title={t('trainingSection.editAttendeeTitle')}>
                                       <Pencil size={11} />
                                     </Button>
-                                    <Button onClick={() => handleDeleteAssignment(a.id)} variant="danger" size="sm" title="Zuweisung löschen">
+                                    <Button onClick={() => handleDeleteAssignment(a.id)} variant="danger" size="sm" title={t('trainingSection.deleteAttendeeTitle')}>
                                       <Trash2 size={11} />
                                     </Button>
                                   </div>
@@ -1270,7 +1292,7 @@ export const Compliance: React.FC = () => {
                           {courseAssignments.length === 0 && (
                             <tr>
                               <td colSpan={canWrite ? 7 : 6} className="text-center py-12 text-gray-400 italic">
-                                Bisher keine Mitarbeiter dieser Schulung zugewiesen. Klicken Sie auf "Mitarbeiter zuweisen", um Teilnehmer zuzuordnen oder eine Excel-Teilnehmerliste hochzuladen.
+                                {t('trainingSection.noAttendees')}
                               </td>
                             </tr>
                           )}
@@ -1281,7 +1303,7 @@ export const Compliance: React.FC = () => {
                 );
               })() : (
                 <div className="h-64 flex flex-col justify-center items-center text-gray-400 italic bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl">
-                  Bitte wählen Sie links eine Schulung aus, um die Teilnehmerliste und deren Bearbeitungsstatus anzuzeigen.
+                  {t('trainingSection.selectCoursePlaceholder')}
                 </div>
               )}
             </div>
@@ -1295,81 +1317,81 @@ export const Compliance: React.FC = () => {
       {/* ── MODALS ─────────────────────────────────────────────────────── */}
 
       {/* KPI Modal */}
-      <Modal open={kpiModal} onClose={() => setKpiModal(false)} title="KPI / Wirksamkeitsmaßnahme definieren" size="lg">
+      <Modal open={kpiModal} onClose={() => setKpiModal(false)} title={t('kpiModal.createTitle')} size="lg">
         <form onSubmit={handleCreateKpi} className="space-y-4">
-          <Input label="Kennzahl Titel *" value={kpiForm.title} onChange={e => setKpiForm({ ...kpiForm, title: e.target.value })} required placeholder="z. B. Phishing Clickrate bei jährlichem Kampagnen-Test" />
+          <Input label={t('kpiModal.titleLabel')} value={kpiForm.title} onChange={e => setKpiForm({ ...kpiForm, title: e.target.value })} required placeholder={t('kpiModal.titlePlaceholder')} />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Beschreibung</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={2} value={kpiForm.description} onChange={e => setKpiForm({ ...kpiForm, description: e.target.value })} placeholder="Wie wird diese Kennzahl gemessen? Welches Control validiert sie?" />
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('description')}</label>
+            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={2} value={kpiForm.description} onChange={e => setKpiForm({ ...kpiForm, description: e.target.value })} placeholder={t('kpiModal.descriptionPlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Zielwert (Target) *" value={kpiForm.target} onChange={e => setKpiForm({ ...kpiForm, target: e.target.value })} required placeholder="z. B. < 5%" />
-            <Select label="Verantwortlicher Owner" value={kpiForm.owner_id} onChange={e => setKpiForm({ ...kpiForm, owner_id: e.target.value })} options={[{ value: '', label: '— niemand —' }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />
+            <Input label={t('kpiModal.targetLabel')} value={kpiForm.target} onChange={e => setKpiForm({ ...kpiForm, target: e.target.value })} required placeholder={t('kpiModal.targetPlaceholder')} />
+            <Select label={t('kpiModal.ownerLabel')} value={kpiForm.owner_id} onChange={e => setKpiForm({ ...kpiForm, owner_id: e.target.value })} options={[{ value: '', label: t('nobody') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setKpiModal(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" className="flex-1 justify-center">Speichern</Button>
+            <Button type="button" variant="secondary" onClick={() => setKpiModal(false)} className="flex-1 justify-center">{t('cancel')}</Button>
+            <Button type="submit" className="flex-1 justify-center">{t('save')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Log Measurement Modal */}
-      <Modal open={measureModal !== null} onClose={() => setMeasureModal(null)} title="Messwert erfassen" size="md">
+      <Modal open={measureModal !== null} onClose={() => setMeasureModal(null)} title={t('measureModal.title')} size="md">
         <form onSubmit={handleAddMeasurement} className="space-y-4">
-          <Input label="Messwert *" value={measureForm.value} onChange={e => setMeasureForm({ ...measureForm, value: e.target.value })} required placeholder="z. B. 3.2% oder 4 Tage" />
-          <Input label="Messzeitpunkt *" type="date" value={measureForm.measured_at} onChange={e => setMeasureForm({ ...measureForm, measured_at: e.target.value })} required />
+          <Input label={t('measureModal.valueLabel')} value={measureForm.value} onChange={e => setMeasureForm({ ...measureForm, value: e.target.value })} required placeholder={t('measureModal.valuePlaceholder')} />
+          <Input label={t('measureModal.dateLabel')} type="date" value={measureForm.measured_at} onChange={e => setMeasureForm({ ...measureForm, measured_at: e.target.value })} required />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Bemerkungen</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={2} value={measureForm.notes} onChange={e => setMeasureForm({ ...measureForm, notes: e.target.value })} placeholder="Abweichungen oder Kontext beim Erfassen" />
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('remarks')}</label>
+            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={2} value={measureForm.notes} onChange={e => setMeasureForm({ ...measureForm, notes: e.target.value })} placeholder={t('measureModal.notesPlaceholder')} />
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setMeasureModal(null)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" className="flex-1 justify-center">Erfassen</Button>
+            <Button type="button" variant="secondary" onClick={() => setMeasureModal(null)} className="flex-1 justify-center">{t('cancel')}</Button>
+            <Button type="submit" className="flex-1 justify-center">{t('measureModal.submitBtn')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Audit Modal */}
-      <Modal open={auditModal} onClose={() => setAuditModal(false)} title="Audit planen" size="lg">
+      <Modal open={auditModal} onClose={() => setAuditModal(false)} title={t('auditModal.title')} size="lg">
         <form onSubmit={handleCreateAudit} className="space-y-4">
-          <Input label="Audit-Titel" value={auditForm.title} onChange={e => setAuditForm({ ...auditForm, title: e.target.value })} required placeholder="z. B. Internes Audit Rechenzentrum & Backup" />
+          <Input label={t('auditModal.titleLabel')} value={auditForm.title} onChange={e => setAuditForm({ ...auditForm, title: e.target.value })} required placeholder={t('auditModal.titlePlaceholder')} />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Scope (Bereich)</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={2} value={auditForm.scope} onChange={e => setAuditForm({ ...auditForm, scope: e.target.value })} placeholder="Welche Abteilungen, Systeme oder Controls werden auditiert?" />
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('auditModal.scopeLabel')}</label>
+            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={2} value={auditForm.scope} onChange={e => setAuditForm({ ...auditForm, scope: e.target.value })} placeholder={t('auditModal.scopePlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select label="Typ" value={auditForm.audit_type} onChange={e => setAuditForm({ ...auditForm, audit_type: e.target.value as any })} options={[{ value: 'internal', label: 'Intern' }, { value: 'external', label: 'Extern' }, { value: 'certification', label: 'Zertifizierung' }]} />
-            <Select label="Status" value={auditForm.status} onChange={e => setAuditForm({ ...auditForm, status: e.target.value as any })} options={[{ value: 'planned', label: 'Geplant' }, { value: 'in_progress', label: 'In Durchführung' }, { value: 'completed', label: 'Abgeschlossen' }]} />
-            <Input label="Auditor (Person/Firma)" value={auditForm.auditor} onChange={e => setAuditForm({ ...auditForm, auditor: e.target.value })} placeholder="z. B. TÜV SÜD, Assessor" />
+            <Select label={t('table.type')} value={auditForm.audit_type} onChange={e => setAuditForm({ ...auditForm, audit_type: e.target.value as any })} options={[{ value: 'internal', label: t('auditSection.types.internal') }, { value: 'external', label: t('auditSection.types.external') }, { value: 'certification', label: t('auditSection.types.certification') }]} />
+            <Select label={t('table.status')} value={auditForm.status} onChange={e => setAuditForm({ ...auditForm, status: e.target.value as any })} options={[{ value: 'planned', label: t('auditSection.status.planned') }, { value: 'in_progress', label: t('auditSection.status.in_progress') }, { value: 'completed', label: t('auditSection.status.completed') }]} />
+            <Input label={t('auditModal.auditorLabel')} value={auditForm.auditor} onChange={e => setAuditForm({ ...auditForm, auditor: e.target.value })} placeholder={t('auditModal.auditorPlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Startdatum" type="date" value={auditForm.start_date} onChange={e => setAuditForm({ ...auditForm, start_date: e.target.value })} />
-            <Input label="Enddatum" type="date" value={auditForm.end_date} onChange={e => setAuditForm({ ...auditForm, end_date: e.target.value })} />
+            <Input label={t('auditModal.startDateLabel')} type="date" value={auditForm.start_date} onChange={e => setAuditForm({ ...auditForm, start_date: e.target.value })} />
+            <Input label={t('auditModal.endDateLabel')} type="date" value={auditForm.end_date} onChange={e => setAuditForm({ ...auditForm, end_date: e.target.value })} />
           </div>
-          <Input label="Bericht Link (Wiki/PDF)" value={auditForm.report_link} onChange={e => setAuditForm({ ...auditForm, report_link: e.target.value })} placeholder="z. B. https://sharepoint.firma.de/compliance/audit-report.pdf" />
+          <Input label={t('auditModal.reportLinkLabel')} value={auditForm.report_link} onChange={e => setAuditForm({ ...auditForm, report_link: e.target.value })} placeholder={t('auditModal.reportLinkPlaceholder')} />
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setAuditModal(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" className="flex-1 justify-center">Audit anlegen</Button>
+            <Button type="button" variant="secondary" onClick={() => setAuditModal(false)} className="flex-1 justify-center">{t('cancel')}</Button>
+            <Button type="submit" className="flex-1 justify-center">{t('auditModal.submitBtn')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Finding Modal */}
-      <Modal open={findingModal !== null} onClose={() => setFindingModal(null)} title="Abweichung (Finding) erfassen" size="lg">
+      <Modal open={findingModal !== null} onClose={() => setFindingModal(null)} title={t('findingModal.title')} size="lg">
         <form onSubmit={handleAddFinding} className="space-y-4">
-          <Input label="Titel der Abweichung" value={findingForm.title} onChange={e => setFindingForm({ ...findingForm, title: e.target.value })} required placeholder="z. B. Fehlendes Backup-Konzept für neue SaaS" />
+          <Input label={t('findingModal.titleLabel')} value={findingForm.title} onChange={e => setFindingForm({ ...findingForm, title: e.target.value })} required placeholder={t('findingModal.titlePlaceholder')} />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Detailbeschreibung</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={3} value={findingForm.description} onChange={e => setFindingForm({ ...findingForm, description: e.target.value })} placeholder="Genaue Beschreibung des Findings, inkl. Soll/Ist-Vergleich" />
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('findingModal.descriptionLabel')}</label>
+            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" rows={3} value={findingForm.description} onChange={e => setFindingForm({ ...findingForm, description: e.target.value })} placeholder={t('findingModal.descriptionPlaceholder')} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select label="Schweregrad" value={findingForm.severity} onChange={e => setFindingForm({ ...findingForm, severity: e.target.value as any })} options={[{ value: 'major', label: 'Hauptabweichung (Major)' }, { value: 'minor', label: 'Nebenabweichung (Minor)' }, { value: 'observation', label: 'Empfehlung / Beobachtung' }]} />
-            <Select label="Zuständige Person" value={findingForm.assignee_id} onChange={e => setFindingForm({ ...findingForm, assignee_id: e.target.value })} options={[{ value: '', label: '— niemand —' }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />
+            <Select label={t('table.severity')} value={findingForm.severity} onChange={e => setFindingForm({ ...findingForm, severity: e.target.value as any })} options={[{ value: 'major', label: t('findingModal.severityOptions.major') }, { value: 'minor', label: t('findingModal.severityOptions.minor') }, { value: 'observation', label: t('findingModal.severityOptions.observation') }]} />
+            <Select label={t('findingModal.assigneeLabel')} value={findingForm.assignee_id} onChange={e => setFindingForm({ ...findingForm, assignee_id: e.target.value })} options={[{ value: '', label: t('nobody') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />
           </div>
-          <Select label="Verknüpfte CAPA-Maßnahme (Task)" value={findingForm.capa_task_id} onChange={e => setFindingForm({ ...findingForm, capa_task_id: e.target.value })} options={[{ value: '', label: '— Keinen Task verknüpfen —' }, ...tasks.filter(t => t.status !== 'done').map(t => ({ value: String(t.id), label: t.title }))]} />
+          <Select label={t('findingModal.capaTaskLabel')} value={findingForm.capa_task_id} onChange={e => setFindingForm({ ...findingForm, capa_task_id: e.target.value })} options={[{ value: '', label: t('findingModal.noTaskLabel') }, ...tasks.filter(t => t.status !== 'done').map(t => ({ value: String(t.id), label: t.title }))]} />
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setFindingModal(null)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" className="flex-1 justify-center">Abweichung eintragen</Button>
+            <Button type="button" variant="secondary" onClick={() => setFindingModal(null)} className="flex-1 justify-center">{t('cancel')}</Button>
+            <Button type="submit" className="flex-1 justify-center">{t('findingModal.submitBtn')}</Button>
           </div>
         </form>
       </Modal>
@@ -1378,30 +1400,30 @@ export const Compliance: React.FC = () => {
       <Modal
         open={masterTrainingModal}
         onClose={() => setMasterTrainingModal(false)}
-        title={editMasterTrainingId ? "Schulungskurs bearbeiten" : "Schulungskurs erstellen"}
+        title={editMasterTrainingId ? t('masterTrainingModal.editTitle') : t('masterTrainingModal.createTitle')}
         size="lg"
       >
         <form onSubmit={handleSaveMasterTraining} className="space-y-4">
           <Input
-            label="Schulungstitel *"
+            label={t('masterTrainingModal.titleLabel')}
             value={masterTrainingForm.title}
             onChange={e => setMasterTrainingForm({ ...masterTrainingForm, title: e.target.value })}
             required
-            placeholder="z. B. Jährliche Sicherheitsunterweisung 2026"
+            placeholder={t('masterTrainingModal.titlePlaceholder')}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Beschreibung</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('description')}</label>
             <textarea
               className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
               value={masterTrainingForm.description}
               onChange={e => setMasterTrainingForm({ ...masterTrainingForm, description: e.target.value })}
-              placeholder="Inhalt, Schwerpunkte der Unterweisung..."
+              placeholder={t('masterTrainingModal.descriptionPlaceholder')}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Datum *"
+              label={t('masterTrainingModal.dateLabel')}
               type="date"
               value={masterTrainingForm.date}
               onChange={e => setMasterTrainingForm({ ...masterTrainingForm, date: e.target.value })}
@@ -1416,13 +1438,13 @@ export const Compliance: React.FC = () => {
                 className="w-4 h-4 rounded text-blue-600"
               />
               <label htmlFor="mandatory-checkbox" className="text-sm font-semibold text-gray-700 dark:text-slate-300 cursor-pointer">
-                Diese Schulung ist verpflichtend (Mandatory)
+                {t('masterTrainingModal.mandatoryLabel')}
               </label>
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setMasterTrainingModal(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" className="flex-1 justify-center">Speichern</Button>
+            <Button type="button" variant="secondary" onClick={() => setMasterTrainingModal(false)} className="flex-1 justify-center">{t('cancel')}</Button>
+            <Button type="submit" className="flex-1 justify-center">{t('save')}</Button>
           </div>
         </form>
       </Modal>
@@ -1431,12 +1453,12 @@ export const Compliance: React.FC = () => {
       <Modal
         open={assignModal}
         onClose={() => setAssignModal(false)}
-        title="Teilnehmer zuweisen & Mapping durchführen"
+        title={t('assignModal.title')}
         size="lg"
       >
         <form onSubmit={handleAssignUsers} className="space-y-5">
           <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl text-blue-800 dark:text-blue-300 text-xs">
-            Zuweisung zum Kurs: <strong className="font-bold">{trainingsList.find(t => t.id === selectedTrainingId)?.title}</strong>
+            {t('assignModal.coursePrefix')} <strong className="font-bold">{trainingsList.find(t => t.id === selectedTrainingId)?.title}</strong>
           </div>
 
           <div className="flex items-center gap-2 mb-3">
@@ -1448,7 +1470,7 @@ export const Compliance: React.FC = () => {
               className="w-4 h-4 rounded text-blue-600"
             />
             <label htmlFor="mark-completed-checkbox" className="text-sm font-semibold text-gray-700 dark:text-slate-300 cursor-pointer">
-              Zugeordnete Teilnehmer direkt als abgeschlossen / erledigt markieren
+              {t('assignModal.markCompletedLabel')}
             </label>
           </div>
 
@@ -1456,35 +1478,35 @@ export const Compliance: React.FC = () => {
             <div className="p-4 bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Abschlussdatum *"
+                  label={t('assignModal.completedAtLabel')}
                   type="date"
                   value={assignForm.completed_at}
                   onChange={e => setAssignForm({ ...assignForm, completed_at: e.target.value })}
                   required={assignForm.mark_completed}
                 />
                 <Input
-                  label="Gültig bis / Ablaufdatum"
+                  label={t('assignModal.expiresAtLabel')}
                   type="date"
                   value={assignForm.expires_at}
                   onChange={e => setAssignForm({ ...assignForm, expires_at: e.target.value })}
                 />
               </div>
               <Input
-                label="Zertifikat / Nachweis Link (Wiki/PDF)"
+                label={t('assignModal.certificateUrlLabel')}
                 value={assignForm.certificate_url}
                 onChange={e => setAssignForm({ ...assignForm, certificate_url: e.target.value })}
-                placeholder="z. B. https://sharepoint.firma.de/trainings/cert_123.pdf"
+                placeholder={t('assignModal.certificateUrlPlaceholder')}
               />
             </div>
           )}
 
           <div className="border-t dark:border-slate-800 pt-4 space-y-4">
-            <h3 className="text-sm font-semibold dark:text-slate-200">Teilnehmer auswählen</h3>
+            <h3 className="text-sm font-semibold dark:text-slate-200">{t('assignModal.selectAttendeesTitle')}</h3>
             
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Option A: Mitarbeiter manuell auswählen ({assignForm.user_ids.length} ausgewählt)</span>
+                  <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">{t('assignModal.manualOption', { count: assignForm.user_ids.length })}</span>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
@@ -1494,7 +1516,7 @@ export const Compliance: React.FC = () => {
                       }}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      Alle auswählen
+                      {t('assignModal.selectAllBtn')}
                     </button>
                     <span className="text-gray-300 dark:text-slate-700 text-xs">|</span>
                     <button
@@ -1502,10 +1524,10 @@ export const Compliance: React.FC = () => {
                       onClick={() => setAssignForm({ ...assignForm, user_ids: [] })}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      Auswahl aufheben
+                      {t('assignModal.deselectAllBtn')}
                     </button>
                     <Input
-                      placeholder="Suchen..."
+                      placeholder={t('searchPlaceholder')}
                       value={userSearch}
                       onChange={e => setUserSearch(e.target.value)}
                       className="max-w-xs text-xs"
@@ -1536,13 +1558,13 @@ export const Compliance: React.FC = () => {
                     );
                   })}
                   {users.filter(u => u.active && u.name.toLowerCase().includes(userSearch.toLowerCase())).length === 0 && (
-                    <p className="text-xs text-gray-400 italic col-span-2 p-2">Keine passenden Mitarbeiter gefunden.</p>
+                    <p className="text-xs text-gray-400 italic col-span-2 p-2">{t('assignModal.noMatchingUsers')}</p>
                   )}
                 </div>
               </div>
 
               <div className="space-y-2 border-t dark:border-slate-800 pt-3">
-                <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 block">Option B: Teilnehmerliste hochladen (.xlsx)</span>
+                <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 block">{t('assignModal.uploadOption')}</span>
                 <div className="flex items-center gap-3">
                   <input
                     type="file"
@@ -1559,25 +1581,25 @@ export const Compliance: React.FC = () => {
                       onClick={() => setAssignForm({ ...assignForm, file: null })}
                       className="text-xs text-red-500 hover:underline shrink-0"
                     >
-                      Entfernen
+                      {t('remove')}
                     </button>
                   )}
                 </div>
                 <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 px-3 py-2 space-y-1">
-                  <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-400">Format: Excel (.xlsx) — Pflichtfelder pro Zeile:</p>
+                  <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-400">{t('assignModal.uploadFormatTitle')}</p>
                   <ul className="text-[10px] text-blue-800 dark:text-blue-300 space-y-0.5 list-disc list-inside">
-                    <li><span className="font-medium">Name</span> — Vor- und Nachname des Teilnehmers (Textspalte)</li>
-                    <li><span className="font-medium">E-Mail</span> — E-Mail-Adresse (Spalte mit @-Zeichen)</li>
+                    <li><span className="font-medium">{t('assignModal.uploadFormatName')}</span></li>
+                    <li><span className="font-medium">{t('assignModal.uploadFormatEmail')}</span></li>
                   </ul>
-                  <p className="text-[10px] text-blue-700/70 dark:text-blue-400/70">Spaltenreihenfolge ist beliebig. Zeilen ohne Name und E-Mail werden übersprungen. Bekannte Benutzer werden automatisch anhand von Name oder E-Mail zugeordnet, unbekannte Einträge als externe Teilnehmer erfasst.</p>
+                  <p className="text-[10px] text-blue-700/70 dark:text-blue-400/70">{t('assignModal.uploadFormatDesc')}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setAssignModal(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" className="flex-1 justify-center">Zuweisen & Speichern</Button>
+            <Button type="button" variant="secondary" onClick={() => setAssignModal(false)} className="flex-1 justify-center">{t('cancel')}</Button>
+            <Button type="submit" className="flex-1 justify-center">{t('assignModal.submitBtn')}</Button>
           </div>
         </form>
       </Modal>
@@ -1586,44 +1608,44 @@ export const Compliance: React.FC = () => {
       <Modal
         open={editAssignmentModal}
         onClose={() => setEditAssignmentModal(false)}
-        title="Schulungs-Teilnahme bearbeiten"
+        title={t('editAssignmentModal.title')}
         size="md"
       >
         <form onSubmit={handleSaveAssignment} className="space-y-4">
           <Input
-            label="Abschlussdatum"
+            label={t('editAssignmentModal.completedAtLabel')}
             type="date"
             value={editAssignmentForm.completed_at}
             onChange={e => setEditAssignmentForm({ ...editAssignmentForm, completed_at: e.target.value })}
-            placeholder="Leer lassen, falls noch nicht abgeschlossen"
+            placeholder={t('editAssignmentModal.completedAtPlaceholder')}
           />
           <Input
-            label="Gültig bis / Ablaufdatum"
+            label={t('assignModal.expiresAtLabel')}
             type="date"
             value={editAssignmentForm.expires_at}
             onChange={e => setEditAssignmentForm({ ...editAssignmentForm, expires_at: e.target.value })}
           />
           <Input
-            label="Nachweis / Zertifikat Link"
+            label={t('editAssignmentModal.certificateUrlLabel')}
             value={editAssignmentForm.certificate_url}
             onChange={e => setEditAssignmentForm({ ...editAssignmentForm, certificate_url: e.target.value })}
-            placeholder="z. B. https://sharepoint.firma.de/cert.pdf"
+            placeholder={t('editAssignmentModal.certificateUrlPlaceholder')}
           />
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setEditAssignmentModal(false)} className="flex-1 justify-center">Abbrechen</Button>
-            <Button type="submit" className="flex-1 justify-center">Speichern</Button>
+            <Button type="button" variant="secondary" onClick={() => setEditAssignmentModal(false)} className="flex-1 justify-center">{t('cancel')}</Button>
+            <Button type="submit" className="flex-1 justify-center">{t('save')}</Button>
           </div>
         </form>
       </Modal>
 
 
       {/* Document Library Modal */}
-      <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)} title={`Dokumente: ${selectedAuditForDocs?.title}`} size="lg">
+      <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)} title={t('docsModal.title', { title: selectedAuditForDocs?.title || '' })} size="lg">
         <div className="space-y-6">
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Hinterlegte Dokumente</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('docsModal.header')}</h3>
             {auditDocs.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-slate-400 italic">Noch keine Dokumente hinterlegt.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 italic">{t('docsModal.noDocs')}</p>
             ) : (
               <div className="grid grid-cols-1 gap-2">
                 {auditDocs.map((doc: any) => (
@@ -1635,7 +1657,7 @@ export const Compliance: React.FC = () => {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={doc.original_name}>{doc.original_name}</p>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-gray-500 dark:text-slate-400">
-                          <span className="font-medium px-1.5 py-0.5 rounded-sm bg-gray-100 dark:bg-slate-700 uppercase tracking-wider">{doc.category}</span>
+                          <span className="font-medium px-1.5 py-0.5 rounded-sm bg-gray-100 dark:bg-slate-700 uppercase tracking-wider">{t(`docsModal.categories.${doc.category}`, { defaultValue: doc.category })}</span>
                           <span>{(doc.size / 1024).toFixed(0)} KB</span>
                           <span>• {new Date(doc.created_at).toLocaleDateString('de')}</span>
                           {doc.uploader && <span>• {doc.uploader.name}</span>}
@@ -1671,17 +1693,17 @@ export const Compliance: React.FC = () => {
 
           {canWrite && (
             <form onSubmit={handleDocUpload} className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-200 dark:border-slate-700 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Neues Dokument hochladen</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">{t('docsModal.uploadHeader')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
-                  label="Dokumententyp"
+                  label={t('docsModal.docTypeLabel')}
                   value={docForm.category}
                   onChange={e => setDocForm({ ...docForm, category: e.target.value })}
                   options={[
-                    { value: 'audit_report', label: 'Audit-Bericht' },
-                    { value: 'certificate', label: 'Zertifikat' },
-                    { value: 'contract', label: 'Vertrag / NDA' },
-                    { value: 'other', label: 'Sonstiges' }
+                    { value: 'audit_report', label: t('docsModal.categories.audit_report') },
+                    { value: 'certificate', label: t('docsModal.categories.certificate') },
+                    { value: 'contract', label: t('docsModal.categories.contract') },
+                    { value: 'other', label: t('docsModal.categories.other') }
                   ]}
                 />
                 <div className="flex flex-col justify-end">
@@ -1694,14 +1716,14 @@ export const Compliance: React.FC = () => {
                 </div>
               </div>
               <Input
-                label="Beschreibung (optional)"
+                label={t('description')}
                 value={docForm.description}
                 onChange={e => setDocForm({ ...docForm, description: e.target.value })}
-                placeholder="Kurze Anmerkung zum Dokument..."
+                placeholder={t('docsModal.descriptionPlaceholder')}
               />
               <div className="flex justify-end pt-2">
                 <Button type="submit" disabled={!docFile || uploadingDoc}>
-                  {uploadingDoc ? 'Wird hochgeladen...' : 'Hochladen'}
+                  {uploadingDoc ? t('docsModal.uploadingStatus') : t('docsModal.uploadBtn')}
                 </Button>
               </div>
             </form>

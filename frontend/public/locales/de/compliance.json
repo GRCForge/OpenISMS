@@ -41,5 +41,314 @@
       "in_progress": "In Bearbeitung",
       "closed": "Geschlossen"
     }
-  }
+  },
+  "yes": "Ja",
+  "nobody": "niemand",
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "remove": "Entfernen",
+  "description": "Beschreibung",
+  "remarks": "Bemerkungen",
+  "date": "Datum",
+  "bis": "bis",
+  "loadingCompliance": "Compliance wird geladen...",
+  "loadingError": "Fehler beim Laden der Compliance-Daten.",
+  "retry": "Erneut versuchen",
+  "header": {
+    "title": "Compliance, KPIs & Audits",
+    "subtitle": "Normenabdeckung, kontinuierliche Verbesserung und Schulungsnachweise"
+  },
+  "tabs": {
+    "frameworks": "Normen-Scope (ISO/NIS2/GDPR)",
+    "kpis": "KPIs & Wirksamkeit",
+    "audits": "Audit & CAPA Module",
+    "trainings": "Schulungsmatrix"
+  },
+  "stats": {
+    "assetsInScope": "Assets im ISMS-Scope",
+    "highRiskAssets": "Hochrisiko-Assets",
+    "gdprGaps": "DSGVO-Lücken (VVT fehlt)"
+  },
+  "frameworkTabs": {
+    "mappings": "Querverweise",
+    "gdpr": "DSGVO (GDPR)"
+  },
+  "iso27001": {
+    "assetsTitle": "ISO 27001 Assets",
+    "noAssets": "Keine Assets im Scope gefunden.",
+    "infoText1": "Der Standard ISO/IEC 27001 definiert die Kriterien für ein robustes Informationssicherheits-Managementsystem (ISMS).",
+    "infoText2": "Alle aktiven Assets der Organisation unterliegen Risikoanalysen und erfordern die Definition technischer und organisatorischer Maßnahmen (TOMs)."
+  },
+  "nis2": {
+    "assetsTitle": "NIS-2 Relevante Assets",
+    "noAssets": "Aktuell keine Assets als NIS-2 relevant gekennzeichnet.",
+    "infoText1": "Die NIS-2-Richtlinie dient dem Aufbau eines gemeinsamen hohen Cybersicherheitsniveaus in der Europäischen Union.",
+    "infoText2": "Betreiber kritischer oder wichtiger Einrichtungen müssen angemessene und verhältnismäßige Sicherheitsvorkehrungen treffen."
+  },
+  "gdpr": {
+    "gapTitle_one": "VVT-Pflichtverletzung: 1 Lücke erkannt",
+    "gapTitle_other": "VVT-Pflichtverletzung: {{count}} Lücke(n) erkannt",
+    "gapText": "Die unten aufgeführten Assets verarbeiten personenbezogene Daten, besitzen aber noch keinen vollständigen VVT-Eintrag. Ein solcher ist rechtlich zwingend erforderlich.",
+    "noGaps": "Alle Assets mit Personenbezug besitzen einen vollständigen VVT-Eintrag. Keine DSGVO-Lücken festgestellt.",
+    "assetsTitle": "Assets mit Personenbezug",
+    "noAssets": "Keine Assets mit Personenbezug gefunden.",
+    "infoText1": "Die Datenschutz-Grundverordnung (DSGVO) regelt den Schutz personenbezogener Daten.",
+    "infoText2": "Jedes Asset mit Personenbezug muss zwingend mit einem Eintrag im Verzeichnis von Verarbeitungstätigkeiten (VVT) dokumentiert sein."
+  },
+  "frameworkInfo": {
+    "title": "Framework Info",
+    "openRisks": "Risikomanagement öffnen",
+    "securityControls": "Sicherheitsmaßnahmen (TOMs)",
+    "manageIncidents": "Sicherheitsvorfälle verwalten",
+    "manageVvt": "Verzeichnis (VVT) verwalten"
+  },
+  "riskLevels": {
+    "low": "Gering",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "critical": "Kritisch",
+    "unrated": "Unbewertet"
+  },
+  "classLabels": {
+    "public": "Öffentlich",
+    "internal": "Intern",
+    "confidential": "Vertraulich",
+    "secret": "Geheim"
+  },
+  "vvtLabels": {
+    "none": "Nicht verzeichnet",
+    "pending": "In Arbeit",
+    "complete": "Vollständig"
+  },
+  "dataCatLabels": {
+    "none": "Keine PD",
+    "normal": "Normal (Art. 6)",
+    "special": "Besonders (Art. 9)"
+  },
+  "actions": {
+    "details": "Details"
+  },
+  "kpiSection": {
+    "title": "Kennzahlen & Wirksamkeitsmessungen (KPIs)",
+    "defineBtn": "KPI definieren",
+    "stats": {
+      "onTarget": "Ziel erreicht / Konform",
+      "warning": "Warnungen",
+      "critical": "Kritisch / Abweichungen"
+    },
+    "status": {
+      "on_target": "Ziel erreicht",
+      "warning": "Warnung",
+      "critical": "Kritisch"
+    },
+    "noValues": "Keine Werte",
+    "logValueBtn": "Wert loggen",
+    "noKpis": "Bisher keine KPIs definiert. Definiere Messgrößen zur Wirksamkeitsprüfung Ihrer Controls."
+  },
+  "auditSection": {
+    "title": "Audits & Korrekturmaßnahmen (CAPA)",
+    "planBtn": "Audit planen",
+    "stats": {
+      "total": "Audits gesamt",
+      "openFindings": "Offene Abweichungen (Findings)",
+      "resolvedFindings": "Behobene Findings (CAPA)"
+    },
+    "types": {
+      "certification": "Zertifizierung",
+      "external": "Externes Audit",
+      "internal": "Internes Audit"
+    },
+    "status": {
+      "completed": "Abgeschlossen",
+      "in_progress": "In Durchführung",
+      "planned": "Geplant"
+    },
+    "addFindingBtn": "Finding eintragen",
+    "docsBtn": "Dokumente",
+    "docsTitle": "Dokumente verwalten",
+    "externalReport": "Externer Bericht ↗",
+    "auditor": "Auditor: {{name}}",
+    "period": "Zeitraum:",
+    "severity": {
+      "major": "Hauptabweichung",
+      "minor": "Nebenabweichung",
+      "observation": "Empfehlung"
+    },
+    "findingStatus": {
+      "resolved": "Behoben",
+      "wont_fix": "Akzeptiert / Ignoriert",
+      "open": "Offen"
+    },
+    "noTaskLinked": "Kein Task verknüpft",
+    "markResolvedBtn": "Als behoben markieren",
+    "acceptBtn": "Akzeptieren",
+    "noFindings": "Keine Abweichungen für dieses Audit verzeichnet. Perfekt!",
+    "noAudits": "Keine Audits geplant. Plane interne und externe Audits zur Absicherung des Informationssicherheitsstandards."
+  },
+  "trainingSection": {
+    "title": "Mitarbeiter-Schulungsmatrix (Awareness & Training)",
+    "createBtn": "Schulung erstellen",
+    "stats": {
+      "completed": "Erledigte Nachweise (Aktiv)",
+      "pending": "Ausstehende Zuweisungen (Pending)",
+      "expired": "Abgelaufene Nachweise"
+    },
+    "catalogTitle": "Schulungskatalog",
+    "coursesCount_one": "1 Kurs",
+    "coursesCount_other": "{{count}} Kurse",
+    "mandatory": "Pflicht",
+    "optional": "Freiwillig",
+    "completedOfAssigned": "{{completed}} / {{assigned}} erledigt",
+    "editCourseTitle": "Schulung bearbeiten",
+    "deleteCourseTitle": "Schulung löschen",
+    "noCourses": "Keine Schulungen im Katalog. Klicken Sie auf \"Schulung erstellen\", um zu beginnen.",
+    "assignAttendeesBtn": "Mitarbeiter zuweisen",
+    "contestedPrefix": "⚠ Beanstandet:",
+    "externalWithEmail": "Extern ({{email}})",
+    "external": "Extern",
+    "attendeeStatus": {
+      "pending": "Ausstehend",
+      "valid": "Aktiv",
+      "warning": "Ablaufend",
+      "expired": "Abgelaufen"
+    },
+    "certificateLink": "Nachweis ↗",
+    "noUpload": "Kein Upload",
+    "editAttendeeTitle": "Nachweis pflegen / Status ändern",
+    "deleteAttendeeTitle": "Zuweisung löschen",
+    "noAttendees": "Bisher keine Mitarbeiter dieser Schulung zugewiesen. Klicken Sie auf \"Mitarbeiter zuweisen\", um Teilnehmer zuzuordnen oder eine Excel-Teilnehmerliste hochzuladen.",
+    "selectCoursePlaceholder": "Bitte wählen Sie links eine Schulung aus, um die Teilnehmerliste und deren Bearbeitungsstatus anzuzeigen."
+  },
+  "kpiModal": {
+    "createTitle": "KPI / Wirksamkeitsmaßnahme definieren",
+    "titleLabel": "Kennzahl Titel *",
+    "titlePlaceholder": "z. B. Phishing Clickrate bei jährlichem Kampagnen-Test",
+    "descriptionPlaceholder": "Wie wird diese Kennzahl gemessen? Welches Control validiert sie?",
+    "targetLabel": "Zielwert (Target) *",
+    "targetPlaceholder": "z. B. < 5%",
+    "ownerLabel": "Verantwortlicher Owner"
+  },
+  "measureModal": {
+    "title": "Messwert erfassen",
+    "valueLabel": "Messwert *",
+    "valuePlaceholder": "z. B. 3.2% oder 4 Tage",
+    "dateLabel": "Messzeitpunkt *",
+    "notesPlaceholder": "Abweichungen oder Kontext beim Erfassen"
+  },
+  "auditModal": {
+    "title": "Audit planen",
+    "titleLabel": "Audit-Titel",
+    "titlePlaceholder": "z. B. Internes Audit Rechenzentrum & Backup",
+    "scopeLabel": "Scope (Bereich)",
+    "scopePlaceholder": "Welche Abteilungen, Systeme oder Controls werden auditiert?",
+    "auditorLabel": "Auditor (Person/Firma)",
+    "auditorPlaceholder": "z. B. TÜV SÜD, Assessor",
+    "startDateLabel": "Startdatum",
+    "endDateLabel": "Enddatum",
+    "reportLinkLabel": "Bericht Link (Wiki/PDF)",
+    "reportLinkPlaceholder": "z. B. https://sharepoint.firma.de/compliance/audit-report.pdf",
+    "submitBtn": "Audit anlegen"
+  },
+  "findingModal": {
+    "title": "Abweichung (Finding) erfassen",
+    "titleLabel": "Titel der Abweichung",
+    "titlePlaceholder": "z. B. Fehlendes Backup-Konzept für neue SaaS",
+    "descriptionLabel": "Detailbeschreibung",
+    "descriptionPlaceholder": "Genaue Beschreibung des Findings, inkl. Soll/Ist-Vergleich",
+    "assigneeLabel": "Zuständige Person",
+    "capaTaskLabel": "Verknüpfte CAPA-Maßnahme (Task)",
+    "noTaskLabel": "— Keinen Task verknüpfen —",
+    "submitBtn": "Abweichung eintragen"
+  },
+  "masterTrainingModal": {
+    "editTitle": "Schulungskurs bearbeiten",
+    "createTitle": "Schulungskurs erstellen",
+    "titleLabel": "Schulungstitel *",
+    "titlePlaceholder": "z. B. Jährliche Sicherheitsunterweisung 2026",
+    "descriptionPlaceholder": "Inhalt, Schwerpunkte der Unterweisung...",
+    "dateLabel": "Datum *",
+    "mandatoryLabel": "Diese Schulung ist verpflichtend (Mandatory)"
+  },
+  "assignModal": {
+    "title": "Teilnehmer zuweisen & Mapping durchführen",
+    "coursePrefix": "Zuweisung zum Kurs:",
+    "markCompletedLabel": "Zugeordnete Teilnehmer direkt als abgeschlossen / erledigt markieren",
+    "completedAtLabel": "Abschlussdatum *",
+    "expiresAtLabel": "Gültig bis / Ablaufdatum",
+    "certificateUrlLabel": "Zertifikat / Nachweis Link (Wiki/PDF)",
+    "certificateUrlPlaceholder": "z. B. https://sharepoint.firma.de/trainings/cert_123.pdf",
+    "selectAttendeesTitle": "Teilnehmer auswählen",
+    "manualOption_one": "Option A: Mitarbeiter manuell auswählen (1 ausgewählt)",
+    "manualOption_other": "Option A: Mitarbeiter manuell auswählen ({{count}} ausgewählt)",
+    "selectAllBtn": "Alle auswählen",
+    "deselectAllBtn": "Auswahl aufheben",
+    "noMatchingUsers": "Keine passenden Mitarbeiter gefunden.",
+    "uploadOption": "Option B: Teilnehmerliste hochladen (.xlsx)",
+    "uploadFormatTitle": "Format: Excel (.xlsx) — Pflichtfelder pro Zeile:",
+    "uploadFormatName": "Name — Vor- und Nachname des Teilnehmers (Textspalte)",
+    "uploadFormatEmail": "E-Mail — E-Mail-Adresse (Spalte mit @-Zeichen)",
+    "uploadFormatDesc": "Spaltenreihenfolge ist beliebig. Zeilen ohne Name und E-Mail werden übersprungen. Bekannte Benutzer werden automatisch anhand von Name oder E-Mail zugeordnet, unbekannte Einträge als externe Teilnehmer erfasst.",
+    "submitBtn": "Zuweisen & Speichern"
+  },
+  "editAssignmentModal": {
+    "title": "Schulungs-Teilnahme bearbeiten",
+    "completedAtLabel": "Abschlussdatum",
+    "completedAtPlaceholder": "Leer lassen, falls noch nicht abgeschlossen",
+    "certificateUrlLabel": "Nachweis / Zertifikat Link",
+    "certificateUrlPlaceholder": "z. B. https://sharepoint.firma.de/cert.pdf"
+  },
+  "docsModal": {
+    "title": "Dokumente: {{title}}",
+    "header": "Hinterlegte Dokumente",
+    "noDocs": "Noch keine Dokumente hinterlegt.",
+    "categories": {
+      "audit_report": "Audit-Bericht",
+      "certificate": "Zertifikat",
+      "contract": "Vertrag / NDA",
+      "other": "Sonstiges"
+    },
+    "uploadHeader": "Neues Dokument hochladen",
+    "docTypeLabel": "Dokumententyp",
+    "descriptionPlaceholder": "Kurze Anmerkung zum Dokument...",
+    "uploadingStatus": "Wird hochgeladen...",
+    "uploadBtn": "Hochladen"
+  },
+  "toasts": {
+    "docUploadSuccess": "Dokument erfolgreich hochgeladen",
+    "docUploadError": "Fehler beim Hochladen des Dokuments",
+    "docDeleteSuccess": "Dokument gelöscht",
+    "docDeleteError": "Fehler beim Löschen des Dokuments",
+    "kpiCreateSuccess": "KPI erfolgreich erstellt",
+    "kpiCreateError": "Fehler beim Erstellen des KPIs",
+    "kpiDeleteSuccess": "KPI gelöscht",
+    "deleteError": "Fehler beim Löschen",
+    "measurementAdded": "Messwert hinzugefügt",
+    "saveError": "Fehler beim Speichern",
+    "auditCreateSuccess": "Audit erfolgreich angelegt",
+    "genericError": "Fehler",
+    "auditDeleteSuccess": "Audit gelöscht",
+    "findingCreateSuccess": "Abweichung (Finding) erfasst",
+    "findingStatusUpdated": "Finding-Status aktualisiert",
+    "trainingUpdated": "Schulungsnachweis aktualisiert",
+    "trainingRecorded": "Schulungsnachweis(e) eingetragen",
+    "trainingRecordError": "Fehler beim Eintragen der Schulung",
+    "entryDeleted": "Eintrag gelöscht",
+    "trainingCatalogUpdated": "Schulungskatalog aktualisiert",
+    "trainingCourseAdded": "Schulungskurs hinzugefügt",
+    "trainingDeleted": "Schulung gelöscht",
+    "attendeesAssigned": "Teilnehmer zugewiesen",
+    "assignError": "Fehler beim Zuweisen",
+    "attendeeStatusUpdated": "Teilnehmerstatus aktualisiert",
+    "assignmentRemoved": "Zuweisung entfernt",
+    "removeError": "Fehler beim Entfernen"
+  },
+  "confirms": {
+    "deleteDoc": "Dokument wirklich löschen?",
+    "deleteKpi": "KPI wirklich löschen?",
+    "deleteAudit": "Audit wirklich löschen?",
+    "deleteTrainingRecord": "Schulungsnachweis wirklich löschen?",
+    "deleteMasterTraining": "Möchten Sie diesen Schulungskurs und alle zugehörigen Mitarbeiter-Zuweisungen wirklich löschen?",
+    "deleteAssignment": "Zuweisung für diesen Mitarbeiter wirklich löschen?"
+  },
+  "searchPlaceholder": "Suchen..."
 }
