@@ -1,105 +1,105 @@
 {
-  "title": "User Management",
-  "subtitle": "{{count}} registered users",
-  "new": "New User",
-  "createUser": "Create User",
-  "searchPlaceholder": "Search users...",
+  "title": "Benutzerverwaltung",
+  "subtitle": "{{count}} registrierte Benutzer",
+  "new": "Neuer Benutzer",
+  "createUser": "Benutzer erstellen",
+  "searchPlaceholder": "Benutzer suchen...",
   "fields": {
     "name": "Name",
-    "email": "Email",
-    "role": "Role",
-    "department": "Department",
-    "active": "Active",
-    "inactive": "Inactive",
-    "lastLogin": "Last Login",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "department": "Abteilung",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "lastLogin": "Letzter Login",
     "twoFactor": "2FA",
-    "authentication": "Authentication",
+    "authentication": "Authentifizierung",
     "status": "Status"
   },
   "roleLabels": {
     "admin": "Administrator",
     "assessor": "Auditor / Assessor",
-    "it-staff": "IT Staff",
-    "dpo": "Data Protection Officer",
-    "owner": "Asset Owner",
+    "it-staff": "IT-Mitarbeiter",
+    "dpo": "Datenschutzbeauftragter",
+    "owner": "Asset-Besitzer",
     "management": "Management",
-    "viewer": "Viewer",
-    "employee": "Employee"
+    "viewer": "Betrachter",
+    "employee": "Mitarbeiter"
   },
   "filters": {
-    "allRoles": "All roles",
-    "allSecurityLevels": "All security levels",
-    "ssoOnly": "SSO users only",
-    "localOnly": "Local users only",
-    "mfaActive": "MFA / Passkey active",
-    "mfaInactive": "MFA inactive (insecure)"
+    "allRoles": "Alle Rollen",
+    "allSecurityLevels": "Alle Sicherheitsstufen",
+    "ssoOnly": "Nur SSO-Benutzer",
+    "localOnly": "Nur lokale Benutzer",
+    "mfaActive": "MFA / Passwort aktiv",
+    "mfaInactive": "MFA inaktiv (unsicher)"
   },
   "badges": {
     "sso": "SSO",
-    "password": "Password",
-    "twoFactorInactive": "2FA inactive",
-    "totpTitle": "Two-factor authentication via app active",
-    "passkeyTitle": "{{count}} passkey(s) registered"
+    "password": "Passwort",
+    "twoFactorInactive": "2FA inaktiv",
+    "totpTitle": "Zwei-Faktor-Authentifizierung über App aktiv",
+    "passkeyTitle": "{{count}} Passkey(s) registriert"
   },
   "statusLabels": {
-    "active": "Active",
-    "deactivated": "Deactivated"
+    "active": "Aktiv",
+    "deactivated": "Deaktiviert"
   },
-  "customRolesGroup": "Custom roles",
+  "customRolesGroup": "Eigene Rollen",
   "roleSelect": {
-    "ownRoleNotChangeable": "Own role not changeable",
-    "changeRoleDirectly": "Change role directly"
+    "ownRoleNotChangeable": "Eigene Rolle nicht veränderbar",
+    "changeRoleDirectly": "Rolle direkt ändern"
   },
   "form": {
-    "editTitle": "Edit User",
-    "newTitle": "Create New User",
-    "fullName": "Full Name *",
-    "fullNamePlaceholder": "e.g. John Doe",
-    "emailLabel": "Email Address *",
-    "emailPlaceholder": "john.doe@company.com",
-    "departmentLabel": "Department / Team",
-    "departmentPlaceholder": "e.g. IT Operations",
-    "systemRole": "System Role *",
+    "editTitle": "Benutzer bearbeiten",
+    "newTitle": "Neuen Benutzer erstellen",
+    "fullName": "Voller Name *",
+    "fullNamePlaceholder": "z.B. John Doe",
+    "emailLabel": "E-Mail-Adresse *",
+    "emailPlaceholder": "john.doe@firma.com",
+    "departmentLabel": "Abteilung / Team",
+    "departmentPlaceholder": "z.B. IT-Operationen",
+    "systemRole": "Systemrolle *",
     "roleOptions": {
-      "admin": "Administrator (Full Access)",
+      "admin": "Administrator (Vollzugriff)",
       "assessor": "Auditor / Assessor",
-      "it-staff": "IT Staff",
-      "dpo": "Data Protection Officer",
-      "owner": "Asset Owner (Responsible)",
-      "viewer": "Viewer (Read-only)"
+      "it-staff": "IT-Mitarbeiter",
+      "dpo": "Datenschutzbeauftragter",
+      "owner": "Asset-Besitzer (Verantwortlich)",
+      "viewer": "Viewer (schreibgeschützt)"
     },
-    "initialPassword": "Initial Password *",
-    "accountStatus": "Account Status",
-    "accountStatusHint": "Deactivated users can no longer sign in to the portal.",
-    "active": "Active",
-    "deactivated": "Deactivated",
-    "saving": "Saving...",
-    "saveChanges": "Save Changes",
-    "createUser": "Create User"
+    "initialPassword": "Initiales Passwort *",
+    "accountStatus": "Kontostatus",
+    "accountStatusHint": "Deaktivierte Benutzer können sich nicht mehr im Portal anmelden.",
+    "active": "Aktiv",
+    "deactivated": "Deaktiviert",
+    "saving": "Speichern...",
+    "saveChanges": "Änderungen speichern",
+    "createUser": "Benutzer erstellen"
   },
   "resetPw": {
-    "title": "Reset Password",
-    "intro": "Set a new password for",
-    "newPassword": "New Password *",
-    "saving": "Saving...",
-    "setPassword": "Set Password",
-    "tooltip": "Reset password",
-    "success": "Password was successfully reset."
+    "title": "Passwort zurücksetzen",
+    "intro": "Neues Passwort setzen für",
+    "newPassword": "Neues Passwort *",
+    "saving": "Speichern...",
+    "setPassword": "Passwort festlegen",
+    "tooltip": "Passwort zurücksetzen",
+    "success": "Passwort wurde erfolgreich zurückgesetzt."
   },
   "toasts": {
-    "saveError": "Error while saving",
-    "genericError": "Error",
-    "ownRoleWarning": "Your own role cannot be changed.",
-    "roleChangeError": "Role could not be changed",
-    "selfDeleteWarning": "You cannot delete yourself.",
-    "deleteFailed": "Deletion failed"
+    "saveError": "Fehler beim Speichern",
+    "genericError": "Fehler",
+    "ownRoleWarning": "Ihre eigene Rolle kann nicht geändert werden.",
+    "roleChangeError": "Rolle konnte nicht geändert werden",
+    "selfDeleteWarning": "Sie können sich nicht selbst löschen.",
+    "deleteFailed": "Löschen fehlgeschlagen"
   },
-  "confirmDelete": "Really delete this user? All associated data will be retained.",
-  "confirmDeleteShort": "Really delete user?",
+  "confirmDelete": "Diesen Benutzer wirklich löschen? Alle zugehörigen Daten werden gespeichert.",
+  "confirmDeleteShort": "Benutzer wirklich löschen?",
   "actions": {
-    "activate": "Activate",
-    "deactivate": "Deactivate",
-    "resetPassword": "Reset Password",
-    "deleteUser": "Delete User"
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "resetPassword": "Passwort zurücksetzen",
+    "deleteUser": "Benutzer löschen"
   }
 }
