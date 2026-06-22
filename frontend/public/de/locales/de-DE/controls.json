@@ -1,77 +1,77 @@
 {
-  "title": "Controls & SoA",
-  "subtitle": "Statement of Applicability · ISO 27001 / NIS-2 / BSI · {{count}} controls",
-  "searchPlaceholder": "Search (code/title)…",
-  "new": "New Custom Control",
-  "bulkDeleteBtn_one": "Delete {{count}}",
-  "bulkDeleteBtn_other": "Delete {{count}}",
+  "title": "Steuerung & SoA",
+  "subtitle": "Statement of Applicability · ISO 27001 / NIS-2 / BSI · {{count}} Kontrollen",
+  "searchPlaceholder": "Suche (Code/Titel)…",
+  "new": "Neue benutzerdefinierte Steuerung",
+  "bulkDeleteBtn_one": "{{count}} löschen",
+  "bulkDeleteBtn_other": "{{count}} löschen",
   "type": {
-    "organizational": "Organizational",
-    "people": "People",
-    "physical": "Physical",
-    "technological": "Technological"
+    "organizational": "Organisatorisch",
+    "people": "Personen",
+    "physical": "Körperlich",
+    "technological": "Technologisch"
   },
   "status": {
-    "implemented": "Implemented",
-    "planned": "Planned",
-    "not_applicable": "Not Applicable"
+    "implemented": "Implementiert",
+    "planned": "Geplant",
+    "not_applicable": "Nicht anwendbar"
   },
   "stats": {
-    "implemented": "Implemented",
-    "planned": "Planned",
-    "notApplicable": "Not applicable",
-    "coverage": "Coverage"
+    "implemented": "Implementiert",
+    "planned": "Geplant",
+    "notApplicable": "Nicht anwendbar",
+    "coverage": "Abdeckung"
   },
   "hints": {
-    "iso27001": "ISO 27001 controls come from the <a>ISO 27001 module</a>. Edit status there for full details.",
-    "nis2": "NIS-2 controls come from the <a>NIS-2 module</a>. Edit status there for full details.",
-    "bsi": "BSI requirements come from the <a>BSI module</a>. Edit status there for full details."
+    "iso27001": "ISO 27001 Steuerelemente stammen vom <a>ISO 27001 Modul</a>. Bearbeiten Sie dort den Status für alle Details.",
+    "nis2": "NIS-2 Steuerelemente kommen aus dem <a>NIS-2 Modul</a>. Bearbeiten Sie dort den Status für vollständige Details.",
+    "bsi": "BSI-Anforderungen kommen aus dem <a>BSI-Modul</a>. Bearbeiten Sie dort den Status für alle Details."
   },
   "filters": {
-    "allFrameworks": "All Frameworks",
-    "allStatus": "All Status"
+    "allFrameworks": "Alle Frameworks",
+    "allStatus": "Alle Status"
   },
   "table": {
     "code": "Code",
-    "control": "Control",
+    "control": "Steuerung",
     "framework": "Framework",
-    "reference": "Reference",
+    "reference": "Referenz",
     "status": "Status"
   },
   "form": {
-    "basicInfo": "Basic Information",
-    "title": "Title",
-    "type": "Type",
-    "description": "Description",
+    "basicInfo": "Grundlegende Informationen",
+    "title": "Titel",
+    "type": "Typ",
+    "description": "Beschreibung",
     "soaStatus": "SoA Status",
-    "justification": "Applicability Justification (SoA)",
-    "justificationPlaceholder": "Why (not) applicable or how implemented?",
-    "linkedPolicies": "Linked Policies",
-    "linkedPoliciesHint": "Link this control to policies from your library that describe this TOM in detail.",
-    "noPolicies": "No policies available.",
-    "noCode": "No code"
+    "justification": "Anwendbarkeitsbegründung (SoA)",
+    "justificationPlaceholder": "Warum (nicht) anwendbar oder wie implementiert?",
+    "linkedPolicies": "Verknüpfte Richtlinien",
+    "linkedPoliciesHint": "Verknüpfen Sie dieses Steuerelement mit Richtlinien aus Ihrer Bibliothek, die dieses TOM detailliert beschreiben.",
+    "noPolicies": "Keine Richtlinien verfügbar.",
+    "noCode": "Kein Code"
   },
   "createModal": {
-    "title": "Create Custom Control",
+    "title": "Benutzerdefinierte Steuerung erstellen",
     "code": "Code (optional)",
-    "codePlaceholder": "e.g. ORG-01"
+    "codePlaceholder": "z.B. ORG-01"
   },
   "buttons": {
-    "cancel": "Cancel",
-    "save": "Save",
-    "create": "Create"
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "create": "Anlegen"
   },
   "empty": {
-    "noResults": "No controls found"
+    "noResults": "Keine Steuerelemente gefunden"
   },
   "confirm": {
-    "delete": "Delete control \"{{title}}\"?",
-    "bulkDelete": "Really delete the {{count}} selected custom controls?"
+    "delete": "Steuerung \"{{title}} \"löschen?",
+    "bulkDelete": "{{count}} ausgewählte Bedienelemente wirklich löschen?"
   },
   "toast": {
-    "bulkDeleted_one": "{{count}} control deleted",
-    "bulkDeleted_other": "{{count}} controls deleted",
-    "deleteError": "Error deleting",
-    "error": "Error"
+    "bulkDeleted_one": "{{count}} Steuerung gelöscht",
+    "bulkDeleted_other": "{{count}} Steuerelemente gelöscht",
+    "deleteError": "Fehler beim Löschen",
+    "error": "Fehler"
   }
 }
