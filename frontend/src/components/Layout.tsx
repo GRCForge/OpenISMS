@@ -303,17 +303,17 @@ export const Layout: React.FC = () => {
         <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-900 dark:bg-black text-white flex flex-col transform transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-900 border-r border-gray-200/60 dark:border-slate-800/60 text-slate-900 dark:text-white flex flex-col transform transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         {/* Logo & Theme Toggle */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/60">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200/60 dark:border-slate-700/60">
           <div className="flex items-center gap-3">
             <IsmsLogo size={36} className="rounded-xl shrink-0" />
             <div>
-              <p className="font-bold text-sm leading-none">OpenISMS</p>
-              <p className="text-xs text-slate-400 mt-0.5">Security Management</p>
+              <p className="font-bold text-sm leading-none text-slate-900 dark:text-white">OpenISMS</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Security Management</p>
             </div>
           </div>
-          <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}>
+          <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}>
             {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
           </button>
         </div>
@@ -333,7 +333,7 @@ export const Layout: React.FC = () => {
             if (!visibleItems.length) return null;
             return (
               <div key={group.groupKey}>
-                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-600 uppercase tracking-widest px-2 mb-1">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1">
                   {t(`nav:groups.${group.groupKey}`)}
                 </p>
                 <div className="space-y-0.5">
@@ -349,7 +349,9 @@ export const Layout: React.FC = () => {
                       <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
                         title={hint}
                         className={`flex items-center gap-2.5 px-3 py-1 rounded-lg text-sm transition-all ${
-                          active ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                          active
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}>
                         <IconComponent size={15} className="shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -371,7 +373,7 @@ export const Layout: React.FC = () => {
         </nav>
 
         {/* User section */}
-        <div className="border-t border-slate-700/60 p-4">
+        <div className="border-t border-gray-200/60 dark:border-slate-700/60 p-4">
           {overdueCount > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 mb-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-pulse">
               <AlertTriangle size={13} className="text-red-400 shrink-0" />
@@ -383,7 +385,7 @@ export const Layout: React.FC = () => {
 
           <button
             onClick={openProfile}
-            className="w-full group mb-2 p-2 rounded-xl hover:bg-white/5 transition-all text-left border border-transparent hover:border-white/10"
+            className="w-full group mb-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left border border-transparent hover:border-gray-200/60 dark:hover:border-white/10"
           >
             <div className="flex items-center gap-3">
               <div className="relative shrink-0">
@@ -393,11 +395,11 @@ export const Layout: React.FC = () => {
                 <div className={`w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform ${user?.avatar_url ? 'hidden' : ''}`}>
                   {user?.name?.charAt(0).toUpperCase()}
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-900 dark:border-black rounded-full shadow-xs" />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full shadow-xs" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold leading-none truncate group-hover:text-blue-400 transition-colors">{user?.name}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">
+                <p className="text-sm font-bold leading-none truncate text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{user?.name}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">
                   {t(`common:roles.${user?.role ?? 'viewer'}`)}
                 </p>
               </div>
@@ -406,12 +408,12 @@ export const Layout: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button onClick={logout}
-              className="flex items-center gap-3 flex-1 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all uppercase tracking-widest border border-transparent hover:border-red-500/20">
+              className="flex items-center gap-3 flex-1 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all uppercase tracking-widest border border-transparent hover:border-red-500/20">
               <LogOut size={14} />{t('common:actions.logout')}
             </button>
             <LanguageSwitcher />
           </div>
-          {version && <p className="text-center text-[10px] text-slate-600 dark:text-slate-700 mt-2 font-mono">OpenISMS v{version} · © 2026 Maximilian Herz</p>}
+          {version && <p className="text-center text-[10px] text-slate-500 dark:text-slate-650 mt-2 font-mono">OpenISMS v{version} · © 2026 Maximilian Herz</p>}
         </div>
       </aside>
 
