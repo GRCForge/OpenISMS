@@ -65,5 +65,72 @@
   "toast": {
     "loadError": "Error loading catalogue",
     "saveError": "Error saving"
+  },
+  "categories": {
+    "riskPolicies": "Análisis de Riesgos y Políticas de Seguridad",
+    "incidentResponse": "Gestión de Incidentes",
+    "businessContinuity": "Continuidad del Negocio",
+    "supplychainSecurity": "Seguridad de la Cadena de Suministro",
+    "acquisitionSecurity": "Seguridad en la Adquisición",
+    "measureEffectiveness": "Efectividad de las Medidas",
+    "cyberHygiene": "Ciberhigiene y Formación",
+    "cryptography": "Criptografía",
+    "accessControl": "Seguridad del Personal y Control de Acceso",
+    "mfa": "Autenticación de Múltiples Factores",
+    "reportingObligations": "Obligaciones de Notificación"
+  },
+  "measures": {
+    "Art. 21(2)(a)": {
+      "title": "Conceptos de Análisis de Riesgos y Seguridad para los Sistemas de Información",
+      "description": "Establecimiento e implementación de políticas sobre el análisis de riesgos y la seguridad de los sistemas de información (Sistema de Gestión de la Seguridad de la Información — SGSI)."
+    },
+    "Art. 21(2)(b)": {
+      "title": "Gestión de Incidentes",
+      "description": "Políticas y procedimientos para la gestión de incidentes de seguridad, incluyendo detección, escalada, respuesta y recuperación."
+    },
+    "Art. 21(2)(c)": {
+      "title": "Continuidad del Negocio, Gestión de Backups y Recuperación ante Desastres",
+      "description": "Medidas de continuidad del negocio, incluyendo la gestión de copias de seguridad, la recuperación ante desastres y la gestión de crisis."
+    },
+    "Art. 21(2)(d)": {
+      "title": "Seguridad de la Cadena de Suministro",
+      "description": "Seguridad de la cadena de suministro, incluidos los aspectos relacionados con la seguridad en las relaciones entre cada entidad y sus proveedores o proveedores de servicios directos."
+    },
+    "Art. 21(2)(e)": {
+      "title": "Seguridad en la Adquisición, Desarrollo y Mantenimiento de Redes y Sistemas de Información",
+      "description": "Requisitos de seguridad en la adquisición, desarrollo y mantenimiento de redes y sistemas de información, incluida la gestión y divulgación de vulnerabilidades."
+    },
+    "Art. 21(2)(f)": {
+      "title": "Evaluación de la Efectividad de las Medidas de Gestión de Riesgos",
+      "description": "Políticas y procedimientos para evaluar la efectividad de las medidas de gestión de riesgos de ciberseguridad, incluidas las auditorías internas y los procesos de revisión."
+    },
+    "Art. 21(2)(g)": {
+      "title": "Prácticas Básicas de Ciberhigiene y Formación",
+      "description": "Prácticas básicas de ciberhigiene y capacitación en ciberseguridad para empleados y directivos."
+    },
+    "Art. 21(2)(h)": {
+      "title": "Políticas y Procedimientos para el Uso de Criptografía",
+      "description": "Políticas y procedimientos relativos al uso de la criptografía y, cuando proceda, del cifrado."
+    },
+    "Art. 21(2)(i)": {
+      "title": "Seguridad del Personal, Políticas de Control de Acceso y Gestión de Activos",
+      "description": "Medidas de seguridad del personal, políticas de control de acceso y gestión de activos, incluidos los principios de necesidad de conocer y enfoques de confianza cero."
+    },
+    "Art. 21(2)(j)": {
+      "title": "Uso de Autenticación de Múltiples Factores o Autenticación Continua",
+      "description": "Uso de soluciones de autenticación multifactor o soluciones de autenticación continua, comunicaciones de voz, vídeo y texto protegidas, y comunicaciones de emergencia protegidas."
+    },
+    "Art. 23(1)": {
+      "title": "Notificación de Incidentes Significativos (Alerta Temprana en 24h)",
+      "description": "Los incidentes de seguridad significativos deben notificarse como alerta temprana a la autoridad competente sin demora injustificada y, en cualquier caso, en un plazo de 24 horas a partir del momento en que se tenga conocimiento."
+    },
+    "Art. 23(2)": {
+      "title": "Notificación Actualizada de Incidentes en 72 Horas",
+      "description": "Sin demora injustificada y, en cualquier caso, en un plazo de 72 horas a partir del momento en que se tenga conocimiento, debe presentarse una notificación actualizada con una evaluación inicial del incidente, su gravedad e indicadores de compromiso."
+    },
+    "Art. 23(4)": {
+      "title": "Informe Final a más tardar un mes después del incidente",
+      "description": "A más tardar un mes después de la presentación de la notificación prevista en el artículo 23, apartado 2, deberá presentarse un informe final en el que se describa el incidente, las causas de raíz y las medidas de mitigación adoptadas."
+    }
   }
 }

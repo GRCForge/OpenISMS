@@ -37,7 +37,7 @@
       "critical": "Kritisch"
     },
     "status": {
-      "open": "Öffnen",
+      "open": "Offen",
       "in_progress": "In Bearbeitung",
       "closed": "Geschlossen"
     }
@@ -177,7 +177,7 @@
     "findingStatus": {
       "resolved": "Gelöst",
       "wont_fix": "Akzeptiert",
-      "open": "Öffnen"
+      "open": "Offen"
     },
     "noTaskLinked": "Keine Aufgabe verknüpft",
     "markResolvedBtn": "Als gelöst markieren",

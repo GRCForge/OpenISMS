@@ -2,7 +2,7 @@
   "title": "NIS-2 · Art. 21 Sicherheitsmaßnahmen",
   "subtitle": "Netzwerk- und Informationssicherheitsrichtlinie 2 · {{count}} Maßnahmen",
   "status": {
-    "not_started": "Öffnen",
+    "not_started": "Nicht begonnen",
     "in_progress": "In Bearbeitung",
     "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
@@ -11,7 +11,7 @@
     "total": "Gesamt",
     "implemented": "Implementiert",
     "inProgress": "In Bearbeitung",
-    "open": "Öffnen"
+    "open": "Nicht begonnen"
   },
   "entity": {
     "essential": {
@@ -30,11 +30,11 @@
   },
   "table": {
     "article": "Artikel",
-    "measure": "Messen",
+    "measure": "Maßnahme",
     "status": "Status",
     "deadline": "Deadline",
     "lastReview": "Letzte Prüfung",
-    "measureCount": "{{count}} Messungen"
+    "measureCount": "{{count}} Maßnahmen"
   },
   "description": {
     "show": "Beschreibung anzeigen",
@@ -47,7 +47,7 @@
     "loadButton": "NIS-2 Katalog laden",
     "loading": "Katalog wird geladen..."
   },
-  "filterEmpty": "Keine Messungen entsprechen den Filterkriterien.",
+  "filterEmpty": "Keine Maßnahmen entsprechen den Filterkriterien.",
   "modal": {
     "status": "Implementierungsstatus",
     "responsible": "Verantwortliche Person",
@@ -78,5 +78,59 @@
     "accessControl": "Personalsicherheit & Zugangssteuerung",
     "mfa": "Multi-Faktor-Authentifizierung",
     "reportingObligations": "Meldepflichten"
+  },
+  "measures": {
+    "Art. 21(2)(a)": {
+      "title": "Konzepte für Risikoanalyse und Sicherheit für Informationssysteme",
+      "description": "Einrichtung und Umsetzung von Konzepten zur Risikoanalyse und zur Sicherheit von Informationssystemen (Informationssicherheitsmanagementsystem — ISMS)."
+    },
+    "Art. 21(2)(b)": {
+      "title": "Bewältigung von Sicherheitsvorfällen",
+      "description": "Konzepte und Verfahren zur Bewältigung von Sicherheitsvorfällen, einschließlich Erkennung, Eskalation, Reaktion und Wiederherstellung."
+    },
+    "Art. 21(2)(c)": {
+      "title": "Aufrechterhaltung des Betriebs, Backup-Management und Disaster Recovery",
+      "description": "Maßnahmen zur Aufrechterhaltung des Betriebs, inkl. Backup-Management, Wiederherstellung im Katastrophenfall und Krisenmanagement."
+    },
+    "Art. 21(2)(d)": {
+      "title": "Sicherheit der Lieferkette",
+      "description": "Sicherheit der Lieferkette einschließlich sicherheitsbezogener Aspekte der Beziehungen zwischen den einzelnen Einrichtungen und ihren unmittelbaren Anbietern oder Diensteanbietern."
+    },
+    "Art. 21(2)(e)": {
+      "title": "Sicherheit beim Erwerb, bei der Entwicklung und Wartung von Netz- und Informationssystemen",
+      "description": "Sicherheitsanforderungen beim Erwerb, bei der Entwicklung und Wartung von Netz- und Informationssystemen, einschließlich Schwachstellenmanagement und Offenlegung von Schwachstellen."
+    },
+    "Art. 21(2)(f)": {
+      "title": "Bewertung der Wirksamkeit von Risikomanagementmaßnahmen",
+      "description": "Konzepte und Verfahren zur Bewertung der Wirksamkeit der Maßnahmen zur Cybersicherheits-Risikomanagement, einschließlich interner Audits und Review-Prozesse."
+    },
+    "Art. 21(2)(g)": {
+      "title": "Grundlegende Verfahren zur Cyberhygiene und Schulungen",
+      "description": "Grundlegende Verfahren im Bereich Cyberhygiene sowie Cybersicherheitsschulungen für Mitarbeitende und Führungskräfte."
+    },
+    "Art. 21(2)(h)": {
+      "title": "Konzepte und Verfahren für den Einsatz von Kryptografie",
+      "description": "Konzepte und Verfahren für den Einsatz von Kryptografie und gegebenenfalls Verschlüsselung."
+    },
+    "Art. 21(2)(i)": {
+      "title": "Sicherheit des Personals, Konzepte für die Zugangssteuerung und Asset Management",
+      "description": "Maßnahmen zur Sicherheit des Personals, Konzepte für die Zugangssteuerung und das Asset Management, einschließlich Need-to-Know-Prinzip und Zero-Trust-Ansätze."
+    },
+    "Art. 21(2)(j)": {
+      "title": "Verwendung von Multi-Faktor-Authentifizierung oder kontinuierlicher Authentifizierung",
+      "description": "Verwendung von Multi-Faktor-Authentifizierungslösungen oder kontinuierlichen Authentifizierungslösungen sowie gesicherter Sprach-, Video- und Textkommunikation und gesicherter Notfallkommunikation."
+    },
+    "Art. 23(1)": {
+      "title": "Meldung erheblicher Sicherheitsvorfälle (Frühwarnung innerhalb 24h)",
+      "description": "Erhebliche Sicherheitsvorfälle müssen der zuständigen Behörde unverzüglich, spätestens 24 Stunden nach Kenntnisnahme, als Frühwarnung gemeldet werden."
+    },
+    "Art. 23(2)": {
+      "title": "Aktualisierte Meldung innerhalb 72 Stunden",
+      "description": "Unverzüglich, spätestens 72 Stunden nach Kenntnisnahme, muss eine aktualisierte Meldung mit erster Einschätzung des Vorfalls, Schweregrad und Indikatoren für Kompromittierung übermittelt werden."
+    },
+    "Art. 23(4)": {
+      "title": "Abschlussbericht spätestens einen Monat nach Vorfall",
+      "description": "Spätestens einen Monat nach Übermittlung der Meldung gemäß Art. 23(2) is ein Abschlussbericht mit Beschreibung des Vorfalls, Angabe der Ursachen und getroffenen Abhilfemaßnahmen zu übermitteln."
+    }
   }
 }
