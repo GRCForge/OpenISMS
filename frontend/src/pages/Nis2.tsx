@@ -53,6 +53,20 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Meldepflichten':                         'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400',
 };
 
+const CATEGORY_KEY_MAP: Record<string, string> = {
+  'Risikoanalyse & Sicherheitsrichtlinien': 'riskPolicies',
+  'Vorfallbewältigung':                     'incidentResponse',
+  'Business Continuity':                    'businessContinuity',
+  'Lieferkettensicherheit':                 'supplychainSecurity',
+  'Sicherheit im Erwerb':                   'acquisitionSecurity',
+  'Wirksamkeit von Maßnahmen':              'measureEffectiveness',
+  'Cyberhygiene & Schulungen':              'cyberHygiene',
+  'Kryptografie':                           'cryptography',
+  'Personalsicherheit & Zugangssteuerung':  'accessControl',
+  'Multi-Faktor-Authentifizierung':         'mfa',
+  'Meldepflichten':                         'reportingObligations',
+};
+
 const emptyEditForm = {
   implementation_status: 'not_started' as ImplStatus,
   responsible_id: '',
@@ -74,6 +88,11 @@ export const Nis2: React.FC = () => {
     in_progress: t('status.in_progress'),
     implemented: t('status.implemented'),
     not_applicable: t('status.not_applicable'),
+  };
+
+  const getCategoryLabel = (cat: string): string => {
+    const key = CATEGORY_KEY_MAP[cat];
+    return key ? t(`categories.${key}`) : cat;
   };
 
   const [measures, setMeasures] = useState<Nis2Measure[]>([]);
@@ -235,7 +254,7 @@ export const Nis2: React.FC = () => {
 
       <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('filter.searchPlaceholder')} activeCount={activeFilterCount} onReset={() => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); }}>
         <Select className="w-44" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} options={[{ value: '', label: t('filter.allStatus') }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]} />
-        <Select className="w-56" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} options={[{ value: '', label: t('filter.allCategories') }, ...categories.map(c => ({ value: c, label: c }))]} />
+        <Select className="w-56" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} options={[{ value: '', label: t('filter.allCategories') }, ...categories.map(c => ({ value: c, label: getCategoryLabel(c) }))]} />
       </FilterBar>
 
       {grouped.map(([category, items]) => {
@@ -246,7 +265,7 @@ export const Nis2: React.FC = () => {
         return (
           <Card key={category} className="overflow-hidden">
             <button onClick={() => toggleCategory(category)} className="w-full flex items-center gap-3 p-4 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors text-left">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded shrink-0 ${colorClass}`}>{category}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded shrink-0 ${colorClass}`}>{getCategoryLabel(category)}</span>
               <span className="text-xs text-gray-500 dark:text-slate-400 shrink-0">{t('table.measureCount', { count: items.length })}</span>
               <div className="flex items-center gap-2 min-w-[80px] ml-auto">
                 <div className="w-16 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} /></div>
@@ -308,7 +327,7 @@ export const Nis2: React.FC = () => {
 
       <Modal open={!!editMeasure} onClose={() => setEditMeasure(null)} title={editMeasure ? `${editMeasure.article_ref} – ${editMeasure.title}` : ''} size="lg">
         <form onSubmit={saveEdit} className="space-y-4">
-          {editMeasure && <div className="flex gap-2 flex-wrap"><span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{editMeasure.category}</span></div>}
+          {editMeasure && <div className="flex gap-2 flex-wrap"><span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{getCategoryLabel(editMeasure.category)}</span></div>}
           <Select label={t('modal.status')} value={editForm.implementation_status} onChange={e => setEditForm({ ...editForm, implementation_status: e.target.value as ImplStatus })} options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))} disabled={!canWrite} />
           <SearchableSelect label={t('modal.responsible')} value={editForm.responsible_id} onChange={val => setEditForm({ ...editForm, responsible_id: val })} options={[{ value: '', label: t('modal.nobody') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} disabled={!canWrite} />
           <div className="flex flex-col gap-1">
