@@ -167,7 +167,7 @@ router.delete('/orphaned', authenticate, requireRole('admin'), async (req, res) 
         purged += orphanIds.length;
       }
     }
-    await auditFromReq(req, 'delete', 'task', null, 'Purge verwaister Aufgaben', { purged });
+    await auditFromReq(req, 'delete', 'task', null, 'Purge orphaned tasks', { purged });
     res.json({ purged });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -206,8 +206,8 @@ router.post('/', requireWriteAccess(), async (req, res) => {
       const group = await Group.findByPk(task.assigned_to_group_id);
       await notifyGroupMembers(
         task.assigned_to_group_id, req.user.id, req.user.id,
-        `Neue Gruppenaufgabe: ${task.title}`,
-        `${req.user.name} hat der Gruppe "${group?.name}" eine neue Aufgabe zugewiesen.`,
+        `New group task: ${task.title}`,
+        `${req.user.name} assigned a new task to group "${group?.name}"`,
         `/tasks`
       );
     }
@@ -249,8 +249,8 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
         const group = await Group.findByPk(task.assigned_to_group_id);
         await notifyGroupMembers(
           task.assigned_to_group_id, req.user.id, req.user.id,
-          `Gruppenaufgabe erledigt: ${task.title}`,
-          `${req.user.name} hat die Aufgabe "${task.title}" der Gruppe "${group?.name}" als erledigt markiert.`,
+          `Group task completed: ${task.title}`,
+          `${req.user.name} marked task "${task.title}" of group "${group?.name}" as done`,
           `/tasks`
         );
       }
@@ -267,8 +267,8 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
       const group = await Group.findByPk(updates.assigned_to_group_id);
       await notifyGroupMembers(
         updates.assigned_to_group_id, req.user.id, req.user.id,
-        `Aufgabe zugewiesen: ${task.title}`,
-        `${req.user.name} hat der Gruppe "${group?.name}" die Aufgabe "${task.title}" zugewiesen.`,
+        `Task assigned: ${task.title}`,
+        `${req.user.name} assigned task "${task.title}" to group "${group?.name}"`,
         `/tasks`
       );
     }

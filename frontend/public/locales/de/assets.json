@@ -107,11 +107,11 @@
     "riskAcceptanceDocDesc": "Risikoakzeptanz",
     "loading": "Asset wird geladen",
     "comments": {
-      "placeholder": "Kommentar schreiben… Markdown möglich, @Benutzer für Erwähnungen, Screenshots mit Strg+V einfügen",
+      "placeholder": "Kommentar schreiben… Markdown · @Nutzer/@Gruppe · - [ ] Aufgaben · Screenshots einfügen (Strg+V)",
       "noComments": "Noch keine Kommentare vorhanden.",
-      "noMatchingUsers": "Keine passenden Benutzer",
+      "noMatchingUsers": "Keine passenden Nutzer oder Gruppen",
       "meetingDate": "Termin-Bezug",
-      "mentionHint": "@Benutzername für Erwähnungen verwenden.",
+      "mentionHint": "@Name eingeben um Nutzer oder Gruppe zu erwähnen.",
       "postButton": "Kommentar senden",
       "saving": "Wird gesendet…",
       "screenshotDesc": "Screenshot aus Kommentar",
@@ -127,9 +127,18 @@
         "colorPlaceholder": "Farbiger Text",
         "attachDoc": "Dokument verlinken",
         "uploading": "Wird hochgeladen…",
-        "pasteHint": "Tipp: Screenshot mit Strg+V / ⌘V direkt in den Kommentar einfügen."
-      }
-    }
+        "pasteHint": "Tipp: Screenshot einfügen (Strg+V / ⌘V) · - [ ] @Nutzer Aufgabe erstellt automatisch eine Task",
+        "list": "Aufzählung",
+        "listPlaceholder": "Listenpunkt",
+        "task": "Aufgaben-Checkbox einfügen",
+        "taskPlaceholder": "Aufgabenbeschreibung"
+      },
+      "reply": "Antworten",
+      "replyingToPrefix": "Antwort auf",
+      "tasksCreated_one": "{{count}} Aufgabe aus Kommentar erstellt",
+      "tasksCreated_other": "{{count}} Aufgaben aus Kommentar erstellt"
+    },
+    "notFound": "Asset nicht gefunden"
   },
   "yn": {
     "yes": "Ja",
