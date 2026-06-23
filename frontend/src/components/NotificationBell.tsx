@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, AlertTriangle, Clock, ShieldAlert, X, Trash2, ChevronRight, AtSign, BellOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { format } from 'date-fns';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -19,6 +20,7 @@ interface Notification {
 }
 
 export const NotificationBell: React.FC = () => {
+  const { t } = useTranslation('notifications');
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<{ overdue: Notification[], upcoming: Notification[], neverAssessed: Notification[], mentions: Notification[], total: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -85,7 +87,7 @@ export const NotificationBell: React.FC = () => {
         <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/50">
             <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              Benachrichtigungen
+              {t('title')}
               {data.total > 0 && <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[10px] px-1.5 py-0.5 rounded-full">{data.total}</span>}
             </h3>
             <div className="flex items-center gap-2">
@@ -93,7 +95,7 @@ export const NotificationBell: React.FC = () => {
                 <button
                   onClick={() => push.subscribed ? push.unsubscribe() : push.requestPermission()}
                   disabled={push.loading}
-                  title={push.subscribed ? 'Browser-Push deaktivieren' : 'Browser-Push aktivieren'}
+                  title={push.subscribed ? t('pushDisable') : t('pushEnable')}
                   className={`p-1.5 rounded-lg transition-colors text-xs flex items-center gap-1 ${push.subscribed ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
                 >
                   {push.subscribed ? <Bell size={13} /> : <BellOff size={13} />}
@@ -107,7 +109,7 @@ export const NotificationBell: React.FC = () => {
             {data.total === 0 ? (
               <div className="p-10 text-center text-gray-400 dark:text-slate-600">
                 <CheckCircle className="mx-auto mb-3 opacity-20" size={40} />
-                <p className="text-sm italic">Alles erledigt! Keine offenen Aufgaben.</p>
+                <p className="text-sm italic">{t('empty')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50 dark:divide-slate-800">
@@ -138,7 +140,7 @@ export const NotificationBell: React.FC = () => {
                           </button>
                         )}
                       </div>
-                      <p className="text-xs text-red-600 dark:text-red-400 font-medium">Review überfällig seit {n.due_date ? format(new Date(n.due_date), 'dd.MM.yyyy') : '?'}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400 font-medium">{t('overdueSince', { date: n.due_date ? format(new Date(n.due_date), 'dd.MM.yyyy') : '?' })}</p>
                     </div>
                   </Link>
                 ))}
@@ -156,7 +158,7 @@ export const NotificationBell: React.FC = () => {
                           </button>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-slate-400">Nächstes Review: {n.due_date ? format(new Date(n.due_date), 'dd.MM.yyyy') : '?'}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">{t('nextReview', { date: n.due_date ? format(new Date(n.due_date), 'dd.MM.yyyy') : '?' })}</p>
                     </div>
                   </Link>
                 ))}
@@ -167,7 +169,7 @@ export const NotificationBell: React.FC = () => {
                     <div className="mt-1 p-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg shrink-0"><ShieldAlert size={14} /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{n.asset_name}</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 italic">Noch nie bewertet</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 italic">{t('neverAssessed')}</p>
                     </div>
                   </Link>
                 ))}
@@ -177,7 +179,7 @@ export const NotificationBell: React.FC = () => {
 
           {data.total > 0 && (
             <Link to="/tasks" onClick={() => setOpen(false)} className="block py-3 text-center text-xs font-bold text-blue-600 dark:text-blue-400 bg-gray-50/50 dark:bg-slate-800/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-t dark:border-slate-800 transition-colors">
-              Alle Aufgaben anzeigen <ChevronRight size={10} className="inline ml-1" />
+              {t('viewAll')} <ChevronRight size={10} className="inline ml-1" />
             </Link>
           )}
         </div>

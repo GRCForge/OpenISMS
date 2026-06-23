@@ -65,5 +65,18 @@
   "toast": {
     "loadError": "Fehler beim Laden des Katalogs",
     "saveError": "Fehler beim Speichern"
+  },
+  "categories": {
+    "riskPolicies": "Risikoanalyse & Sicherheitsrichtlinien",
+    "incidentResponse": "Vorfallbewältigung",
+    "businessContinuity": "Business Continuity",
+    "supplychainSecurity": "Lieferkettensicherheit",
+    "acquisitionSecurity": "Sicherheit im Erwerb",
+    "measureEffectiveness": "Wirksamkeit von Maßnahmen",
+    "cyberHygiene": "Cyberhygiene & Schulungen",
+    "cryptography": "Kryptografie",
+    "accessControl": "Personalsicherheit & Zugangssteuerung",
+    "mfa": "Multi-Faktor-Authentifizierung",
+    "reportingObligations": "Meldepflichten"
   }
 }

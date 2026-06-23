@@ -301,7 +301,7 @@ export const Vendors: React.FC = () => {
                     <Building2 size={24} className={`fallback-icon ${v.website ? 'hidden' : ''}`} />
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <Badge value={v.risk_level || 'medium'} label={v.risk_level?.toUpperCase() || 'MODERAT'} />
+                    <Badge value={v.risk_level || 'medium'} label={v.risk_level?.toUpperCase() || t('common:severity.medium').toUpperCase()} />
                     {v.data_processor && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">{t('vendors:card.dataProcessor')}</span>}
                   </div>
                 </div>
