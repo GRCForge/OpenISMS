@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Search, Server, ShieldAlert, CheckSquare, FileText, X } from 'lucide-react';
 import api from '../lib/api';
 import { useCommandPalette } from '../contexts/CommandPaletteContext';
@@ -13,13 +14,14 @@ interface CmdResult {
 }
 
 const TYPE_CONFIG = {
-  asset:  { icon: Server,      label: 'Asset',    color: 'text-blue-500'   },
-  risk:   { icon: ShieldAlert, label: 'Risiko',   color: 'text-red-500'    },
-  task:   { icon: CheckSquare, label: 'Aufgabe',  color: 'text-green-500'  },
-  policy: { icon: FileText,    label: 'Dokument', color: 'text-purple-500' },
+  asset:  { icon: Server,      color: 'text-blue-500'   },
+  risk:   { icon: ShieldAlert, color: 'text-red-500'    },
+  task:   { icon: CheckSquare, color: 'text-green-500'  },
+  policy: { icon: FileText,    color: 'text-purple-500' },
 };
 
 export const CommandPalette: React.FC = () => {
+  const { t } = useTranslation('common');
   const { open, closePalette } = useCommandPalette();
   const [query,     setQuery]     = useState('');
   const [results,   setResults]   = useState<CmdResult[]>([]);
@@ -126,7 +128,7 @@ export const CommandPalette: React.FC = () => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Assets, Risiken, Aufgaben, Dokumente…"
+            placeholder={t('cmdPalette.searchPlaceholder')}
             className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 outline-none"
           />
           {query ? (
@@ -143,15 +145,15 @@ export const CommandPalette: React.FC = () => {
         {/* Results list */}
         <div ref={listRef} className="max-h-[320px] overflow-y-auto">
           {loading && (
-            <p className="px-4 py-10 text-center text-sm text-gray-400 dark:text-slate-500">Lade…</p>
+            <p className="px-4 py-10 text-center text-sm text-gray-400 dark:text-slate-500">{t('cmdPalette.loading')}</p>
           )}
           {!loading && results.length === 0 && (
             <p className="px-4 py-10 text-center text-sm text-gray-400 dark:text-slate-500">
-              {query ? `Keine Ergebnisse für „${query}"` : 'Keine Einträge vorhanden'}
+              {query ? t('cmdPalette.noResults', { query }) : t('cmdPalette.noItems')}
             </p>
           )}
           {!loading && results.map((r, i) => {
-            const { icon: Icon, label, color } = TYPE_CONFIG[r.type];
+            const { icon: Icon, color } = TYPE_CONFIG[r.type];
             return (
               <button
                 key={`${r.type}-${r.id}`}
@@ -172,7 +174,7 @@ export const CommandPalette: React.FC = () => {
                   )}
                 </div>
                 <span className="text-[10px] text-gray-300 dark:text-slate-600 shrink-0 font-medium uppercase tracking-wider">
-                  {label}
+                  {t(`cmdPalette.types.${r.type}`)}
                 </span>
               </button>
             );
@@ -182,16 +184,16 @@ export const CommandPalette: React.FC = () => {
         {/* Footer hints */}
         <div className="px-4 py-2.5 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 flex items-center gap-4 text-[11px] text-gray-400 dark:text-slate-500">
           <span className="flex items-center gap-1">
-            <kbd className="font-mono border border-gray-200 dark:border-slate-700 px-1 py-0.5 rounded bg-white dark:bg-slate-700 text-gray-500 dark:text-slate-400">↑↓</kbd>
-            navigieren
+            <kbd className="font-mono border border-gray-200 dark:border-slate-700 px-1 py-0.5 rounded bg-white dark:bg-slate-700 text-gray-500 dark:text-slate-400">⇕</kbd>
+            {t('cmdPalette.navigate')}
           </span>
           <span className="flex items-center gap-1">
             <kbd className="font-mono border border-gray-200 dark:border-slate-700 px-1 py-0.5 rounded bg-white dark:bg-slate-700 text-gray-500 dark:text-slate-400">↵</kbd>
-            öffnen
+            {t('cmdPalette.open')}
           </span>
           <span className="flex items-center gap-1">
             <kbd className="font-mono border border-gray-200 dark:border-slate-700 px-1 py-0.5 rounded bg-white dark:bg-slate-700 text-gray-500 dark:text-slate-400">ESC</kbd>
-            schließen
+            {t('cmdPalette.close')}
           </span>
         </div>
       </div>
