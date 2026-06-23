@@ -4,7 +4,7 @@ import {
   Shield, LayoutDashboard, Server, ClipboardCheck, Bell,
   Users, LogOut, Menu, ChevronRight, CheckCircle,
   Upload, AlertTriangle, Building2, Sun, Moon, FileText, Network, Settings, ShieldAlert, ShieldCheck, AlertOctagon, BarChart3, BookOpen, CheckSquare, Fingerprint, Trash2, LayoutList, Radar, Copy, Check, KeyRound, Eye, EyeOff, Search, UserCheck, Scale,
-  Zap, Bot, LifeBuoy, Target, Car
+  Zap, Bot, LifeBuoy, Target, Car, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -113,6 +113,16 @@ export const Layout: React.FC = () => {
 
   useKeyShortcut('k', openPalette, { ctrl: true });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem('sidebar-collapsed') === 'true'; } catch { return false; }
+  });
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('sidebar-collapsed', String(next)); } catch {}
+      return next;
+    });
+  };
   const [overdueCount, setOverdueCount] = useState(0);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [version, setVersion] = useState('');
@@ -303,19 +313,20 @@ export const Layout: React.FC = () => {
         <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-900 border-r border-gray-200/60 dark:border-slate-800/60 text-slate-900 dark:text-white flex flex-col transform transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        {/* Logo & Theme Toggle */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200/60 dark:border-slate-700/60">
-          <div className="flex items-center gap-3">
-            <IsmsLogo size={36} className="rounded-xl shrink-0" />
-            <div>
-              <p className="font-bold text-sm leading-none text-slate-900 dark:text-white">OpenISMS</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Security Management</p>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-30 ${sidebarCollapsed ? 'w-16' : 'w-64'} bg-white dark:bg-slate-900 border-r border-gray-200/60 dark:border-slate-800/60 text-slate-900 dark:text-white flex flex-col transform transition-all duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        {/* Logo */}
+        <div className={`flex items-center ${sidebarCollapsed ? 'justify-center px-3' : 'justify-start px-5'} py-4 border-b border-gray-200/60 dark:border-slate-700/60`}>
+          {sidebarCollapsed ? (
+            <IsmsLogo size={32} className="rounded-xl shrink-0" />
+          ) : (
+            <div className="flex items-center gap-3">
+              <IsmsLogo size={36} className="rounded-xl shrink-0" />
+              <div>
+                <p className="font-bold text-sm leading-none text-slate-900 dark:text-white">OpenISMS</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Security Management</p>
+              </div>
             </div>
-          </div>
-          <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}>
-            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-          </button>
+          )}
         </div>
 
         {/* Nav */}
@@ -333,9 +344,11 @@ export const Layout: React.FC = () => {
             if (!visibleItems.length) return null;
             return (
               <div key={group.groupKey}>
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1">
-                  {t(`nav:groups.${group.groupKey}`)}
-                </p>
+                {!sidebarCollapsed && (
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1">
+                    {t(`nav:groups.${group.groupKey}`)}
+                  </p>
+                )}
                 <div className="space-y-0.5">
                   {visibleItems.map(item => {
                     const active = isActive(item.path);
@@ -347,22 +360,29 @@ export const Layout: React.FC = () => {
                     const IconComponent = isEmployee ? BookOpen : item.icon;
                     return (
                       <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
-                        title={hint}
-                        className={`flex items-center gap-2.5 px-3 py-1 rounded-lg text-sm transition-all ${
+                        title={sidebarCollapsed ? label : hint}
+                        className={`relative flex items-center ${sidebarCollapsed ? 'justify-center px-2 py-2' : 'gap-2.5 px-3 py-1'} rounded-lg text-sm transition-all ${
                           active
                             ? 'bg-blue-600 text-white shadow-xs'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}>
                         <IconComponent size={15} className="shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <span className="block truncate leading-tight font-medium">{label}</span>
-                        </div>
-                        {showBadge && (
-                          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
-                            {overdueCount}
-                          </span>
+                        {!sidebarCollapsed && (
+                          <>
+                            <div className="flex-1 min-w-0">
+                              <span className="block truncate leading-tight font-medium">{label}</span>
+                            </div>
+                            {showBadge && (
+                              <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
+                                {overdueCount}
+                              </span>
+                            )}
+                            {active && !showBadge && <ChevronRight size={12} className="shrink-0 opacity-70" />}
+                          </>
                         )}
-                        {active && !showBadge && <ChevronRight size={12} className="shrink-0 opacity-70" />}
+                        {sidebarCollapsed && showBadge && (
+                          <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full" />
+                        )}
                       </Link>
                     );
                   })}
@@ -373,8 +393,8 @@ export const Layout: React.FC = () => {
         </nav>
 
         {/* User section */}
-        <div className="border-t border-gray-200/60 dark:border-slate-700/60 p-4">
-          {overdueCount > 0 && (
+        <div className={`border-t border-gray-200/60 dark:border-slate-700/60 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+          {!sidebarCollapsed && overdueCount > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 mb-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-pulse">
               <AlertTriangle size={13} className="text-red-400 shrink-0" />
               <p className="text-[10px] font-bold text-red-300 uppercase tracking-tight">
@@ -383,37 +403,58 @@ export const Layout: React.FC = () => {
             </div>
           )}
 
-          <button
-            onClick={openProfile}
-            className="w-full group mb-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left border border-transparent hover:border-gray-200/60 dark:hover:border-white/10"
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative shrink-0">
+          {sidebarCollapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={openProfile} title={user?.name}
+                className="group relative p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
                 {user?.avatar_url
-                  ? <img src={user.avatar_url} alt={user.name} className="w-10 h-10 rounded-xl object-cover shadow-lg group-hover:scale-105 transition-transform" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style'); }} />
-                  : null}
-                <div className={`w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform ${user?.avatar_url ? 'hidden' : ''}`}>
-                  {user?.name?.charAt(0).toUpperCase()}
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full shadow-xs" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold leading-none truncate text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{user?.name}</p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">
-                  {t(`common:roles.${user?.role ?? 'viewer'}`)}
-                </p>
-              </div>
+                  ? <img src={user.avatar_url} alt={user.name} className="w-8 h-8 rounded-xl object-cover shadow-lg group-hover:scale-105 transition-transform" />
+                  : <div className="w-8 h-8 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-lg group-hover:scale-105 transition-transform">{user?.name?.charAt(0).toUpperCase()}</div>}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full" />
+              </button>
+              {overdueCount > 0 && (
+                <div title={t('nav:overdueReviews', { count: overdueCount })} className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              )}
+              <button onClick={logout} title={t('common:actions.logout')}
+                className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all">
+                <LogOut size={14} />
+              </button>
             </div>
-          </button>
+          ) : (
+            <>
+              <button
+                onClick={openProfile}
+                className="w-full group mb-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left border border-transparent hover:border-gray-200/60 dark:hover:border-white/10"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative shrink-0">
+                    {user?.avatar_url
+                      ? <img src={user.avatar_url} alt={user.name} className="w-10 h-10 rounded-xl object-cover shadow-lg group-hover:scale-105 transition-transform" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style'); }} />
+                      : null}
+                    <div className={`w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform ${user?.avatar_url ? 'hidden' : ''}`}>
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full shadow-xs" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold leading-none truncate text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{user?.name}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">
+                      {t(`common:roles.${user?.role ?? 'viewer'}`)}
+                    </p>
+                  </div>
+                </div>
+              </button>
 
-          <div className="flex items-center gap-2">
-            <button onClick={logout}
-              className="flex items-center gap-3 flex-1 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all uppercase tracking-widest border border-transparent hover:border-red-500/20">
-              <LogOut size={14} />{t('common:actions.logout')}
-            </button>
-            <LanguageSwitcher />
-          </div>
-          {version && <p className="text-center text-[10px] text-slate-500 dark:text-slate-650 mt-2 font-mono">OpenISMS v{version} · © 2026 Maximilian Herz</p>}
+              <div className="flex items-center gap-2">
+                <button onClick={logout}
+                  className="flex items-center gap-3 flex-1 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all uppercase tracking-widest border border-transparent hover:border-red-500/20">
+                  <LogOut size={14} />{t('common:actions.logout')}
+                </button>
+                <LanguageSwitcher />
+              </div>
+              {version && <p className="text-center text-[10px] text-slate-500 dark:text-slate-650 mt-2 font-mono">OpenISMS v{version} · © 2026 Maximilian Herz</p>}
+            </>
+          )}
         </div>
       </aside>
 
@@ -698,7 +739,10 @@ export const Layout: React.FC = () => {
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 py-3 flex items-center gap-3 shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"><Menu size={20} /></button>
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"><Menu size={20} /></button>
+          <button onClick={toggleSidebarCollapsed} className="hidden lg:flex p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title={sidebarCollapsed ? t('nav:sidebar.expand') : t('nav:sidebar.collapse')}>
+            {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
           <IsmsLogo size={24} className="rounded-md lg:hidden" />
           <span className="lg:hidden font-semibold text-sm dark:text-white">OpenISMS</span>
           <button
@@ -709,7 +753,10 @@ export const Layout: React.FC = () => {
             <span className="text-xs">{t('common:filters.searchPlaceholder')}</span>
             <kbd className="font-mono text-[10px] px-1 py-0.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded ml-1">⌘K</kbd>
           </button>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}>
+              {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
             <NotificationBell />
           </div>
         </header>

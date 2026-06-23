@@ -137,6 +137,10 @@
     "dark": "Dunkler Modus aktivieren",
     "light": "Lichtmodus aktivieren"
   },
+  "sidebar": {
+    "collapse": "Seitenleiste einklappen",
+    "expand": "Seitenleiste ausklappen"
+  },
   "version": "OpenISMS v{{version}} · ©️ 2026 Maximilian Herz",
   "overdueReviews_one": "{{count}} überfällige Überprüfung",
   "overdueReviews_other": "{{count}} überfällige Bewertungen"
