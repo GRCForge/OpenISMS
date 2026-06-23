@@ -22,7 +22,8 @@
     "settings": "General",
     "rbac": "Roles & Permissions",
     "api": "API Documentation",
-    "backup": "Backup & Restore"
+    "backup": "Backup & Restore",
+    "llm": "AI / LLM"
   },
   "smtp": {
     "title": "Email / SMTP Configuration",
@@ -245,6 +246,30 @@
     "edit_basics": "Edit Base Data",
     "edit_compliance": "Edit Compliance",
     "edit_security": "Edit Security"
+  },
+  "llm": {
+    "title": "AI / LLM Configuration",
+    "description": "Configure an AI language model for automated vendor document triage (AVV, TOM, SOC2). API keys are stored encrypted.",
+    "provider_label": "Active Provider",
+    "provider_anthropic": "Anthropic (Claude)",
+    "provider_openai": "OpenAI / Compatible API",
+    "provider_gemini": "Google Gemini",
+    "provider_ollama": "Ollama (Local)",
+    "api_key": "API Key",
+    "api_key_set": "(set — leave blank to keep)",
+    "api_key_placeholder": "Enter new API key…",
+    "model": "Model",
+    "base_url": "Base URL",
+    "base_url_placeholder": "e.g. http://localhost:11434",
+    "base_url_help": "For Ollama or OpenAI-compatible endpoints (e.g. LM Studio, vLLM).",
+    "test": "Test Connection",
+    "testing": "Testing…",
+    "test_ok": "Connection successful — {{provider}} / {{model}} responded.",
+    "test_failed": "Connection failed: {{error}}",
+    "saved": "Configuration saved.",
+    "save_failed": "Save failed.",
+    "saving": "Saving…",
+    "no_key_warning": "No API key configured. Vendor triage will not work until a key is set."
   },
   "modules_config": {
     "dsgvo": {

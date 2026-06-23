@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Building2, Plus, Pencil, Trash2, Globe, ShieldCheck, ExternalLink, ShieldAlert, User, Clock, CheckCircle, Paperclip, Download } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Building2, Plus, Pencil, Trash2, Globe, ShieldCheck, ExternalLink, ShieldAlert, User, Clock, CheckCircle, Paperclip, Download, Bot, ChevronDown, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
@@ -79,6 +79,16 @@ export const Vendors: React.FC = () => {
 
   const [docsModalOpen, setDocsModalOpen] = useState(false);
   const [selectedVendorForDocs, setSelectedVendorForDocs] = useState<Vendor | null>(null);
+
+  const [triageModalOpen, setTriageModalOpen] = useState(false);
+  const [triageVendor, setTriageVendor] = useState<Vendor | null>(null);
+  const [triageDocs, setTriageDocs] = useState<any[]>([]);
+  const [triageRuns, setTriageRuns] = useState<any[]>([]);
+  const [triageForm, setTriageForm] = useState({ document_id: '', doc_type: 'avv' });
+  const [triageStarting, setTriageStarting] = useState(false);
+  const [expandedRun, setExpandedRun] = useState<number | null>(null);
+  const [runDetails, setRunDetails] = useState<Record<number, any>>({});
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [vendorDocs, setVendorDocs] = useState<any[]>([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -134,6 +144,74 @@ export const Vendors: React.FC = () => {
       toast.error(err.response?.data?.error || t('vendors:toast.docDeleteError'));
     }
   };
+
+  const loadTriageRuns = (vendorId: number) =>
+    api.get(`/vendors/${vendorId}/triage`).then(r => setTriageRuns(r.data)).catch(() => setTriageRuns([]));
+
+  const openTriage = (v: Vendor) => {
+    setTriageVendor(v);
+    setTriageRuns([]);
+    setExpandedRun(null);
+    setRunDetails({});
+    setTriageForm({ document_id: '', doc_type: 'avv' });
+    setTriageModalOpen(true);
+    api.get(`/vendors/${v.id}/documents`).then(r => {
+      const docs = r.data.filter((d: any) => ['pdf', 'docx', 'txt'].some(ext => d.original_name?.toLowerCase().endsWith(ext)) || ['application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','text/plain'].includes(d.mimetype));
+      setTriageDocs(docs);
+      if (docs.length > 0) setTriageForm(f => ({ ...f, document_id: String(docs[0].id) }));
+    }).catch(() => setTriageDocs([]));
+    loadTriageRuns(v.id);
+  };
+
+  const startTriage = async () => {
+    if (!triageVendor || !triageForm.document_id) return;
+    setTriageStarting(true);
+    try {
+      await api.post(`/vendors/${triageVendor.id}/triage`, {
+        document_id: parseInt(triageForm.document_id),
+        doc_type: triageForm.doc_type,
+      });
+      toast.success(t('vendors:triage.triage_started'));
+      loadTriageRuns(triageVendor.id);
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(() => {
+        if (triageVendor) loadTriageRuns(triageVendor.id);
+      }, 4000);
+    } catch (err: any) {
+      const msg = err.response?.data?.error || '';
+      if (msg.toLowerCase().includes('not configured') || msg.toLowerCase().includes('api key')) {
+        toast.error(t('vendors:triage.llm_not_configured'));
+      } else {
+        toast.error(t('vendors:triage.triage_error'));
+      }
+    } finally { setTriageStarting(false); }
+  };
+
+  const loadRunDetails = async (runId: number) => {
+    if (runDetails[runId]) { setExpandedRun(expandedRun === runId ? null : runId); return; }
+    try {
+      const r = await api.get(`/vendors/${triageVendor?.id}/triage/${runId}`);
+      setRunDetails(d => ({ ...d, [runId]: r.data }));
+      setExpandedRun(runId);
+    } catch { /* ignore */ }
+  };
+
+  const deleteTriage = async (runId: number) => {
+    if (!triageVendor || !confirm(t('vendors:triage.delete_confirm'))) return;
+    try {
+      await api.delete(`/vendors/${triageVendor.id}/triage/${runId}`);
+      setTriageRuns(rs => rs.filter(r => r.id !== runId));
+      setRunDetails(d => { const nd = { ...d }; delete nd[runId]; return nd; });
+      if (expandedRun === runId) setExpandedRun(null);
+    } catch { /* ignore */ }
+  };
+
+  useEffect(() => {
+    const hasRunning = triageRuns.some(r => r.status === 'running' || r.status === 'pending');
+    if (!hasRunning && pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  }, [triageRuns]);
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const load = () => api.get('/vendors').then(r => setVendors(r.data)).catch(() => setVendors([])).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
@@ -339,6 +417,9 @@ export const Vendors: React.FC = () => {
                     <button onClick={() => openDocs(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title={t('vendors:card.docsTitle')}>
                       <Paperclip size={18} />
                     </button>
+                    <button onClick={() => openTriage(v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-purple-600 transition-colors" title={t('vendors:triage.title', { name: v.name })}>
+                      <Bot size={18} />
+                    </button>
                     {canWrite && (
                       <button onClick={() => { setEditVendor(v); setForm({ name: v.name, type: v.type, website: v.website || '', phone: v.phone || '', address: v.address || '', notes: v.notes || '' }); setModalOpen(true); }} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors" title={t('vendors:card.editTitle')}>
                         <Pencil size={18} />
@@ -476,6 +557,155 @@ export const Vendors: React.FC = () => {
             <Button type="submit" disabled={assessing || !canWrite} className="flex-1 justify-center">{assessing ? t('vendors:assess.saving') : t('vendors:assess.save')}</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* AI Triage Modal */}
+      <Modal open={triageModalOpen} onClose={() => { setTriageModalOpen(false); if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } }} title={t('vendors:triage.title', { name: triageVendor?.name || '' })} size="xl">
+        <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+          <p className="text-sm text-gray-500 dark:text-slate-400">{t('vendors:triage.description')}</p>
+
+          {/* Start Triage Form */}
+          {canWrite && (
+            <div className="p-4 rounded-xl border dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 space-y-4">
+              {triageDocs.length === 0 ? (
+                <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2"><AlertTriangle size={15} />{t('vendors:triage.no_docs')}</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                      label={t('vendors:triage.select_doc')}
+                      value={triageForm.document_id}
+                      onChange={e => setTriageForm(f => ({ ...f, document_id: e.target.value }))}
+                      options={triageDocs.map((d: any) => ({ value: String(d.id), label: d.original_name }))}
+                    />
+                    <Select
+                      label={t('vendors:triage.doc_type_label')}
+                      value={triageForm.doc_type}
+                      onChange={e => setTriageForm(f => ({ ...f, doc_type: e.target.value }))}
+                      options={[
+                        { value: 'avv', label: t('vendors:triage.doc_type_avv') },
+                        { value: 'tom', label: t('vendors:triage.doc_type_tom') },
+                        { value: 'soc2', label: t('vendors:triage.doc_type_soc2') },
+                        { value: 'other', label: t('vendors:triage.doc_type_other') },
+                      ]}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={startTriage} disabled={triageStarting || !triageForm.document_id}>
+                      {triageStarting ? <><Loader2 size={14} className="animate-spin mr-1" />{t('vendors:triage.running')}</> : <><Bot size={14} className="mr-1" />{t('vendors:triage.run_btn')}</>}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Triage Runs */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold dark:text-white">{t('vendors:triage.past_runs')}</h3>
+            {triageRuns.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 border border-dashed dark:border-slate-800 rounded-xl">{t('vendors:triage.no_runs')}</p>
+            ) : (
+              <div className="space-y-2">
+                {triageRuns.map(run => {
+                  const isExpanded = expandedRun === run.id;
+                  const details = runDetails[run.id];
+                  const severityColors: Record<string, string> = {
+                    critical: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                    warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                    gap: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+                  };
+                  const riskColors: Record<string, string> = {
+                    critical: 'text-red-600 dark:text-red-400',
+                    high: 'text-orange-600 dark:text-orange-400',
+                    medium: 'text-amber-600 dark:text-amber-400',
+                    low: 'text-green-600 dark:text-green-400',
+                  };
+                  return (
+                    <div key={run.id} className="border dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
+                      <div className="p-3 flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              run.status === 'done' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                              run.status === 'running' || run.status === 'pending' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                              'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                            }`}>
+                              {run.status === 'running' || run.status === 'pending' ? <span className="flex items-center gap-1"><Loader2 size={10} className="animate-spin" />{t(`vendors:triage.status_${run.status}`)}</span> : t(`vendors:triage.status_${run.status}`)}
+                            </span>
+                            {run.risk_level && <span className={`text-xs font-semibold ${riskColors[run.risk_level] || ''}`}>{t(`vendors:riskLevels.${run.risk_level}`)}</span>}
+                            <span className="text-xs text-gray-500 dark:text-slate-400">{run.document?.original_name}</span>
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-0.5">
+                            {format(new Date(run.created_at), 'Pp', { locale: dateFnsLocale })}
+                            {run.llm_provider && ` · ${run.llm_provider} / ${run.llm_model}`}
+                            {run.triggered_by && ` · ${t('vendors:triage.triggered_by', { name: run.triggered_by.name })}`}
+                          </p>
+                          {run.status === 'error' && run.error_message && (
+                            <p className="text-xs text-red-500 mt-0.5">{t('vendors:triage.error_message', { message: run.error_message })}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {run.status === 'done' && (
+                            <button onClick={() => loadRunDetails(run.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 transition-colors">
+                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </button>
+                          )}
+                          {user?.role === 'admin' && (
+                            <button onClick={() => deleteTriage(run.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-red-600 transition-colors">
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {isExpanded && details && (
+                        <div className="border-t dark:border-slate-700 p-4 bg-gray-50/50 dark:bg-slate-800/30 space-y-4">
+                          {details.summary && (
+                            <p className="text-sm text-gray-700 dark:text-slate-300 italic">{details.summary}</p>
+                          )}
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('vendors:triage.findings')}</h4>
+                            {!details.findings?.length ? (
+                              <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1"><CheckCircle size={14} />{t('vendors:triage.no_findings')}</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {details.findings.map((f: any) => (
+                                  <div key={f.id} className="rounded-lg border dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+                                    <div className="p-3 flex items-start gap-3">
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${severityColors[f.severity] || ''}`}>
+                                        {t(`vendors:triage.finding_${f.severity}`)}
+                                      </span>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="text-sm font-semibold dark:text-white">{f.finding_ref} — {f.title}</span>
+                                          {f.control_ref && <span className="text-[10px] text-gray-500 dark:text-slate-400">{f.control_ref}</span>}
+                                        </div>
+                                        {f.description && <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">{f.description}</p>}
+                                        {f.quote && (
+                                          <blockquote className="mt-2 pl-3 border-l-2 border-gray-300 dark:border-slate-600 text-xs text-gray-500 dark:text-slate-500 italic">"{f.quote}"</blockquote>
+                                        )}
+                                        {f.remediation && (
+                                          <div className="mt-2 p-2 rounded bg-blue-50 dark:bg-blue-900/20 text-xs text-blue-800 dark:text-blue-300">
+                                            <span className="font-semibold">{t('vendors:triage.remediation_label')}:</span> {f.remediation}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </Modal>
 
       {/* Vendor Documents Modal */}
