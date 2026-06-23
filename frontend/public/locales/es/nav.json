@@ -132,12 +132,16 @@
       "hint": "Settings"
     }
   },
+  "overdueReviews_one": "{{count}} overdue review",
+  "overdueReviews_other": "{{count}} overdue reviews",
   "search": "Search…",
   "theme": {
     "dark": "Enable dark mode",
     "light": "Enable light mode"
   },
-  "version": "OpenISMS v{{version}} · © 2026 Maximilian Herz",
-  "overdueReviews_one": "{{count}} overdue review",
-  "overdueReviews_other": "{{count}} overdue reviews"
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
+  "version": "OpenISMS v{{version}} · © 2026 Maximilian Herz"
 }

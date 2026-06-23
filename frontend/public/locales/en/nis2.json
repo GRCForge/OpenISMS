@@ -65,5 +65,18 @@
   "toast": {
     "loadError": "Error loading catalogue",
     "saveError": "Error saving"
+  },
+  "categories": {
+    "riskPolicies": "Risk Analysis & Security Policies",
+    "incidentResponse": "Incident Response",
+    "businessContinuity": "Business Continuity",
+    "supplychainSecurity": "Supply Chain Security",
+    "acquisitionSecurity": "Security in Acquisition",
+    "measureEffectiveness": "Effectiveness of Measures",
+    "cyberHygiene": "Cyberhygiene & Training",
+    "cryptography": "Cryptography",
+    "accessControl": "HR Security & Access Control",
+    "mfa": "Multi-Factor Authentication",
+    "reportingObligations": "Reporting Obligations"
   }
 }

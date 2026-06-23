@@ -1,5 +1,7 @@
 {
   "title": "Aufgaben & Messungen",
+  "subtitle_one": "{{count}} Aufgabensumme",
+  "subtitle_other": "{{count}} Aufgaben insgesamt",
   "new": "Neue Aufgabe",
   "searchPlaceholder": "Aufgaben suchen...",
   "selectTask": "Auswählen",
@@ -61,24 +63,24 @@
     "saving": "Speichern..."
   },
   "bulk": {
+    "selected_one": "{{count}} Aufgabe ausgewählt",
+    "selected_other": "{{count}} Aufgaben ausgewählt",
     "markDone": "Als erledigt markieren",
     "delete": "Löschen",
-    "deselect": "Abwählen",
-    "selected_one": "{{count}} Aufgabe ausgewählt",
-    "selected_other": "{{count}} Aufgaben ausgewählt"
+    "deselect": "Abwählen"
   },
   "orphan": {
     "check": "Bereinigen",
     "checking": "Überprüfen...",
-    "noneFound": "Keine verwaisten Aufgaben gefunden.",
-    "checkError": "Fehlerüberprüfung",
-    "purgeError": "Fehler beim Löschen",
     "purge_one": "{{count}} verwaiste Aufgabe löschen",
     "purge_other": "{{count}} verwaiste Aufgaben löschen",
+    "noneFound": "Keine verwaisten Aufgaben gefunden.",
     "confirmPurge_one": "{{count}} verwaiste Aufgabe löschen? Diese Aufgabe weist auf ein Objekt hin, das nicht mehr existiert.",
     "confirmPurge_other": "{{count}} verwaiste Aufgaben löschen? Diese Aufgaben verweisen auf Objekte, die nicht mehr existieren.",
     "purgedSuccess_one": "{{count}} verwaiste Aufgabe gelöscht.",
-    "purgedSuccess_other": "{{count}} verwaiste Aufgaben gelöscht."
+    "purgedSuccess_other": "{{count}} verwaiste Aufgaben gelöscht.",
+    "checkError": "Fehlerüberprüfung",
+    "purgeError": "Fehler beim Löschen"
   },
   "empty": {
     "title": "Keine Aufgaben gefunden",
@@ -88,15 +90,13 @@
   "selectAll": "Alle {{count}} auswählen",
   "deselectAll": "Alle abwählen",
   "deleteConfirm": "Aufgabe wirklich löschen?",
-  "saveError": "Fehler beim Speichern",
-  "deleteFailed": "Löschen fehlgeschlagen",
-  "updateError": "Fehler beim Aktualisieren",
-  "subtitle_one": "{{count}} Aufgabensumme",
-  "subtitle_other": "{{count}} Aufgaben insgesamt",
   "deleteSelected_one": "{{count}} Aufgabe wirklich löschen?",
   "deleteSelected_other": "{{count}} Aufgaben wirklich löschen?",
   "markDoneSuccess_one": "{{count}} Aufgabe als erledigt markiert",
   "markDoneSuccess_other": "{{count}} Aufgaben als erledigt markiert",
   "deleteSuccess_one": "{{count}} Aufgabe gelöscht",
-  "deleteSuccess_other": "{{count}} Aufgaben gelöscht"
+  "deleteSuccess_other": "{{count}} Aufgaben gelöscht",
+  "saveError": "Fehler beim Speichern",
+  "deleteFailed": "Löschen fehlgeschlagen",
+  "updateError": "Fehler beim Aktualisieren"
 }

@@ -89,7 +89,7 @@ interface UserTraining {
 }
 
 export const Compliance: React.FC = () => {
-  const { t } = useTranslation('compliance');
+  const { t } = useTranslation(['compliance', 'common']);
   const { isEnabled } = useModules();
   const { user } = useAuth();
   const toast = useToast();
@@ -1671,15 +1671,15 @@ export const Compliance: React.FC = () => {
                         target="_blank" 
                         rel="noreferrer"
                         className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-xs"
-                        title="Herunterladen"
+                        title={t('common:actions.download')}
                       >
                         <Download size={16} />
                       </a>
                       {canWrite && (
-                        <button 
+                        <button
                           onClick={() => handleDocDelete(doc.id)}
                           className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors shadow-xs"
-                          title="Löschen"
+                          title={t('common:actions.delete')}
                         >
                           <Trash2 size={16} />
                         </button>
