@@ -66,9 +66,7 @@
       "it-staff": "IT Staff",
       "dpo": "Data Protection Officer",
       "owner": "Asset Owner (Responsible)",
-      "viewer": "Viewer (Read-only)",
-      "management": "Management",
-      "employee": "Employee"
+      "viewer": "Viewer (Read-only)"
     },
     "initialPassword": "Initial Password *",
     "accountStatus": "Account Status",
