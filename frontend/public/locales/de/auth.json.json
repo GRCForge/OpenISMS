@@ -1,0 +1,26 @@
+{
+  "title": "OpenISMS",
+  "subtitle": "Informationssicherheitssystem",
+  "email": "E-Mail",
+  "password": "Passwort",
+  "login": "Anmelden",
+  "loggingIn": "Anmelden...",
+  "invalidCredentials": "Ungültige Anmeldedaten",
+  "ssoButton": "Single Sign-On",
+  "ssoError": "Single Sign-on fehlgeschlagen.",
+  "ssoSessionError": "SSO-Sitzung ging während der Umleitung verloren. Stellen Sie sicher, dass APP_URL genau mit der verwendeten Domäne übereinstimmt und dass Cookies erlaubt sind.",
+  "passkeyLogin": "Mit Passwort anmelden",
+  "passkeyLoginFailed": "Passwort-Authentifizierung fehlgeschlagen",
+  "orWithPassword": "oder mit Passwort",
+  "totp": {
+    "title": "Zwei-Faktor-Authentifizierung",
+    "instruction": "Geben Sie den 6-stelligen Code aus Ihrer Authentifizierungs-App ein.",
+    "label": "TOTP-Code",
+    "placeholder": "123456",
+    "confirm": "Bestätigen",
+    "confirming": "Überprüfen...",
+    "backToLogin": "← Zurück zum Login",
+    "invalidCode": "Ungültiger Code"
+  },
+  "copyright": "©️ 2026 Maximilian Herz · OpenISMS"
+}
