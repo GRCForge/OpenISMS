@@ -132,6 +132,8 @@
       "hint": "Einstellungen"
     }
   },
+  "overdueReviews_one": "{{count}} überfällige Überprüfung",
+  "overdueReviews_other": "{{count}} überfällige Bewertungen",
   "search": "Suche…",
   "theme": {
     "dark": "Dunkler Modus aktivieren",
@@ -139,9 +141,7 @@
   },
   "sidebar": {
     "collapse": "Seitenleiste einklappen",
-    "expand": "Seitenleiste ausklappen"
+    "expand": "Expand sidebar"
   },
-  "version": "OpenISMS v{{version}} · ©️ 2026 Maximilian Herz",
-  "overdueReviews_one": "{{count}} überfällige Überprüfung",
-  "overdueReviews_other": "{{count}} überfällige Bewertungen"
+  "version": "OpenISMS v{{version}} · ©️ 2026 Maximilian Herz"
 }
