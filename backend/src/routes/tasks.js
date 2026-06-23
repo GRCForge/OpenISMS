@@ -9,7 +9,7 @@ const { Op } = require('sequelize');
 // Maps each related_type to the model and the condition that means "record still exists/active".
 // Used by the orphan-cleanup endpoints.
 const ORPHAN_CHECKS = {
-  asset:          { model: Asset,          where: {} },
+  asset:          { model: Asset,          where: { status: 'active' } },
   risk:           { model: Risk,           where: {} },
   incident:       { model: Incident,       where: { deleted: { [Op.ne]: true } } },
   training:       { model: Training,       where: {} },
@@ -36,6 +36,16 @@ async function notifyGroupMembers(groupId, excludeUserId, actorId, title, conten
   if (inserts.length > 0) await Notification.bulkCreate(inserts);
 }
 
+// Returns the set of asset IDs that are inactive or decommissioned, for task filtering.
+async function getInactiveAssetIds() {
+  const inactiveAssets = await Asset.findAll({
+    where: { status: { [Op.in]: ['inactive', 'decommissioned'] } },
+    attributes: ['id'],
+    raw: true,
+  });
+  return new Set(inactiveAssets.map(a => a.id));
+}
+
 // List tasks with optional filters
 router.get('/', async (req, res) => {
   try {
@@ -55,7 +65,14 @@ router.get('/', async (req, res) => {
       const limitStr = limit.toISOString().slice(0, 10);
       where[Op.or] = [{ due_date: { [Op.lte]: limitStr } }, { due_date: null }];
     }
-    const tasks = await Task.findAll({ where, include: taskInclude, order: [['due_date', 'ASC'], ['priority', 'DESC']] });
+    let tasks = await Task.findAll({ where, include: taskInclude, order: [['due_date', 'ASC'], ['priority', 'DESC']] });
+
+    // Exclude tasks linked to inactive or decommissioned assets
+    const inactiveAssetIds = await getInactiveAssetIds();
+    if (inactiveAssetIds.size > 0) {
+      tasks = tasks.filter(t => !(t.related_type === 'asset' && inactiveAssetIds.has(t.related_id)));
+    }
+
     res.json(tasks);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -70,11 +87,18 @@ router.get('/my', authenticate, async (req, res) => {
     const orConditions = [{ assigned_to_id: req.user.id }];
     if (groupIds.length > 0) orConditions.push({ assigned_to_group_id: { [Op.in]: groupIds } });
 
-    const tasks = await Task.findAll({
+    let tasks = await Task.findAll({
       where: { [Op.or]: orConditions, status: { [Op.notIn]: ['done', 'cancelled'] } },
       include: taskInclude,
       order: [['due_date', 'ASC']],
     });
+
+    // Exclude tasks linked to inactive or decommissioned assets
+    const inactiveAssetIds = await getInactiveAssetIds();
+    if (inactiveAssetIds.size > 0) {
+      tasks = tasks.filter(t => !(t.related_type === 'asset' && inactiveAssetIds.has(t.related_id)));
+    }
+
     res.json(tasks);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -82,11 +106,22 @@ router.get('/my', authenticate, async (req, res) => {
 // Stats
 router.get('/stats', authenticate, async (req, res) => {
   try {
+    // Exclude tasks linked to inactive or decommissioned assets from stats
+    const inactiveAssetIds = await getInactiveAssetIds();
+    // NOT (related_type = 'asset' AND related_id IN (...)) = related_type != 'asset' OR related_id NOT IN (...)
+    const activeAssetFilter = inactiveAssetIds.size > 0 ? {
+      [Op.or]: [
+        { related_type: { [Op.ne]: 'asset' } },
+        { related_type: null },
+        { related_id: { [Op.notIn]: [...inactiveAssetIds] } },
+      ]
+    } : {};
+
     const [open, in_progress, done, overdue] = await Promise.all([
-      Task.count({ where: { status: 'open' } }),
-      Task.count({ where: { status: 'in_progress' } }),
-      Task.count({ where: { status: 'done' } }),
-      Task.count({ where: { status: { [Op.notIn]: ['done', 'cancelled'] }, due_date: { [Op.lt]: new Date().toISOString().slice(0, 10) } } }),
+      Task.count({ where: { status: 'open', ...activeAssetFilter } }),
+      Task.count({ where: { status: 'in_progress', ...activeAssetFilter } }),
+      Task.count({ where: { status: 'done', ...activeAssetFilter } }),
+      Task.count({ where: { status: { [Op.notIn]: ['done', 'cancelled'] }, due_date: { [Op.lt]: new Date().toISOString().slice(0, 10) }, ...activeAssetFilter } }),
     ]);
     res.json({ open, in_progress, done, overdue });
   } catch (e) { res.status(500).json({ error: e.message }); }

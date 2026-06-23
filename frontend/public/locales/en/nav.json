@@ -46,5 +46,9 @@
     "dark": "Enable dark mode",
     "light": "Enable light mode"
   },
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
   "version": "OpenISMS v{{version}} · © 2026 Maximilian Herz"
 }

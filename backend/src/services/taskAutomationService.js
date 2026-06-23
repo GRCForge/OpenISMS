@@ -11,7 +11,7 @@ const runTaskAutomation = async () => {
   try {
     // 1. Core Asset-Completeness & Risk checks
     const assets = await Asset.findAll({
-      where: { status: { [Op.ne]: 'decommissioned' } },
+      where: { status: 'active' },
       include: [
         { model: Assessment, order: [['created_at', 'DESC']], separate: true }
       ]
@@ -54,7 +54,7 @@ const runTaskAutomation = async () => {
 const checkAndManageAssetTasks = async (asset) => {
   if (!asset) return;
 
-  if (asset.status === 'decommissioned') {
+  if (['decommissioned', 'inactive'].includes(asset.status)) {
     await Task.update(
       { status: 'cancelled' },
       {

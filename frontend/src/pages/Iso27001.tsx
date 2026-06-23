@@ -283,36 +283,50 @@ export const Iso27001: React.FC = () => {
         <Card><CardBody><div className="py-12 text-center"><Target size={36} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" /><p className="text-gray-500 dark:text-slate-400">{t('filterEmpty')}</p></div></CardBody></Card>
       )}
 
-      <Modal open={!!editControl} onClose={() => setEditControl(null)} title={editControl ? `${editControl.ref} – ${editControl.title}` : ''} size="lg">
+      <Modal open={!!editControl} onClose={() => setEditControl(null)} title={editControl ? `${editControl.ref} – ${editControl.title}` : ''} size="xl">
         <form onSubmit={saveEdit} className="space-y-4">
+          {/* Description — full width */}
           {editControl?.description && (
             <div className="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 px-4 py-3">
               <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">{t('modal.description')}</p>
               <p className="text-sm text-blue-900 dark:text-blue-200 leading-relaxed">{editControl.description}</p>
             </div>
           )}
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="edit-applicable" checked={editForm.applicable} onChange={e => setEditForm({ ...editForm, applicable: e.target.checked, implementation_status: e.target.checked ? editForm.implementation_status : 'not_applicable' })} disabled={!canWrite} className="w-4 h-4 rounded accent-blue-600 disabled:cursor-not-allowed" />
-            <label htmlFor="edit-applicable" className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.applicable')}</label>
+
+          {/* 3-column grid: left 1/3 = controls, right 2/3 = text areas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {/* Left column — compact controls */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 pt-1">
+                <input type="checkbox" id="edit-applicable" checked={editForm.applicable} onChange={e => setEditForm({ ...editForm, applicable: e.target.checked, implementation_status: e.target.checked ? editForm.implementation_status : 'not_applicable' })} disabled={!canWrite} className="w-4 h-4 rounded accent-blue-600 disabled:cursor-not-allowed" />
+                <label htmlFor="edit-applicable" className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.applicable')}</label>
+              </div>
+              <Select label={t('modal.status')} value={editForm.implementation_status} onChange={e => setEditForm({ ...editForm, implementation_status: e.target.value as ImplStatus })} options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))} disabled={!canWrite || !editForm.applicable} />
+              <SearchableSelect label={t('modal.responsible')} value={editForm.owner_id} onChange={val => setEditForm({ ...editForm, owner_id: val })} options={[{ value: '', label: t('modal.nobody') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} disabled={!canWrite} />
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.lastReview')}</label>
+                <input type="date" className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl px-3 py-2 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" value={editForm.last_review_date} onChange={e => setEditForm({ ...editForm, last_review_date: e.target.value })} disabled={!canWrite} />
+              </div>
+            </div>
+
+            {/* Right 2 columns — text areas (span 2 on xl) */}
+            <div className="xl:col-span-2 space-y-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.justification')}</label>
+                <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden resize-y" rows={3} value={editForm.justification} onChange={e => setEditForm({ ...editForm, justification: e.target.value })} disabled={!canWrite} placeholder={t('modal.justificationPlaceholder')} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.evidence')}</label>
+                <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden resize-y" rows={3} value={editForm.evidence} onChange={e => setEditForm({ ...editForm, evidence: e.target.value })} disabled={!canWrite} placeholder={t('modal.evidencePlaceholder')} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.notes')}</label>
+                <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden resize-y" rows={2} value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} disabled={!canWrite} />
+              </div>
+            </div>
           </div>
-          <Select label={t('modal.status')} value={editForm.implementation_status} onChange={e => setEditForm({ ...editForm, implementation_status: e.target.value as ImplStatus })} options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))} disabled={!canWrite || !editForm.applicable} />
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.justification')}</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={editForm.justification} onChange={e => setEditForm({ ...editForm, justification: e.target.value })} disabled={!canWrite} placeholder={t('modal.justificationPlaceholder')} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.evidence')}</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={editForm.evidence} onChange={e => setEditForm({ ...editForm, evidence: e.target.value })} disabled={!canWrite} placeholder={t('modal.evidencePlaceholder')} />
-          </div>
-          <SearchableSelect label={t('modal.responsible')} value={editForm.owner_id} onChange={val => setEditForm({ ...editForm, owner_id: val })} options={[{ value: '', label: t('modal.nobody') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} disabled={!canWrite} />
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.lastReview')}</label>
-            <input type="date" className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl px-3 py-2 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" value={editForm.last_review_date} onChange={e => setEditForm({ ...editForm, last_review_date: e.target.value })} disabled={!canWrite} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.notes')}</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} disabled={!canWrite} />
-          </div>
+
+          {/* Cross-references — full width */}
           {editControl && (
             <div className="border-t dark:border-slate-700 pt-3">
               <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2">{t('modal.crossRefs')}</p>
