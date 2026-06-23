@@ -454,7 +454,7 @@ export const Risks: React.FC = () => {
                         type="button"
                         onClick={() => handleDownload(t.id, t.original_name)}
                         className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white shrink-0 cursor-pointer"
-                        title="Herunterladen"
+                        title="Download"
                       >
                         <Download size={14} />
                       </button>

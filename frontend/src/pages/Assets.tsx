@@ -476,7 +476,7 @@ export const Assets: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <div className="text-sm font-medium dark:text-slate-200">{a.owner?.name || '-'}</div>
                           {a.owner && (
-                            <div className={`w-2 h-2 rounded-full ${isOnline(a.owner.last_seen_at) ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={isOnline(a.owner.last_seen_at) ? 'Online' : 'Offline'} />
+                            <div className={`w-2 h-2 rounded-full ${isOnline(a.owner.last_seen_at) ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={isOnline(a.owner.last_seen_at) ? t('detail.online') : t('detail.offline')} />
                           )}
                         </div>
                       </Td>
