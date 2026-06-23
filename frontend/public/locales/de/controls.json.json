@@ -1,0 +1,77 @@
+{
+  "title": "Steuerung & SoA",
+  "subtitle": "Statement of Applicability · ISO 27001 / NIS-2 / BSI · {{count}} Kontrollen",
+  "searchPlaceholder": "Suche (Code/Titel)…",
+  "new": "Neue benutzerdefinierte Steuerung",
+  "bulkDeleteBtn_one": "{{count}} löschen",
+  "bulkDeleteBtn_other": "{{count}} löschen",
+  "type": {
+    "organizational": "Organisatorisch",
+    "people": "Personen",
+    "physical": "Körperlich",
+    "technological": "Technologisch"
+  },
+  "status": {
+    "implemented": "Implementiert",
+    "planned": "Geplant",
+    "not_applicable": "Nicht anwendbar"
+  },
+  "stats": {
+    "implemented": "Implementiert",
+    "planned": "Geplant",
+    "notApplicable": "Nicht anwendbar",
+    "coverage": "Abdeckung"
+  },
+  "hints": {
+    "iso27001": "ISO 27001 Steuerelemente stammen vom <a>ISO 27001 Modul</a>. Bearbeiten Sie dort den Status für alle Details.",
+    "nis2": "NIS-2 Steuerelemente kommen aus dem <a>NIS-2 Modul</a>. Bearbeiten Sie dort den Status für vollständige Details.",
+    "bsi": "BSI-Anforderungen kommen aus dem <a>BSI-Modul</a>. Bearbeiten Sie dort den Status für alle Details."
+  },
+  "filters": {
+    "allFrameworks": "Alle Frameworks",
+    "allStatus": "Alle Status"
+  },
+  "table": {
+    "code": "Code",
+    "control": "Steuerung",
+    "framework": "Framework",
+    "reference": "Referenz",
+    "status": "Status"
+  },
+  "form": {
+    "basicInfo": "Grundlegende Informationen",
+    "title": "Titel",
+    "type": "Typ",
+    "description": "Beschreibung",
+    "soaStatus": "SoA Status",
+    "justification": "Anwendbarkeitsbegründung (SoA)",
+    "justificationPlaceholder": "Warum (nicht) anwendbar oder wie implementiert?",
+    "linkedPolicies": "Verknüpfte Richtlinien",
+    "linkedPoliciesHint": "Verknüpfen Sie dieses Steuerelement mit Richtlinien aus Ihrer Bibliothek, die dieses TOM detailliert beschreiben.",
+    "noPolicies": "Keine Richtlinien verfügbar.",
+    "noCode": "Kein Code"
+  },
+  "createModal": {
+    "title": "Benutzerdefinierte Steuerung erstellen",
+    "code": "Code (optional)",
+    "codePlaceholder": "z.B. ORG-01"
+  },
+  "buttons": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "create": "Anlegen"
+  },
+  "empty": {
+    "noResults": "Keine Steuerelemente gefunden"
+  },
+  "confirm": {
+    "delete": "Steuerung \"{{title}} \"löschen?",
+    "bulkDelete": "{{count}} ausgewählte Bedienelemente wirklich löschen?"
+  },
+  "toast": {
+    "bulkDeleted_one": "{{count}} Steuerung gelöscht",
+    "bulkDeleted_other": "{{count}} Steuerelemente gelöscht",
+    "deleteError": "Fehler beim Löschen",
+    "error": "Fehler"
+  }
+}
