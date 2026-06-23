@@ -201,7 +201,10 @@ router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) =
     // deklarierte Datei als HTML/JS interpretiert -> Stored-XSS-Schutz.
     res.setHeader('X-Content-Type-Options', 'nosniff');
     if (req.query.inline === 'true') {
-      res.setHeader('Content-Type', doc.mimetype || 'application/pdf');
+      const safeMime = ALLOWED_EXT.includes(path.extname(doc.original_name || '').toLowerCase()) && doc.mimetype
+        ? doc.mimetype
+        : 'application/octet-stream';
+      res.setHeader('Content-Type', safeMime);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.original_name)}"`);
       return res.sendFile(filePath);
     }
