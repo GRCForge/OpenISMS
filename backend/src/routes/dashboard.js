@@ -33,12 +33,6 @@ router.get('/', authenticate, async (req, res) => {
     in30.setDate(in30.getDate() + 30);
     const in30Str = in30.toISOString().split('T')[0];
 
-    // Mark overdue
-    await Reminder.update(
-      { status: 'overdue' },
-      { where: { status: 'pending', due_date: { [Op.lt]: todayStr } } }
-    );
-
     const [
       totalAssets, activeAssets, overdueReminders,
       upcomingReminders, riskDistribution, recentAssessments,
