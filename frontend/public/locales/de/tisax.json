@@ -1,50 +1,50 @@
 {
-  "title": "TISAX Assessments",
-  "subtitle": "Trusted Information Security Assessment Exchange · {{count}} Einträge",
+  "title": "TISAX-Prüfungen",
+  "subtitle": "Vertrauenswürdiger Datensicherheitsprüfungsaustausch · {{count}} Einträge",
   "status": {
-    "preparation": "Vorbereitung",
+    "preparation": "Zubereitung",
     "requested": "Angefragt",
-    "scheduled": "Terminiert",
+    "scheduled": "Geplant",
     "audit_done": "Audit abgeschlossen",
-    "label_received": "Label erhalten"
+    "label_received": "Label empfangen"
   },
   "reqStatus": {
-    "open": "Offen",
-    "in_progress": "In Umsetzung",
-    "implemented": "Umgesetzt",
+    "open": "Öffnen",
+    "in_progress": "In Bearbeitung",
+    "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
   },
   "button": {
-    "newAssessment": "Assessment erfassen"
+    "newAssessment": "Prüfung hinzufügen"
   },
   "tabs": {
     "assessments": "Assessments",
-    "requirements": "VDA-ISA-Anforderungen"
+    "requirements": "VDA ISA Anforderungen"
   },
   "stats": {
     "total": "Gesamt",
     "active": "Aktiv",
-    "labelReceived": "Label erhalten",
+    "labelReceived": "Label empfangen",
     "overdue": "Überfällig"
   },
   "filter": {
-    "searchPlaceholder": "Scope oder Prüfgesellschaft suchen...",
+    "searchPlaceholder": "Suchumfang oder Auditorfirma...",
     "allStatuses": "Alle Status"
   },
   "table": {
-    "scope": "Scope",
+    "scope": "Bereich",
     "level": "Level",
     "label": "Label",
     "status": "Status",
-    "assessmentDate": "Assessment-Datum",
+    "assessmentDate": "Prüfungsdatum",
     "validUntil": "Gültig bis"
   },
   "empty": {
-    "title": "Keine TISAX-Assessments gefunden"
+    "title": "Keine TISAX-Prüfungen gefunden"
   },
   "confirm": {
-    "delete": "„{{name}}“ wirklich löschen?",
-    "deleteRequirement": "Anforderung {{ref}} „{{title}}“ wirklich löschen?"
+    "delete": "\"{{name}} \"wirklich löschen?",
+    "deleteRequirement": "Really delete requirement {{ref}} \"{{title}}\"?"
   },
   "toast": {
     "catalogLoadError": "Fehler beim Laden des Katalogs",
@@ -56,25 +56,25 @@
       "requirements": "Anforderungen",
       "assessed": "Bewertet",
       "targetReached": "Ziel erreicht",
-      "avgMaturity": "Ø Reifegrad"
+      "avgMaturity": "Ø Bindungsgrad"
     },
     "empty": {
-      "title": "Noch keine VDA-ISA-Anforderungen vorhanden",
-      "subtitle": "Lade den integrierten VDA-ISA-Katalog, um mit der Reifegrad-Selbstbewertung zu starten.",
-      "loadCatalog": "VDA-ISA-Katalog laden",
-      "loadingCatalog": "Lade Katalog..."
+      "title": "Noch keine VDA ISA Anforderungen verfügbar",
+      "subtitle": "Laden Sie den integrierten VDA ISA Katalog um die Reifenselbstbewertung zu starten.",
+      "loadCatalog": "VDA ISA Katalog laden",
+      "loadingCatalog": "Katalog wird geladen..."
     },
     "chapter": {
       "targetReached": "{{reached}}/{{total}} Ziel erreicht"
     },
     "maturity": {
-      "remove": "Bewertung entfernen",
-      "level": "Reifegrad {{level}}",
-      "target": "Ziel: {{target}}"
+      "remove": "Prüfung entfernen",
+      "level": "Maturity level {{level}}",
+      "target": "Target: {{target}}"
     },
     "editModal": {
       "statusLabel": "Status",
-      "targetLevel": "Ziel-Reifegrad",
+      "targetLevel": "Level der Zielreife",
       "notes": "Notizen",
       "cancel": "Abbrechen",
       "saving": "Speichern...",
@@ -82,21 +82,21 @@
     }
   },
   "modal": {
-    "editTitle": "TISAX Assessment bearbeiten",
-    "newTitle": "TISAX Assessment erfassen",
-    "scopeDescriptionLabel": "Scope-Beschreibung *",
-    "scopeDescriptionPlaceholder": "Beschreibung des TISAX-Scopes und der zu bewertenden Standorte / Bereiche",
-    "assessmentLevelLabel": "Assessment Level",
+    "editTitle": "TISAX-Prüfung bearbeiten",
+    "newTitle": "TISAX-Prüfung aufnehmen",
+    "scopeDescriptionLabel": "Bereichsbeschreibung *",
+    "scopeDescriptionPlaceholder": "Beschreibung des TISAX-Anwendungsbereichs und der zu bewertenden Standorte / Bereiche",
+    "assessmentLevelLabel": "Prüfungsstufe",
     "assessmentLevelOptions": {
-      "AL2": "AL2 – Hoher Schutzbedarf",
+      "AL2": "AL2 – Hohe Schutzbedürfnisse",
       "AL3": "AL3 – Sehr hoher Schutzbedarf"
     },
     "statusLabel": "Status",
     "labelRequestedLabel": "Angefordertes Label",
-    "labelRequestedPlaceholder": "z. B. TISAX Label – Information High",
-    "auditorCompanyLabel": "Prüfgesellschaft",
-    "auditorCompanyPlaceholder": "Name des zugelassenen Prüfdienstleisters",
-    "assessmentDateLabel": "Assessment-Datum",
+    "labelRequestedPlaceholder": "z.B. TISAX Label – Information Hoch",
+    "auditorCompanyLabel": "Auditor-Unternehmen",
+    "auditorCompanyPlaceholder": "Name des akkreditierten Audit-Anbieters",
+    "assessmentDateLabel": "Prüfungsdatum",
     "labelValidUntilLabel": "Label gültig bis",
     "ownerLabel": "Verantwortliche Person",
     "noOwner": "– niemand –",
