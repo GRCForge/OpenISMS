@@ -429,11 +429,11 @@
     "findingsPlaceholder": "Justification for classification...",
     "incidentsTitle": "Asset-related Incidents",
     "comments": {
-      "placeholder": "Write a comment… Markdown supported, @user for mentions, paste screenshots with Ctrl+V",
+      "placeholder": "Write a comment… Markdown supported · @user/@group mentions · - [ ] tasks · paste screenshots (Ctrl+V)",
       "noComments": "No comments yet.",
-      "noMatchingUsers": "No matching users",
+      "noMatchingUsers": "No matching users or groups",
       "meetingDate": "Meeting Reference",
-      "mentionHint": "Use @username for mentions.",
+      "mentionHint": "Use @name to mention a user or group.",
       "postButton": "Post Comment",
       "saving": "Posting…",
       "screenshotDesc": "Screenshot from comment",
@@ -449,8 +449,17 @@
         "colorPlaceholder": "colored text",
         "attachDoc": "Attach document",
         "uploading": "Uploading…",
-        "pasteHint": "Tip: paste a screenshot (Ctrl+V / ⌘V) to upload it directly into the comment."
-      }
-    }
+        "pasteHint": "Tip: paste a screenshot (Ctrl+V / ⌘V) · use - [ ] @user Task to auto-create a task",
+        "list": "Bullet list",
+        "listPlaceholder": "list item",
+        "task": "Insert task checkbox",
+        "taskPlaceholder": "task description"
+      },
+      "reply": "Reply",
+      "replyingToPrefix": "Replying to",
+      "tasksCreated_one": "{{count}} task created from comment",
+      "tasksCreated_other": "{{count}} tasks created from comment"
+    },
+    "notFound": "Asset not found"
   }
 }
