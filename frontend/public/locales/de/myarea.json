@@ -34,13 +34,13 @@
     "manageAll": "Alle Aufgaben verwalten",
     "empty": "Keine offenen Aufgaben",
     "emptyDescription": "Super! Alles getan.",
+    "overdueWarning_one": "{{count}} Aufgabe überfällig",
+    "overdueWarning_other": "{{count}} überfällige Aufgaben",
     "overdueSuffix": "⚠ Überfällig",
     "dueLabel": "Fällig",
     "markDone": "Als erledigt markieren",
     "setInProgress": "Setze in Bearbeitung",
-    "done": "Fertig",
-    "overdueWarning_one": "{{count}} Aufgabe überfällig",
-    "overdueWarning_other": "{{count}} überfällige Aufgaben"
+    "done": "Fertig"
   },
   "priority": {
     "critical": "Kritisch",
