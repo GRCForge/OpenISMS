@@ -2,7 +2,7 @@
   "title": "NIS-2 · Art. 21 Sicherheitsmaßnahmen",
   "subtitle": "Netzwerk- und Informationssicherheitsrichtlinie 2 · {{count}} Maßnahmen",
   "status": {
-    "not_started": "Nicht begonnen",
+    "not_started": "Öffnen",
     "in_progress": "In Bearbeitung",
     "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
@@ -11,7 +11,7 @@
     "total": "Gesamt",
     "implemented": "Implementiert",
     "inProgress": "In Bearbeitung",
-    "open": "Nicht begonnen"
+    "open": "Öffnen"
   },
   "entity": {
     "essential": {
@@ -30,11 +30,11 @@
   },
   "table": {
     "article": "Artikel",
-    "measure": "Maßnahme",
+    "measure": "Messen",
     "status": "Status",
     "deadline": "Deadline",
     "lastReview": "Letzte Prüfung",
-    "measureCount": "{{count}} Maßnahmen"
+    "measureCount": "{{count}} Messungen"
   },
   "description": {
     "show": "Beschreibung anzeigen",
@@ -47,7 +47,7 @@
     "loadButton": "NIS-2 Katalog laden",
     "loading": "Katalog wird geladen..."
   },
-  "filterEmpty": "Keine Maßnahmen entsprechen den Filterkriterien.",
+  "filterEmpty": "Keine Messungen entsprechen den Filterkriterien.",
   "modal": {
     "status": "Implementierungsstatus",
     "responsible": "Verantwortliche Person",
