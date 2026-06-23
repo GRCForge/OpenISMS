@@ -1089,7 +1089,7 @@ export const AssetDetail: React.FC = () => {
                                         )}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed font-sans">{cve.description || 'Keine Beschreibung'}</p>
+                                        <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed font-sans">{cve.description || t('detail.noCveDescription')}</p>
                                         {cve.published && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{cve.published}</p>}
                                       </div>
                                       <div className="flex-shrink-0 self-center">
