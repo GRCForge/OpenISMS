@@ -37,7 +37,7 @@
       "critical": "Kritisch"
     },
     "status": {
-      "open": "Offen",
+      "open": "Öffnen",
       "in_progress": "In Bearbeitung",
       "closed": "Geschlossen"
     }
@@ -177,7 +177,7 @@
     "findingStatus": {
       "resolved": "Gelöst",
       "wont_fix": "Akzeptiert",
-      "open": "Offen"
+      "open": "Öffnen"
     },
     "noTaskLinked": "Keine Aufgabe verknüpft",
     "markResolvedBtn": "Als gelöst markieren",
@@ -363,7 +363,7 @@
     "targetValue": "Zielwert",
     "currentValue": "Ist-Wert",
     "status": "Status",
-    "owner": "Verantwortlicher",
+    "owner": "Besitzer",
     "latestTrend": "Trend",
     "finding": "Feststellung / Abweichung",
     "severity": "Schweregrad",
