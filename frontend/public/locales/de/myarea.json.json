@@ -1,0 +1,77 @@
+{
+  "title": "Mein Bereich",
+  "welcome": "Willkommen, {{name}}",
+  "openItems": "{{count}} offene Elemente",
+  "noPasskey": "Kein Passwort",
+  "employee": {
+    "title": "Meine Trainings",
+    "subtitle": "Hier siehst du einen Überblick über deine abgeschlossenen Trainings. Du kannst Einträge bewerten, wenn du ein anderes Training besucht hast oder die Informationen falsch sind.",
+    "required": "Benötigt",
+    "completedAt": "Abgeschlossen am:",
+    "expiresAt": "Gültig bis:",
+    "contested": "Gefecht",
+    "contest": "Wettbewerb",
+    "empty": "Keine Trainingseinträge gefunden",
+    "emptyDescription": "Es wurden noch keine Schulungsteilnehmer für Ihr Konto registriert."
+  },
+  "contestModal": {
+    "title": "Training Rekord des Wettbewerbs",
+    "hint": "Wenn Sie nicht an diesem Training teilgenommen haben, ist das Datum falsch, oder Sie haben eine andere Ausbildung besucht, können Sie dies hier erklären. Ein Compliance-Offizier wird Ihre Anfrage überprüfen.",
+    "hintTitle": "Hinweis zu Wettbewerben",
+    "selectedTraining": "Ausgewähltes Training",
+    "registeredDate": "Registriertes Datum:",
+    "reasonLabel": "Begründung / Korrekturnotiz",
+    "reasonRequired": "*",
+    "reasonPlaceholder": "z.B. \"Ich habe zu diesem Zeitpunkt nicht an dieser Ausbildung teilgenommen, sondern stattdessen an der Data Protection Training B teilgenommen.\"",
+    "cancel": "Abbrechen",
+    "submit": "Wettbewerb abschicken",
+    "submitting": "Wird gesendet..."
+  },
+  "tasks": {
+    "title": "Meine Aufgaben",
+    "openCount": "({{count}} offen)",
+    "allTasks": "Alle Aufgaben",
+    "manageAll": "Alle Aufgaben verwalten",
+    "empty": "Keine offenen Aufgaben",
+    "emptyDescription": "Super! Alles getan.",
+    "overdueWarning_one": "{{count}} Aufgabe überfällig",
+    "overdueWarning_other": "{{count}} überfällige Aufgaben",
+    "overdueSuffix": "⚠ Überfällig",
+    "dueLabel": "Fällig",
+    "markDone": "Als erledigt markieren",
+    "setInProgress": "Setze in Bearbeitung",
+    "done": "Fertig"
+  },
+  "priority": {
+    "critical": "Kritisch",
+    "high": "Hoch",
+    "medium": "Mittel",
+    "low": "Niedrig"
+  },
+  "sections": {
+    "title": "Aktion erforderlich",
+    "showMore": "+{{count}} mehr → Alle anzeigen"
+  },
+  "allClear": {
+    "title": "Alles klar",
+    "description": "Keine offenen Aufgaben oder Aktionselemente für Ihre Rolle."
+  },
+  "passkey": {
+    "title": "Kein Passwort konfiguriert",
+    "description": "Verbessern Sie Ihre Kontosicherheit mit einem Passwort. Klicken Sie auf Ihr Profilbild und wählen Sie \"Passwort hinzufügen\"."
+  },
+  "roles": {
+    "admin": "Systemadministrator",
+    "assessor": "Auditor & Assessor",
+    "it-staff": "IT-Mitarbeiter",
+    "dpo": "Datenschutzbeauftragter",
+    "owner": "Asset-Besitzer",
+    "viewer": "Gast",
+    "employee": "Mitarbeiter"
+  },
+  "toast": {
+    "contestSuccess": "Wettbewerb erfolgreich eingereicht.",
+    "contestError": "Fehler beim Senden des Wettbewerbs.",
+    "taskError": "Fehler beim Aktualisieren der Aufgabe"
+  }
+}
