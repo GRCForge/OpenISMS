@@ -77,13 +77,16 @@
     "dpo": "Data Protection Officer",
     "owner": "Asset Owner",
     "viewer": "Viewer",
+    "management": "Management",
+    "employee": "Employee",
     "admin_short": "Admin",
     "assessor_short": "Assessor",
     "it-staff_short": "IT-Staff",
     "dpo_short": "DPO",
     "owner_short": "Owner",
     "management_short": "Management",
-    "viewer_short": "Viewer"
+    "viewer_short": "Viewer",
+    "employee_short": "Employee"
   },
   "security": {
     "purge_confirm": "Delete audit log entries beyond the retention period now? This process is irreversible.",

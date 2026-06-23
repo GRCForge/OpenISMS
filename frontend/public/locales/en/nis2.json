@@ -78,5 +78,59 @@
     "accessControl": "HR Security & Access Control",
     "mfa": "Multi-Factor Authentication",
     "reportingObligations": "Reporting Obligations"
+  },
+  "measures": {
+    "Art. 21(2)(a)": {
+      "title": "Concepts for Risk Analysis and Security for Information Systems",
+      "description": "Establishment and implementation of policies on risk analysis and information system security (Information Security Management System — ISMS)."
+    },
+    "Art. 21(2)(b)": {
+      "title": "Incident Handling",
+      "description": "Policies and procedures for security incident handling, including detection, escalation, response, and recovery."
+    },
+    "Art. 21(2)(c)": {
+      "title": "Business Continuity, Backup Management, and Disaster Recovery",
+      "description": "Business continuity measures, including backup management, disaster recovery, and crisis management."
+    },
+    "Art. 21(2)(d)": {
+      "title": "Supply Chain Security",
+      "description": "Security of the supply chain, including security-related aspects concerning the relationships between each entity and its direct providers or service providers."
+    },
+    "Art. 21(2)(e)": {
+      "title": "Security in Acquisition, Development, and Maintenance of Network and Information Systems",
+      "description": "Security requirements in acquisition, development, and maintenance of network and information systems, including vulnerability handling and disclosure."
+    },
+    "Art. 21(2)(f)": {
+      "title": "Assessing the Effectiveness of Risk Management Measures",
+      "description": "Policies and procedures to assess the effectiveness of cybersecurity risk management measures, including internal audits and review processes."
+    },
+    "Art. 21(2)(g)": {
+      "title": "Basic Cyber Hygiene Practices and Training",
+      "description": "Basic cyber hygiene practices and cybersecurity training for employees and management."
+    },
+    "Art. 21(2)(h)": {
+      "title": "Policies and Procedures for the Use of Cryptography",
+      "description": "Policies and procedures regarding the use of cryptography and, where appropriate, encryption."
+    },
+    "Art. 21(2)(i)": {
+      "title": "Human Resources Security, Access Control Policies, and Asset Management",
+      "description": "Human resources security measures, access control policies, and asset management, including need-to-know principles and zero-trust approaches."
+    },
+    "Art. 21(2)(j)": {
+      "title": "Use of Multi-Factor Authentication or Continuous Authentication",
+      "description": "Use of multi-factor authentication solutions or continuous authentication solutions, secured voice, video, and text communications, and secured emergency communications."
+    },
+    "Art. 23(1)": {
+      "title": "Reporting of Significant Incidents (Early Warning within 24h)",
+      "description": "Significant security incidents must be reported as an early warning to the competent authority without undue delay, and in any event within 24 hours of becoming aware."
+    },
+    "Art. 23(2)": {
+      "title": "Updated Incident Notification within 72 Hours",
+      "description": "Without undue delay, and in any event within 72 hours of becoming aware, an updated notification must be submitted with an initial assessment of the incident, severity, and indicators of compromise."
+    },
+    "Art. 23(4)": {
+      "title": "Final Report at most one month after the incident",
+      "description": "Not later than one month after submission of the notification under Art. 23(2), a final report describing the incident, the root causes, and the mitigation measures taken must be submitted."
+    }
   }
 }

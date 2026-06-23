@@ -13,6 +13,15 @@ const Reminder = sequelize.define('Reminder', {
   notes: { type: DataTypes.TEXT },
   dismissed: { type: DataTypes.BOOLEAN, defaultValue: false },
   task_id: { type: DataTypes.INTEGER, references: { model: 'tasks', key: 'id' } },
-}, { tableName: 'reminders', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+}, { 
+  tableName: 'reminders', 
+  timestamps: true, 
+  createdAt: 'created_at', 
+  updatedAt: 'updated_at',
+  indexes: [
+    { fields: ['status'] },
+    { fields: ['due_date'] }
+  ]
+});
 
 module.exports = Reminder;

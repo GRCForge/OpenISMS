@@ -2,7 +2,7 @@
   "title": "NIS-2 · Art. 21 Sicherheitsmaßnahmen",
   "subtitle": "Netzwerk- und Informationssicherheitsrichtlinie 2 · {{count}} Maßnahmen",
   "status": {
-    "not_started": "Öffnen",
+    "not_started": "Nicht begonnen",
     "in_progress": "In Bearbeitung",
     "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar"
@@ -11,7 +11,7 @@
     "total": "Gesamt",
     "implemented": "Implementiert",
     "inProgress": "In Bearbeitung",
-    "open": "Öffnen"
+    "open": "Nicht begonnen"
   },
   "entity": {
     "essential": {
@@ -30,11 +30,11 @@
   },
   "table": {
     "article": "Artikel",
-    "measure": "Messen",
+    "measure": "Maßnahme",
     "status": "Status",
     "deadline": "Deadline",
     "lastReview": "Letzte Prüfung",
-    "measureCount": "{{count}} Messungen"
+    "measureCount": "{{count}} Maßnahmen"
   },
   "description": {
     "show": "Beschreibung anzeigen",
@@ -47,7 +47,7 @@
     "loadButton": "NIS-2 Katalog laden",
     "loading": "Katalog wird geladen..."
   },
-  "filterEmpty": "Keine Messungen entsprechen den Filterkriterien.",
+  "filterEmpty": "Keine Maßnahmen entsprechen den Filterkriterien.",
   "modal": {
     "status": "Implementierungsstatus",
     "responsible": "Verantwortliche Person",
@@ -78,5 +78,59 @@
     "accessControl": "Personalsicherheit & Zugangssteuerung",
     "mfa": "Multi-Faktor-Authentifizierung",
     "reportingObligations": "Meldepflichten"
+  },
+  "measures": {
+    "Art. 21(2)(a)": {
+      "title": "Konzepte in Bezug auf die Risikoanalyse und Sicherheit für Informationssysteme",
+      "description": "Einrichtung und Umsetzung von Konzepten in Bezug auf die Risikoanalyse und die Sicherheit für Informationssysteme."
+    },
+    "Art. 21(2)(b)": {
+      "title": "Bewältigung von Sicherheitsvorfällen",
+      "description": "Konzepte und Verfahren zur Bewältigung von Sicherheitsvorfällen (Prävention, Erkennung und Reaktion)."
+    },
+    "Art. 21(2)(c)": {
+      "title": "Aufrechterhaltung des Betriebs und Krisenmanagement",
+      "description": "Maßnahmen zur Aufrechterhaltung des Betriebs, wie Backup-Management und Wiederherstellung im Katastrophenfall, und Krisenmanagement."
+    },
+    "Art. 21(2)(d)": {
+      "title": "Sicherheit der Lieferkette",
+      "description": "Sicherheit der Lieferkette einschließlich sicherheitsbezogener Aspekte der Beziehungen zwischen den einzelnen Einrichtungen und ihren unmittelbaren Anbietern oder Diensteanbietern."
+    },
+    "Art. 21(2)(e)": {
+      "title": "Sicherheit bei Erwerb, Entwicklung und Wartung",
+      "description": "Sicherheit bei Erwerb, Entwicklung und Wartung von Netz- und Informationssystemen, einschließlich des Umgangs mit Schwachstellen und deren Offenlegung."
+    },
+    "Art. 21(2)(f)": {
+      "title": "Bewertung der Wirksamkeit von Risikomanagementmaßnahmen",
+      "description": "Konzepte und Verfahren zur Bewertung der Wirksamkeit von Risikomanagementmaßnahmen im Bereich der Cybersicherheit."
+    },
+    "Art. 21(2)(g)": {
+      "title": "Cyberhygiene und Schulungen",
+      "description": "Grundlegende Verfahren im Bereich der Cyberhygiene und Schulungen im Bereich der Cybersicherheit."
+    },
+    "Art. 21(2)(h)": {
+      "title": "Einsatz von Kryptografie und Verschlüsselung",
+      "description": "Konzepte und Verfahren für den Einsatz von Kryptografie und gegebenenfalls Verschlüsselung."
+    },
+    "Art. 21(2)(i)": {
+      "title": "Sicherheit des Personals, Zugangssteuerung und Asset-Management",
+      "description": "Sicherheit des Personals, Konzepte für die Zugangssteuerung und Asset-Management."
+    },
+    "Art. 21(2)(j)": {
+      "title": "Multi-Faktor-Authentifizierung und gesicherte Kommunikation",
+      "description": "Nutzung von Multi-Faktor-Authentifizierungs- oder kontinuierlichen Authentifizierungslösungen, gesicherter Sprach-, Video- und Textkommunikation sowie gegebenenfalls gesicherter Notfallkommunikationssysteme innerhalb der Einrichtung."
+    },
+    "Art. 23(1)": {
+      "title": "Frühwarnung bei erheblichen Sicherheitsvorfällen (innerhalb von 24h)",
+      "description": "Übermittlung einer Frühwarnung unverzüglich, auf jeden Fall aber innerhalb von 24 Stunden nach Kenntnisnahme von dem erheblichen Sicherheitsvorfall."
+    },
+    "Art. 23(2)": {
+      "title": "Meldung über den Sicherheitsvorfall (innerhalb von 72h)",
+      "description": "Übermittlung einer Meldung über den Sicherheitsvorfall unverzüglich, auf jeden Fall aber innerhalb von 72 Stunden nach Kenntnisnahme von dem erheblichen Sicherheitsvorfall."
+    },
+    "Art. 23(4)": {
+      "title": "Abschlussbericht (spätestens ein Monat nach der Meldung)",
+      "description": "Übermittlung eines Abschlussberichts spätestens einen Monat nach der Übermittlung der Meldung über den Sicherheitsvorfall."
+    }
   }
 }

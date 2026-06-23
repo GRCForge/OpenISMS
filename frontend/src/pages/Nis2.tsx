@@ -291,7 +291,7 @@ export const Nis2: React.FC = () => {
                               <div className="flex items-start gap-2">
                                 {m.description && <button type="button" onClick={() => toggleExpanded(m.id)} className="mt-0.5 p-0.5 rounded text-gray-400 hover:text-blue-600 transition-colors shrink-0" title={expanded ? t('description.hide') : t('description.show')}>{expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button>}
                                 <div>
-                                  <p className="font-medium text-sm dark:text-slate-200">{m.title}</p>
+                                  <p className="font-medium text-sm dark:text-slate-200">{t('measures.' + m.article_ref + '.title', { defaultValue: m.title })}</p>
                                   {m.responsible && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{m.responsible.name}</p>}
                                 </div>
                               </div>
@@ -305,7 +305,7 @@ export const Nis2: React.FC = () => {
                             <tr className="bg-gray-50 dark:bg-slate-800/30">
                               <td />
                               <td colSpan={5} className="px-4 py-3">
-                                <p className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">{m.description}</p>
+                                <p className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">{t('measures.' + m.article_ref + '.description', { defaultValue: m.description })}</p>
                                 {m.evidence && <div className="mt-2"><span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">{t('description.evidence')}</span><span className="text-xs text-gray-600 dark:text-slate-400">{m.evidence}</span></div>}
                               </td>
                             </tr>
@@ -325,7 +325,7 @@ export const Nis2: React.FC = () => {
         <Card><CardBody><div className="py-12 text-center"><AlertOctagon size={36} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" /><p className="text-gray-500 dark:text-slate-400">{t('filterEmpty')}</p></div></CardBody></Card>
       )}
 
-      <Modal open={!!editMeasure} onClose={() => setEditMeasure(null)} title={editMeasure ? `${editMeasure.article_ref} – ${editMeasure.title}` : ''} size="lg">
+      <Modal open={!!editMeasure} onClose={() => setEditMeasure(null)} title={editMeasure ? `${editMeasure.article_ref} – ${t('measures.' + editMeasure.article_ref + '.title', { defaultValue: editMeasure.title })}` : ''} size="lg">
         <form onSubmit={saveEdit} className="space-y-4">
           {editMeasure && <div className="flex gap-2 flex-wrap"><span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{getCategoryLabel(editMeasure.category)}</span></div>}
           <Select label={t('modal.status')} value={editForm.implementation_status} onChange={e => setEditForm({ ...editForm, implementation_status: e.target.value as ImplStatus })} options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))} disabled={!canWrite} />
