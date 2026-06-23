@@ -32,6 +32,8 @@
   },
   "card": {
     "audit": "Audit",
+    "contacts_one": "{{count}} Kontakt",
+    "contacts_other": "{{count}} Kontakte",
     "dataProcessor": "Datenverarbeiter",
     "dpaLabel": "DPA",
     "isoLabel": "ISO",
@@ -39,9 +41,7 @@
     "riskAssessmentTitle": "Risikobewertung",
     "docsTitle": "Dokumente verwalten (DPA, Zertifikaten)",
     "editTitle": "Bearbeiten",
-    "deleteTitle": "Löschen",
-    "contacts_one": "{{count}} Kontakt",
-    "contacts_other": "{{count}} Kontakte"
+    "deleteTitle": "Löschen"
   },
   "modal": {
     "editTitle": "Firma bearbeiten",

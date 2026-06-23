@@ -34,13 +34,13 @@
     "manageAll": "Manage all tasks",
     "empty": "No open tasks",
     "emptyDescription": "Great! Everything done.",
+    "overdueWarning_one": "{{count}} task overdue",
+    "overdueWarning_other": "{{count}} tasks overdue",
     "overdueSuffix": "⚠ Overdue ·",
     "dueLabel": "Due",
     "markDone": "Mark as done",
     "setInProgress": "Set in progress",
-    "done": "Done",
-    "overdueWarning_one": "{{count}} task overdue",
-    "overdueWarning_other": "{{count}} tasks overdue"
+    "done": "Done"
   },
   "priority": {
     "critical": "Critical",

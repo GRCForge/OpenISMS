@@ -1,5 +1,7 @@
 {
   "title": "Tasks & Measures",
+  "subtitle_one": "{{count}} task total",
+  "subtitle_other": "{{count}} tasks total",
   "new": "New Task",
   "searchPlaceholder": "Search tasks...",
   "selectTask": "Select",
@@ -61,24 +63,24 @@
     "saving": "Saving..."
   },
   "bulk": {
+    "selected_one": "{{count}} task selected",
+    "selected_other": "{{count}} tasks selected",
     "markDone": "Mark as done",
     "delete": "Delete",
-    "deselect": "Deselect",
-    "selected_one": "{{count}} task selected",
-    "selected_other": "{{count}} tasks selected"
+    "deselect": "Deselect"
   },
   "orphan": {
     "check": "Clean up",
     "checking": "Checking...",
-    "noneFound": "No orphaned tasks found.",
-    "checkError": "Error checking",
-    "purgeError": "Error deleting",
     "purge_one": "Delete {{count}} orphaned task",
     "purge_other": "Delete {{count}} orphaned tasks",
+    "noneFound": "No orphaned tasks found.",
     "confirmPurge_one": "Delete {{count}} orphaned task? This task points to an object that no longer exists.",
     "confirmPurge_other": "Delete {{count}} orphaned tasks? These tasks point to objects that no longer exist.",
     "purgedSuccess_one": "{{count}} orphaned task deleted.",
-    "purgedSuccess_other": "{{count}} orphaned tasks deleted."
+    "purgedSuccess_other": "{{count}} orphaned tasks deleted.",
+    "checkError": "Error checking",
+    "purgeError": "Error deleting"
   },
   "empty": {
     "title": "No tasks found",
@@ -88,15 +90,13 @@
   "selectAll": "Select all {{count}}",
   "deselectAll": "Deselect all",
   "deleteConfirm": "Really delete task?",
-  "saveError": "Error saving",
-  "deleteFailed": "Delete failed",
-  "updateError": "Error updating",
-  "subtitle_one": "{{count}} task total",
-  "subtitle_other": "{{count}} tasks total",
   "deleteSelected_one": "Really delete {{count}} task?",
   "deleteSelected_other": "Really delete {{count}} tasks?",
   "markDoneSuccess_one": "{{count}} task marked as done",
   "markDoneSuccess_other": "{{count}} tasks marked as done",
   "deleteSuccess_one": "{{count}} task deleted",
-  "deleteSuccess_other": "{{count}} tasks deleted"
+  "deleteSuccess_other": "{{count}} tasks deleted",
+  "saveError": "Error saving",
+  "deleteFailed": "Delete failed",
+  "updateError": "Error updating"
 }

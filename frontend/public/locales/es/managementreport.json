@@ -1,0 +1,224 @@
+{
+  "riskLabels": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "classLabels": {
+    "public": "Public",
+    "internal": "Internal",
+    "confidential": "Confidential",
+    "secret": "Secret"
+  },
+  "treatmentLabels": {
+    "mitigate": "Mitigate",
+    "accept": "Accept",
+    "transfer": "Transfer",
+    "avoid": "Avoid"
+  },
+  "riskStatusLabels": {
+    "open": "Open",
+    "in_treatment": "In treatment",
+    "accepted": "Accepted",
+    "closed": "Closed"
+  },
+  "toast": {
+    "loadError": "Failed to load {{count}} data areas.",
+    "success": "Management review approved",
+    "error": "Error"
+  },
+  "healthStatus": {
+    "good": "Good",
+    "needsImprovement": "Needs improvement",
+    "critical": "Critical"
+  },
+  "controlPieLabels": {
+    "implemented": "Implemented",
+    "planned": "Planned",
+    "na": "N/A"
+  },
+  "taskPieLabels": {
+    "open": "Open",
+    "inProgress": "In progress",
+    "done": "Completed"
+  },
+  "excel": {
+    "headers": {
+      "kpi": "KPI",
+      "value": "Value",
+      "note": "Note",
+      "ref": "Ref",
+      "title": "Title",
+      "inherentRisk": "Inherent Risk",
+      "treatment": "Treatment",
+      "status": "Status",
+      "asset": "Asset",
+      "type": "Type",
+      "classification": "Classification",
+      "riskLevel": "Risk Level",
+      "owner": "Owner"
+    },
+    "summary": {
+      "healthScore": "ISMS Health Score",
+      "totalAssets": "Total Assets",
+      "assessedAssets": "Assessed Assets",
+      "criticalRisks": "Critical Risks",
+      "immediateMeasures": "Immediate measures",
+      "highRisks": "High Risks",
+      "openRisks": "Open Risks (Register)",
+      "controlImplementation": "Control Implementation",
+      "overdueReviews": "Overdue Reviews",
+      "openIncidents": "Open Incidents",
+      "mttr": "MTTR (Days)",
+      "last90days": "last 90 days",
+      "taskCompletionRate": "Task Completion Rate",
+      "activeVvt": "Active VVT Entries",
+      "dsfaRequired": "{{count}} DPIA-required",
+      "reportDate": "Report Date"
+    },
+    "notAssessed": "Not assessed",
+    "sheets": {
+      "summary": "Management Summary",
+      "assets": "Asset Register",
+      "risks": "Risk Register"
+    }
+  },
+  "tabs": {
+    "overview": "Overview",
+    "trends": "Trends",
+    "details": "Details"
+  },
+  "header": {
+    "title": "Management Report",
+    "asOf": "As of {{date}}",
+    "released": "Released {{date}}",
+    "signOff": "Approve Review",
+    "reloadTitle": "Reload data",
+    "refresh": "Refresh",
+    "excelExport": "Excel Export"
+  },
+  "overview": {
+    "controls": "Controls",
+    "assessment": "Assessment"
+  },
+  "kpis": {
+    "openHighRisks": {
+      "label": "Open High Risks",
+      "sub": "{{critical}} critical · {{high}} high"
+    },
+    "controlImplementation": {
+      "label": "Control Implementation"
+    },
+    "assetAssessment": {
+      "label": "Asset Assessment"
+    },
+    "overdueReviews": {
+      "label": "Overdue Reviews"
+    },
+    "openIncidents": {
+      "label": "Open Incidents",
+      "sub": "{{count}} total"
+    },
+    "mttr": {
+      "label": "MTTR (Days)",
+      "sub": "Ø resolution time (90d)"
+    },
+    "tasksCompleted": {
+      "label": "Tasks Completed",
+      "sub": "{{done}} of {{total}}"
+    },
+    "nis2Assets": {
+      "label": "NIS-2 Assets"
+    },
+    "vvtEntries": {
+      "label": "VVT Entries",
+      "sub": "{{count}} DPIA-required"
+    }
+  },
+  "charts": {
+    "riskDistribution": {
+      "title": "Risk Distribution (SBF)",
+      "empty": "No assessments"
+    },
+    "controlStatus": {
+      "title": "Control Status",
+      "empty": "No controls"
+    },
+    "taskStatus": {
+      "title": "Task Status",
+      "empty": "No tasks"
+    }
+  },
+  "alerts": {
+    "expiringAcceptances": "Expiring risk acceptances (≤ 60 days)",
+    "until": "until {{date}}",
+    "today": "Today!",
+    "elevatedRiskAssets": "Assets with elevated risk",
+    "assetFallback": "Asset"
+  },
+  "kpiStatus": {
+    "onTarget": "On target",
+    "warning": "Warning",
+    "critical": "Critical"
+  },
+  "kpis.target": "Target: {{target}}",
+  "trends": {
+    "noData": "No trend data available",
+    "noDataSub": "Data will be automatically populated as more entries are added."
+  },
+  "trendCharts": {
+    "incidentsAndRisks": "Incidents & new risks — last 12 months",
+    "incidents": "Incidents",
+    "criticalIncidents": "Critical Incidents",
+    "newRisks": "New Risks",
+    "newAssets": "New Assets",
+    "completedTasks": "Completed",
+    "newAssetsTitle": "New Assets per Month",
+    "completedTasksTitle": "Completed Tasks per Month",
+    "current": "Current: {{value}}",
+    "targetLabel": "Target: {{target}}",
+    "targetRefLine": "Target {{target}}"
+  },
+  "details": {
+    "nis2AssetsTitle": "NIS-2-relevant Assets ({{count}})",
+    "notAssessed": "Not assessed",
+    "privacyOverview": "Data Protection Overview (Art. 30 GDPR)",
+    "riskAcceptancesTitle": "Risk Acceptances (SBF)",
+    "untilLabel": "until {{date}}",
+    "overdueAssessmentsTitle": "Overdue Security Assessments",
+    "due": "Due: {{date}}",
+    "daysOverdue": "{{count}} days overdue",
+    "overdueLabel": "Overdue"
+  },
+  "privacy": {
+    "processingActivities": {
+      "label": "Processing Activities",
+      "sub": "{{count}} active"
+    },
+    "specialCategories": {
+      "label": "Art. 9 — Special Categories",
+      "sub": "Increased protection duty"
+    },
+    "thirdCountryTransfers": {
+      "label": "Third Country Transfers",
+      "sub": "Art. 44 GDPR"
+    },
+    "dsfaRequired": {
+      "label": "DPIA-required (Art. 35)",
+      "sub": "Data Protection Impact Assessment"
+    },
+    "dsfaRequiredTitle": "DPIA-required Activities (Art. 35)"
+  },
+  "signOffModal": {
+    "title": "Management Review Approval",
+    "description": "You hereby confirm acknowledgment of the current management report in accordance with ISO 27001 Sec. 9.3.",
+    "reportDate": "Report date: {{date}}",
+    "healthScore": "ISMS Health Score: {{score}}/100 — {{label}}",
+    "notes": "Notes (optional)",
+    "placeholder": "Decisions, actions, comments...",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "approve": "Approve"
+  }
+}

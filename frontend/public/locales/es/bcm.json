@@ -1,0 +1,123 @@
+{
+  "criticality": {
+    "critical": "Critical",
+    "important": "Important",
+    "normal": "Normal"
+  },
+  "status": {
+    "documented": "Documented",
+    "tested": "Tested",
+    "approved": "Approved"
+  },
+  "exerciseType": {
+    "tabletop": "Tabletop Exercise",
+    "simulation": "Simulation",
+    "technical_recovery": "Technical Recovery",
+    "full_failover": "Full Failover"
+  },
+  "exerciseResult": {
+    "pending": "Pending",
+    "passed": "Passed",
+    "passed_with_findings": "Passed with Findings",
+    "failed": "Failed"
+  },
+  "errors": {
+    "saveError": "Error saving",
+    "generic": "Error"
+  },
+  "confirm": {
+    "deleteProcess": "Really delete \"{{name}}\"?",
+    "deleteExercise": "Really delete \"{{title}}\"?"
+  },
+  "title": {
+    "processes": "BCM – Process Register",
+    "exercises": "BCM – Exercise Log"
+  },
+  "subtitle": {
+    "processes": "Business Continuity Management – critical business processes and recovery strategies · {{count}} entries",
+    "exercises": "Emergency and recovery exercises · {{count}} entries"
+  },
+  "button": {
+    "addProcess": "Log Process",
+    "addExercise": "Log Exercise",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "update": "Update",
+    "create": "Create"
+  },
+  "tab": {
+    "processes": "Processes (BIA)",
+    "exercises": "Exercise Log"
+  },
+  "stats": {
+    "total": "Total",
+    "critical": "Critical Processes",
+    "testOverdue": "Test Overdue",
+    "approved": "Approved",
+    "exercisesTotal": "Total Exercises",
+    "passed": "Passed",
+    "withFindings": "With Findings",
+    "failed": "Failed"
+  },
+  "filter": {
+    "searchPlaceholder": "Search process or recovery strategy...",
+    "allCriticalities": "All Criticalities",
+    "allStatus": "All Status"
+  },
+  "table": {
+    "process": "Process",
+    "criticality": "Criticality",
+    "rto_rpo": "RTO / RPO",
+    "status": "Status",
+    "owner": "Owner",
+    "nextTest": "Next Test",
+    "title": "Title",
+    "exerciseType": "Exercise Type",
+    "date": "Date",
+    "result": "Result"
+  },
+  "noProcesses": "No BCM processes found",
+  "noExercises": "No exercises found",
+  "modal": {
+    "editExercise": "Edit Exercise",
+    "addExercise": "Log Exercise",
+    "editProcess": "Edit BCM Process",
+    "addProcess": "Log BCM Process"
+  },
+  "form": {
+    "titleRequired": "Title *",
+    "titlePlaceholder": "e.g., Disaster recovery test data center outage",
+    "exerciseType": "Exercise Type",
+    "process": "Process",
+    "noProcess": "— No Process —",
+    "exerciseDate": "Exercise Date",
+    "result": "Result",
+    "participants": "Participants",
+    "participantsPlaceholder": "e.g., IT team, emergency task force, business units",
+    "findings": "Findings",
+    "findingsPlaceholder": "Identified vulnerabilities and findings",
+    "actions": "Actions",
+    "actionsPlaceholder": "Derived improvement actions",
+    "notes": "Notes",
+    "processNameRequired": "Process Name *",
+    "processNamePlaceholder": "e.g., Order processing, IT emergency operations",
+    "description": "Description",
+    "descriptionPlaceholder": "Brief description of the business process",
+    "criticality": "Criticality",
+    "status": "Status",
+    "rto": "RTO (Hours)",
+    "rtoPlaceholder": "Recovery Time Objective in hours",
+    "rpo": "RPO (Hours)",
+    "rpoPlaceholder": "Recovery Point Objective in hours",
+    "owner": "Responsible Person",
+    "noOwner": "– nobody –",
+    "dependencies": "Dependencies",
+    "dependenciesPlaceholder": "Systems, resources, and processes this process depends on",
+    "recoveryStrategy": "Recovery Strategy",
+    "recoveryStrategyPlaceholder": "Description of emergency and recovery procedures",
+    "lastTest": "Last Test",
+    "nextTest": "Next Test"
+  },
+  "rtoFormat": "RTO {{count}}h",
+  "rpoFormat": "RPO {{count}}h"
+}

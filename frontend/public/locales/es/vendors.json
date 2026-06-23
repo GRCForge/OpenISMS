@@ -32,6 +32,8 @@
   },
   "card": {
     "audit": "Audit",
+    "contacts_one": "{{count}} Contact",
+    "contacts_other": "{{count}} Contacts",
     "dataProcessor": "Data Processor",
     "dpaLabel": "DPA",
     "isoLabel": "ISO",
@@ -39,9 +41,7 @@
     "riskAssessmentTitle": "Risk Assessment",
     "docsTitle": "Manage Documents (DPA, Certificates)",
     "editTitle": "Edit",
-    "deleteTitle": "Delete",
-    "contacts_one": "{{count}} Contact",
-    "contacts_other": "{{count}} Contacts"
+    "deleteTitle": "Delete"
   },
   "modal": {
     "editTitle": "Edit Company",
