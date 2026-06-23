@@ -1,0 +1,123 @@
+{
+  "criticality": {
+    "critical": "Kritisch",
+    "important": "Wichtig",
+    "normal": "Normal"
+  },
+  "status": {
+    "documented": "Dokumentiert",
+    "tested": "Getestet",
+    "approved": "Genehmigt"
+  },
+  "exerciseType": {
+    "tabletop": "Tischtop Übung",
+    "simulation": "Simulation",
+    "technical_recovery": "Technische Wiederherstellung",
+    "full_failover": "Voller Fehler"
+  },
+  "exerciseResult": {
+    "pending": "Ausstehend",
+    "passed": "Übergeben",
+    "passed_with_findings": "Mit Findungen übergeben",
+    "failed": "Fehler"
+  },
+  "errors": {
+    "saveError": "Fehler beim Speichern",
+    "generic": "Fehler"
+  },
+  "confirm": {
+    "deleteProcess": "\"{{name}} \"wirklich löschen?",
+    "deleteExercise": "\"{{title}} \"wirklich löschen?"
+  },
+  "title": {
+    "processes": "BCM – Prozessregister",
+    "exercises": "BCM – Übungsprotokoll"
+  },
+  "subtitle": {
+    "processes": "Business Continuity Management – kritische Geschäftsprozesse und Wiederherstellungsstrategien · {{count}} Einträge",
+    "exercises": "Notfall- und Wiederherstellungsübungen · {{count}} Einträge"
+  },
+  "button": {
+    "addProcess": "Log-Prozess",
+    "addExercise": "Log Übung",
+    "cancel": "Abbrechen",
+    "saving": "Speichern...",
+    "update": "Aktualisieren",
+    "create": "Anlegen"
+  },
+  "tab": {
+    "processes": "Prozesse (BIA)",
+    "exercises": "Übungsprotokoll"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "critical": "Kritische Prozesse",
+    "testOverdue": "Test überfällig",
+    "approved": "Genehmigt",
+    "exercisesTotal": "Gesamte Übungen",
+    "passed": "Übergeben",
+    "withFindings": "Mit Funden",
+    "failed": "Fehler"
+  },
+  "filter": {
+    "searchPlaceholder": "Suche Prozess oder Wiederherstellungsstrategie...",
+    "allCriticalities": "Alle Kritiken",
+    "allStatus": "Alle Status"
+  },
+  "table": {
+    "process": "Verarbeiten",
+    "criticality": "Kritik",
+    "rto_rpo": "RTO / RPO",
+    "status": "Status",
+    "owner": "Besitzer",
+    "nextTest": "Nächster Test",
+    "title": "Titel",
+    "exerciseType": "Übungsart",
+    "date": "Datum",
+    "result": "Ergebnis"
+  },
+  "noProcesses": "Keine BCM-Prozesse gefunden",
+  "noExercises": "Keine Übungen gefunden",
+  "modal": {
+    "editExercise": "Übung bearbeiten",
+    "addExercise": "Log Übung",
+    "editProcess": "BCM-Prozess bearbeiten",
+    "addProcess": "BCM-Prozess protokollieren"
+  },
+  "form": {
+    "titleRequired": "Titel *",
+    "titlePlaceholder": "z. B. Disaster-Recovery-Datenträgerausfall",
+    "exerciseType": "Übungsart",
+    "process": "Verarbeiten",
+    "noProcess": "— Kein Prozess —",
+    "exerciseDate": "Übungsdatum",
+    "result": "Ergebnis",
+    "participants": "Teilnehmer",
+    "participantsPlaceholder": "z. B. IT-Team, Notruftruppe, Business Units",
+    "findings": "Findungen",
+    "findingsPlaceholder": "Identifizierte Schwachstellen und Erkenntnisse",
+    "actions": "Aktionen",
+    "actionsPlaceholder": "Abgeleitete Verbesserungsaktionen",
+    "notes": "Notizen",
+    "processNameRequired": "Prozessname *",
+    "processNamePlaceholder": "z. B. Auftragsabwicklung, IT-Notfall-Operationen",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Kurzbeschreibung des Geschäftsprozesses",
+    "criticality": "Kritik",
+    "status": "Status",
+    "rto": "RTO (Hours)",
+    "rtoPlaceholder": "Recovery-Time Ziel in Stunden",
+    "rpo": "RPO (Hours)",
+    "rpoPlaceholder": "Erholungspunkt Ziel in Stunden",
+    "owner": "Verantwortliche Person",
+    "noOwner": "– niemand –",
+    "dependencies": "Abhängigkeiten",
+    "dependenciesPlaceholder": "Systeme, Ressourcen und Prozesse, von denen dieser Prozess abhängt",
+    "recoveryStrategy": "Wiederherstellungsstrategie",
+    "recoveryStrategyPlaceholder": "Beschreibung der Notfall- und Wiedereinziehungsverfahren",
+    "lastTest": "Letzter Test",
+    "nextTest": "Nächster Test"
+  },
+  "rtoFormat": "RTO {{count}}h",
+  "rpoFormat": "RPO {{count}}h"
+}
