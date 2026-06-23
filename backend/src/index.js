@@ -149,6 +149,7 @@ app.use('/api/assets/:assetId/comments', require('./routes/comments'));
 app.use('/api/compliance', require('./routes/compliance'));
 app.use('/api/import', require('./routes/import'));
 app.use('/api/vendors', require('./routes/vendors'));
+app.use('/api/vendors/:vendorId/triage', require('./routes/vendorTriage'));
 app.use('/api/policies', require('./routes/policies'));
 app.use('/api/admin/backup', require('./routes/backup'));
 const { requireModule } = require('./middleware/modules');

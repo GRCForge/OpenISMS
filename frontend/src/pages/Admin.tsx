@@ -12,7 +12,7 @@ import { Groups } from './Groups';
 import { useModules } from '../contexts/ModulesContext';
 import type { ModuleKey } from '../contexts/ModulesContext';
 
-type AdminTab = 'users' | 'groups' | 'audit' | 'settings' | 'security' | 'rbac' | 'api' | 'backup' | 'smtp' | 'modules';
+type AdminTab = 'users' | 'groups' | 'audit' | 'settings' | 'security' | 'rbac' | 'api' | 'backup' | 'smtp' | 'modules' | 'llm';
 
 // ---------------- SMTP / E-Mail ----------------
 interface SmtpState { host: string; port: string; secure: boolean; user: string; password: string; from: string; }
@@ -1219,6 +1219,160 @@ const ModulesSettings: React.FC = () => {
   );
 };
 
+// ---------------- LLM-Einstellungen ----------------
+interface LlmProviderConfig { model?: string; baseUrl?: string; hasApiKey?: boolean; }
+interface LlmConfig {
+  provider: string;
+  anthropic?: LlmProviderConfig;
+  openai?: LlmProviderConfig;
+  gemini?: LlmProviderConfig;
+  ollama?: LlmProviderConfig;
+}
+
+const LlmSettings: React.FC = () => {
+  const { t } = useTranslation('admin');
+  const [cfg, setCfg] = useState<LlmConfig>({ provider: 'anthropic' });
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    api.get('/admin/llm').then(r => {
+      if (r.data) setCfg(r.data);
+    }).catch(() => {}).finally(() => setLoaded(true));
+  }, []);
+
+  const save = async () => {
+    setSaving(true); setMsg(null);
+    try {
+      const payload: any = { provider: cfg.provider };
+      for (const p of ['anthropic', 'openai', 'gemini', 'ollama'] as const) {
+        const pc = cfg[p] || {};
+        payload[p] = { model: pc.model || '' };
+        if (p === 'openai' || p === 'ollama') payload[p].baseUrl = (pc as any).baseUrl || '';
+        if (apiKeys[p]) payload[p].apiKey = apiKeys[p];
+      }
+      const r = await api.put('/admin/llm', payload);
+      setCfg(r.data);
+      setApiKeys({});
+      setMsg({ ok: true, text: t('llm.saved') });
+    } catch (e: any) {
+      setMsg({ ok: false, text: e.response?.data?.error || t('llm.save_failed') });
+    } finally { setSaving(false); }
+  };
+
+  const test = async () => {
+    setTesting(true); setMsg(null);
+    try {
+      const r = await api.post('/admin/llm/test');
+      setMsg({ ok: true, text: t('llm.test_ok', { provider: r.data.provider, model: r.data.model }) });
+    } catch (e: any) {
+      setMsg({ ok: false, text: t('llm.test_failed', { error: e.response?.data?.error || 'Unknown error' }) });
+    } finally { setTesting(false); }
+  };
+
+  const providers = [
+    { value: 'anthropic', label: t('llm.provider_anthropic') },
+    { value: 'openai', label: t('llm.provider_openai') },
+    { value: 'gemini', label: t('llm.provider_gemini') },
+    { value: 'ollama', label: t('llm.provider_ollama') },
+  ];
+
+  const modelSuggestions: Record<string, string[]> = {
+    anthropic: ['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
+    openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1', 'o3-mini'],
+    gemini: ['gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-2.5-flash'],
+    ollama: ['llama3.2', 'llama3.1', 'mistral', 'qwen2.5', 'deepseek-r1'],
+  };
+
+  if (!loaded) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-blue-600" /></div>;
+
+  const p = cfg.provider as keyof LlmConfig;
+  const activeCfg = (cfg[p] as LlmProviderConfig) || {};
+  const hasKey = activeCfg.hasApiKey || !!apiKeys[cfg.provider];
+
+  return (
+    <Card>
+      <CardHeader><div className="flex items-center gap-2"><Bot size={18} className="text-blue-500" /><h2 className="font-semibold dark:text-white">{t('llm.title')}</h2></div></CardHeader>
+      <CardBody className="space-y-6 max-w-2xl">
+        <p className="text-sm text-gray-500 dark:text-slate-400">{t('llm.description')}</p>
+
+        {!hasKey && cfg.provider !== 'ollama' && (
+          <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-sm text-amber-800 dark:text-amber-300">
+            <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+            <span>{t('llm.no_key_warning')}</span>
+          </div>
+        )}
+
+        <Select label={t('llm.provider_label')} value={cfg.provider}
+          onChange={e => setCfg(c => ({ ...c, provider: e.target.value }))}>
+          {providers.map(pr => <option key={pr.value} value={pr.value}>{pr.label}</option>)}
+        </Select>
+
+        <div className="border dark:border-slate-700 rounded-lg p-4 space-y-4">
+          {cfg.provider !== 'ollama' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('llm.api_key')}</label>
+              {activeCfg.hasApiKey && (
+                <p className="text-xs text-green-600 dark:text-green-400 mb-1 flex items-center gap-1"><CheckCircle2 size={12} />{t('llm.api_key_set')}</p>
+              )}
+              <Input
+                type="password"
+                placeholder={activeCfg.hasApiKey ? '••••••••' : t('llm.api_key_placeholder')}
+                value={apiKeys[cfg.provider] || ''}
+                onChange={e => setApiKeys(k => ({ ...k, [cfg.provider]: e.target.value }))}
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('llm.model')}</label>
+            <Input
+              value={activeCfg.model || ''}
+              onChange={e => setCfg(c => ({ ...c, [cfg.provider]: { ...activeCfg, model: e.target.value } }))}
+              list={`model-suggestions-${cfg.provider}`}
+              placeholder={modelSuggestions[cfg.provider]?.[0] || ''}
+            />
+            <datalist id={`model-suggestions-${cfg.provider}`}>
+              {(modelSuggestions[cfg.provider] || []).map(m => <option key={m} value={m} />)}
+            </datalist>
+          </div>
+
+          {(cfg.provider === 'ollama' || cfg.provider === 'openai') && (
+            <div>
+              <Input
+                label={t('llm.base_url')}
+                value={(activeCfg as any).baseUrl || ''}
+                onChange={e => setCfg(c => ({ ...c, [cfg.provider]: { ...activeCfg, baseUrl: e.target.value } }))}
+                placeholder={cfg.provider === 'ollama' ? 'http://localhost:11434' : t('llm.base_url_placeholder')}
+              />
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t('llm.base_url_help')}</p>
+            </div>
+          )}
+        </div>
+
+        {msg && (
+          <div className={`flex items-start gap-2 p-3 rounded-lg text-sm ${msg.ok ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'}`}>
+            {msg.ok ? <CheckCircle2 size={15} className="shrink-0 mt-0.5" /> : <XCircle size={15} className="shrink-0 mt-0.5" />}
+            <span>{msg.text}</span>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <Button onClick={save} disabled={saving}>
+            {saving ? <><Loader2 size={14} className="animate-spin mr-1" />{t('llm.saving')}</> : t('save')}
+          </Button>
+          <Button variant="secondary" onClick={test} disabled={testing}>
+            {testing ? <><Loader2 size={14} className="animate-spin mr-1" />{t('llm.testing')}</> : t('llm.test')}
+          </Button>
+        </div>
+      </CardBody>
+    </Card>
+  );
+};
+
 // ---------------- Admin-Shell ----------------
 export const Admin: React.FC = () => {
   const { t } = useTranslation('admin');
@@ -1234,6 +1388,7 @@ export const Admin: React.FC = () => {
     { key: 'rbac', label: 'Rollen & Rechte', icon: Lock },
     { key: 'api', label: 'API Dokumentation', icon: BookOpen },
     { key: 'backup', label: 'Backup & Restore', icon: Database },
+    { key: 'llm', label: 'KI / LLM', icon: Bot },
   ];
 
   return (
@@ -1278,6 +1433,7 @@ export const Admin: React.FC = () => {
       {tab === 'rbac' && <RbacEditor />}
       {tab === 'api' && <ApiDocs />}
       {tab === 'backup' && <BackupRestore />}
+      {tab === 'llm' && <LlmSettings />}
     </div>
   );
 };
