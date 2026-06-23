@@ -10,8 +10,8 @@
     "terminated": "Beendet"
   },
   "testType": {
-    "tlpt": "TLPT (bedrohungsorientierter Penetrationstest)",
-    "penetration_test": "Penetrationstest",
+    "tlpt": "TLPT (Bedrohungs-Led Pentest)",
+    "penetration_test": "Durchdringungstest",
     "vulnerability_scan": "Schwachstellenscan",
     "scenario_based": "Szenariogestützter Test",
     "bcp_test": "BCP/Disaster Recovery Test",
