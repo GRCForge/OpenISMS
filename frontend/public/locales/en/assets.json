@@ -1,6 +1,6 @@
 {
   "title": "Assets",
-  "subtitle_one":   "{{count}} asset",
+  "subtitle_one": "{{count}} asset",
   "subtitle_other": "{{count}} assets",
   "new": "New Asset",
   "edit": "Edit Asset",
@@ -11,94 +11,94 @@
   "bulkDelete_one": "Delete {{count}}",
   "bulkDelete_other": "Delete {{count}}",
   "types": {
-    "application":   "Application",
-    "software":      "Software",
-    "hardware":      "Hardware",
-    "service":       "Service",
-    "data":          "Data",
-    "information":   "Information/Data",
-    "process":       "Process",
-    "personal":      "Personnel",
-    "ai_application":"AI Application (AI Act)",
-    "ai_agent":      "AI Agent / Autonomous System",
-    "other":         "Other"
+    "application": "Application",
+    "software": "Software",
+    "hardware": "Hardware",
+    "service": "Service",
+    "data": "Data",
+    "information": "Information/Data",
+    "process": "Process",
+    "personal": "Personnel",
+    "ai_application": "AI Application (AI Act)",
+    "ai_agent": "AI Agent / Autonomous System",
+    "other": "Other"
   },
   "status": {
-    "active":          "Active",
-    "inactive":        "Inactive",
-    "decommissioned":  "Decommissioned",
-    "all":             "All (incl. decommissioned)",
-    "onlyActive":      "Active only",
-    "onlyInactive":    "Inactive only",
-    "activeAssets":    "Active Assets"
+    "active": "Active",
+    "inactive": "Inactive",
+    "decommissioned": "Decommissioned",
+    "all": "All (incl. decommissioned)",
+    "onlyActive": "Active only",
+    "onlyInactive": "Inactive only",
+    "activeAssets": "Active Assets"
   },
   "hosting": {
-    "on-premise":    "On-Premise",
-    "cloud_public":  "Cloud Public",
+    "on-premise": "On-Premise",
+    "cloud_public": "Cloud Public",
     "cloud_private": "Cloud Private",
-    "hybrid":        "Hybrid"
+    "hybrid": "Hybrid"
   },
   "lifecycle": {
     "evaluation": "Evaluation",
     "production": "Production",
     "maintenance": "Maintenance",
-    "archived":   "Archived"
+    "archived": "Archived"
   },
   "filters": {
-    "allTypes":           "All Types",
-    "allFrameworks":      "All Frameworks",
+    "allTypes": "All Types",
+    "allFrameworks": "All Frameworks",
     "allClassifications": "All Classifications",
-    "allHosting":         "All Hosting",
-    "allLifecycle":       "All Lifecycle",
-    "allStatus":          "Active Assets"
+    "allHosting": "All Hosting",
+    "allLifecycle": "All Lifecycle",
+    "allStatus": "Active Assets"
   },
   "empty": {
-    "title":       "No assets found",
-    "subtitle":    "Create assets to manage your IT landscape and evaluate risks.",
+    "title": "No assets found",
+    "subtitle": "Create assets to manage your IT landscape and evaluate risks.",
     "createFirst": "Create first asset"
   },
   "table": {
-    "name":           "Name",
-    "type":           "Type",
+    "name": "Name",
+    "type": "Type",
     "classification": "Classification",
-    "owner":          "Owner",
-    "status":         "Status"
+    "owner": "Owner",
+    "status": "Status"
   },
   "form": {
-    "name":           "Asset Name",
-    "description":    "Description",
-    "type":           "Asset Type",
+    "name": "Asset Name",
+    "description": "Description",
+    "type": "Asset Type",
     "classification": "Protection Class",
-    "owner":          "Owner (Business Owner)",
-    "assessor":       "Technical Responsible (Assessor)",
-    "version":        "Version / Revision",
-    "vendor":         "Manufacturer / Vendor",
-    "location":       "Location / Region",
+    "owner": "Owner (Business Owner)",
+    "assessor": "Technical Responsible (Assessor)",
+    "version": "Version / Revision",
+    "vendor": "Manufacturer / Vendor",
+    "location": "Location / Region",
     "externalVendor": "External Service Provider (Supply Chain)",
-    "frameworks":     "Relevant Frameworks",
-    "dsfa":           "DPIA required?",
-    "nis2":           "NIS-2 relevant?",
+    "frameworks": "Relevant Frameworks",
+    "dsfa": "DPIA required?",
+    "nis2": "NIS-2 relevant?",
     "placeholders": {
-      "name":        "e.g. ERP system, customer database...",
+      "name": "e.g. ERP system, customer database...",
       "description": "Brief description of intended use...",
-      "version":     "v1.0.0",
-      "vendor":      "Microsoft, SAP, etc.",
-      "location":    "DC South, AWS, etc.",
-      "select":      "Select...",
-      "own":         "— Own operation / Internal —",
+      "version": "v1.0.0",
+      "vendor": "Microsoft, SAP, etc.",
+      "location": "DC South, AWS, etc.",
+      "select": "Select...",
+      "own": "— Own operation / Internal —",
       "pleaseSelect": "— please select —"
     },
-    "save":          "Save Asset",
-    "saving":        "Saving...",
+    "save": "Save Asset",
+    "saving": "Saving...",
     "requiredOwner": "Please select owner and technical responsible."
   },
   "toast": {
-    "bulkDeleted_one":        "{{count}} asset deleted",
-    "bulkDeleted_other":      "{{count}} assets deleted",
-    "bulkDeleteConfirm_one":  "Do you really want to delete / decommission {{count}} selected asset?",
-    "bulkDeleteConfirm_other":"Do you really want to delete / decommission {{count}} selected assets?",
+    "bulkDeleted_one": "{{count}} asset deleted",
+    "bulkDeleted_other": "{{count}} assets deleted",
+    "bulkDeleteConfirm_one": "Do you really want to delete / decommission {{count}} selected asset?",
+    "bulkDeleteConfirm_other": "Do you really want to delete / decommission {{count}} selected assets?",
     "errorDeleting": "Error deleting",
-    "errorSaving":   "Error saving",
+    "errorSaving": "Error saving",
     "nvdNoCpe": "No CPE entry found in NVD. Please check manufacturer/name or adjust search term.",
     "cpeResolveFailed": "CPE resolution failed",
     "cveSearchImpossible": "CVE search not possible (missing asset data).",
@@ -111,7 +111,7 @@
   },
   "yn": {
     "yes": "Yes",
-    "no":  "No"
+    "no": "No"
   },
   "detail": {
     "back": "Back",
@@ -120,7 +120,14 @@
     "editBasics": "Edit General Info",
     "editCompliance": "Edit Compliance",
     "editSecurity": "Edit Security",
-    "ratingLabels": ["", "Very Low (1)", "Low (2)", "Medium (3)", "High (4)", "Very High (5)"],
+    "ratingLabels": [
+      "",
+      "Very Low (1)",
+      "Low (2)",
+      "Medium (3)",
+      "High (4)",
+      "Very High (5)"
+    ],
     "patchStatusLabels": {
       "up-to-date": "Compliant / Up-to-date",
       "pending": "Pending",
@@ -164,7 +171,7 @@
     "protectionNeed": "Protection Need",
     "nextReview": "Next Review",
     "pendingReview": "Pending",
-    "owner": "Owner",
+    "owner": "Asset Owner *",
     "tabs": {
       "basics": "General",
       "classification": "Protection Need",
@@ -309,7 +316,6 @@
     "lifecycle": "Lifecycle *",
     "status": "Operational Status *",
     "vendorPlaceholder": "e.g. Microsoft, Cisco...",
-    "owner": "Asset Owner *",
     "assessor": "System Assessor *",
     "supplyChain": "Service Provider (Supply Chain)",
     "noSupplyChain": "No service provider",
@@ -421,6 +427,30 @@
     "serviceProvider": "Service Provider",
     "findingsJustification": "Findings / Justification",
     "findingsPlaceholder": "Justification for classification...",
-    "incidentsTitle": "Asset-related Incidents"
+    "incidentsTitle": "Asset-related Incidents",
+    "comments": {
+      "placeholder": "Write a comment… Markdown supported, @user for mentions, paste screenshots with Ctrl+V",
+      "noComments": "No comments yet.",
+      "noMatchingUsers": "No matching users",
+      "meetingDate": "Meeting Reference",
+      "mentionHint": "Use @username for mentions.",
+      "postButton": "Post Comment",
+      "saving": "Posting…",
+      "screenshotDesc": "Screenshot from comment",
+      "screenshotAlt": "Screenshot",
+      "imageUploadError": "Image upload failed",
+      "toolbar": {
+        "bold": "Bold",
+        "boldPlaceholder": "bold text",
+        "italic": "Italic",
+        "italicPlaceholder": "italic text",
+        "link": "Insert link",
+        "color": "Text color",
+        "colorPlaceholder": "colored text",
+        "attachDoc": "Attach document",
+        "uploading": "Uploading…",
+        "pasteHint": "Tip: paste a screenshot (Ctrl+V / ⌘V) to upload it directly into the comment."
+      }
+    }
   }
 }
