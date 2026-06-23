@@ -53,6 +53,8 @@ const Training = require('./Training');
 const Group = require('./Group');
 const GroupMember = require('./GroupMember');
 const PushSubscription = require('./PushSubscription');
+const VendorTriageRun = require('./VendorTriageRun');
+const VendorFinding = require('./VendorFinding');
 
 // Associations
 Training.hasMany(UserTraining, { as: 'assignments', foreignKey: 'training_id', onDelete: 'CASCADE' });
@@ -98,6 +100,16 @@ VendorContact.belongsTo(Vendor, { foreignKey: 'vendor_id' });
 Vendor.belongsTo(User, { as: 'assessedBy', foreignKey: 'assessed_by_id' });
 Vendor.hasMany(Document, { foreignKey: 'vendor_id' });
 Document.belongsTo(Vendor, { foreignKey: 'vendor_id' });
+
+// Vendor Triage associations
+Vendor.hasMany(VendorTriageRun, { as: 'triageRuns', foreignKey: 'vendor_id' });
+VendorTriageRun.belongsTo(Vendor, { foreignKey: 'vendor_id' });
+VendorTriageRun.belongsTo(Document, { as: 'document', foreignKey: 'document_id' });
+Document.hasMany(VendorTriageRun, { as: 'triageRuns', foreignKey: 'document_id' });
+VendorTriageRun.belongsTo(User, { as: 'triggeredBy', foreignKey: 'triggered_by_id' });
+VendorTriageRun.hasMany(VendorFinding, { as: 'findings', foreignKey: 'triage_run_id' });
+VendorFinding.belongsTo(VendorTriageRun, { foreignKey: 'triage_run_id' });
+VendorFinding.belongsTo(Vendor, { foreignKey: 'vendor_id' });
 
 // Policy - Asset Mapping (Many-to-Many)
 Policy.belongsToMany(Asset, { through: 'policy_assets', as: 'assets', foreignKey: 'policy_id' });
@@ -261,4 +273,5 @@ module.exports = {
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,
+  VendorTriageRun, VendorFinding,
 };

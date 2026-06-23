@@ -22,7 +22,8 @@
     "settings": "Allgemein",
     "rbac": "Rollen & Rechte",
     "api": "API Dokumentation",
-    "backup": "Backup & Restore"
+    "backup": "Backup & Restore",
+    "llm": "KI / LLM"
   },
   "smtp": {
     "title": "E-Mail / SMTP-Konfiguration",
@@ -245,6 +246,30 @@
     "edit_basics": "Stammdaten änd.",
     "edit_compliance": "Compliance änd.",
     "edit_security": "Security änd."
+  },
+  "llm": {
+    "title": "KI / LLM-Konfiguration",
+    "description": "Konfigurieren Sie ein KI-Sprachmodell für die automatisierte Lieferantendokumenten-Triage (AVV, TOM, SOC2). API-Schlüssel werden verschlüsselt gespeichert.",
+    "provider_label": "Aktiver Anbieter",
+    "provider_anthropic": "Anthropic (Claude)",
+    "provider_openai": "OpenAI / Kompatible API",
+    "provider_gemini": "Google Gemini",
+    "provider_ollama": "Ollama (Lokal)",
+    "api_key": "API-Schlüssel",
+    "api_key_set": "(gesetzt — leer lassen zum Beibehalten)",
+    "api_key_placeholder": "Neuen API-Schlüssel eingeben…",
+    "model": "Modell",
+    "base_url": "Basis-URL",
+    "base_url_placeholder": "z. B. http://localhost:11434",
+    "base_url_help": "Für Ollama oder OpenAI-kompatible Endpunkte (z. B. LM Studio, vLLM).",
+    "test": "Verbindung testen",
+    "testing": "Teste…",
+    "test_ok": "Verbindung erfolgreich — {{provider}} / {{model}} hat geantwortet.",
+    "test_failed": "Verbindung fehlgeschlagen: {{error}}",
+    "saved": "Konfiguration gespeichert.",
+    "save_failed": "Speichern fehlgeschlagen.",
+    "saving": "Speichern…",
+    "no_key_warning": "Kein API-Schlüssel konfiguriert. Die Vendor-Triage funktioniert erst nach Eingabe eines Schlüssels."
   },
   "modules_config": {
     "dsgvo": {
