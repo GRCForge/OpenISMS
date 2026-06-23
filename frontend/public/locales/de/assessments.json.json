@@ -1,0 +1,63 @@
+{
+  "title": "Alle Prüfungen",
+  "searchPlaceholder": "Suche Asset...",
+  "subtitle": "{{filtered}} von {{total}} Bewertungen",
+  "filters": {
+    "allRisks": "Alle Risiken",
+    "currentOnly": "Nur aktuell"
+  },
+  "trend": {
+    "up": "Risiko erhöht",
+    "down": "Risiko verringert",
+    "same": "Unverändert"
+  },
+  "table": {
+    "asset": "Asset",
+    "classification": "Klasse",
+    "confidentiality": "C",
+    "integrity": "I",
+    "availability": "A",
+    "score": "Punktzahl",
+    "risk": "Risiko",
+    "trend": "Trend",
+    "assessor": "Assessor",
+    "date": "Datum",
+    "nextReview": "Nächste Bewertung",
+    "status": "Status"
+  },
+  "statusCurrent": "Aktuell",
+  "statusOutdated": "Veraltet",
+  "unknown": "Unbekannt",
+  "templates": {
+    "title": "Prüfungsvorlagen & SBF Vorlagen",
+    "manage": "Verwalten",
+    "download": "Download"
+  },
+  "empty": {
+    "noResults": "Keine Bewertungen gefunden"
+  },
+  "export": {
+    "id": "ID",
+    "asset": "Asset",
+    "assetType": "Asset-Typ",
+    "classification": "Klassifizierung",
+    "confidentiality": "Vertraulichkeit (C)",
+    "integrity": "Integrität (I)",
+    "availability": "Verfügbarkeit (A)",
+    "riskScore": "Risikowert",
+    "riskLevel": "Risiko-Level",
+    "assessor": "Assessor",
+    "assessedAt": "Bewertet am",
+    "nextReview": "Nächste Bewertung",
+    "current": "Aktuell",
+    "notes": "Notizen",
+    "mitigation": "Abmilderung",
+    "yes": "Ja",
+    "no": "Nein",
+    "filename": "Bewertungen",
+    "sheetName": "Assessments"
+  },
+  "toast": {
+    "downloadError": "Download fehlgeschlagen"
+  }
+}
