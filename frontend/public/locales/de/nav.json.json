@@ -1,0 +1,147 @@
+{
+  "groups": {
+    "cockpit": "Cockpit",
+    "governance": "Governance",
+    "operations": "Operationen",
+    "resources": "Ressourcen",
+    "system": "System"
+  },
+  "items": {
+    "dashboard": {
+      "label": "Dashboard",
+      "hint": "Sicherheitsstatus auf einen Blick"
+    },
+    "my": {
+      "label": "Mein Bereich",
+      "hint": "Ihre Aufgaben"
+    },
+    "myEmployee": {
+      "label": "Mein Training",
+      "hint": "Dein zugewiesenes Training"
+    },
+    "report": {
+      "label": "Berichte",
+      "hint": "Managementberichte"
+    },
+    "compliance": {
+      "label": "Compliance",
+      "hint": "ISO 27001 · NIS-2 · GDPR"
+    },
+    "controls": {
+      "label": "Steuerelemente",
+      "hint": "SoA & Steuerung"
+    },
+    "policies": {
+      "label": "Dokumente",
+      "hint": "Richtlinien & Vorlagen"
+    },
+    "vvt": {
+      "label": "Privatsphäre",
+      "hint": "RoPA (Art. 30 GDPR)"
+    },
+    "subjectRequests": {
+      "label": "Daten-Betreff Rechte",
+      "hint": "Anfrage Art. 15–22 DPR"
+    },
+    "legalRequirements": {
+      "label": "Gesetzliches Register",
+      "hint": "Rechtliche Anforderungen"
+    },
+    "iso27001": {
+      "label": "ISO 27001",
+      "hint": "Anhang A Kontrollen & SoA"
+    },
+    "bsiGrundschutz": {
+      "label": "BSI Grundschutz",
+      "hint": "IT-Grundschutz Compendium"
+    },
+    "nis2": {
+      "label": "NIS-2",
+      "hint": "Art. 21 Sicherheitsmaßnahmen"
+    },
+    "c5": {
+      "label": "BSI C5:2026",
+      "hint": "Cloud-Steuerungskatalog"
+    },
+    "tisax": {
+      "label": "TISAX",
+      "hint": "Beurteilung der Sicherheit von Kraftfahrzeugen"
+    },
+    "aiAct": {
+      "label": "EU AI Act",
+      "hint": "KI-System-Register"
+    },
+    "assets": {
+      "label": "Assets",
+      "hint": "Inventar & Klassifizierung"
+    },
+    "discovery": {
+      "label": "Entdeckung",
+      "hint": "Netzwerk & Agenten"
+    },
+    "risks": {
+      "label": "Risiken",
+      "hint": "ISO 27005 Register"
+    },
+    "incidents": {
+      "label": "Störungen",
+      "hint": "Störungsmanagement"
+    },
+    "tasks": {
+      "label": "Aufgaben",
+      "hint": "Sicherheitsmaßnahmen"
+    },
+    "dora": {
+      "label": "DORA",
+      "hint": "ICT Drittpartei Register"
+    },
+    "pentests": {
+      "label": "Pentest",
+      "hint": "Pentest Tracking & Erkenntnisse"
+    },
+    "vendors": {
+      "label": "Diensteanbieter",
+      "hint": "Firmenverzeichnis"
+    },
+    "contacts": {
+      "label": "Kontakte",
+      "hint": "Firmenkontakte"
+    },
+    "topology": {
+      "label": "Topologie",
+      "hint": "Visualisierung"
+    },
+    "assessments": {
+      "label": "Assessments",
+      "hint": "CIA-Bewertungen"
+    },
+    "reminders": {
+      "label": "Bewertungen",
+      "hint": "Fällige Bewertungen"
+    },
+    "bcm": {
+      "label": "BCM",
+      "hint": "Kontinuitätsmanagement"
+    },
+    "import": {
+      "label": "Importieren",
+      "hint": "CSV Massenupload"
+    },
+    "admin": {
+      "label": "Admin",
+      "hint": "Einstellungen"
+    }
+  },
+  "overdueReviews_one": "{{count}} überfällige Überprüfung",
+  "overdueReviews_other": "{{count}} überfällige Bewertungen",
+  "search": "Suche…",
+  "theme": {
+    "dark": "Dunkler Modus aktivieren",
+    "light": "Lichtmodus aktivieren"
+  },
+  "sidebar": {
+    "collapse": "Seitenleiste einklappen",
+    "expand": "Expand sidebar"
+  },
+  "version": "OpenISMS v{{version}} · ©️ 2026 Maximilian Herz"
+}
