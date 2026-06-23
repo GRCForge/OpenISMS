@@ -350,5 +350,29 @@
     "deleteMasterTraining": "Are you sure you want to delete this training course and all associated employee assignments?",
     "deleteAssignment": "Are you sure you want to delete the assignment for this employee?"
   },
-  "searchPlaceholder": "Search..."
+  "searchPlaceholder": "Search...",
+  "table": {
+    "assetName": "Asset Name",
+    "type": "Type",
+    "classification": "Classification",
+    "risk": "Risk",
+    "actions": "Actions",
+    "personalData": "Personal Data",
+    "vvtStatus": "RoPA Status",
+    "kpi": "KPI",
+    "targetValue": "Target Value",
+    "currentValue": "Current Value",
+    "status": "Status",
+    "owner": "Owner",
+    "latestTrend": "Trend",
+    "finding": "Finding / Non-Conformity",
+    "severity": "Severity",
+    "assignedPerson": "Assigned Person",
+    "capaTask": "CAPA Task",
+    "employee": "Employee",
+    "department": "Department",
+    "completionDate": "Completion Date",
+    "validUntil": "Valid Until",
+    "certificate": "Certificate / Proof"
+  }
 }
