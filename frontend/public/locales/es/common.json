@@ -23,7 +23,8 @@
     "copy": "Copy",
     "hide": "Hide",
     "show": "Show",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "download": "Download"
   },
   "status": {
     "loading": "Loading...",
@@ -130,5 +131,20 @@
     "notes": "Notes",
     "owner": "Owner",
     "dueDate": "Due date"
+  },
+  "cmdPalette": {
+    "searchPlaceholder": "Assets, Risks, Tasks, Documents…",
+    "loading": "Loading…",
+    "noResults": "No results for \"{{query}}\"",
+    "noItems": "No entries",
+    "navigate": "navigate",
+    "open": "open",
+    "close": "close",
+    "types": {
+      "asset": "Asset",
+      "risk": "Risk",
+      "task": "Task",
+      "policy": "Document"
+    }
   }
 }
