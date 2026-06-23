@@ -244,13 +244,24 @@ const path = require('path');
 const fs = require('fs');
 const PUBLIC_DIR = process.env.PUBLIC_DIR || path.join(__dirname, '../public');
 if (fs.existsSync(path.join(PUBLIC_DIR, 'index.html'))) {
-  app.use(express.static(PUBLIC_DIR));
+  app.use(express.static(PUBLIC_DIR, {
+    maxAge: '1d',
+    setHeaders: (res, filePath) => {
+      // Vite places hashed production assets in the 'static' directory
+      if (filePath.includes('/static/') || filePath.match(/\.[a-f0-9]{8,}\./)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }));
   // SPA-Fallback: alle GET-Routen ausserhalb von /api auf index.html (Client-Routing)
   app.use((req, res, next) => {
     if (req.method !== 'GET' || req.path.startsWith('/api')) return next();
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
   });
-  console.log(`[Static] Serving frontend from ${PUBLIC_DIR}`);
+  console.log(`[Static] Serving frontend with cache-control headers from ${PUBLIC_DIR}`);
 }
 
 const PORT = process.env.PORT || 3001;
