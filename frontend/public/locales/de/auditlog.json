@@ -95,9 +95,9 @@
   },
   "details": {
     "noChanges": "Keine Änderungen des Feldes",
-    "count": "Details ({{count}})",
     "changes_one": "{{count}} Änderung",
-    "changes_other": "{{count}} Änderungen"
+    "changes_other": "{{count}} Änderungen",
+    "count": "Details ({{count}})"
   },
   "fields": {
     "name": "Name",

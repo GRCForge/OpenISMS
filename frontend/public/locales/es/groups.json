@@ -1,9 +1,13 @@
 {
   "title": "Groups & Teams",
+  "subtitle_one": "{{count}} group · Assign tasks, @mention and complete together",
+  "subtitle_other": "{{count}} groups · Assign tasks, @mention and complete together",
   "new": "New Group",
   "adminOnly": "Only administrators can manage groups.",
   "manageMembers": "Manage members",
   "noMembers": "No members",
+  "memberCount_one": "{{count}} member",
+  "memberCount_other": "{{count}} members",
   "mentionHint": "Mention in tasks & comments as <code>@{{name}}</code>",
   "empty": {
     "title": "No groups yet",
@@ -43,9 +47,5 @@
     "memberAdded": "Member added",
     "memberRemoved": "Member removed",
     "error": "Error"
-  },
-  "subtitle_one": "{{count}} group · Assign tasks, @mention and complete together",
-  "subtitle_other": "{{count}} groups · Assign tasks, @mention and complete together",
-  "memberCount_one": "{{count}} member",
-  "memberCount_other": "{{count}} members"
+  }
 }

@@ -10,36 +10,36 @@
     "approved": "Genehmigt"
   },
   "exerciseType": {
-    "tabletop": "Tabletop-Übung",
+    "tabletop": "Tischtop Übung",
     "simulation": "Simulation",
-    "technical_recovery": "Technischer Wiederanlauf",
-    "full_failover": "Voll-Failover"
+    "technical_recovery": "Technische Wiederherstellung",
+    "full_failover": "Voller Fehler"
   },
   "exerciseResult": {
     "pending": "Ausstehend",
-    "passed": "Bestanden",
-    "passed_with_findings": "Bestanden mit Findings",
-    "failed": "Nicht bestanden"
+    "passed": "Übergeben",
+    "passed_with_findings": "Mit Findungen übergeben",
+    "failed": "Fehler"
   },
   "errors": {
     "saveError": "Fehler beim Speichern",
     "generic": "Fehler"
   },
   "confirm": {
-    "deleteProcess": "„{{name}}\" wirklich löschen?",
-    "deleteExercise": "„{{title}}\" wirklich löschen?"
+    "deleteProcess": "\"{{name}} \"wirklich löschen?",
+    "deleteExercise": "\"{{title}} \"wirklich löschen?"
   },
   "title": {
     "processes": "BCM – Prozessregister",
     "exercises": "BCM – Übungsprotokoll"
   },
   "subtitle": {
-    "processes": "Business Continuity Management – kritische Geschäftsprozesse und Wiederanlaufstrategien · {{count}} Einträge",
-    "exercises": "Notfall- und Wiederanlaufübungen · {{count}} Einträge"
+    "processes": "Business Continuity Management – kritische Geschäftsprozesse und Wiederherstellungsstrategien · {{count}} Einträge",
+    "exercises": "Notfall- und Wiederherstellungsübungen · {{count}} Einträge"
   },
   "button": {
-    "addProcess": "Prozess erfassen",
-    "addExercise": "Übung erfassen",
+    "addProcess": "Log-Prozess",
+    "addExercise": "Log Übung",
     "cancel": "Abbrechen",
     "saving": "Speichern...",
     "update": "Aktualisieren",
@@ -54,22 +54,22 @@
     "critical": "Kritische Prozesse",
     "testOverdue": "Test überfällig",
     "approved": "Genehmigt",
-    "exercisesTotal": "Übungen gesamt",
-    "passed": "Bestanden",
-    "withFindings": "Mit Findings",
-    "failed": "Nicht bestanden"
+    "exercisesTotal": "Gesamte Übungen",
+    "passed": "Übergeben",
+    "withFindings": "Mit Funden",
+    "failed": "Fehler"
   },
   "filter": {
-    "searchPlaceholder": "Prozess oder Wiederanlaufstrategie suchen...",
-    "allCriticalities": "Alle Kritikalitäten",
+    "searchPlaceholder": "Suche Prozess oder Wiederherstellungsstrategie...",
+    "allCriticalities": "Alle Kritiken",
     "allStatus": "Alle Status"
   },
   "table": {
-    "process": "Prozess",
-    "criticality": "Kritikalität",
+    "process": "Verarbeiten",
+    "criticality": "Kritik",
     "rto_rpo": "RTO / RPO",
     "status": "Status",
-    "owner": "Verantwortlich",
+    "owner": "Besitzer",
     "nextTest": "Nächster Test",
     "title": "Titel",
     "exerciseType": "Übungsart",
@@ -80,41 +80,41 @@
   "noExercises": "Keine Übungen gefunden",
   "modal": {
     "editExercise": "Übung bearbeiten",
-    "addExercise": "Übung erfassen",
+    "addExercise": "Log Übung",
     "editProcess": "BCM-Prozess bearbeiten",
-    "addProcess": "BCM-Prozess erfassen"
+    "addProcess": "BCM-Prozess protokollieren"
   },
   "form": {
     "titleRequired": "Titel *",
-    "titlePlaceholder": "z. B. Notfallübung Rechenzentrumsausfall",
+    "titlePlaceholder": "z. B. Disaster-Recovery-Datenträgerausfall",
     "exerciseType": "Übungsart",
-    "process": "Prozess",
+    "process": "Verarbeiten",
     "noProcess": "— Kein Prozess —",
     "exerciseDate": "Übungsdatum",
     "result": "Ergebnis",
     "participants": "Teilnehmer",
-    "participantsPlaceholder": "z. B. IT-Team, Notfallstab, Fachbereiche",
-    "findings": "Findings",
-    "findingsPlaceholder": "Festgestellte Schwachstellen und Auffälligkeiten",
-    "actions": "Maßnahmen",
-    "actionsPlaceholder": "Abgeleitete Verbesserungsmaßnahmen",
+    "participantsPlaceholder": "z. B. IT-Team, Notruftruppe, Business Units",
+    "findings": "Findungen",
+    "findingsPlaceholder": "Identifizierte Schwachstellen und Erkenntnisse",
+    "actions": "Aktionen",
+    "actionsPlaceholder": "Abgeleitete Verbesserungsaktionen",
     "notes": "Notizen",
     "processNameRequired": "Prozessname *",
-    "processNamePlaceholder": "z. B. Auftragsabwicklung, IT-Notfallbetrieb",
+    "processNamePlaceholder": "z. B. Auftragsabwicklung, IT-Notfall-Operationen",
     "description": "Beschreibung",
     "descriptionPlaceholder": "Kurzbeschreibung des Geschäftsprozesses",
-    "criticality": "Kritikalität",
+    "criticality": "Kritik",
     "status": "Status",
-    "rto": "RTO (Stunden)",
-    "rtoPlaceholder": "Recovery Time Objective in Stunden",
-    "rpo": "RPO (Stunden)",
-    "rpoPlaceholder": "Recovery Point Objective in Stunden",
+    "rto": "RTO (Hours)",
+    "rtoPlaceholder": "Recovery-Time Ziel in Stunden",
+    "rpo": "RPO (Hours)",
+    "rpoPlaceholder": "Erholungspunkt Ziel in Stunden",
     "owner": "Verantwortliche Person",
     "noOwner": "– niemand –",
     "dependencies": "Abhängigkeiten",
     "dependenciesPlaceholder": "Systeme, Ressourcen und Prozesse, von denen dieser Prozess abhängt",
-    "recoveryStrategy": "Wiederanlaufstrategie",
-    "recoveryStrategyPlaceholder": "Beschreibung der Notfall- und Wiederanlaufmaßnahmen",
+    "recoveryStrategy": "Wiederherstellungsstrategie",
+    "recoveryStrategyPlaceholder": "Beschreibung der Notfall- und Wiedereinziehungsverfahren",
     "lastTest": "Letzter Test",
     "nextTest": "Nächster Test"
   },
