@@ -1,0 +1,10 @@
+{
+  "title": "Benachrichtigungen",
+  "pushEnable": "Browser-Push aktivieren",
+  "pushDisable": "Browser-Push deaktivieren",
+  "empty": "Alles erledigt! Keine offenen Aufgaben.",
+  "overdueSince": "Review überfällig seit {{date}}",
+  "nextReview": "Nächstes Review: {{date}}",
+  "neverAssessed": "Noch nie bewertet",
+  "viewAll": "Alle Aufgaben anzeigen"
+}

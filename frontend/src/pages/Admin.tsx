@@ -377,15 +377,6 @@ const SecuritySettings: React.FC = () => {
 };
 
 // ---------------- RBAC / Rollen & Rechte ----------------
-const MODULE_LABELS: Record<string, string> = {
-  assets: 'Assets & Anwendungen', risks: 'Risikoregister', incidents: 'Vorfälle',
-  assessments: 'Bewertungen (SBF)', controls: 'Maßnahmen & SoA', policies: 'Richtlinien-Bibliothek',
-  reminders: 'Erinnerungen', vendors: 'Dienstleister', import: 'Import', reports: 'Management-Reports', admin: 'Administration',
-};
-const ACTION_LABELS: Record<string, string> = {
-  view: 'Lesen', create: 'Erstellen', edit: 'Bearbeiten', delete: 'Löschen',
-  access: 'Zugriff', edit_basics: 'Stammdaten änd.', edit_compliance: 'Compliance änd.', edit_security: 'Security änd.',
-};
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin', assessor: 'Assessor', 'it-staff': 'IT-Staff', dpo: 'DPO', owner: 'Owner', management: 'Management', viewer: 'Viewer',
 };

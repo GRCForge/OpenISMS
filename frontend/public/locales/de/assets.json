@@ -429,14 +429,14 @@
     "findingsPlaceholder": "Begründung für Klassifizierung...",
     "incidentsTitle": "Asset-bezogene Störungen",
     "comments": {
-      "placeholder": "Schreibe einen Kommentar… Markdown unterstützt · @user/@group Erwähnungen · - [ ] Aufgaben · Screenshots einfügen (Ctrl+V)",
-      "noComments": "Noch keine Kommentare.",
-      "noMatchingUsers": "Keine passenden Benutzer oder Gruppen",
-      "meetingDate": "Besprechungsreferenz",
-      "mentionHint": "Nutze @name um einen Benutzer oder eine Gruppe zu erwähnen.",
-      "postButton": "Kommentar posten",
-      "saving": "Posten…",
-      "screenshotDesc": "Screenshot von Kommentar",
+      "placeholder": "Kommentar schreiben… Markdown · @Nutzer/@Gruppe · - [ ] Aufgaben · Screenshots einfügen (Strg+V)",
+      "noComments": "Noch keine Kommentare vorhanden.",
+      "noMatchingUsers": "Keine passenden Nutzer oder Gruppen",
+      "meetingDate": "Termin-Bezug",
+      "mentionHint": "@Name eingeben um Nutzer oder Gruppe zu erwähnen.",
+      "postButton": "Kommentar senden",
+      "saving": "Wird gesendet…",
+      "screenshotDesc": "Screenshot aus Kommentar",
       "screenshotAlt": "Screenshot",
       "imageUploadError": "Bild-Upload fehlgeschlagen",
       "toolbar": {
@@ -446,20 +446,30 @@
         "italicPlaceholder": "italic text",
         "link": "Insert link",
         "color": "Textfarbe",
-        "colorPlaceholder": "farbiger Text",
-        "attachDoc": "Dokument anhängen",
-        "uploading": "Hochladen…",
-        "pasteHint": "Tipp: Fügen Sie einen Screenshot ein (Strg+V / <unk> V) · verwenden - [ ] @user Task um eine Aufgabe automatisch zu erstellen",
-        "list": "Kugelliste",
-        "listPlaceholder": "listenelement",
-        "task": "Task Checkbox einfügen",
+        "colorPlaceholder": "Farbiger Text",
+        "attachDoc": "Dokument verlinken",
+        "uploading": "Wird hochgeladen…",
+        "pasteHint": "Tipp: Screenshot einfügen (Strg+V / ⌘V) · - [ ] @Nutzer Aufgabe erstellt automatisch eine Task",
+        "list": "Aufzählung",
+        "listPlaceholder": "Listenpunkt",
+        "task": "Aufgaben-Checkbox einfügen",
         "taskPlaceholder": "Aufgabenbeschreibung"
       },
-      "reply": "Antwort",
-      "replyingToPrefix": "Antworten auf",
+      "reply": "Antworten",
+      "replyingToPrefix": "Antwort auf",
       "tasksCreated_one": "{{count}} Aufgabe aus Kommentar erstellt",
-      "tasksCreated_other": "{{count}} aus Kommentar erstellte Aufgaben"
+      "tasksCreated_other": "{{count}} Aufgaben aus Kommentar erstellt"
     },
     "notFound": "Asset nicht gefunden"
-  }
+  },
+  "yn": {
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "subtitle_one": "{{count}} asset",
+  "subtitle_other": "{{count}} Assets",
+  "countLabel_one": "{{count}} Eintrag",
+  "countLabel_other": "{{count}} Einträge",
+  "bulkDelete_one": "{{count}} löschen",
+  "bulkDelete_other": "{{count}} löschen"
 }

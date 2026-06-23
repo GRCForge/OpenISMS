@@ -6,7 +6,7 @@ import {
   Network, AlertTriangle, CheckCircle, Info, Database, Layers,
   Server, HardDrive, User, Activity, Globe, ListChecks, History, ChevronRight,
   Share2, ArrowRight, Bold, Italic, Link as LinkIcon, AtSign, Paperclip, X, Eye,
-  BookOpen, AlertOctagon, ExternalLink, Palette, ImageIcon, Loader2
+  BookOpen, AlertOctagon, ExternalLink, Palette, ImageIcon, Loader2, List, SquareCheck, Users, Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
@@ -50,10 +50,9 @@ const RatingBar: React.FC<{ label: string; value: number }> = ({ label, value })
 );
 
 const MarkdownText: React.FC<{ text: string }> = ({ text }) => {
-  // Simple regex-based markdown formatter with ReDoS protection (using bounded quantifiers to prevent backtracking issues)
   let html = text
-    .replace(/[&<>]/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[s] || s)) // Sanitize
-    // Images — must come before links so ![alt](url) doesn't match as a bare link
+    .replace(/[&<>]/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[s] || s))
+    // Images — before links
     .replace(/!\[([^\]]{0,200})\]\(((?:https?:\/\/|\/)[^)]{1,1000})\)/g, (_, alt, url) => {
       const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       return `<img src="${safeUrl}" alt="${alt}" class="max-w-full max-h-64 rounded-lg my-1 inline-block border dark:border-slate-700" loading="lazy" />`;
@@ -62,16 +61,23 @@ const MarkdownText: React.FC<{ text: string }> = ({ text }) => {
     .replace(/\*([^*]{1,500})\*/g, '<em>$1</em>')
     .replace(/`([^`]{1,1000})`/g, '<code class="bg-gray-100 dark:bg-slate-800 px-1 rounded text-xs font-mono">$1</code>')
     .replace(/\[([^\]]{1,500})\]\(([^)]{1,1000})\)/g, (_, linkText, url) => {
-      // Only allow safe URL schemes — blocks javascript:, data:, vbscript: etc.
       const safeUrl = (/^(https?:\/\/|\/)/i.test(url) ? url : '#').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       return `<a href="${safeUrl}" target="_blank" rel="noreferrer noopener" class="text-blue-600 hover:underline">${linkText}</a>`;
     })
-    // Color spans: [color=#rrggbb]text[/color] — only hex colors allowed to prevent CSS injection
     .replace(/\[color=(#[0-9a-fA-F]{3,6})\](.{1,500}?)\[\/color\]/g, (_, color, inner) =>
       `<span style="color: ${color}">${inner}</span>`
     )
-    .replace(/^-(.{1,1000})$/gm, '• $1')
-    .replace(/@([^\s@,.;:!]{1,100}(?:\s+[^\s@,.;:!]{1,100})?)/g, '<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-1 rounded">@$1</span>')
+    // Checked task checkbox — before unchecked and bullets
+    .replace(/^- \[x\] (.{0,1000})$/gim,
+      '<label class="flex items-center gap-2 py-0.5 select-none"><input type="checkbox" checked disabled class="w-4 h-4 rounded accent-blue-500 cursor-default shrink-0" /><span class="line-through text-gray-400 dark:text-slate-500">$1</span></label>')
+    // Unchecked task checkbox
+    .replace(/^- \[ \] (.{0,1000})$/gm,
+      '<label class="flex items-center gap-2 py-0.5 select-none"><input type="checkbox" disabled class="w-4 h-4 rounded cursor-default shrink-0" />$1</label>')
+    // Bullet points
+    .replace(/^[-*] (.{0,1000})$/gm,
+      '<span class="flex items-start gap-1.5 py-0.5"><span class="text-gray-400 dark:text-slate-500 shrink-0">•</span><span>$1</span></span>')
+    .replace(/@([^\s@,.;:!]{1,100}(?:\s+[^\s@,.;:!]{1,100})?)/g,
+      '<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-1 rounded">@$1</span>')
     .replace(/\n/g, '<br />');
 
   return <div className="markdown-content" dangerouslySetInnerHTML={{ __html: html }} />;
@@ -111,7 +117,9 @@ export const AssetDetail: React.FC = () => {
   const [asset, setAsset] = useState<Asset | any>(null);
   const [documents, setDocuments] = useState<AssetDocument[]>([]);
   const [comments, setComments] = useState<AssetComment[]>([]);
+  const [assetTasks, setAssetTasks] = useState<any[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
+  const [groups, setGroups] = useState<{ id: number; name: string; color?: string }[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
   const [vvtEntriesList, setVvtEntriesList] = useState<any[]>([]);
@@ -261,11 +269,21 @@ export const AssetDetail: React.FC = () => {
 
   const loadAsset = () => api.get(`/assets/${id}`).then(r => setAsset(r.data)).finally(() => setLoading(false));
   const loadDocs = () => api.get(`/assets/${id}/documents`).then(r => setDocuments(r.data));
-  const loadComments = () => api.get(`/assets/${id}/comments`).then(r => setComments(r.data));
+  const loadComments = () => {
+    api.get(`/assets/${id}/comments`).then(r => setComments(r.data));
+    api.get('/tasks', { params: { related_type: 'asset', related_id: id, all: 'true' } })
+      .then(r => setAssetTasks(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+  };
+  const toggleCommentTask = async (task: any) => {
+    const newStatus = task.status === 'done' ? 'open' : 'done';
+    await api.put(`/tasks/${task.id}`, { status: newStatus });
+    setAssetTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+  };
 
   useEffect(() => {
     loadAsset(); loadDocs(); loadComments();
     api.get('/users').then(r => setUsers(r.data)).catch(() => setUsers([]));
+    api.get('/groups').then(r => setGroups(r.data)).catch(() => setGroups([]));
     api.get('/vendors').then(r => setVendors(r.data)).catch(() => setVendors([]));
     api.get('/assets').then(r => setAllAssets(r.data)).catch(() => setAllAssets([]));
     api.get('/risks').then(r => setAssetRisks(Array.isArray(r.data) ? r.data : [])).catch(() => setAssetRisks([]));
@@ -426,12 +444,17 @@ export const AssetDetail: React.FC = () => {
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
     try {
-      await api.post(`/assets/${id}/comments`, { 
-        content: comment, 
+      const res = await api.post(`/assets/${id}/comments`, {
+        content: comment,
         meeting_date: meetingDate || undefined,
-        parent_id: replyingTo?.id 
+        parent_id: replyingTo?.id
       });
-      setComment(''); setMeetingDate(''); setReplyingTo(null); loadComments();
+      setComment(''); setMeetingDate(''); setReplyingTo(null);
+      loadComments();
+      const taskCount = res.data?._createdTaskCount;
+      if (taskCount > 0) {
+        toast.success(t('detail.comments.tasksCreated', { count: taskCount }));
+      }
     } catch (err: any) { toast.error(err.response?.data?.error || t('toast.genericError')); }
     finally { setSaving(false); }
   };
@@ -464,7 +487,7 @@ export const AssetDetail: React.FC = () => {
       <SkeletonDetailHeader />
     </div>
   );
-  if (!asset) return <div className="p-6 text-gray-500">Asset nicht gefunden</div>;
+  if (!asset) return <div className="p-6 text-gray-500">{t('detail.notFound')}</div>;
 
   const current = asset.Assessments?.find((a: any) => a.is_current);
   const riskColorMap: Record<string, string> = { low: 'bg-green-500', medium: 'bg-yellow-500', high: 'bg-orange-500', critical: 'bg-red-500' };
@@ -1066,7 +1089,7 @@ export const AssetDetail: React.FC = () => {
                                         )}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed font-sans">{cve.description || 'Keine Beschreibung'}</p>
+                                        <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed font-sans">{cve.description || t('detail.noCveDescription')}</p>
                                         {cve.published && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{cve.published}</p>}
                                       </div>
                                       <div className="flex-shrink-0 self-center">
@@ -1408,8 +1431,35 @@ export const AssetDetail: React.FC = () => {
                              <div className="text-sm text-gray-600 dark:text-slate-400 mt-2 leading-relaxed">
                                 <MarkdownText text={c.content} />
                              </div>
+                             {/* Linked auto-created tasks */}
+                             {(() => {
+                               const linked = assetTasks.filter(t => t.description === `comment:${c.id}`);
+                               if (!linked.length) return null;
+                               return (
+                                 <div className="mt-2 space-y-1 pl-1">
+                                   {linked.map(task => (
+                                     <button key={task.id} type="button" onClick={() => !isViewer && toggleCommentTask(task)}
+                                       className={`flex items-center gap-2 text-xs w-full text-left rounded-lg px-2 py-1 transition-colors ${isViewer ? 'cursor-default' : 'hover:bg-gray-100 dark:hover:bg-slate-800/60'}`}>
+                                       <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${task.status === 'done' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-slate-600'}`}>
+                                         {task.status === 'done' && <Check size={9} />}
+                                       </span>
+                                       <span className={task.status === 'done' ? 'line-through text-gray-400 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300'}>
+                                         {task.title}
+                                       </span>
+                                       {task.assignee && <span className="text-blue-500 dark:text-blue-400 text-[10px] ml-auto shrink-0">@{task.assignee.name}</span>}
+                                       {task.assignedGroup && (
+                                         <span className="text-[10px] ml-auto shrink-0 px-1.5 py-0.5 rounded-full text-white"
+                                           style={{ backgroundColor: task.assignedGroup.color || '#8b5cf6' }}>
+                                           @{task.assignedGroup.name}
+                                         </span>
+                                       )}
+                                     </button>
+                                   ))}
+                                 </div>
+                               );
+                             })()}
                              <div className="mt-2 flex items-center gap-4">
-                               <button onClick={() => setReplyingTo(c)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Antworten</button>
+                               <button onClick={() => setReplyingTo(c)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('detail.comments.reply')}</button>
                              </div>
                           </div>
                           {!isViewer && (user?.role === 'admin' || user?.id === c.user_id) && (
@@ -1449,7 +1499,7 @@ export const AssetDetail: React.FC = () => {
                     {replyingTo && (
                       <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded flex justify-between items-center text-xs">
                         <span className="text-blue-700 dark:text-blue-300">
-                          Antwort auf <span className="font-bold">{replyingTo.author?.name}</span>: <span className="italic">"{replyingTo.content.substring(0, 50)}{replyingTo.content.length > 50 ? '...' : ''}"</span>
+                          {t('detail.comments.replyingToPrefix')} <span className="font-bold">{replyingTo.author?.name}</span>: <span className="italic">"{replyingTo.content.substring(0, 50)}{replyingTo.content.length > 50 ? '...' : ''}"</span>
                         </span>
                         <button type="button" onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white"><X size={14}/></button>
                       </div>
@@ -1458,6 +1508,8 @@ export const AssetDetail: React.FC = () => {
                        <button type="button" onClick={() => insertWithWrap('**', '**', t('detail.comments.toolbar.boldPlaceholder'))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.bold')}><Bold size={16}/></button>
                        <button type="button" onClick={() => insertWithWrap('*', '*', t('detail.comments.toolbar.italicPlaceholder'))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.italic')}><Italic size={16}/></button>
                        <button type="button" onClick={() => insertAtCursor('[Link](https://...)')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.link')}><LinkIcon size={16}/></button>
+                       <button type="button" onClick={() => insertAtCursor(`- ${t('detail.comments.toolbar.listPlaceholder')}`)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.list')}><List size={16}/></button>
+                       <button type="button" onClick={() => insertAtCursor(`- [ ] ${t('detail.comments.toolbar.taskPlaceholder')}`)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.task')}><SquareCheck size={16}/></button>
                        {/* Color picker */}
                        <div className="relative" ref={colorPickerRef}>
                          <button
@@ -1527,14 +1579,16 @@ export const AssetDetail: React.FC = () => {
                           checkMentions(target.value, target.selectionStart);
                         }}
                         onKeyUp={e => {
+                          if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'].includes(e.key)) return;
                           const target = e.target as HTMLTextAreaElement;
                           checkMentions(target.value, target.selectionStart);
                         }}
                         onKeyDown={e => {
                           if (mentionSearch !== null) {
-                            const filtered = activeUsers.filter(u => 
-                              u.name.toLowerCase().includes(mentionSearch.toLowerCase())
-                            );
+                            const filtered = [
+                              ...activeUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())),
+                              ...groups.filter(g => g.name.toLowerCase().includes(mentionSearch.toLowerCase())),
+                            ];
                             if (e.key === 'Escape') {
                               e.preventDefault();
                               setMentionSearch(null);
@@ -1559,40 +1613,49 @@ export const AssetDetail: React.FC = () => {
                           }
                         }}
                       />
-                      {mentionSearch !== null && (
+                      {mentionSearch !== null && (() => {
+                        const mentionCandidates = [
+                          ...activeUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).map(u => ({ type: 'user' as const, id: u.id, name: u.name, meta: u.role })),
+                          ...groups.filter(g => g.name.toLowerCase().includes(mentionSearch.toLowerCase())).map(g => ({ type: 'group' as const, id: g.id, name: g.name, meta: 'group' })),
+                        ];
+                        return (
                         <div className="absolute left-4 bottom-full mb-1 w-64 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 p-2 max-h-48 overflow-y-auto animate-fade-in">
                           <p className="text-[10px] font-bold text-gray-400 uppercase px-2 mb-1">{t('detail.mentionTitle')}</p>
-                          {activeUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).map((u, i) => (
+                          {mentionCandidates.map((item, i) => (
                             <button
-                              key={u.id}
+                              key={`${item.type}-${item.id}`}
                               type="button"
-                              onClick={() => insertMention(u.name)}
+                              onClick={() => insertMention(item.name)}
                               className={`w-full text-left px-2 py-1.5 text-xs rounded flex items-center gap-2 dark:text-slate-300 transition-colors ${
                                 i === mentionHighlightIndex
                                   ? 'bg-blue-500 text-white dark:bg-blue-600 font-semibold'
                                   : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                               }`}
                             >
-                              <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                                i === mentionHighlightIndex
-                                  ? 'bg-white/20 text-white'
-                                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              }`}>
-                                {u.name.charAt(0)}
+                              <span
+                                className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${i === mentionHighlightIndex ? 'bg-white/20 text-white' : 'text-white'}`}
+                                style={i !== mentionHighlightIndex && item.type === 'group' && (item as any).color
+                                  ? { backgroundColor: (item as any).color }
+                                  : i !== mentionHighlightIndex
+                                    ? { backgroundColor: item.type === 'group' ? '#8b5cf6' : '#3b82f6' }
+                                    : undefined}
+                              >
+                                {item.type === 'group' ? <Users size={10} /> : item.name.charAt(0)}
                               </span>
-                              <span className="flex-1 truncate">{u.name}</span>
+                              <span className="flex-1 truncate">{item.name}</span>
                               <span className={`text-[9px] uppercase px-1.5 py-0.5 rounded ${
                                 i === mentionHighlightIndex
                                   ? 'bg-white/20 text-white'
                                   : 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400'
-                              }`}>{u.role}</span>
+                              }`}>{item.meta}</span>
                             </button>
                           ))}
-                          {activeUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).length === 0 && (
+                          {mentionCandidates.length === 0 && (
                             <p className="text-xs text-gray-400 italic px-2 py-1">{t('detail.comments.noMatchingUsers')}</p>
                           )}
                         </div>
-                      )}
+                        );
+                      })()}
                     </div>
                     <p className="text-[10px] text-gray-400 mt-1 mb-2">{t('detail.comments.toolbar.pasteHint')}</p>
                     <div className="flex flex-col sm:flex-row justify-between items-center mt-1 gap-3">
