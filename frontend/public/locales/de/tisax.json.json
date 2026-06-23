@@ -1,0 +1,109 @@
+{
+  "title": "TISAX-Prüfungen",
+  "subtitle": "Vertrauenswürdiger Datensicherheitsprüfungsaustausch · {{count}} Einträge",
+  "status": {
+    "preparation": "Zubereitung",
+    "requested": "Angefragt",
+    "scheduled": "Geplant",
+    "audit_done": "Audit abgeschlossen",
+    "label_received": "Label empfangen"
+  },
+  "reqStatus": {
+    "open": "Öffnen",
+    "in_progress": "In Bearbeitung",
+    "implemented": "Implementiert",
+    "not_applicable": "Nicht anwendbar"
+  },
+  "button": {
+    "newAssessment": "Prüfung hinzufügen"
+  },
+  "tabs": {
+    "assessments": "Assessments",
+    "requirements": "VDA ISA Anforderungen"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "active": "Aktiv",
+    "labelReceived": "Label empfangen",
+    "overdue": "Überfällig"
+  },
+  "filter": {
+    "searchPlaceholder": "Suchumfang oder Auditorfirma...",
+    "allStatuses": "Alle Status"
+  },
+  "table": {
+    "scope": "Bereich",
+    "level": "Level",
+    "label": "Label",
+    "status": "Status",
+    "assessmentDate": "Prüfungsdatum",
+    "validUntil": "Gültig bis"
+  },
+  "empty": {
+    "title": "Keine TISAX-Prüfungen gefunden"
+  },
+  "confirm": {
+    "delete": "\"{{name}} \"wirklich löschen?",
+    "deleteRequirement": "Really delete requirement {{ref}} \"{{title}}\"?"
+  },
+  "toast": {
+    "catalogLoadError": "Fehler beim Laden des Katalogs",
+    "saveError": "Fehler beim Speichern",
+    "error": "Fehler"
+  },
+  "requirementsTab": {
+    "stats": {
+      "requirements": "Anforderungen",
+      "assessed": "Bewertet",
+      "targetReached": "Ziel erreicht",
+      "avgMaturity": "Ø Bindungsgrad"
+    },
+    "empty": {
+      "title": "Noch keine VDA ISA Anforderungen verfügbar",
+      "subtitle": "Laden Sie den integrierten VDA ISA Katalog um die Reifenselbstbewertung zu starten.",
+      "loadCatalog": "VDA ISA Katalog laden",
+      "loadingCatalog": "Katalog wird geladen..."
+    },
+    "chapter": {
+      "targetReached": "{{reached}}/{{total}} Ziel erreicht"
+    },
+    "maturity": {
+      "remove": "Prüfung entfernen",
+      "level": "Maturity level {{level}}",
+      "target": "Target: {{target}}"
+    },
+    "editModal": {
+      "statusLabel": "Status",
+      "targetLevel": "Level der Zielreife",
+      "notes": "Notizen",
+      "cancel": "Abbrechen",
+      "saving": "Speichern...",
+      "save": "Speichern"
+    }
+  },
+  "modal": {
+    "editTitle": "TISAX-Prüfung bearbeiten",
+    "newTitle": "TISAX-Prüfung aufnehmen",
+    "scopeDescriptionLabel": "Bereichsbeschreibung *",
+    "scopeDescriptionPlaceholder": "Beschreibung des TISAX-Anwendungsbereichs und der zu bewertenden Standorte / Bereiche",
+    "assessmentLevelLabel": "Prüfungsstufe",
+    "assessmentLevelOptions": {
+      "AL2": "AL2 – Hohe Schutzbedürfnisse",
+      "AL3": "AL3 – Sehr hoher Schutzbedarf"
+    },
+    "statusLabel": "Status",
+    "labelRequestedLabel": "Angefordertes Label",
+    "labelRequestedPlaceholder": "z.B. TISAX Label – Information Hoch",
+    "auditorCompanyLabel": "Auditor-Unternehmen",
+    "auditorCompanyPlaceholder": "Name des akkreditierten Audit-Anbieters",
+    "assessmentDateLabel": "Prüfungsdatum",
+    "labelValidUntilLabel": "Label gültig bis",
+    "ownerLabel": "Verantwortliche Person",
+    "noOwner": "– niemand –",
+    "notesLabel": "Notizen",
+    "cancel": "Abbrechen",
+    "saving": "Speichern...",
+    "update": "Aktualisieren",
+    "create": "Anlegen"
+  }
+}
