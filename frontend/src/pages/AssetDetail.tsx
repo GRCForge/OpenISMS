@@ -1698,7 +1698,7 @@ export const AssetDetail: React.FC = () => {
           
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.descriptionUsage')}</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} placeholder={t('detail.descriptionPlaceholder')} />
+            <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} placeholder={t('detail.descriptionPlaceholder')} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2018,7 +2018,7 @@ export const AssetDetail: React.FC = () => {
 
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.findingsJustification')}</label>
-            <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder={t('detail.findingsPlaceholder')} value={assessForm.notes} onChange={e => setAssessForm(f => ({ ...f, notes: e.target.value }))} />
+            <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder={t('detail.findingsPlaceholder')} value={assessForm.notes} onChange={e => setAssessForm(f => ({ ...f, notes: e.target.value }))} />
           </div>
 
           <section className="p-3 rounded-xl border dark:border-slate-800 space-y-3">
@@ -2026,7 +2026,7 @@ export const AssetDetail: React.FC = () => {
             <Select label={t('detail.mitigationAction')} value={assessForm.risk_treatment} onChange={e => setAssessForm(f => ({ ...f, risk_treatment: e.target.value }))} options={Object.entries(treatmentLabels).map(([v, l]) => ({ value: v, label: l }))} />
             <div className="flex flex-col gap-1">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.mitigationNotesLabel')}</label>
-              <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder={t('detail.mitigationPlaceholder')} value={assessForm.mitigation} onChange={e => setAssessForm(f => ({ ...f, mitigation: e.target.value }))} />
+              <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} placeholder={t('detail.mitigationPlaceholder')} value={assessForm.mitigation} onChange={e => setAssessForm(f => ({ ...f, mitigation: e.target.value }))} />
             </div>
           </section>
 
@@ -2035,7 +2035,7 @@ export const AssetDetail: React.FC = () => {
               <h3 className="text-xs font-bold uppercase text-amber-700 dark:text-amber-400 flex items-center gap-1.5"><AlertTriangle size={13} /> {t('detail.riskAcceptanceFields')}</h3>
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.acceptanceJustificationLabel')} <span className="text-red-500 font-bold ml-1">*</span></label>
-                <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} required placeholder={t('detail.acceptanceJustificationPlaceholder')} value={assessForm.treatment_justification} onChange={e => setAssessForm(f => ({ ...f, treatment_justification: e.target.value }))} />
+                <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} required placeholder={t('detail.acceptanceJustificationPlaceholder')} value={assessForm.treatment_justification} onChange={e => setAssessForm(f => ({ ...f, treatment_justification: e.target.value }))} />
               </div>
               <Input label={t('detail.acceptedByNameRole')} value={assessForm.accepted_by} onChange={e => setAssessForm(f => ({ ...f, accepted_by: e.target.value }))} placeholder={t('detail.acceptedByPlaceholder')} required={assessForm.risk_treatment === 'accept'} />
               <Input label={t('detail.validUntilLabel')} type="date" value={assessForm.accepted_until} onChange={e => setAssessForm(f => ({ ...f, accepted_until: e.target.value }))} />
@@ -2095,18 +2095,18 @@ export const AssetDetail: React.FC = () => {
               </div>
               <div className="md:col-span-2 flex flex-col gap-1">
                 <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.vvtPurposeLabel')}</label>
-                <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.purpose} onChange={e => setVvtForm({ ...vvtForm, purpose: e.target.value })} />
+                <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.purpose} onChange={e => setVvtForm({ ...vvtForm, purpose: e.target.value })} />
               </div>
               <Input label={t('detail.vvtLegalBasisLabel')} value={vvtForm.legal_basis} onChange={v => setVvtForm({ ...vvtForm, legal_basis: v.target.value })} />
               <Select label="Status" value={vvtForm.status} onChange={v => setVvtForm({ ...vvtForm, status: v.target.value as any })} options={[{value: 'draft', label: t('detail.vvtDraft')}, {value: 'active', label: t('detail.vvtActive')}, {value: 'archived', label: t('detail.vvtArchived')}]} />
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.vvtDataCategoriesLabel')}</label>
-                  <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_categories} onChange={e => setVvtForm({ ...vvtForm, data_categories: e.target.value })} placeholder={t('detail.vvtDataCategoriesPlaceholder')} />
+                  <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_categories} onChange={e => setVvtForm({ ...vvtForm, data_categories: e.target.value })} placeholder={t('detail.vvtDataCategoriesPlaceholder')} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.vvtDataSubjectsLabel')}</label>
-                  <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_subjects} onChange={e => setVvtForm({ ...vvtForm, data_subjects: e.target.value })} placeholder={t('detail.vvtDataSubjectsPlaceholder')} />
+                  <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={vvtForm.data_subjects} onChange={e => setVvtForm({ ...vvtForm, data_subjects: e.target.value })} placeholder={t('detail.vvtDataSubjectsPlaceholder')} />
                 </div>
               </div>
               <Select label={t('detail.vvtResponsibleLabel')} value={vvtForm.responsible_id} onChange={v => setVvtForm({ ...vvtForm, responsible_id: v.target.value })} options={[{ value: '', label: t('form.placeholders.pleaseSelect') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />

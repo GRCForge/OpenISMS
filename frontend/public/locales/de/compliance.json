@@ -37,7 +37,7 @@
       "critical": "Kritisch"
     },
     "status": {
-      "open": "Öffnen",
+      "open": "Offen",
       "in_progress": "In Bearbeitung",
       "closed": "Geschlossen"
     }
@@ -177,7 +177,7 @@
     "findingStatus": {
       "resolved": "Gelöst",
       "wont_fix": "Akzeptiert",
-      "open": "Öffnen"
+      "open": "Offen"
     },
     "noTaskLinked": "Keine Aufgabe verknüpft",
     "markResolvedBtn": "Als gelöst markieren",
@@ -350,5 +350,29 @@
     "deleteMasterTraining": "Sind Sie sicher, dass Sie diesen Schulungskurs und alle zugehörigen Mitarbeiterzuweisungen löschen möchten?",
     "deleteAssignment": "Sind Sie sicher, dass Sie die Aufgabe für diesen Mitarbeiter löschen möchten?"
   },
-  "searchPlaceholder": "Suche..."
+  "searchPlaceholder": "Suche...",
+  "table": {
+    "assetName": "Asset-Name",
+    "type": "Typ",
+    "classification": "Klassifizierung",
+    "risk": "Risiko",
+    "actions": "Aktionen",
+    "personalData": "Personenbezogene Daten",
+    "vvtStatus": "VVT-Status",
+    "kpi": "KPI",
+    "targetValue": "Zielwert",
+    "currentValue": "Ist-Wert",
+    "status": "Status",
+    "owner": "Verantwortlicher",
+    "latestTrend": "Trend",
+    "finding": "Feststellung / Abweichung",
+    "severity": "Schweregrad",
+    "assignedPerson": "Zugewiesene Person",
+    "capaTask": "CAPA-Maßnahme",
+    "employee": "Mitarbeiter",
+    "department": "Abteilung",
+    "completionDate": "Abschlussdatum",
+    "validUntil": "Gültig bis",
+    "certificate": "Zertifikat / Nachweis"
+  }
 }

@@ -110,12 +110,23 @@ router.get('/callback', async (req, res) => {
 
     // Try standard OIDC picture claim first; fall back to MS Graph for Azure/Entra
     let avatar_url = info.picture || claims.picture || null;
+    if (avatar_url && typeof avatar_url === 'string') {
+      // Request higher resolution for Google/other profile pictures (e.g. s512-c instead of s96-c)
+      avatar_url = avatar_url.replace(/([=|\/]s)\d+(-\w+)?$/, '$1512$2');
+    }
     if (!avatar_url && tokenSet.access_token) {
       try {
-        const photoRes = await fetch('https://graph.microsoft.com/v1.0/me/photos/240x240/$value', {
+        // Try getting full resolution photo first, fall back to 240x240 if needed
+        let photoRes = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
           headers: { Authorization: `Bearer ${tokenSet.access_token}` },
           signal: AbortSignal.timeout(4000),
         });
+        if (!photoRes.ok) {
+          photoRes = await fetch('https://graph.microsoft.com/v1.0/me/photos/240x240/$value', {
+            headers: { Authorization: `Bearer ${tokenSet.access_token}` },
+            signal: AbortSignal.timeout(4000),
+          });
+        }
         if (photoRes.ok) {
           const buf = await photoRes.arrayBuffer();
           const ct  = photoRes.headers.get('content-type') || 'image/jpeg';

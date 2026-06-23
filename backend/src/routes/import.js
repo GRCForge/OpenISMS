@@ -163,36 +163,29 @@ const cellText = (v) => {
 };
 
 const readRows = async (file) => {
+  let headers = [];
   const rows = [];
   if (file.originalname.endsWith('.csv')) {
     const text = file.buffer.toString('utf-8').replace(/\r/g, '');
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length === 0) return [];
+    if (lines.length === 0) return { headers, rows };
     const sep = lines[0].includes(';') ? ';' : ',';
-    const headers = lines[0].split(sep).map(h => safeHeader(h.replace(/^"|"$/g, '').trim()));
+    headers = lines[0].split(sep).map(h => safeHeader(h.replace(/^"|"$/g, '').trim()));
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(sep).map(v => v.replace(/^"|"$/g, '').trim());
-      const row = Object.create(null); // null prototype — no inherited properties to shadow
-      // codeql[js/remote-property-injection] — row has no prototype (Object.create(null));
-      // safeHeader() above already strips __proto__/constructor/prototype keys.
-      headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
-      rows.push(row);
+      const rowValues = headers.map((_, idx) => values[idx] || '');
+      rows.push(rowValues);
     }
   } else {
-    // readSheet returns the first sheet as an array of rows, each row an array
-    // of (typed) cell values. Row 0 is the header row. (The default export of
-    // read-excel-file v9 instead returns [{ sheet, data }], hence readSheet.)
     const sheet = await readSheet(file.buffer);
-    if (sheet.length === 0) return [];
-    const headers = sheet[0].map(h => safeHeader(cellText(h)));
+    if (sheet.length === 0) return { headers, rows };
+    headers = sheet[0].map(h => safeHeader(cellText(h)));
     for (let i = 1; i < sheet.length; i++) {
-      const dataRow = Object.create(null); // null prototype — no inherited properties to shadow
-      // codeql[js/remote-property-injection] — same guarantee as the CSV path above.
-      headers.forEach((h, idx) => { dataRow[h] = cellText(sheet[i][idx]); });
-      rows.push(dataRow);
+      const rowValues = headers.map((_, idx) => cellText(sheet[i][idx]));
+      rows.push(rowValues);
     }
   }
-  return rows;
+  return { headers, rows };
 };
 
 router.post('/preview', authenticate, requireRole('admin', 'assessor', 'it-staff'), upload.single('file'), async (req, res) => {
@@ -202,10 +195,8 @@ router.post('/preview', authenticate, requireRole('admin', 'assessor', 'it-staff
   if (!config) return res.status(400).json({ error: 'Ungültiger Import-Typ' });
 
   try {
-    const rows = await readRows(req.file);
+    const { headers, rows } = await readRows(req.file);
     if (rows.length === 0) return res.status(400).json({ error: 'Datei ist leer' });
-    
-    const headers = Object.keys(rows[0]);
     
     // Intelligent mapping
     const mapping = {};
@@ -217,9 +208,22 @@ router.post('/preview', authenticate, requireRole('admin', 'assessor', 'it-staff
       if (match) mapping[f.key] = match;
     });
 
+    // Format preview rows as objects safely for the UI
+    const preview = rows.slice(0, 5).map(rowValues => {
+      const obj = {};
+      headers.forEach((h, idx) => {
+        if (typeof h === 'string' && /^[a-zA-Z0-9äöüÄÖÜß_\s.\-()\/]+$/.test(h) && h !== '__proto__' && h !== 'constructor' && h !== 'prototype') {
+          obj[h] = rowValues[idx] || '';
+        } else {
+          obj[`col_${idx}`] = rowValues[idx] || '';
+        }
+      });
+      return obj;
+    });
+
     res.json({
       headers,
-      preview: rows.slice(0, 5),
+      preview,
       mapping,
       totalRows: rows.length,
       fields: config.fields.map(f => ({ key: f.key, label: f.label, required: f.required }))
@@ -235,16 +239,17 @@ router.post('/process', authenticate, requireRole('admin', 'assessor', 'it-staff
   if (!config) return res.status(400).json({ error: 'Ungültiger Import-Typ' });
 
   try {
-    const rows = await readRows(req.file);
+    const { headers, rows } = await readRows(req.file);
     const results = { created: 0, errors: [] };
 
     for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+      const rowValues = rows[i];
       try {
         const data = {};
         for (const field of config.fields) {
           const colName = mapping[field.key];
-          let val = colName ? row[colName] : field.default;
+          const colIdx = headers.indexOf(colName);
+          let val = colIdx !== -1 ? rowValues[colIdx] : field.default;
           
           if (field.required && !val) throw new Error(`${field.label} fehlt`);
           
