@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
-  ArrowLeft, Plus, Upload, Trash2, Download, MessageSquare, FileText, 
-  ClipboardCheck, Clock, Building2, Mail, Phone, Edit, Shield, 
+  ArrowLeft, Plus, Upload, Trash2, Download, MessageSquare, FileText,
+  ClipboardCheck, Clock, Building2, Mail, Phone, Edit, Shield,
   Network, AlertTriangle, CheckCircle, Info, Database, Layers,
   Server, HardDrive, User, Activity, Globe, ListChecks, History, ChevronRight,
   Share2, ArrowRight, Bold, Italic, Link as LinkIcon, AtSign, Paperclip, X, Eye,
-  BookOpen, AlertOctagon, ExternalLink
+  BookOpen, AlertOctagon, ExternalLink, Palette, ImageIcon, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
@@ -36,6 +36,12 @@ import { Skeleton, SkeletonDetailHeader } from '../components/ui/Skeleton';
 
 const catColors: Record<string, string> = { contract: 'bg-blue-100 text-blue-800', dpa: 'bg-purple-100 text-purple-800', policy: 'bg-green-100 text-green-800', guideline: 'bg-teal-100 text-teal-800', procedure: 'bg-indigo-100 text-indigo-800', certificate: 'bg-yellow-100 text-yellow-800', risk_report: 'bg-orange-100 text-orange-800', risk_acceptance: 'bg-red-100 text-red-800', other: 'bg-gray-100 text-gray-700' };
 
+const COMMENT_COLOR_PALETTE = [
+  '#ef4444', '#f97316', '#eab308', '#22c55e',
+  '#3b82f6', '#6366f1', '#a855f7', '#ec4899',
+  '#14b8a6', '#64748b', '#0f172a', '#6b7280',
+];
+
 const RatingBar: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <div>
     <div className="flex justify-between mb-1"><span className="text-sm text-gray-600 dark:text-slate-400">{label}</span><span className="text-sm font-medium dark:text-slate-200">{value}/5</span></div>
@@ -47,16 +53,23 @@ const MarkdownText: React.FC<{ text: string }> = ({ text }) => {
   // Simple regex-based markdown formatter with ReDoS protection (using bounded quantifiers to prevent backtracking issues)
   let html = text
     .replace(/[&<>]/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[s] || s)) // Sanitize
+    // Images — must come before links so ![alt](url) doesn't match as a bare link
+    .replace(/!\[([^\]]{0,200})\]\(((?:https?:\/\/|\/)[^)]{1,1000})\)/g, (_, alt, url) => {
+      const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return `<img src="${safeUrl}" alt="${alt}" class="max-w-full max-h-64 rounded-lg my-1 inline-block border dark:border-slate-700" loading="lazy" />`;
+    })
     .replace(/\*\*([^*]{1,500})\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]{1,500})\*/g, '<em>$1</em>')
     .replace(/`([^`]{1,1000})`/g, '<code class="bg-gray-100 dark:bg-slate-800 px-1 rounded text-xs font-mono">$1</code>')
     .replace(/\[([^\]]{1,500})\]\(([^)]{1,1000})\)/g, (_, linkText, url) => {
       // Only allow safe URL schemes — blocks javascript:, data:, vbscript: etc.
-      // Quotes must be escaped too: a URL like `https://a" onmouseover="…`
-      // would otherwise break out of the href attribute.
       const safeUrl = (/^(https?:\/\/|\/)/i.test(url) ? url : '#').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       return `<a href="${safeUrl}" target="_blank" rel="noreferrer noopener" class="text-blue-600 hover:underline">${linkText}</a>`;
     })
+    // Color spans: [color=#rrggbb]text[/color] — only hex colors allowed to prevent CSS injection
+    .replace(/\[color=(#[0-9a-fA-F]{3,6})\](.{1,500}?)\[\/color\]/g, (_, color, inner) =>
+      `<span style="color: ${color}">${inner}</span>`
+    )
     .replace(/^-(.{1,1000})$/gm, '• $1')
     .replace(/@([^\s@,.;:!]{1,100}(?:\s+[^\s@,.;:!]{1,100})?)/g, '<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-1 rounded">@$1</span>')
     .replace(/\n/g, '<br />');
@@ -150,6 +163,9 @@ export const AssetDetail: React.FC = () => {
   const [cpeResolving, setCpeResolving] = useState(false);
   const [cpeSuggestions, setCpeSuggestions] = useState<{ cpe: string; title: string }[]>([]);
   const [cpeSearchQuery, setCpeSearchQuery] = useState('');
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -269,6 +285,56 @@ export const AssetDetail: React.FC = () => {
        commentInputRef.current?.setSelectionRange(start + text.length, start + text.length);
     }, 10);
   };
+
+  // Wraps the selected text (or a fallback placeholder) with prefix/suffix.
+  const insertWithWrap = (prefix: string, suffix: string, fallback: string) => {
+    if (!commentInputRef.current) return;
+    const start = commentInputRef.current.selectionStart;
+    const end = commentInputRef.current.selectionEnd;
+    const selected = comment.substring(start, end);
+    const inner = selected.length > 0 ? selected : fallback;
+    const next = comment.substring(0, start) + prefix + inner + suffix + comment.substring(end);
+    setComment(next);
+    setTimeout(() => {
+      commentInputRef.current?.focus();
+      commentInputRef.current?.setSelectionRange(start + prefix.length, start + prefix.length + inner.length);
+    }, 10);
+  };
+
+  // Uploads a pasted image blob and inserts a markdown image reference.
+  const handleCommentPaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = Array.from(e.clipboardData.items);
+    const imageItem = items.find(item => item.type.startsWith('image/'));
+    if (!imageItem) return;
+    e.preventDefault();
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    setImageUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file, `screenshot-${Date.now()}.png`);
+      fd.append('category', 'other');
+      fd.append('description', t('detail.comments.screenshotDesc'));
+      const res = await api.post(`/assets/${id}/documents`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      insertAtCursor(`![${t('detail.comments.screenshotAlt')}](/api/assets/${id}/documents/${res.data.id}/download)`);
+    } catch {
+      toast.error(t('detail.comments.imageUploadError'));
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  // Close color picker when clicking outside
+  useEffect(() => {
+    if (!colorPickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+        setColorPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [colorPickerOpen]);
 
   const checkMentions = (value: string, selectionStart: number) => {
     const textBeforeCursor = value.slice(0, selectionStart);
@@ -1376,7 +1442,7 @@ export const AssetDetail: React.FC = () => {
                        )}
                      </div>
                    ))}
-                   {comments.length === 0 && <div className="text-center py-12 text-gray-400 italic">Noch keine Kommentare vorhanden.</div>}
+                   {comments.length === 0 && <div className="text-center py-12 text-gray-400 italic">{t('detail.comments.noComments')}</div>}
                 </div>
                 {!isViewer && (
                   <form onSubmit={handleComment} className="mt-6 pt-6 border-t dark:border-slate-800">
@@ -1388,11 +1454,40 @@ export const AssetDetail: React.FC = () => {
                         <button type="button" onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white"><X size={14}/></button>
                       </div>
                     )}
-                    <div className="flex items-center gap-1 mb-2">
-                       <button type="button" onClick={() => insertAtCursor('**fett**')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title="Fett"><Bold size={16}/></button>
-                       <button type="button" onClick={() => insertAtCursor('*kursiv*')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title="Kursiv"><Italic size={16}/></button>
-                       <button type="button" onClick={() => insertAtCursor('[Link](https://...)')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title="Link"><LinkIcon size={16}/></button>
-                       <button type="button" onClick={() => setLinkDocModalOpen(true)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title="Datei verlinken"><Paperclip size={16}/></button>
+                    <div className="flex items-center gap-1 mb-2 flex-wrap">
+                       <button type="button" onClick={() => insertWithWrap('**', '**', t('detail.comments.toolbar.boldPlaceholder'))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.bold')}><Bold size={16}/></button>
+                       <button type="button" onClick={() => insertWithWrap('*', '*', t('detail.comments.toolbar.italicPlaceholder'))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.italic')}><Italic size={16}/></button>
+                       <button type="button" onClick={() => insertAtCursor('[Link](https://...)')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.link')}><LinkIcon size={16}/></button>
+                       {/* Color picker */}
+                       <div className="relative" ref={colorPickerRef}>
+                         <button
+                           type="button"
+                           onClick={() => setColorPickerOpen(o => !o)}
+                           className={`p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded transition-colors ${colorPickerOpen ? 'bg-gray-100 dark:bg-slate-800 text-blue-600' : 'text-gray-500'}`}
+                           title={t('detail.comments.toolbar.color')}
+                         >
+                           <Palette size={16}/>
+                         </button>
+                         {colorPickerOpen && (
+                           <div className="absolute left-0 top-full mt-1 z-50 p-2 bg-white dark:bg-slate-900 border dark:border-slate-700 rounded-xl shadow-xl grid grid-cols-6 gap-1.5 w-[120px]">
+                             {COMMENT_COLOR_PALETTE.map(color => (
+                               <button
+                                 key={color}
+                                 type="button"
+                                 title={color}
+                                 onClick={() => {
+                                   insertWithWrap(`[color=${color}]`, '[/color]', t('detail.comments.toolbar.colorPlaceholder'));
+                                   setColorPickerOpen(false);
+                                 }}
+                                 className="w-7 h-7 rounded-md border border-white/20 shadow-sm hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                 style={{ backgroundColor: color }}
+                               />
+                             ))}
+                           </div>
+                         )}
+                       </div>
+                       <div className="w-px h-4 bg-gray-200 dark:bg-slate-700 mx-0.5" />
+                       <button type="button" onClick={() => setLinkDocModalOpen(true)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500" title={t('detail.comments.toolbar.attachDoc')}><Paperclip size={16}/></button>
                        <button
                          type="button"
                          onClick={() => {
@@ -1408,14 +1503,21 @@ export const AssetDetail: React.FC = () => {
                        >
                          <AtSign size={16} />
                        </button>
+                       {imageUploading && (
+                         <span className="flex items-center gap-1 text-xs text-blue-500 ml-1">
+                           <Loader2 size={13} className="animate-spin"/>
+                           {t('detail.comments.toolbar.uploading')}
+                         </span>
+                       )}
                     </div>
                     <div className="relative">
                       <textarea
                         ref={commentInputRef}
                         className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-4 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden transition-all shadow-xs"
                         rows={4}
-                        placeholder={t('detail.markdownHint')}
+                        placeholder={t('detail.comments.placeholder')}
                         value={comment}
+                        onPaste={handleCommentPaste}
                         onChange={e => {
                           setComment(e.target.value);
                           checkMentions(e.target.value, e.target.selectionStart);
@@ -1487,17 +1589,18 @@ export const AssetDetail: React.FC = () => {
                             </button>
                           ))}
                           {activeUsers.filter(u => u.name.toLowerCase().includes(mentionSearch.toLowerCase())).length === 0 && (
-                            <p className="text-xs text-gray-400 italic px-2 py-1">Keine passenden Benutzer</p>
+                            <p className="text-xs text-gray-400 italic px-2 py-1">{t('detail.comments.noMatchingUsers')}</p>
                           )}
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col sm:flex-row justify-between items-center mt-3 gap-3">
+                    <p className="text-[10px] text-gray-400 mt-1 mb-2">{t('detail.comments.toolbar.pasteHint')}</p>
+                    <div className="flex flex-col sm:flex-row justify-between items-center mt-1 gap-3">
                        <div className="flex items-center gap-3 w-full sm:w-auto">
-                          <Input type="date" label="Termin-Bezug" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} className="!py-1" />
-                          <p className="text-[10px] text-gray-400 italic hidden sm:block">{t('detail.mentionTip')}</p>
+                          <Input type="date" label={t('detail.comments.meetingDate')} value={meetingDate} onChange={e => setMeetingDate(e.target.value)} className="!py-1" />
+                          <p className="text-[10px] text-gray-400 italic hidden sm:block">{t('detail.comments.mentionHint')}</p>
                        </div>
-                       <Button type="submit" disabled={!comment.trim() || saving} className="w-full sm:w-auto">{saving ? t('common:status.saving') : t('detail.postComment')}</Button>
+                       <Button type="submit" disabled={!comment.trim() || saving} className="w-full sm:w-auto">{saving ? t('detail.comments.saving') : t('detail.comments.postButton')}</Button>
                     </div>
                   </form>
                 )}
