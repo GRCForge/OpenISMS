@@ -377,4 +377,34 @@ router.get('/logs', logsLimiter, async (req, res) => {
   }
 });
 
+// ── LLM / KI-Einstellungen ──────────────────────────────────────────────────
+const { getLlmConfigPublic, saveLlmConfig, testConnection } = require('../services/llmService');
+
+router.get('/llm', async (req, res) => {
+  try { res.json(await getLlmConfigPublic()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.put('/llm', async (req, res) => {
+  try {
+    const { provider, anthropic, openai, gemini, ollama } = req.body;
+    const patch = {};
+    if (provider !== undefined) patch.provider = provider;
+    if (anthropic !== undefined) patch.anthropic = anthropic;
+    if (openai !== undefined) patch.openai = openai;
+    if (gemini !== undefined) patch.gemini = gemini;
+    if (ollama !== undefined) patch.ollama = ollama;
+    await saveLlmConfig(patch);
+    await auditFromReq(req, 'update', 'settings', null, 'LLM-Konfiguration', { provider: patch.provider });
+    res.json(await getLlmConfigPublic());
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+router.post('/llm/test', async (req, res) => {
+  try {
+    const result = await testConnection();
+    res.json({ ok: true, provider: result.provider, model: result.model, response: result.text });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 module.exports = router;
