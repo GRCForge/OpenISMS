@@ -6,126 +6,126 @@
   },
   "status": {
     "active": "Aktiv",
-    "under_review": "In Prüfung",
+    "under_review": "Wird geprüft",
     "terminated": "Beendet"
   },
   "testType": {
-    "tlpt": "TLPT (Threat-Led Pentest)",
-    "penetration_test": "Penetrationstest",
+    "tlpt": "TLPT (Bedrohungs-Led Pentest)",
+    "penetration_test": "Durchdringungstest",
     "vulnerability_scan": "Schwachstellenscan",
-    "scenario_based": "Szenariobasierter Test",
-    "bcp_test": "BCP-/Wiederanlauftest",
+    "scenario_based": "Szenariogestützter Test",
+    "bcp_test": "BCP/Disaster Recovery Test",
     "other": "Sonstiger Test"
   },
   "testStatus": {
     "planned": "Geplant",
-    "in_progress": "Laufend",
+    "in_progress": "In Bearbeitung",
     "completed": "Abgeschlossen"
   },
   "testResult": {
     "pending": "Ausstehend",
-    "passed": "Bestanden",
-    "passed_with_findings": "Bestanden mit Findings",
-    "failed": "Nicht bestanden"
+    "passed": "Übergeben",
+    "passed_with_findings": "Mit Findungen übergeben",
+    "failed": "Fehler"
   },
   "toast": {
     "saveError": "Fehler beim Speichern",
     "error": "Fehler"
   },
   "confirm": {
-    "deleteVendor": "„{{name}}\" wirklich löschen?",
-    "deleteTest": "„{{title}}\" wirklich löschen?"
+    "deleteVendor": "Sind Sie sicher, dass Sie \"{{name}} \" löschen möchten?",
+    "deleteTest": "Sind Sie sicher, dass Sie \"{{title}} \" löschen möchten?"
   },
   "title": {
-    "register": "DORA IKT-Drittparteienregister",
+    "register": "DORA ICT Drittpartei Register",
     "tests": "DORA Resilienztests"
   },
   "subtitle": {
-    "register": "Digital Operational Resilience Act – Register IKT-Drittdienstleister · {{count}} Einträge",
-    "tests": "Tests der digitalen operationalen Resilienz (DORA Art. 24–26) · {{count}} Einträge"
+    "register": "Digital Operational Resilience Act – Register von IKT Drittanbietern · {{count}} Einträge",
+    "tests": "Digitale Betriebswiderstandsprüfung (DORA Art. 24–26) · {{count}} Einträge"
   },
   "button": {
-    "addVendor": "Dienstleister erfassen",
-    "addTest": "Test erfassen",
+    "addVendor": "Diensteanbieter registrieren",
+    "addTest": "Test aufnehmen",
     "cancel": "Abbrechen",
     "saving": "Speichern...",
     "update": "Aktualisieren",
     "create": "Anlegen"
   },
   "tab": {
-    "vendors": "Drittparteien",
-    "tests": "Resilienztests"
+    "vendors": "Dritte Parteien",
+    "tests": "Widerstandstests"
   },
   "stats": {
     "total": "Gesamt",
     "critical": "Kritisch",
-    "reviewDue": "Review fällig",
+    "reviewDue": "Prüfung fällig",
     "active": "Aktive Verträge",
-    "testsTotal": "Tests gesamt",
+    "testsTotal": "Gesamte Tests",
     "planned": "Geplant",
     "completed": "Abgeschlossen",
-    "failed": "Nicht bestanden"
+    "failed": "Fehler"
   },
   "filter": {
-    "searchPlaceholder": "Dienstleister, IKT-Service oder Land suchen...",
-    "allCriticalities": "Alle Kritikalitäten",
+    "searchPlaceholder": "Suchanbieter, IKT-Service oder Land...",
+    "allCriticalities": "Alle Kritiken",
     "allStatus": "Alle Status"
   },
   "table": {
-    "vendor": "Dienstleister",
-    "ictService": "IKT-Service",
-    "criticality": "Kritikalität",
+    "vendor": "Dienstanbieter",
+    "ictService": "IKT-Dienst",
+    "criticality": "Kritik",
     "status": "Status",
     "country": "Land",
-    "nextReview": "Nächste Prüfung",
+    "nextReview": "Nächste Bewertung",
     "title": "Titel",
-    "testType": "Testart",
+    "testType": "Testtyp",
     "date": "Datum",
-    "performedBy": "Durchgeführt von",
+    "performedBy": "Ausgeführt von",
     "result": "Ergebnis",
     "nextTest": "Nächster Test"
   },
-  "noVendors": "Keine IKT-Drittdienstleister gefunden",
-  "noTests": "Keine Resilienztests gefunden",
+  "noVendors": "Keine IKT-Dienstleister gefunden",
+  "noTests": "Keine Belastbarkeitstests gefunden",
   "modal": {
-    "editTest": "Resilienztest bearbeiten",
-    "addTest": "Resilienztest erfassen",
-    "editVendor": "IKT-Drittdienstleister bearbeiten",
-    "addVendor": "IKT-Drittdienstleister erfassen"
+    "editTest": "Abhärtungstest bearbeiten",
+    "addTest": "Resilienztest aufzeichnen",
+    "editVendor": "IKT Drittanbieter bearbeiten",
+    "addVendor": "ICT Service Provider von Dritten registrieren"
   },
   "form": {
     "titleRequired": "Titel *",
-    "titlePlaceholder": "z. B. Jährlicher Penetrationstest Kernbanksystem",
-    "testType": "Testart",
+    "titlePlaceholder": "z.B. Jährliches Penetrationstest-Bankensystem",
+    "testType": "Testtyp",
     "testDate": "Testdatum",
-    "performedBy": "Durchgeführt von",
-    "performedByPlaceholder": "z. B. externer Dienstleister, internes Team",
+    "performedBy": "Ausgeführt von",
+    "performedByPlaceholder": "z.B. externer Provider, internes Team",
     "status": "Status",
     "result": "Ergebnis",
-    "findings": "Findings",
-    "findingsPlaceholder": "Festgestellte Schwachstellen und Auffälligkeiten",
-    "remediation": "Behebungsmaßnahmen",
-    "remediationPlaceholder": "Geplante bzw. umgesetzte Maßnahmen zur Behebung",
+    "findings": "Findungen",
+    "findingsPlaceholder": "Identifizierte Schwachstellen und Erkenntnisse",
+    "remediation": "Remediationsmaßnahmen",
+    "remediationPlaceholder": "Geplante oder umgesetzte Maßnahmen zur Sanierung",
     "nextTest": "Nächster Test",
     "notes": "Notizen",
-    "vendorNameRequired": "Dienstleistername *",
-    "vendorNamePlaceholder": "z. B. Microsoft Azure",
-    "ictServiceRequired": "IKT-Service / Leistungsbeschreibung *",
-    "ictServicePlaceholder": "z. B. Cloud-Infrastruktur, SaaS-Plattform",
-    "criticality": "Kritikalität (DORA)",
+    "vendorNameRequired": "Name des Dienstanbieters *",
+    "vendorNamePlaceholder": "e.g. Microsoft Azure",
+    "ictServiceRequired": "IKT-Service / Arbeitsbereich *",
+    "ictServicePlaceholder": "z.B. Cloud-Infrastruktur, SaaS-Plattform",
+    "criticality": "Kritik (DORA)",
     "contractStart": "Vertragsbeginn",
     "contractEnd": "Vertragsende",
     "country": "Land",
-    "countryPlaceholder": "z. B. Deutschland, USA",
-    "slaRto": "SLA RTO (Stunden)",
-    "slaRtoPlaceholder": "z. B. 4",
-    "slaRpo": "SLA RPO (Stunden)",
-    "slaRpoPlaceholder": "z. B. 1",
+    "countryPlaceholder": "z.B. Deutschland, USA",
+    "slaRto": "SLA RTO (Hours)",
+    "slaRtoPlaceholder": "z.B. 4",
+    "slaRpo": "SLA RPO (Hours)",
+    "slaRpoPlaceholder": "z.B. 1",
     "contactName": "Ansprechpartner (Name)",
-    "contactNamePlaceholder": "Vollständiger Name",
-    "contactEmail": "Ansprechpartner (E-Mail)",
-    "contactEmailPlaceholder": "kontakt@example.com",
-    "lastReview": "Letzte Prüfung",
-    "nextReview": "Nächste Prüfung"
+    "contactNamePlaceholder": "Voller Name",
+    "contactEmail": "Kontaktperson (Email)",
+    "contactEmailPlaceholder": "contact@beispiel.com",
+    "lastReview": "Letzte Überprüfung",
+    "nextReview": "Nächste Bewertung"
   }
 }
