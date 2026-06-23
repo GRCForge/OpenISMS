@@ -15,9 +15,29 @@ const authenticator = new TOTP({
   window: 2,
 });
 
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
+
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.body?.token ? String(req.body.token).slice(0, 64) + req.ip : req.ip,
+  message: { error: 'Zu viele Anfragen. Bitte warten Sie 15 Minuten.' },
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Anfragen. Bitte warten Sie 15 Minuten.' },
+});
+
+const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const getClientIp = (req) => {
   return req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -85,20 +105,22 @@ const handleFailedLoginForIp = async (req, email) => {
         }
 
         const { sendEmail } = require('../services/emailService');
+        const safeIp = escapeHtml(ip);
+        const safeEmail = escapeHtml(email);
         const emailHtml = `
           <h3>Sicherheitswarnung: Brute-Force-Verdacht</h3>
           <p>Hallo Admin,</p>
           <p>in OpenISMS wurden ungewöhnlich viele fehlgeschlagene Anmeldeversuche festgestellt:</p>
           <ul>
-            <li><strong>IP-Adresse:</strong> ${ip}</li>
+            <li><strong>IP-Adresse:</strong> ${safeIp}</li>
             <li><strong>Anzahl Fehlversuche:</strong> ${failedCount} (in den letzten 15 Minuten)</li>
-            <li><strong>Letzter eingegebener Benutzer/E-Mail:</strong> ${email}</li>
+            <li><strong>Letzter eingegebener Benutzer/E-Mail:</strong> ${safeEmail}</li>
             <li><strong>Status:</strong> Die IP-Adresse wird vorübergehend blockiert.</li>
           </ul>
           <p>Bitte überprüfen Sie die Audit-Logs für weitere Details.</p>
           <p>Ihr OpenISMS-System</p>
         `;
-        const emailText = `Sicherheitswarnung: Brute-Force-Verdacht\n\nHallo Admin,\n\nin OpenISMS wurden ungewöhnlich viele fehlgeschlagene Anmeldeversuche von der IP-Adresse ${ip} festgestellt (${failedCount} Fehlversuche in 15 Minuten, letzter Benutzer: "${email}"). Die IP-Adresse wurde vorübergehend blockiert.\n\nIhr OpenISMS-System`;
+        const emailText = `Sicherheitswarnung: Brute-Force-Verdacht\n\nHallo Admin,\n\nin OpenISMS wurden ungewöhnlich viele fehlgeschlagene Anmeldeversuche von der IP-Adresse ${ip} festgestellt (${failedCount} Fehlversuche in 15 Minuten, letzter Benutzer: [siehe Audit-Log]). Die IP-Adresse wurde vorübergehend blockiert.\n\nIhr OpenISMS-System`;
 
         for (const admin of admins) {
           await sendEmail({
@@ -352,7 +374,7 @@ router.post('/2fa/disable', authenticate, async (req, res) => {
 });
 
 // Request password reset (forgot-password) - fully anonymous response
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   const genericResponse = { message: 'Wenn die E-Mail-Adresse registriert ist, wurde eine E-Mail mit Anweisungen zum Zurücksetzen des Passworts gesendet.' };
   try {
     const { email } = req.body;
@@ -412,7 +434,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // Perform password reset using token - fully anonymous response on invalid token
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', resetPasswordLimiter, async (req, res) => {
   try {
     const { token, new_password } = req.body;
     if (!token || !new_password) return res.status(400).json({ error: 'Token und neues Passwort sind erforderlich.' });
