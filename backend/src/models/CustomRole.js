@@ -6,7 +6,7 @@ const CustomRole = sequelize.define('CustomRole', {
   name: { type: DataTypes.STRING(100), allowNull: false },
   description: { type: DataTypes.TEXT, allowNull: true },
   base_role: {
-    type: DataTypes.ENUM('admin', 'assessor', 'dpo', 'it-staff', 'owner', 'viewer', 'employee'),
+    type: DataTypes.ENUM('admin', 'assessor', 'dpo', 'it-staff', 'owner', 'viewer', 'employee', 'management'),
     allowNull: false,
     defaultValue: 'viewer',
   },

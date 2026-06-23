@@ -238,7 +238,9 @@ const GeneralSettings: React.FC = () => {
             { value: 'it-staff', label: t('roles.it-staff') },
             { value: 'dpo', label: t('roles.dpo') },
             { value: 'owner', label: t('roles.owner') },
-            { value: 'viewer', label: t('roles.viewer') }
+            { value: 'management', label: t('roles.management') },
+            { value: 'viewer', label: t('roles.viewer') },
+            { value: 'employee', label: t('roles.employee') }
           ]} />
         <label className="flex items-center gap-3 p-3 rounded-lg border bg-gray-50 dark:bg-slate-800/40 dark:border-slate-700 cursor-pointer">
           <input type="checkbox" checked={s.ssoAutoProvision} onChange={e => setS({ ...s, ssoAutoProvision: e.target.checked })} className="w-4 h-4 rounded text-blue-600" />
@@ -385,7 +387,7 @@ const ROLE_LABELS: Record<string, string> = {
 interface CustomRoleItem { id: number; name: string; description: string | null; base_role: string; users_count?: number; }
 interface OidcMappingItem { id: number; claim_path: string; claim_value: string; role: string | null; custom_role_id: number | null; priority: number; customRole?: { id: number; name: string; base_role: string } | null; }
 
-const BASE_ROLES = ['admin', 'assessor', 'dpo', 'it-staff', 'management', 'owner', 'viewer'] as const;
+const BASE_ROLES = ['admin', 'assessor', 'dpo', 'employee', 'it-staff', 'management', 'owner', 'viewer'] as const;
 
 const CustomRolesEditor: React.FC = () => {
   const { t } = useTranslation('admin');
@@ -754,16 +756,16 @@ const ApiDocs: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
             {[
-              ['auth', 'Authentifizierung', 'Login, JWT'],
-              ['assets', 'Assets', 'CRUD, Dokumente'],
-              ['risks', 'Risiken', 'Risikoregister'],
-              ['incidents', 'Vorfälle', 'Incident Management'],
-              ['assessments', 'Bewertungen', 'CIA / SBF'],
-              ['controls', 'Maßnahmen', 'Controls & SoA'],
-              ['policies', 'Richtlinien', 'Policy-Bibliothek'],
-              ['users', 'Benutzer', 'User Management'],
-              ['admin', 'Administration', 'Einstellungen, RBAC'],
-              ['import', 'Import', 'CSV-Massenimport']
+              ['auth', 'Authentication', 'Login, JWT'],
+              ['assets', 'Assets', 'CRUD, Documents'],
+              ['risks', 'Risks', 'Risk Register'],
+              ['incidents', 'Incidents', 'Incident Management'],
+              ['assessments', 'Assessments', 'CIA / SBF'],
+              ['controls', 'Controls', 'Controls & SoA'],
+              ['policies', 'Policies', 'Policy Library'],
+              ['users', 'Users', 'User Management'],
+              ['admin', 'Administration', 'Settings, RBAC'],
+              ['import', 'Import', 'CSV Mass Import']
             ].map(([key, name, desc]) => (
               <div key={key} className="p-2 rounded-lg border dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30">
                 <p className="font-bold text-gray-700 dark:text-slate-300">{t('api_docs.cat.' + key, { defaultValue: name })}</p>
@@ -1024,99 +1026,99 @@ interface ModuleDefinition {
 const MODULE_DEFS: ModuleDefinition[] = [
   {
     key: 'dsgvo',
-    label: 'DSGVO / Datenschutz',
-    description: 'Datenschutz-Grundverordnung — Verzeichnis der Verarbeitungstätigkeiten (Art. 30), Betroffenenrechte (Art. 15–22), DSFA-Workflow (Art. 35) und Datenflusskarte.',
+    label: 'GDPR / Data Protection',
+    description: 'General Data Protection Regulation — Record of Processing Activities (Art. 30), Data Subject Rights (Art. 15–22), DPIA Workflow (Art. 35), and Data Flow Map.',
     icon: Shield,
     iconColor: 'text-blue-600 dark:text-blue-400',
-    features: ['Verarbeitungsverzeichnis (VVT, Art. 30)', 'Betroffenenrechte Art. 15–22', 'DSFA-Workflow (Art. 35)', 'Datenflusskarte'],
+    features: ['Record of Processing Activities (RoPA, Art. 30)', 'Data Subject Rights (Art. 15–22)', 'DPIA Workflow (Art. 35)', 'Data Flow Map'],
   },
   {
     key: 'tisax',
     label: 'TISAX',
-    description: 'Trusted Information Security Assessment Exchange — Anforderungen der Automobilindustrie (VDA ISA), Label-Tracking.',
+    description: 'Trusted Information Security Assessment Exchange — Automotive industry requirements (VDA ISA), Label Tracking.',
     icon: Car,
     iconColor: 'text-indigo-600 dark:text-indigo-400',
-    features: ['Assessment-Tracking', 'Label-Status (AL2/AL3)', 'Auditplanung', 'Gültigkeitsüberwachung'],
+    features: ['Assessment Tracking', 'Label Status (AL2/AL3)', 'Audit Planning', 'Validity Monitoring'],
   },
   {
     key: 'dora',
     label: 'DORA',
-    description: 'Digital Operational Resilience Act — IKT-Drittparteienregister, Kritikalitätsbewertung und SLA-Tracking nach EU 2022/2554.',
+    description: 'Digital Operational Resilience Act — ICT third-party register, criticality assessment, and SLA tracking under EU 2022/2554.',
     icon: Zap,
     iconColor: 'text-yellow-600 dark:text-yellow-400',
-    features: ['IKT-Drittparteienregister', 'Kritikalitätsbewertung', 'RTO/RPO-Tracking', 'Review-Fristen'],
+    features: ['ICT Third-Party Register', 'Criticality Assessment', 'RTO/RPO Tracking', 'Review Deadlines'],
   },
   {
     key: 'ai_act',
     label: 'EU AI Act',
-    description: 'KI-Register nach EU 2024/1689 — Risikoklassifikation (minimal/limited/high-risk/prohibited), Konformitätsstatus und technische Dokumentation.',
+    description: 'AI Register according to EU 2024/1689 — risk classification (minimal/limited/high-risk/prohibited), compliance status, and technical documentation.',
     icon: Bot,
     iconColor: 'text-purple-600 dark:text-purple-400',
-    features: ['KI-Systemregister', 'Risikoklassifikation (Art. 5–7)', 'Konformitätsstatus', 'Technische Dokumentation'],
+    features: ['AI System Register', 'Risk Classification (Art. 5–7)', 'Compliance Status', 'Technical Documentation'],
   },
   {
     key: 'bcm',
     label: 'BCM',
-    description: 'Business Continuity Management — Business Impact Analysis, Wiederanlaufzeiten (RTO/RPO), Recovery-Strategien und Übungsprotokoll.',
+    description: 'Business Continuity Management — Business Impact Analysis, recovery times (RTO/RPO), recovery strategies, and exercise logs.',
     icon: LifeBuoy,
     iconColor: 'text-teal-600 dark:text-teal-400',
-    features: ['BIA-Prozessregister', 'RTO/RPO-Ziele', 'Recovery-Strategien', 'Übungsprotokoll'],
+    features: ['BIA Process Register', 'RTO/RPO Targets', 'Recovery Strategies', 'Exercise Logs'],
   },
   {
     key: 'pentest',
-    label: 'Pentest-Tracking',
-    description: 'Verwaltung von Penetrationstests — Projekte, Findings mit Schweregrad (CVSS), Remediation-Status und Retest-Tracking.',
+    label: 'Pentest Tracking',
+    description: 'Management of penetration tests — projects, findings with severity (CVSS), remediation status, and retest tracking.',
     icon: Target,
     iconColor: 'text-red-600 dark:text-red-400',
-    features: ['Projekt- & Scope-Verwaltung', 'Finding-Register mit CVSS', 'Remediation-Tracking', 'Retest-Status'],
+    features: ['Project & Scope Management', 'Finding Register with CVSS', 'Remediation Tracking', 'Retest Status'],
   },
   {
     key: 'discovery',
     label: 'Network Discovery & CVE',
-    description: 'Netzwerk-Scanning, automatisches Asset-Discovery und CVE-Vulnerability-Matching (NVD, OSV.dev) für erkannte Assets.',
+    description: 'Network scanning, automatic asset discovery, and CVE vulnerability matching (NVD, OSV.dev) for detected assets.',
     icon: Radar,
     iconColor: 'text-cyan-600 dark:text-cyan-400',
-    features: ['Netzwerk-Scan (Agent-basiert)', 'CVE-Matching per CPE/OSV', 'CVSS-Schweregrade', 'Automatisches Asset-Inventar'],
+    features: ['Network Scan (Agent-based)', 'CVE Matching via CPE/OSV', 'CVSS Severity Levels', 'Automatic Asset Inventory'],
   },
   {
     key: 'iso27001',
     label: 'ISO 27001:2022',
-    description: 'Statement of Applicability (SoA) und Umsetzungsstatus aller 93 Annex-A-Controls nach ISO/IEC 27001:2022 — Organisatorisch, Personell, Physisch, Technologisch.',
+    description: 'Statement of Applicability (SoA) and implementation status of all 93 Annex A controls according to ISO/IEC 27001:2022 — Organizational, People, Physical, Technological.',
     icon: ShieldCheck,
     iconColor: 'text-green-600 dark:text-green-400',
-    features: ['93 Annex-A-Controls (4 Themes)', 'Statement of Applicability (SoA)', 'Umsetzungsstatus & Begründung', 'Gap-Analyse & Fortschrittsübersicht'],
+    features: ['93 Annex A Controls (4 Themes)', 'Statement of Applicability (SoA)', 'Implementation Status & Justification', 'Gap Analysis & Progress Overview'],
   },
   {
     key: 'bsi_grundschutz',
     label: 'BSI IT-Grundschutz',
-    description: 'Anforderungsmanagement nach BSI IT-Grundschutz-Kompendium — Bausteine (ISMS, ORP, CON, OPS, DER, APP, SYS, NET, INF) mit Basis-, Standard- und Erhöhten-Anforderungen.',
+    description: 'Requirement management according to the BSI IT-Grundschutz Compendium — modules (ISMS, ORP, CON, OPS, DER, APP, SYS, NET, INF) with basic, standard, and high requirements.',
     icon: BookOpen,
     iconColor: 'text-amber-600 dark:text-amber-400',
-    features: ['Bausteine & Anforderungskatalog', 'Basis-, Standard- und Erhöhte Anforderungen', 'Umsetzungsstatus je Anforderung', 'Verantwortliche & Review-Fristen'],
+    features: ['Modules & Requirement Catalog', 'Basic, Standard, and High Requirements', 'Implementation Status per Requirement', 'Responsible Persons & Review Deadlines'],
   },
   {
     key: 'nis2',
     label: 'NIS-2 (EU 2022/2555)',
-    description: 'Sicherheitsmaßnahmen nach Art. 21 NIS-2-Richtlinie und Meldepflichten nach Art. 23 — für wesentliche und wichtige Einrichtungen nach EU 2022/2555.',
+    description: 'Security measures under Art. 21 of the NIS-2 Directive and reporting obligations under Art. 23 — for essential and important entities under EU 2022/2555.',
     icon: AlertOctagon,
     iconColor: 'text-red-600 dark:text-red-400',
-    features: ['10 Mindestmaßnahmen (Art. 21)', 'Meldepflichten Art. 23 (24h/72h/1 Monat)', 'Entitätsklassifizierung (wesentlich/wichtig)', 'Umsetzungsnachweis & Fristen'],
+    features: ['10 Minimum Measures (Art. 21)', 'Reporting Obligations Art. 23 (24h/72h/1 month)', 'Entity Classification (essential/important)', 'Proof of Implementation & Deadlines'],
   },
   {
     key: 'c5',
     label: 'BSI C5:2026',
-    description: 'BSI Cloud Computing Compliance Criteria Catalogue (C5:2026) — 174 Kriterien in 18 Domains für Cloud-Anbieter und deren Auftraggeber.',
+    description: 'BSI Cloud Computing Compliance Criteria Catalogue (C5:2026) — 174 criteria in 18 domains for cloud providers and their customers.',
     icon: Shield,
     iconColor: 'text-cyan-600 dark:text-cyan-400',
-    features: ['174 Kriterien (C5:2026)', '18 Domains (AM, IAM, OPS, CRY, DEV …)', 'Umsetzungsstatus & Nachweise', 'Gap-Analyse nach BSI-Testat-Vorbereitung'],
+    features: ['174 Criteria (C5:2026)', '18 Domains (AM, IAM, OPS, CRY, DEV ...)', 'Implementation Status & Evidence', 'Gap Analysis for BSI Attestation Preparation'],
   },
   {
     key: 'mcp',
     label: 'Model Context Protocol (MCP)',
-    description: 'KI-Integration — Stellt einen Model Context Protocol (MCP) Server auf /mcp zur Verfügung, über den KI-Assistenten wie Claude Assets abfragen, Risiken verwalten und Sicherheitsvorfälle anlegen können.',
+    description: 'AI Integration — Provides a Model Context Protocol (MCP) server at /mcp through which AI assistants like Claude can query assets, manage risks, and create security incidents.',
     icon: Puzzle,
     iconColor: 'text-rose-600 dark:text-rose-400',
-    features: ['MCP Server Endpoint (/mcp)', 'KI-Interaktion (Claude, Cursor etc.)', 'Lese- & Schreib-Tools', 'API-Token / MCP_SECRET Auth'],
+    features: ['MCP Server Endpoint (/mcp)', 'AI Interaction (Claude, Cursor, etc.)', 'Read & Write Tools', 'API Token / MCP_SECRET Auth'],
   },
 ];
 

@@ -61,12 +61,14 @@
     "departmentPlaceholder": "e.g. IT Operations",
     "systemRole": "System Role *",
     "roleOptions": {
-      "admin": "Administrator (Full Access)",
-      "assessor": "Auditor / Assessor",
-      "it-staff": "IT Staff",
-      "dpo": "Data Protection Officer",
-      "owner": "Asset Owner (Responsible)",
-      "viewer": "Viewer (Read-only)"
+      "admin": "Administrador (Acceso Completo)",
+      "assessor": "Auditor / Asesor",
+      "it-staff": "Personal de TI",
+      "dpo": "Delegado de Protección de Datos",
+      "owner": "Propietario de Activos (Responsable)",
+      "viewer": "Lector (Solo Lectura)",
+      "management": "Dirección",
+      "employee": "Empleado"
     },
     "initialPassword": "Initial Password *",
     "accountStatus": "Account Status",

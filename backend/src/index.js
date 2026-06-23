@@ -344,6 +344,10 @@ const start = async () => {
       ALTER TABLE tasks MODIFY COLUMN assigned_role ENUM('admin','owner','assessor','viewer','it-staff','dpo','employee','management')
     `).catch(e => console.warn('[DB] Could not alter tasks.assigned_role:', e.message));
 
+    await sequelize.query(`
+      ALTER TABLE custom_roles MODIFY COLUMN base_role ENUM('admin','assessor','dpo','it-staff','owner','viewer','employee','management') NOT NULL DEFAULT 'viewer'
+    `).catch(e => console.warn('[DB] Could not alter custom_roles.base_role:', e.message));
+
     // Drop old camelCase columns from push_subscriptions
     await sequelize.query(`
       ALTER TABLE push_subscriptions DROP COLUMN createdAt, DROP COLUMN updatedAt

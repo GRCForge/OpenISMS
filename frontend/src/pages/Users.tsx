@@ -242,7 +242,9 @@ export const Users: React.FC = () => {
               <option value="it-staff">{t('users:form.roleOptions.it-staff')}</option>
               <option value="dpo">{t('users:form.roleOptions.dpo')}</option>
               <option value="owner">{t('users:form.roleOptions.owner')}</option>
+              <option value="management">{t('users:form.roleOptions.management')}</option>
               <option value="viewer">{t('users:form.roleOptions.viewer')}</option>
+              <option value="employee">{t('users:form.roleOptions.employee')}</option>
               {customRoles.length > 0 && (
                 <optgroup label={t('users:customRolesGroup')}>
                   {customRoles.map(cr => <option key={cr.id} value={`custom:${cr.id}`}>{cr.name}</option>)}
