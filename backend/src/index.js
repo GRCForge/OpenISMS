@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('./services/logger');
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -27,12 +28,18 @@ app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 1));
 
 app.use(compression());
 
+app.use((req, res, next) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://unpkg.com", "'unsafe-inline'"],
+      scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
+      scriptSrcAttr: ["'none'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "blob:"],
       connectSrc: ["'self'"],
@@ -42,6 +49,7 @@ app.use(helmet({
       baseUri: ["'self'"],
       formAction: ["'self'"],
       frameAncestors: ["'self'"],
+      upgradeInsecureRequests: [],
     },
   },
 }));
@@ -195,15 +203,22 @@ app.get('/api/openapi.json', (req, res) => {
     res.sendFile(filePath);
   }
 });
+
+// Serve Swagger UI assets locally — avoids CDN dependency and SRI requirement
+const swaggerUiDist = require('swagger-ui-dist');
+app.use('/api/swagger-ui', express.static(swaggerUiDist.absolutePath(), { index: false, maxAge: '7d' }));
+
 app.get('/api/docs', (req, res) => {
   const base = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
+  const nonce = res.locals.cspNonce;
   res.type('html').send(`<!DOCTYPE html><html><head>
   <title>ISMS API Dokumentation</title><meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
-  <style>
+  <link rel="stylesheet" href="/api/swagger-ui/swagger-ui.css">
+  <style nonce="${nonce}">
     body { margin: 0; padding: 0; background: #fafafa; }
     .swagger-ui .topbar { display: none; }
+    #docs-dl-btn:hover { background-color: #1d4ed8 !important; }
   </style>
   </head><body>
   <div style="background:#0f172a; padding:12px 24px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e293b; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#fff;">
@@ -211,14 +226,14 @@ app.get('/api/docs', (req, res) => {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       ISMS API Dokumentation (OpenAPI 3.0)
     </span>
-    <a href="${base}/api/openapi.json?download=1" style="background:#2563eb; color:#fff; text-decoration:none; padding:8px 16px; font-size:12px; border-radius:6px; font-weight:bold; display:inline-flex; align-items:center; gap:6px; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">
+    <a id="docs-dl-btn" href="${base}/api/openapi.json?download=1" style="background:#2563eb; color:#fff; text-decoration:none; padding:8px 16px; font-size:12px; border-radius:6px; font-weight:bold; display:inline-flex; align-items:center; gap:6px; transition: background 0.2s;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Spezifikation herunterladen
     </a>
   </div>
   <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-  <script>
+  <script src="/api/swagger-ui/swagger-ui-bundle.js"></script>
+  <script nonce="${nonce}">
   SwaggerUIBundle({
     url:"${base}/api/openapi.json",dom_id:'#swagger-ui',
     presets:[SwaggerUIBundle.presets.apis,SwaggerUIBundle.SwaggerUIStandalonePreset],
