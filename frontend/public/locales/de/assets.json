@@ -105,7 +105,31 @@
   "detail": {
     "deleteLabel": "Löschen",
     "riskAcceptanceDocDesc": "Risikoakzeptanz",
-    "loading": "Asset wird geladen"
+    "loading": "Asset wird geladen",
+    "comments": {
+      "placeholder": "Kommentar schreiben… Markdown möglich, @Benutzer für Erwähnungen, Screenshots mit Strg+V einfügen",
+      "noComments": "Noch keine Kommentare vorhanden.",
+      "noMatchingUsers": "Keine passenden Benutzer",
+      "meetingDate": "Termin-Bezug",
+      "mentionHint": "@Benutzername für Erwähnungen verwenden.",
+      "postButton": "Kommentar senden",
+      "saving": "Wird gesendet…",
+      "screenshotDesc": "Screenshot aus Kommentar",
+      "screenshotAlt": "Screenshot",
+      "imageUploadError": "Bild-Upload fehlgeschlagen",
+      "toolbar": {
+        "bold": "Fett",
+        "boldPlaceholder": "Fettgedruckter Text",
+        "italic": "Kursiv",
+        "italicPlaceholder": "Kursiver Text",
+        "link": "Link einfügen",
+        "color": "Textfarbe",
+        "colorPlaceholder": "Farbiger Text",
+        "attachDoc": "Dokument verlinken",
+        "uploading": "Wird hochgeladen…",
+        "pasteHint": "Tipp: Screenshot mit Strg+V / ⌘V direkt in den Kommentar einfügen."
+      }
+    }
   },
   "yn": {
     "yes": "Ja",
