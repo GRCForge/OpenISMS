@@ -123,9 +123,35 @@ router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
           related_type: 'asset',
           related_id: parseInt(assetId),
           created_by_id: req.user.id,
-          description: `Auto-created from comment on asset "${asset?.name || assetId}"`,
+          description: `comment:${comment.id}`,
         });
         createdTasks.push(newTask.id);
+
+        // Notify assigned user or group members
+        if (assigned_to_group_id) {
+          const notifGroup = await Group.findOne({
+            where: { id: assigned_to_group_id },
+            include: [{ model: User, as: 'members', attributes: ['id'], through: { attributes: [] } }],
+          });
+          if (notifGroup?.members?.length) {
+            const inserts = notifGroup.members
+              .filter(m => m.id !== req.user.id)
+              .map(m => ({
+                user_id: m.id, actor_id: req.user.id, type: 'assignment',
+                title: `New task: ${taskTitle}`,
+                content: `${req.user.name} created a task for group "${notifGroup.name}" on asset "${asset?.name || assetId}"`,
+                link: `/assets/${assetId}#comment-${comment.id}`, read: false,
+              }));
+            if (inserts.length) await Notification.bulkCreate(inserts);
+          }
+        } else if (assigned_to_id && assigned_to_id !== req.user.id) {
+          await Notification.create({
+            user_id: assigned_to_id, actor_id: req.user.id, type: 'assignment',
+            title: `New task: ${taskTitle}`,
+            content: `${req.user.name} assigned a task to you on asset "${asset?.name || assetId}"`,
+            link: `/assets/${assetId}#comment-${comment.id}`,
+          });
+        }
       }
     }
 

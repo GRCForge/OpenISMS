@@ -6,7 +6,7 @@ import {
   Network, AlertTriangle, CheckCircle, Info, Database, Layers,
   Server, HardDrive, User, Activity, Globe, ListChecks, History, ChevronRight,
   Share2, ArrowRight, Bold, Italic, Link as LinkIcon, AtSign, Paperclip, X, Eye,
-  BookOpen, AlertOctagon, ExternalLink, Palette, ImageIcon, Loader2, List, SquareCheck, Users
+  BookOpen, AlertOctagon, ExternalLink, Palette, ImageIcon, Loader2, List, SquareCheck, Users, Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
@@ -117,6 +117,7 @@ export const AssetDetail: React.FC = () => {
   const [asset, setAsset] = useState<Asset | any>(null);
   const [documents, setDocuments] = useState<AssetDocument[]>([]);
   const [comments, setComments] = useState<AssetComment[]>([]);
+  const [assetTasks, setAssetTasks] = useState<any[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [groups, setGroups] = useState<{ id: number; name: string; color?: string }[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -268,7 +269,16 @@ export const AssetDetail: React.FC = () => {
 
   const loadAsset = () => api.get(`/assets/${id}`).then(r => setAsset(r.data)).finally(() => setLoading(false));
   const loadDocs = () => api.get(`/assets/${id}/documents`).then(r => setDocuments(r.data));
-  const loadComments = () => api.get(`/assets/${id}/comments`).then(r => setComments(r.data));
+  const loadComments = () => {
+    api.get(`/assets/${id}/comments`).then(r => setComments(r.data));
+    api.get('/tasks', { params: { related_type: 'asset', related_id: id, all: 'true' } })
+      .then(r => setAssetTasks(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+  };
+  const toggleCommentTask = async (task: any) => {
+    const newStatus = task.status === 'done' ? 'open' : 'done';
+    await api.put(`/tasks/${task.id}`, { status: newStatus });
+    setAssetTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+  };
 
   useEffect(() => {
     loadAsset(); loadDocs(); loadComments();
@@ -439,7 +449,8 @@ export const AssetDetail: React.FC = () => {
         meeting_date: meetingDate || undefined,
         parent_id: replyingTo?.id
       });
-      setComment(''); setMeetingDate(''); setReplyingTo(null); loadComments();
+      setComment(''); setMeetingDate(''); setReplyingTo(null);
+      loadComments();
       const taskCount = res.data?._createdTaskCount;
       if (taskCount > 0) {
         toast.success(t('detail.comments.tasksCreated', { count: taskCount }));
@@ -1420,6 +1431,33 @@ export const AssetDetail: React.FC = () => {
                              <div className="text-sm text-gray-600 dark:text-slate-400 mt-2 leading-relaxed">
                                 <MarkdownText text={c.content} />
                              </div>
+                             {/* Linked auto-created tasks */}
+                             {(() => {
+                               const linked = assetTasks.filter(t => t.description === `comment:${c.id}`);
+                               if (!linked.length) return null;
+                               return (
+                                 <div className="mt-2 space-y-1 pl-1">
+                                   {linked.map(task => (
+                                     <button key={task.id} type="button" onClick={() => !isViewer && toggleCommentTask(task)}
+                                       className={`flex items-center gap-2 text-xs w-full text-left rounded-lg px-2 py-1 transition-colors ${isViewer ? 'cursor-default' : 'hover:bg-gray-100 dark:hover:bg-slate-800/60'}`}>
+                                       <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${task.status === 'done' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-slate-600'}`}>
+                                         {task.status === 'done' && <Check size={9} />}
+                                       </span>
+                                       <span className={task.status === 'done' ? 'line-through text-gray-400 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300'}>
+                                         {task.title}
+                                       </span>
+                                       {task.assignee && <span className="text-blue-500 dark:text-blue-400 text-[10px] ml-auto shrink-0">@{task.assignee.name}</span>}
+                                       {task.assignedGroup && (
+                                         <span className="text-[10px] ml-auto shrink-0 px-1.5 py-0.5 rounded-full text-white"
+                                           style={{ backgroundColor: task.assignedGroup.color || '#8b5cf6' }}>
+                                           @{task.assignedGroup.name}
+                                         </span>
+                                       )}
+                                     </button>
+                                   ))}
+                                 </div>
+                               );
+                             })()}
                              <div className="mt-2 flex items-center gap-4">
                                <button onClick={() => setReplyingTo(c)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('detail.comments.reply')}</button>
                              </div>
@@ -1541,6 +1579,7 @@ export const AssetDetail: React.FC = () => {
                           checkMentions(target.value, target.selectionStart);
                         }}
                         onKeyUp={e => {
+                          if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'].includes(e.key)) return;
                           const target = e.target as HTMLTextAreaElement;
                           checkMentions(target.value, target.selectionStart);
                         }}
@@ -1593,13 +1632,14 @@ export const AssetDetail: React.FC = () => {
                                   : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                               }`}
                             >
-                              <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                                i === mentionHighlightIndex
-                                  ? 'bg-white/20 text-white'
-                                  : item.type === 'group'
-                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              }`}>
+                              <span
+                                className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${i === mentionHighlightIndex ? 'bg-white/20 text-white' : 'text-white'}`}
+                                style={i !== mentionHighlightIndex && item.type === 'group' && (item as any).color
+                                  ? { backgroundColor: (item as any).color }
+                                  : i !== mentionHighlightIndex
+                                    ? { backgroundColor: item.type === 'group' ? '#8b5cf6' : '#3b82f6' }
+                                    : undefined}
+                              >
                                 {item.type === 'group' ? <Users size={10} /> : item.name.charAt(0)}
                               </span>
                               <span className="flex-1 truncate">{item.name}</span>
