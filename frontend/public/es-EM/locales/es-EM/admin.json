@@ -1,9 +1,0 @@
-{
-  "title": "Administration",
-  "sections": {
-    "users": "User Management",
-    "modules": "Module Configuration",
-    "system": "System Settings",
-    "audit": "Audit Log"
-  }
-}
