@@ -1,0 +1,72 @@
+{
+  "title": "Register für rechtliche Verpflichtungen",
+  "subtitle": "Gesetzliche Anforderungen für Datenschutz, Informationssicherheit und Compliance · {{count}} Einträge",
+  "new": "Verpflichtung hinzufügen",
+  "category": {
+    "data_protection": "Datenschutz",
+    "information_security": "Informationssicherheit",
+    "sector_specific": "Sektorspezifisch",
+    "labor_law": "Arbeitsrecht",
+    "commercial_law": "Handels- / Steuerrecht",
+    "other": "Andere"
+  },
+  "status": {
+    "identified": "Identifiziert",
+    "assessed": "Bewertet",
+    "implemented": "Implementiert",
+    "obsolete": "Veraltet"
+  },
+  "stats": {
+    "total": "Gesamt",
+    "identified": "Identifiziert",
+    "assessed": "Bewertet",
+    "implemented": "Implementiert"
+  },
+  "filters": {
+    "allCategories": "Alle Kategorien",
+    "allStatus": "Alle Status",
+    "searchPlaceholder": "Titel oder Beschreibung suchen..."
+  },
+  "table": {
+    "title": "Titel",
+    "category": "Kategorie",
+    "status": "Status",
+    "applicableSince": "Anwendbar seit",
+    "review": "Überprüfen",
+    "responsible": "Verantwortlich"
+  },
+  "empty": {
+    "noResults": "Keine Einträge gefunden",
+    "new": "Verpflichtung hinzufügen"
+  },
+  "modal": {
+    "editTitle": "Rechtliche Verpflichtung bearbeiten",
+    "newTitle": "Rechtliche Verpflichtung hinzufügen"
+  },
+  "form": {
+    "title": "Titel / Bezeichnung *",
+    "titlePlaceholder": "z. B. DPR Art. 30 – Aufzeichnungen über Verarbeitungsaktivitäten",
+    "category": "Kategorie",
+    "status": "Status",
+    "description": "Beschreibung / Anforderung",
+    "descriptionPlaceholder": "Welche Maßnahmen müssen ergriffen werden?",
+    "referenceUrl": "Quelllink / Gesetzestext-URL",
+    "applicableSince": "Anwendbar seit (Datum)",
+    "reviewDate": "Nächste Bewertung",
+    "owner": "Verantwortliche Person",
+    "ownerNone": "– niemand –",
+    "notes": "Anmerkungen / Implementierungsstatus",
+    "cancel": "Abbrechen",
+    "save": "Aktualisieren",
+    "create": "Anlegen",
+    "saving": "Speichern..."
+  },
+  "toast": {
+    "saveError": "Fehler beim Speichern",
+    "error": "Fehler"
+  },
+  "confirm": {
+    "delete": "\"{{title}} \"löschen?"
+  },
+  "openSource": "Quelle öffnen"
+}
