@@ -23,7 +23,8 @@
     "copy": "Kopieren",
     "hide": "Verstecken",
     "show": "Zeigen",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "download": "Herunterladen"
   },
   "status": {
     "loading": "Wird geladen...",
@@ -130,5 +131,20 @@
     "notes": "Notizen",
     "owner": "Besitzer",
     "dueDate": "Fälligkeitsdatum"
+  },
+  "cmdPalette": {
+    "searchPlaceholder": "Assets, Risiken, Aufgaben, Dokumente…",
+    "loading": "Lade…",
+    "noResults": "Keine Ergebnisse für „{{query}}“",
+    "noItems": "Keine Einträge vorhanden",
+    "navigate": "navigieren",
+    "open": "öffnen",
+    "close": "schließen",
+    "types": {
+      "asset": "Asset",
+      "risk": "Risiko",
+      "task": "Aufgabe",
+      "policy": "Dokument"
+    }
   }
 }

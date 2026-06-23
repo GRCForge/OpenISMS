@@ -1,17 +1,19 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { LayoutDashboard, Server, ShieldAlert, CheckSquare, BarChart3 } from 'lucide-react';
 
-const tabs = [
-  { path: '/',       icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/assets', icon: Server,          label: 'Assets'    },
-  { path: '/risks',  icon: ShieldAlert,     label: 'Risiken'   },
-  { path: '/tasks',  icon: CheckSquare,     label: 'Aufgaben'  },
-  { path: '/report', icon: BarChart3,       label: 'Reports'   },
-];
-
 export const BottomNav: React.FC = () => {
+  const { t } = useTranslation('nav');
   const location = useLocation();
+
+  const tabs = [
+    { path: '/',       icon: LayoutDashboard, label: 'Dashboard'               },
+    { path: '/assets', icon: Server,          label: t('items.assets.label')   },
+    { path: '/risks',  icon: ShieldAlert,     label: t('items.risks.label')    },
+    { path: '/tasks',  icon: CheckSquare,     label: t('items.tasks.label')    },
+    { path: '/report', icon: BarChart3,       label: t('items.report.label')   },
+  ];
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
