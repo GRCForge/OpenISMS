@@ -67,7 +67,7 @@
   "modal": {
     "editTitle": "Ticket bearbeiten",
     "newTitle": "Vorfall melden",
-    "docsTitle": "Manage Evidence: {{ref}}"
+    "docsTitle": "Beweismittel verwalten: {{ref}}"
   },
   "form": {
     "securityIncident": "Sicherheitsvorfall",
