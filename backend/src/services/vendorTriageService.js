@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { callLlm, getLlmConfig } = require('./llmService');
+const { callLlm } = require('./llmService');
 
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
 
@@ -136,7 +136,6 @@ async function runTriage(triageRunId) {
     const text = await extractText(filePath, doc.mimetype);
     if (!text || text.trim().length < 50) throw new Error('Document text too short to analyze');
 
-    const llmConfig = await getLlmConfig();
     const { text: rawResult, provider, model } = await callLlm({
       systemPrompt: SYSTEM_PROMPT,
       userPrompt: buildUserPrompt(run.doc_type, text),
