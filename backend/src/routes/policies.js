@@ -21,18 +21,47 @@ const downloadLimiter = rateLimit({
 
 const POLICIES_DIR = path.resolve('uploads/policies');
 const ALLOWED_MIME_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
 const MAX_UPLOAD_SIZE = 20 * 1024 * 1024; // 20 MB
+
+const MAGIC_BYTES = {
+  '.pdf':  [0x25, 0x50, 0x44, 0x46],
+  '.docx': [0x50, 0x4B, 0x03, 0x04],
+  '.xlsx': [0x50, 0x4B, 0x03, 0x04],
+  '.doc':  [0xD0, 0xCF, 0x11, 0xE0],
+  '.xls':  [0xD0, 0xCF, 0x11, 0xE0],
+};
+
+const checkMagicBytes = (filePath, ext) => {
+  const expected = MAGIC_BYTES[ext];
+  if (!expected) return true;
+  try {
+    const buf = Buffer.alloc(expected.length);
+    const fd = fs.openSync(filePath, 'r');
+    fs.readSync(fd, buf, 0, expected.length, 0);
+    fs.closeSync(fd);
+    return Buffer.from(expected).equals(buf);
+  } catch {
+    return false;
+  }
+};
 
 const storage = multer.diskStorage({
   destination: 'uploads/policies/',
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    cb(null, Date.now() + '-' + safeName + ext);
+  },
 });
 const upload = multer({
   storage,
   limits: { fileSize: MAX_UPLOAD_SIZE },
   fileFilter: (req, file, cb) => {
-    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Nicht erlaubter Dateityp. Erlaubt: PDF, Word, Excel, Text.'));
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) return cb(new Error('Nicht erlaubter Dateityp. Erlaubt: PDF, Word, Excel, Text.'));
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) return cb(new Error('Nicht erlaubter MIME-Typ.'));
+    cb(null, true);
   },
 });
 
@@ -57,7 +86,7 @@ router.get('/', authenticate, async (req, res) => {
       order: [['title', 'ASC']]
     });
     res.json(policies);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // Create policy (Admin, Assessor or DPO)
@@ -70,6 +99,11 @@ router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.s
     if (data.valid_until === '' || data.valid_until === 'Invalid date') data.valid_until = null;
 
     if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      if (!checkMagicBytes(req.file.path, ext)) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(400).json({ error: 'Dateiinhalt stimmt nicht mit dem deklarierten Dateityp überein.' });
+      }
       data.file_url = req.file.path;
       data.original_filename = req.file.originalname;
     }
@@ -104,6 +138,11 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
     const before = { title: policy.title, version: policy.version, status: policy.status, file_url: policy.file_url };
 
     if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      if (!checkMagicBytes(req.file.path, ext)) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(400).json({ error: 'Dateiinhalt stimmt nicht mit dem deklarierten Dateityp überein.' });
+      }
       // Archive the old file as a version entry — only if the policy already had a file
       // (policy.file_url is null when created without a file; PolicyVersion.file_url is NOT NULL)
       if (policy.file_url) {
@@ -199,7 +238,7 @@ router.get('/:id/versions/:versionId/download', authenticate, downloadLimiter, a
       return res.sendFile(filePath);
     }
     res.download(filePath, version.original_filename);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // Download policy file
@@ -216,7 +255,7 @@ router.get('/:id/download', authenticate, downloadLimiter, async (req, res) => {
       return res.sendFile(filePath);
     }
     res.download(filePath, policy.original_filename);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // Delete policy
@@ -238,7 +277,7 @@ router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
     
     await policy.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // Policy acknowledgment endpoints — /acknowledgments/me must be before /:id/... routes
@@ -246,7 +285,7 @@ router.get('/acknowledgments/me', authenticate, async (req, res) => {
   try {
     const acks = await PolicyAcknowledgment.findAll({ where: { user_id: req.user.id } });
     res.json(acks);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.post('/:id/acknowledge', authenticate, async (req, res) => {
@@ -261,7 +300,7 @@ router.post('/:id/acknowledge', authenticate, async (req, res) => {
     const ack = await PolicyAcknowledgment.create({ policy_id: req.params.id, user_id: req.user.id, acknowledged_at: new Date() });
     await auditFromReq(req, 'acknowledge', 'policy', Number(req.params.id), policy.title, {});
     res.status(201).json(ack);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.get('/:id/acknowledgments', authenticate, requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
@@ -272,7 +311,7 @@ router.get('/:id/acknowledgments', authenticate, requireRole('admin', 'assessor'
       order: [['acknowledged_at', 'DESC']],
     });
     res.json(acks);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 module.exports = router;
