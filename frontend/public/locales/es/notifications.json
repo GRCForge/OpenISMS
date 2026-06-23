@@ -1,0 +1,10 @@
+{
+  "title": "Notifications",
+  "pushEnable": "Enable browser push notifications",
+  "pushDisable": "Disable browser push notifications",
+  "empty": "All done! No open tasks.",
+  "overdueSince": "Review overdue since {{date}}",
+  "nextReview": "Next review: {{date}}",
+  "neverAssessed": "Never assessed",
+  "viewAll": "View all tasks"
+}
