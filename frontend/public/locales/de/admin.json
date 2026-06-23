@@ -301,12 +301,12 @@
       ]
     },
     "pentest": {
-      "label": "Durchdringungstest-Nachverfolgung",
-      "description": "Management von Penetrationstests – Projekte, Ergebnisse mit Schweregrad (CVSS), Sanierungsstatus und Retest-Tracking.",
+      "label": "Pentest-Tracking",
+      "description": "Management von Penetrationstests — Projekte, Befunde mit Schweregrad (CVSS), Behebungsstatus und Retest-Nachverfolgung.",
       "features": [
-        "Projekt- & Scope Management",
-        "Register mit CVSS finden",
-        "Remediation-Nachverfolgung",
+        "Projekt- & Scope-Management",
+        "Befundregister mit CVSS",
+        "Behebungsnachverfolgung (Remediation)",
         "Retest-Status"
       ]
     },

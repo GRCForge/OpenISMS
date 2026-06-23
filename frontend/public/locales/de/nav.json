@@ -97,7 +97,7 @@
     },
     "pentests": {
       "label": "Pentest",
-      "hint": "Pentest Tracking & Erkenntnisse"
+      "hint": "Pentest-Tracking & Befunde"
     },
     "vendors": {
       "label": "Dienstleister",
