@@ -264,7 +264,7 @@ export const Iso27001: React.FC = () => {
                     {items.map(ctrl => (
                       <tr key={ctrl.id} className={`hover:bg-gray-50 dark:hover:bg-slate-800/50 ${!ctrl.applicable ? 'opacity-50' : ''}`}>
                         <Td><span className="font-mono text-xs text-gray-500 dark:text-slate-400">{ctrl.ref}</span></Td>
-                        <Td><p className="font-medium text-sm dark:text-slate-200">{ctrl.title}</p>{ctrl.owner && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{ctrl.owner.name}</p>}</Td>
+                        <Td><p className="font-medium text-sm dark:text-slate-200">{t('controls.' + ctrl.ref + '.title', { defaultValue: ctrl.title })}</p>{ctrl.owner && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{ctrl.owner.name}</p>}</Td>
                         <Td><input type="checkbox" checked={ctrl.applicable} disabled={!canWrite} onChange={() => toggleApplicable(ctrl)} className="w-4 h-4 rounded accent-blue-600 cursor-pointer disabled:cursor-not-allowed" /></Td>
                         <Td><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[ctrl.implementation_status]}`}>{statusLabels[ctrl.implementation_status]}</span></Td>
                         <Td className="text-gray-500 dark:text-slate-400 text-xs">{ctrl.last_review_date ? format(new Date(ctrl.last_review_date), 'dd.MM.yyyy') : '–'}</Td>
@@ -283,13 +283,13 @@ export const Iso27001: React.FC = () => {
         <Card><CardBody><div className="py-12 text-center"><Target size={36} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" /><p className="text-gray-500 dark:text-slate-400">{t('filterEmpty')}</p></div></CardBody></Card>
       )}
 
-      <Modal open={!!editControl} onClose={() => setEditControl(null)} title={editControl ? `${editControl.ref} – ${editControl.title}` : ''} size="xl">
+      <Modal open={!!editControl} onClose={() => setEditControl(null)} title={editControl ? `${editControl.ref} – ${t('controls.' + editControl.ref + '.title', { defaultValue: editControl.title })}` : ''} size="xl">
         <form onSubmit={saveEdit} className="space-y-4">
           {/* Description — full width */}
           {editControl?.description && (
             <div className="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 px-4 py-3">
               <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">{t('modal.description')}</p>
-              <p className="text-sm text-blue-900 dark:text-blue-200 leading-relaxed">{editControl.description}</p>
+              <p className="text-sm text-blue-900 dark:text-blue-200 leading-relaxed">{t('controls.' + editControl.ref + '.description', { defaultValue: editControl.description })}</p>
             </div>
           )}
 
