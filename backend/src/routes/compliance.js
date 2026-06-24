@@ -62,7 +62,7 @@ router.get('/stats', authenticate, async (req, res) => {
       noFramework: { count: 0, assets: [] },
       dsgvoGaps,
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // ── KPI & Effectiveness Measurement ──────────────────────────────────
@@ -76,12 +76,13 @@ router.get('/kpis', authenticate, async (req, res) => {
       order: [['created_at', 'DESC']]
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.post('/kpis', authenticate, requireWriteAccess(), async (req, res) => {
   try {
-    const item = await Kpi.create(req.body);
+    const { title, description, target, current_value, status, owner_id } = req.body;
+    const item = await Kpi.create({ title, description, target, current_value, status, owner_id });
     await auditFromReq(req, 'create', 'kpi', item.id, item.title, {
       description: item.description,
       target: item.target,
@@ -89,7 +90,7 @@ router.post('/kpis', authenticate, requireWriteAccess(), async (req, res) => {
       owner_id: item.owner_id
     });
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('[Compliance] POST /kpis', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.put('/kpis/:id', authenticate, requireWriteAccess(), async (req, res) => {
@@ -104,7 +105,8 @@ router.put('/kpis/:id', authenticate, requireWriteAccess(), async (req, res) => 
       status: item.status,
       owner_id: item.owner_id
     };
-    await item.update(req.body);
+    const { title, description, target, current_value, status, owner_id } = req.body;
+    await item.update({ title, description, target, current_value, status, owner_id });
     const after = {
       title: item.title,
       description: item.description,
@@ -115,7 +117,7 @@ router.put('/kpis/:id', authenticate, requireWriteAccess(), async (req, res) => 
     };
     await auditFromReq(req, 'update', 'kpi', item.id, item.title, { before, after });
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('[Compliance] PUT /kpis/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.delete('/kpis/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
@@ -126,7 +128,7 @@ router.delete('/kpis/:id', authenticate, requireRole('admin', 'assessor'), requi
     await item.destroy();
     await auditFromReq(req, 'delete', 'kpi', id, title, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.post('/kpis/:id/measurements', authenticate, requireWriteAccess(), async (req, res) => {
@@ -134,10 +136,8 @@ router.post('/kpis/:id/measurements', authenticate, requireWriteAccess(), async 
     const kpi = await Kpi.findByPk(req.params.id);
     if (!kpi) return res.status(404).json({ error: 'KPI nicht gefunden' });
     
-    const measurement = await KpiMeasurement.create({
-      ...req.body,
-      kpi_id: kpi.id
-    });
+    const { measured_at, value, notes } = req.body;
+    const measurement = await KpiMeasurement.create({ measured_at, value, notes, kpi_id: kpi.id });
     
     // Update KPI current value
     await kpi.update({
@@ -146,7 +146,7 @@ router.post('/kpis/:id/measurements', authenticate, requireWriteAccess(), async 
     
     await auditFromReq(req, 'create', 'kpi_measurement', measurement.id, `KPI: ${kpi.title}`, { value: measurement.value });
     res.status(201).json(measurement);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // ── Audit & CAPA Module ────────────────────────────────────────────
@@ -166,12 +166,13 @@ router.get('/audits', authenticate, async (req, res) => {
       order: [['start_date', 'DESC'], ['created_at', 'DESC']]
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.post('/audits', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
   try {
-    const item = await Audit.create(req.body);
+    const { title, scope, audit_type, status, auditor, start_date, end_date, report_link, notes } = req.body;
+    const item = await Audit.create({ title, scope, audit_type, status, auditor, start_date, end_date, report_link, notes });
     await auditFromReq(req, 'create', 'audit', item.id, item.title, {
       scope: item.scope,
       audit_type: item.audit_type,
@@ -181,7 +182,7 @@ router.post('/audits', authenticate, requireRole('admin', 'assessor'), requireWr
       end_date: item.end_date
     });
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('[Compliance] POST /audits', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.put('/audits/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
@@ -199,7 +200,8 @@ router.put('/audits/:id', authenticate, requireRole('admin', 'assessor'), requir
       report_link: item.report_link,
       notes: item.notes
     };
-    await item.update(req.body);
+    const { title, scope, audit_type, status, auditor, start_date, end_date, report_link, notes } = req.body;
+    await item.update({ title, scope, audit_type, status, auditor, start_date, end_date, report_link, notes });
     const after = {
       title: item.title,
       scope: item.scope,
@@ -213,7 +215,7 @@ router.put('/audits/:id', authenticate, requireRole('admin', 'assessor'), requir
     };
     await auditFromReq(req, 'update', 'audit', item.id, item.title, { before, after });
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('[Compliance] PUT /audits/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.delete('/audits/:id', authenticate, requireRole('admin'), requireWriteAccess(), async (req, res) => {
@@ -224,7 +226,7 @@ router.delete('/audits/:id', authenticate, requireRole('admin'), requireWriteAcc
     await item.destroy();
     await auditFromReq(req, 'delete', 'audit', id, title, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.post('/audits/:id/findings', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
@@ -232,10 +234,8 @@ router.post('/audits/:id/findings', authenticate, requireRole('admin', 'assessor
     const audit = await Audit.findByPk(req.params.id);
     if (!audit) return res.status(404).json({ error: 'Audit nicht gefunden' });
     
-    const finding = await AuditFinding.create({
-      ...req.body,
-      audit_id: audit.id
-    });
+    const { title, description, severity, status, assignee_id } = req.body;
+    const finding = await AuditFinding.create({ title, description, severity, status, assignee_id, audit_id: audit.id });
     
     await auditFromReq(req, 'create', 'audit_finding', finding.id, finding.title, {
       audit_id: audit.id,
@@ -245,7 +245,7 @@ router.post('/audits/:id/findings', authenticate, requireRole('admin', 'assessor
       assignee_id: finding.assignee_id
     });
     res.status(201).json(finding);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.put('/findings/:id', authenticate, requireWriteAccess(), async (req, res) => {
@@ -261,7 +261,8 @@ router.put('/findings/:id', authenticate, requireWriteAccess(), async (req, res)
       capa_task_id: item.capa_task_id,
       assignee_id: item.assignee_id
     };
-    await item.update(req.body);
+    const { title, description, severity, status, capa_task_id, assignee_id } = req.body;
+    await item.update({ title, description, severity, status, capa_task_id, assignee_id });
     const after = {
       audit_id: item.audit_id,
       title: item.title,
@@ -273,7 +274,7 @@ router.put('/findings/:id', authenticate, requireWriteAccess(), async (req, res)
     };
     await auditFromReq(req, 'update', 'audit_finding', item.id, item.title, { before, after });
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error('[Compliance] PUT /findings/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 router.delete('/findings/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
@@ -284,7 +285,7 @@ router.delete('/findings/:id', authenticate, requireRole('admin', 'assessor'), r
     await item.destroy();
     await auditFromReq(req, 'delete', 'audit_finding', id, title, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // ── Awareness & Training Tracking ──────────────────────────────────
@@ -317,7 +318,7 @@ router.get('/trainings-list', authenticate, async (req, res) => {
     });
     
     res.json(formatted);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // POST create a new training course
@@ -340,7 +341,7 @@ router.post('/trainings-list', authenticate, requireRole('admin', 'assessor', 'd
     });
     
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // PUT update a training course
@@ -369,7 +370,7 @@ router.put('/trainings-list/:id', authenticate, requireRole('admin', 'assessor',
     );
     
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // DELETE a training course
@@ -386,7 +387,7 @@ router.delete('/trainings-list/:id', authenticate, requireRole('admin', 'assesso
     await item.destroy();
     await auditFromReq(req, 'delete', 'training', id, title, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // GET all user training assignments
@@ -402,7 +403,7 @@ router.get('/trainings', authenticate, async (req, res) => {
       order: [['completed_at', 'DESC'], ['created_at', 'DESC']]
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // POST contest a user training assignment
@@ -444,7 +445,7 @@ router.post('/trainings/:id/contest', authenticate, async (req, res) => {
     
     res.json(item);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error(e); res.status(500).json({ error: 'Interner Serverfehler' });
   }
 });
 
@@ -617,7 +618,7 @@ router.post('/trainings/bulk', authenticate, requireRole('admin', 'assessor', 'd
     await auditFromReq(req, 'create', 'user_training', null, `Bulk: ${finalTitle}`, { count: created.length, training_id });
     res.status(201).json({ count: created.length, items: created });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error(e); res.status(500).json({ error: 'Interner Serverfehler' });
   }
 });
 
@@ -648,7 +649,7 @@ router.post('/trainings', authenticate, requireRole('admin', 'assessor', 'dpo'),
       status: item.status
     });
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // PUT update user training assignment
@@ -693,7 +694,7 @@ router.put('/trainings/:id', authenticate, requireRole('admin', 'assessor', 'dpo
     };
     await auditFromReq(req, 'update', 'user_training', item.id, item.training_title, { before, after });
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 // DELETE user training assignment
@@ -705,7 +706,7 @@ router.delete('/trainings/:id', authenticate, requireRole('admin', 'assessor'), 
     await item.destroy();
     await auditFromReq(req, 'delete', 'user_training', id, training_title, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
 module.exports = router;

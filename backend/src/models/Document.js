@@ -16,6 +16,7 @@ const Document = sequelize.define('Document', {
     defaultValue: 'other',
   },
   description: { type: DataTypes.STRING(500) },
+  file_hash: { type: DataTypes.STRING(64), allowNull: true },
 }, { tableName: 'documents', timestamps: true, createdAt: 'created_at', updatedAt: false });
 
 module.exports = Document;

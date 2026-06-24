@@ -11,6 +11,7 @@ const PolicyVersion = sequelize.define('PolicyVersion', {
   original_filename: { type: DataTypes.STRING(255) },
   created_by: { type: DataTypes.INTEGER },
   notes: { type: DataTypes.TEXT },
+  file_hash: { type: DataTypes.STRING(64), allowNull: true },
 }, { tableName: 'policy_versions', timestamps: true, createdAt: 'created_at', updatedAt: false });
 
 module.exports = PolicyVersion;
