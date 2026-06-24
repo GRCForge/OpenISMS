@@ -66,9 +66,7 @@
       "it-staff": "Personal de TI",
       "dpo": "Delegado de Protección de Datos",
       "owner": "Propietario de Activos (Responsable)",
-      "viewer": "Lector (Solo Lectura)",
-      "management": "Dirección",
-      "employee": "Empleado"
+      "viewer": "Lector (Solo Lectura)"
     },
     "initialPassword": "Initial Password *",
     "accountStatus": "Account Status",

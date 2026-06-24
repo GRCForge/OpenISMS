@@ -350,29 +350,5 @@
     "deleteMasterTraining": "Are you sure you want to delete this training course and all associated employee assignments?",
     "deleteAssignment": "Are you sure you want to delete the assignment for this employee?"
   },
-  "searchPlaceholder": "Search...",
-  "table": {
-    "assetName": "Nombre del Activo",
-    "type": "Tipo",
-    "classification": "Clasificación",
-    "risk": "Riesgo",
-    "actions": "Acciones",
-    "personalData": "Datos Personales",
-    "vvtStatus": "Estado RoPA",
-    "kpi": "KPI",
-    "targetValue": "Valor Objetivo",
-    "currentValue": "Valor Actual",
-    "status": "Estado",
-    "owner": "Propietario",
-    "latestTrend": "Tendencia",
-    "finding": "Hallazgo / No Conformidad",
-    "severity": "Severidad",
-    "assignedPerson": "Persona Asignada",
-    "capaTask": "Acción CAPA",
-    "employee": "Empleado",
-    "department": "Departamento",
-    "completionDate": "Fecha de Finalización",
-    "validUntil": "Válido Hasta",
-    "certificate": "Certificado / Comprobante"
-  }
+  "searchPlaceholder": "Search..."
 }
