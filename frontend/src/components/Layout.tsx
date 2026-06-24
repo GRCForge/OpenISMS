@@ -21,7 +21,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { IsmsLogo } from './IsmsLogo';
 import api from '../lib/api';
-import { startRegistration } from '../lib/webauthn';
+import { startRegistration, PasskeyCancelledError } from '../lib/webauthn';
 
 interface NavItem {
   path: string;
@@ -290,7 +290,7 @@ export const Layout: React.FC = () => {
       setPasskeys(updated.data);
       setPasskeyMsg({ ok: true, text: t('profile:passkeys.success') });
     } catch (e: any) {
-      if (!e.message?.includes('abgebrochen')) {
+      if (!(e instanceof PasskeyCancelledError)) {
         setPasskeyMsg({ ok: false, text: e.response?.data?.error || e.message || t('profile:passkeys.failed') });
       }
     } finally { setPasskeyLoading(false); }
@@ -754,7 +754,8 @@ export const Layout: React.FC = () => {
             <kbd className="font-mono text-[10px] px-1 py-0.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded ml-1">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
-            <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}>
+            <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}
+            >
               {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </button>
             <NotificationBell />
