@@ -22,7 +22,7 @@ ENV NODE_ENV=production
 COPY backend/package.json backend/package-lock.json ./
 # --loglevel=error suppresses the dottie deprecation warning (transitive dep of
 # sequelize@6; dottie@2.0.7 is the latest version — no fix available upstream).
-RUN npm ci --omit=dev --loglevel=error
+RUN npm ci --omit=dev --loglevel=error || npm install --omit=dev --loglevel=error
 COPY backend/ ./
 # Gebautes Frontend wird von Express aus /app/public ausgeliefert (siehe src/index.js)
 COPY --from=frontend-build /frontend/dist ./public
