@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
+const crypto = require('crypto');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -92,7 +93,7 @@ router.get('/', authenticate, async (req, res) => {
 // Create policy (Admin, Assessor or DPO)
 router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.single('file'), async (req, res) => {
   try {
-    const { asset_ids, control_ids, ...data } = req.body;
+    const { asset_ids, control_ids, file_hash: _h, ...data } = req.body;
     
     // Sanitize dates
     if (data.valid_from === '' || data.valid_from === 'Invalid date') data.valid_from = null;
@@ -106,6 +107,7 @@ router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.s
       }
       data.file_url = req.file.path;
       data.original_filename = req.file.originalname;
+      data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(req.file.path)).digest('hex');
     }
     const policy = await Policy.create(data);
     
@@ -129,8 +131,8 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
     const policy = await Policy.findByPk(req.params.id);
     if (!policy) return res.status(404).json({ error: 'Dokument nicht gefunden' });
 
-    const { asset_ids, control_ids, ...data } = req.body;
-    
+    const { asset_ids, control_ids, file_hash: _h, ...data } = req.body;
+
     // Sanitize dates
     if (data.valid_from === '' || data.valid_from === 'Invalid date') data.valid_from = null;
     if (data.valid_until === '' || data.valid_until === 'Invalid date') data.valid_until = null;
@@ -151,6 +153,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
           version: policy.version,
           file_url: policy.file_url,
           original_filename: policy.original_filename,
+          file_hash: policy.file_hash,
           created_by: req.user.id,
           notes: `Automatische Archivierung bei Update auf v${data.version || '?'}`
         });
@@ -158,6 +161,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
 
       data.file_url = req.file.path;
       data.original_filename = req.file.originalname;
+      data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(req.file.path)).digest('hex');
     }
 
     await policy.update(data);
@@ -224,6 +228,18 @@ const safeFilePath = (fileUrl) => {
   return null;
 };
 
+const verifyFileHash = async (filePath, storedHash) => {
+  if (!storedHash) return true;
+  const computed = await new Promise((resolve, reject) => {
+    const hash = crypto.createHash('sha256');
+    const stream = fs.createReadStream(filePath);
+    stream.on('data', d => hash.update(d));
+    stream.on('end', () => resolve(hash.digest('hex')));
+    stream.on('error', reject);
+  });
+  return computed === storedHash;
+};
+
 // Download old version
 router.get('/:id/versions/:versionId/download', authenticate, downloadLimiter, async (req, res) => {
   try {
@@ -231,7 +247,12 @@ router.get('/:id/versions/:versionId/download', authenticate, downloadLimiter, a
     if (!version) return res.status(404).json({ error: 'Version nicht gefunden' });
     const filePath = safeFilePath(version.file_url);
     if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Datei nicht vorhanden' });
+    if (!await verifyFileHash(filePath, version.file_hash)) {
+      console.error(`[Security] Integrity check failed for policy version ${version.id}`);
+      return res.status(500).json({ error: 'Dateiintegrität konnte nicht verifiziert werden.' });
+    }
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Content-SHA256', version.file_hash || '');
     if (req.query.inline === 'true') {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(version.original_filename)}"`);
@@ -248,7 +269,12 @@ router.get('/:id/download', authenticate, downloadLimiter, async (req, res) => {
     if (!policy || !policy.file_url) return res.status(404).json({ error: 'Datei nicht gefunden' });
     const filePath = safeFilePath(policy.file_url);
     if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Datei nicht vorhanden' });
+    if (!await verifyFileHash(filePath, policy.file_hash)) {
+      console.error(`[Security] Integrity check failed for policy ${policy.id}`);
+      return res.status(500).json({ error: 'Dateiintegrität konnte nicht verifiziert werden.' });
+    }
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Content-SHA256', policy.file_hash || '');
     if (req.query.inline === 'true') {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(policy.original_filename)}"`);
