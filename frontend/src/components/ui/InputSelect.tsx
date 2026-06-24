@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface InputSelectProps {
   label?: string;
@@ -30,6 +31,7 @@ export const InputSelect: React.FC<InputSelectProps> = ({
   placeholder,
   required
 }) => {
+  const { t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
@@ -115,14 +117,14 @@ export const InputSelect: React.FC<InputSelectProps> = ({
           }}
           className="w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-semibold border-b border-gray-100 dark:border-slate-700/50 flex items-center justify-between"
         >
-          <span>+ "{value.trim()}" neu eintragen</span>
-          <span className="text-[10px] text-gray-400 font-normal px-1 py-0.5 bg-gray-100 dark:bg-slate-700 rounded-xs">Neu</span>
+          <span>{t('ui.addEntry', { value: value.trim() })}</span>
+          <span className="text-[10px] text-gray-400 font-normal px-1 py-0.5 bg-gray-100 dark:bg-slate-700 rounded-xs">{t('ui.new')}</span>
         </button>
       )}
 
       {filteredOptions.length === 0 && !showCreateOption ? (
         <div className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">
-          Keine Standorte verfügbar
+          {t('ui.noOptions')}
         </div>
       ) : filteredOptions.length === 0 && showCreateOption ? null : (
         filteredOptions.map(opt => (

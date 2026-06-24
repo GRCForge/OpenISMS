@@ -146,5 +146,14 @@
       "task": "Task",
       "policy": "Document"
     }
+  },
+
+  "ui": {
+    "addEntry": "Agregar \"{{value}}\"",
+    "new": "Nuevo",
+    "noOptions": "Sin opciones disponibles",
+    "noEntries": "No se encontraron entradas",
+    "pleaseSelect": "– por favor seleccione –",
+    "search": "Buscar..."
   }
 }
