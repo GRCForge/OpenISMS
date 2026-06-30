@@ -77,16 +77,13 @@
     "dpo": "Datenschutzbeauftragter",
     "owner": "Asset-Besitzer",
     "viewer": "Betrachter",
-    "management": "Management",
-    "employee": "Mitarbeiter",
     "admin_short": "Admin",
     "assessor_short": "Assessor",
     "it-staff_short": "IT-Mitarbeiter",
     "dpo_short": "DPO",
     "owner_short": "Besitzer",
     "management_short": "Management",
-    "viewer_short": "Betrachter",
-    "employee_short": "Mitarbeiter"
+    "viewer_short": "Betrachter"
   },
   "security": {
     "purge_confirm": "Audit Log Einträge über die Speicherzeit hinaus löschen? Dieser Prozess ist unwiderruflich.",
@@ -277,7 +274,7 @@
   "modules_config": {
     "dsgvo": {
       "label": "DPR / Datenschutz",
-      "description": "Datenschutz-Grundverordnung — Verzeichnis der Verarbeitungstätigkeiten (Art. 30), Betroffenenrechte (Art. 15–22), DSFA-Workflow (Art. 35) und Datenflusskarte.",
+      "description": "General Data Protection Regulation – Aufzeichnung von Verarbeitungstätigkeiten (Art.",
       "features": [
         "Aufzeichnung der Verarbeitungsaktivitäten (RoPA, Art. 30)",
         "Rechte des Datengegenstands (Art. 15–22)",
@@ -326,12 +323,12 @@
       ]
     },
     "pentest": {
-      "label": "Pentest-Tracking",
-      "description": "Management von Penetrationstests — Projekte, Befunde mit Schweregrad (CVSS), Behebungsstatus und Retest-Nachverfolgung.",
+      "label": "Durchdringungstest-Nachverfolgung",
+      "description": "Management von Penetrationstests – Projekte, Ergebnisse mit Schweregrad (CVSS), Sanierungsstatus und Retest-Tracking.",
       "features": [
-        "Projekt- & Scope-Management",
-        "Befundregister mit CVSS",
-        "Behebungsnachverfolgung (Remediation)",
+        "Projekt- & Scope Management",
+        "Register mit CVSS finden",
+        "Remediation-Nachverfolgung",
         "Retest-Status"
       ]
     },

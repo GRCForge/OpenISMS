@@ -77,16 +77,13 @@
     "dpo": "Delegado de Protección de Datos",
     "owner": "Propietario de Activos",
     "viewer": "Lector",
-    "management": "Dirección",
-    "employee": "Empleado",
     "admin_short": "Admin",
     "assessor_short": "Asesor",
     "it-staff_short": "TI",
     "dpo_short": "DPO",
     "owner_short": "Propietario",
     "management_short": "Dirección",
-    "viewer_short": "Lector",
-    "employee_short": "Empleado"
+    "viewer_short": "Lector"
   },
   "security": {
     "purge_confirm": "Delete audit log entries beyond the retention period now? This process is irreversible.",
