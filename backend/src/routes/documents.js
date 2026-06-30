@@ -131,6 +131,8 @@ router.post('/', authenticate, requireWriteAccess(), upload.single('file'), asyn
       return res.status(400).json({ error: 'Dateiinhalt stimmt nicht mit der Dateiendung überein' });
     }
 
+    const fileHash = crypto.createHash('sha256').update(fs.readFileSync(uploadedPath)).digest('hex');
+
     const docData = {
       uploaded_by: req.user.id,
       filename: req.file.filename,
@@ -139,6 +141,7 @@ router.post('/', authenticate, requireWriteAccess(), upload.single('file'), asyn
       size: req.file.size,
       category: req.body.category || 'other',
       description: req.body.description || '',
+      file_hash: fileHash,
     };
 
     let auditEntity = '';
@@ -196,12 +199,30 @@ router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) =
     const filePath = getSafePath(doc.filename);
     if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Datei nicht gefunden' });
 
+    if (doc.file_hash) {
+      const computedHash = await new Promise((resolve, reject) => {
+        const hash = crypto.createHash('sha256');
+        const stream = fs.createReadStream(filePath);
+        stream.on('data', d => hash.update(d));
+        stream.on('end', () => resolve(hash.digest('hex')));
+        stream.on('error', reject);
+      });
+      if (computedHash !== doc.file_hash) {
+        console.error(`[Security] Integrity check failed for document ${doc.id}`);
+        return res.status(500).json({ error: 'Dateiintegrität konnte nicht verifiziert werden.' });
+      }
+    }
+
     // nosniff verhindert, dass der Browser den vom Upload übernommenen
     // (client-gesetzten) MIME-Typ überschreibt und z.B. eine als PDF
     // deklarierte Datei als HTML/JS interpretiert -> Stored-XSS-Schutz.
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Content-SHA256', doc.file_hash || '');
     if (req.query.inline === 'true') {
-      res.setHeader('Content-Type', doc.mimetype || 'application/pdf');
+      const safeMime = ALLOWED_EXT.includes(path.extname(doc.original_name || '').toLowerCase()) && doc.mimetype
+        ? doc.mimetype
+        : 'application/octet-stream';
+      res.setHeader('Content-Type', safeMime);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.original_name)}"`);
       return res.sendFile(filePath);
     }

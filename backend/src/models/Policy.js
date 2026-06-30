@@ -15,7 +15,8 @@ const Policy = sequelize.define('Policy', {
   valid_from: { type: DataTypes.DATEONLY },
   valid_until: { type: DataTypes.DATEONLY },
   file_url: { type: DataTypes.STRING(500) },
-  original_filename: { type: DataTypes.STRING(255) }
+  original_filename: { type: DataTypes.STRING(255) },
+  file_hash: { type: DataTypes.STRING(64), allowNull: true },
 }, { tableName: 'policies', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
 module.exports = Policy;
