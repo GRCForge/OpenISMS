@@ -102,6 +102,8 @@
     "nvdNoCpe": "Kein CPE-Eintrag in NVD gefunden. Bitte Hersteller/Name überprüfen oder Suchbegriff anpassen.",
     "cpeResolveFailed": "CPE-Auflösung fehlgeschlagen",
     "cveSearchImpossible": "CVE-Suche nicht möglich (fehlende Asset-Daten).",
+    "cveScanSuccess": "CVE-Scan abgeschlossen: {{critical}} kritisch, {{high}} hoch, {{medium}} mittel, {{low}} gering (Quelle: {{source}})",
+    "cveRefreshFailed": "CVE-Aktualisierung fehlgeschlagen",
     "linkFailed": "Fehler beim Verlinken",
     "cpeSaved": "CPE gespeichert: {{title}}",
     "createFailed": "Fehler beim Erstellen",

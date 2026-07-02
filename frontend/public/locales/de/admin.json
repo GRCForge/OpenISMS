@@ -235,7 +235,10 @@
     "vendors": "Diensteanbieter",
     "import": "Importieren",
     "reports": "Managementberichte",
-    "admin": "Verwaltung"
+    "admin": "Verwaltung",
+    "title": "Compliance-Module",
+    "description": "Aktiviere oder deaktiviere Compliance-Module. Deaktivierte Module werden in der Navigation ausgeblendet. Der ISMS-Kern (Assets, Risiken, Controls, Richtlinien) ist immer aktiv. Änderungen werden sofort gespeichert.",
+    "saved": "Gespeichert"
   },
   "actions": {
     "view": "Lesen",

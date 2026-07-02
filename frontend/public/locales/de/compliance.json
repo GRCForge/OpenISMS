@@ -233,7 +233,8 @@
     "valueLabel": "Gemessener Wert *",
     "valuePlaceholder": "z. B. 3,2% oder 4 Tage",
     "dateLabel": "Messdatum *",
-    "notesPlaceholder": "Abweichungen oder Kontext beim Protokollieren"
+    "notesPlaceholder": "Abweichungen oder Kontext beim Protokollieren",
+    "submitBtn": "Messwert speichern"
   },
   "auditModal": {
     "title": "Plan-Audit",
@@ -255,6 +256,11 @@
     "titlePlaceholder": "z. B. Fehlendes Backup-Konzept für neue SaaS",
     "descriptionLabel": "Detaillierte Beschreibung",
     "descriptionPlaceholder": "Genaue Beschreibung der Suche, einschließlich Ziel/aktueller Vergleichsdaten",
+    "severityOptions": {
+      "major": "Hauptabweichung (Major)",
+      "minor": "Nebenabweichung (Minor)",
+      "observation": "Empfehlung / Beobachtung"
+    },
     "assigneeLabel": "Verantwortliche Person",
     "capaTaskLabel": "Verlinkte CAPA-Aktion (Aufgabe)",
     "noTaskLabel": "— Keine Aufgabe verknüpfen —",

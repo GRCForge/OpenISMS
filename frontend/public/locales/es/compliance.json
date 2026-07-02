@@ -233,7 +233,8 @@
     "valueLabel": "Measured Value *",
     "valuePlaceholder": "e.g., 3.2% or 4 days",
     "dateLabel": "Measurement Date *",
-    "notesPlaceholder": "Deviations or context when logging"
+    "notesPlaceholder": "Deviations or context when logging",
+    "submitBtn": "Guardar medición"
   },
   "auditModal": {
     "title": "Plan Audit",
@@ -255,6 +256,11 @@
     "titlePlaceholder": "e.g., Missing backup concept for new SaaS",
     "descriptionLabel": "Detailed Description",
     "descriptionPlaceholder": "Exact description of the finding, including target/actual comparison",
+    "severityOptions": {
+      "major": "No conformidad mayor",
+      "minor": "No conformidad menor",
+      "observation": "Observación / Recomendación"
+    },
     "assigneeLabel": "Responsible Person",
     "capaTaskLabel": "Linked CAPA Action (Task)",
     "noTaskLabel": "— Do not link a task —",
