@@ -115,6 +115,30 @@
     "confidential": "Vertraulich",
     "secret": "Geheimnis"
   },
+  "table": {
+    "assetName": "Asset-Name",
+    "type": "Typ",
+    "classification": "Klassifizierung",
+    "risk": "Risiko",
+    "actions": "Aktionen",
+    "personalData": "Personenbezogene Daten",
+    "vvtStatus": "VVT-Status",
+    "kpi": "KPI",
+    "targetValue": "Zielwert",
+    "currentValue": "Ist-Wert",
+    "status": "Status",
+    "owner": "Besitzer",
+    "latestTrend": "Neuester Trend",
+    "finding": "Suche / Nichtkonformität",
+    "severity": "Schweregrad",
+    "assignedPerson": "Zugewiesene Person",
+    "capaTask": "CAPA-Maßnahme",
+    "employee": "Mitarbeiter",
+    "department": "Abteilung",
+    "completionDate": "Abschlussdatum",
+    "validUntil": "Gültig bis",
+    "certificate": "Zertifikat"
+  },
   "vvtLabels": {
     "none": "Nicht aufgezeichnet",
     "pending": "In Bearbeitung",
@@ -233,7 +257,8 @@
     "valueLabel": "Gemessener Wert *",
     "valuePlaceholder": "z. B. 3,2% oder 4 Tage",
     "dateLabel": "Messdatum *",
-    "notesPlaceholder": "Abweichungen oder Kontext beim Protokollieren"
+    "notesPlaceholder": "Abweichungen oder Kontext beim Protokollieren",
+    "submitBtn": "Messwert speichern"
   },
   "auditModal": {
     "title": "Plan-Audit",
@@ -255,6 +280,11 @@
     "titlePlaceholder": "z. B. Fehlendes Backup-Konzept für neue SaaS",
     "descriptionLabel": "Detaillierte Beschreibung",
     "descriptionPlaceholder": "Genaue Beschreibung der Suche, einschließlich Ziel/aktueller Vergleichsdaten",
+    "severityOptions": {
+      "major": "Hauptabweichung (Major)",
+      "minor": "Nebenabweichung (Minor)",
+      "observation": "Empfehlung / Beobachtung"
+    },
     "assigneeLabel": "Verantwortliche Person",
     "capaTaskLabel": "Verlinkte CAPA-Aktion (Aufgabe)",
     "noTaskLabel": "— Keine Aufgabe verknüpfen —",
