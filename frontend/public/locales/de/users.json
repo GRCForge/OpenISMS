@@ -66,7 +66,9 @@
       "it-staff": "IT-Mitarbeiter",
       "dpo": "Datenschutzbeauftragter",
       "owner": "Asset-Besitzer (Verantwortlich)",
-      "viewer": "Viewer (schreibgeschützt)"
+      "management": "Management",
+      "viewer": "Viewer (schreibgeschützt)",
+      "employee": "Mitarbeiter"
     },
     "initialPassword": "Initiales Passwort *",
     "accountStatus": "Kontostatus",
