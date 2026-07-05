@@ -155,7 +155,8 @@
     "until": "bis {{date}}",
     "today": "Heute!",
     "elevatedRiskAssets": "Vermögenswerte mit erhöhtem Risiko",
-    "assetFallback": "Asset"
+    "assetFallback": "Asset",
+    "manualKpis": "Manuelle KPIs"
   },
   "kpiStatus": {
     "onTarget": "Am Ziel",
@@ -220,5 +221,6 @@
     "cancel": "Abbrechen",
     "saving": "Speichern...",
     "approve": "Bestätigen"
-  }
+  },
+  "healthScore": "ISMS Health Score"
 }
