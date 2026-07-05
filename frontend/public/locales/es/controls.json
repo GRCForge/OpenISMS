@@ -14,7 +14,9 @@
   "status": {
     "implemented": "Implemented",
     "planned": "Planned",
-    "not_applicable": "Not Applicable"
+    "not_applicable": "Not Applicable",
+    "in_progress": "En Progreso",
+    "open": "Abierto"
   },
   "stats": {
     "implemented": "Implemented",
@@ -73,5 +75,20 @@
     "bulkDeleted_other": "{{count}} controls deleted",
     "deleteError": "Error deleting",
     "error": "Error"
+  },
+  "mapping": {
+    "typeLabels": {
+      "direct": "Directo",
+      "partial": "Parcial",
+      "related": "Relacionado"
+    },
+    "loading": "Cargando referencias cruzadas…",
+    "empty": "No hay referencias cruzadas disponibles.",
+    "fulfilledFilter": "Cumplido (ISO 27001 o directo)",
+    "pendingFilter": "Pendiente de implementar (abierto)",
+    "allStatuses": "Todos los niveles de implementación",
+    "withMappings": "controles con referencias cruzadas",
+    "filterPlaceholder": "Filtrar por ID o título…",
+    "nameAndStatus": "Nombre y estado"
   }
 }
