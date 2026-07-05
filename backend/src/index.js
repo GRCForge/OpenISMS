@@ -100,7 +100,11 @@ app.use(session({
   // Callback schluege fehl. 'lax' erlaubt das Cookie bei Top-Level-GET-Navigation
   // (genau der OAuth-Redirect) und blockt weiterhin Cross-Site-POST (CSRF).
   cookie: {
-    secure: process.env.SECURE_COOKIES === 'true',
+    // Auto-enable Secure over HTTPS (APP_URL) so a correct production deployment
+    // never sends the session cookie in cleartext; still overridable via env, and
+    // stays false for plain-HTTP LAN setups so those keep working.
+    secure: process.env.SECURE_COOKIES === 'true'
+      || (process.env.SECURE_COOKIES !== 'false' && String(process.env.APP_URL || '').startsWith('https://')),
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 10 * 60 * 1000,
@@ -453,12 +457,39 @@ const start = async () => {
       console.warn('[DB] Could not migrate API tokens to hashed storage:', e.message);
     }
 
+    // Encrypt legacy cleartext TOTP secrets at rest (idempotent). Reads raw values
+    // (bypassing the model getter); rows that fail to decrypt are plaintext and get
+    // encrypted via a raw UPDATE (bypassing the setter to avoid double-encryption).
+    try {
+      const { QueryTypes } = require('sequelize');
+      const { encrypt, decrypt } = require('./services/cryptoService');
+      const rows = await sequelize.query(
+        'SELECT id, totp_secret FROM users WHERE totp_secret IS NOT NULL',
+        { type: QueryTypes.SELECT }
+      );
+      let migrated = 0;
+      for (const r of rows) {
+        if (decrypt(r.totp_secret) === null) { // not ciphertext → legacy plaintext
+          await sequelize.query('UPDATE users SET totp_secret = :enc WHERE id = :id',
+            { replacements: { enc: encrypt(r.totp_secret), id: r.id } });
+          migrated++;
+        }
+      }
+      if (migrated > 0) console.log(`[DB] Encrypted ${migrated} TOTP secret(s) at rest`);
+    } catch (e) {
+      console.warn('[DB] Could not migrate TOTP secrets to encrypted storage:', e.message);
+    }
+
     // Seed admin user if none exists. Passwort über ADMIN_PASSWORD setzbar;
     // ohne Override greift der dokumentierte Standard, der sofort zu ändern ist.
     const { User } = require('./models');
     const count = await User.count();
     if (count === 0) {
-      const initialPassword = process.env.ADMIN_PASSWORD || 'Admin1234!';
+      // Never ship a known default credential. Use ADMIN_PASSWORD when provided,
+      // otherwise generate a strong random one and print it once so the initial
+      // admin cannot be logged into with a guessable, publicly documented password.
+      const generated = !process.env.ADMIN_PASSWORD;
+      const initialPassword = process.env.ADMIN_PASSWORD || (crypto.randomBytes(12).toString('base64') + 'Aa1!');
       await User.create({
         name: 'Administrator',
         email: 'admin@isms.local',
@@ -466,10 +497,14 @@ const start = async () => {
         role: 'admin',
         department: 'IT Security'
       });
-      if (process.env.ADMIN_PASSWORD) {
-        console.log('Admin user created: admin@isms.local (Passwort aus ADMIN_PASSWORD)');
+      if (generated) {
+        console.warn('════════════════════════════════════════════════════════════════');
+        console.warn('[SECURITY] Admin-Konto erstellt: admin@isms.local');
+        console.warn(`[SECURITY] Generiertes Einmal-Passwort: ${initialPassword}`);
+        console.warn('[SECURITY] Bitte NACH dem ersten Login sofort ändern (oder ADMIN_PASSWORD setzen).');
+        console.warn('════════════════════════════════════════════════════════════════');
       } else {
-        console.warn('[SECURITY] Admin-Standardkonto erstellt: admin@isms.local / Admin1234! — Passwort SOFORT ändern oder ADMIN_PASSWORD setzen!');
+        console.log('Admin user created: admin@isms.local (Passwort aus ADMIN_PASSWORD)');
       }
     }
 

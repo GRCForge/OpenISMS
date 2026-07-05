@@ -2,11 +2,31 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { AuditLog } = require('../models');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { verifyAuditRow } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
+
+// Integrity check: recompute the HMAC for every audit row and report any that were
+// tampered with (or predate the integrity feature and cannot be verified).
+router.get('/verify', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const rows = await AuditLog.findAll({ order: [['id', 'ASC']] });
+    let intact = 0, tampered = 0, unverifiable = 0;
+    const tamperedIds = [];
+    for (const row of rows) {
+      const result = verifyAuditRow(row);
+      if (result === null) unverifiable++;
+      else if (result) intact++;
+      else { tampered++; if (tamperedIds.length < 100) tamperedIds.push(row.id); }
+    }
+    res.json({ total: rows.length, intact, tampered, unverifiable, tamperedIds });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 router.get('/', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
   try {

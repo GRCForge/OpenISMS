@@ -51,9 +51,22 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
     // Block temp TOTP-pending tokens from being used as full session tokens
     if (decoded.totp_pending) return res.status(401).json({ error: 'MFA erforderlich' });
-    const user = await User.findByPk(decoded.id, { attributes: { exclude: ['password_hash'] } });
+    // Never expose secrets on req.user (and thus on GET /auth/me).
+    const user = await User.findByPk(decoded.id, {
+      attributes: { exclude: ['password_hash', 'totp_secret', 'reset_password_token', 'reset_password_expires'] },
+    });
     if (!user || !user.active) return res.status(401).json({ error: 'Unauthorized' });
-    
+
+    // Invalidate sessions issued before the last password change/reset. Tokens
+    // predating password_changed_at are rejected (1s skew for the token minted by
+    // the change itself). Legacy tokens without iat and users who never changed
+    // their password are unaffected.
+    if (user.password_changed_at && decoded.iat) {
+      if (decoded.iat * 1000 < new Date(user.password_changed_at).getTime() - 1000) {
+        return res.status(401).json({ error: 'Session abgelaufen — bitte neu anmelden.' });
+      }
+    }
+
     // Update last seen (async, don't wait)
     user.last_seen_at = new Date();
     user.save().catch(e => console.error('Error updating last_seen_at:', e.message));

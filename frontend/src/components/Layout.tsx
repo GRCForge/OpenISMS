@@ -242,7 +242,10 @@ export const Layout: React.FC = () => {
     e.preventDefault();
     setPwLoading(true); setPwMsg(null);
     try {
-      await api.post('/auth/change-password', { current_password: pwCurrent, new_password: pwNew });
+      const r = await api.post('/auth/change-password', { current_password: pwCurrent, new_password: pwNew });
+      // The server rotates the session token on password change; store the new one
+      // so the current session isn't invalidated along with the old tokens.
+      if (r.data?.token) localStorage.setItem('token', r.data.token);
       setPwMsg({ ok: true, text: t('profile:password.success') });
       setPwCurrent(''); setPwNew('');
     } catch (e: any) {
