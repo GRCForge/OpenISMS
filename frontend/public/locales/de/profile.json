@@ -56,6 +56,7 @@
     "delete": "Löschen",
     "confirmDelete": "Diesen API-Token wirklich löschen?",
     "generated": "API-Token erfolgreich generiert.",
+    "copyNow": "Kopieren Sie dieses Token jetzt — aus Sicherheitsgründen wird es nicht erneut angezeigt.",
     "generateError": "Fehler beim Generieren des Token",
     "deleted": "API-Token gelöscht.",
     "deleteError": "Fehler beim Löschen des Token",

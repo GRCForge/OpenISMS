@@ -433,6 +433,26 @@ const start = async () => {
       console.warn('[DB] Could not backfill ISO 27001 descriptions:', e.message);
     }
 
+    // Migrate legacy cleartext API tokens to hashed storage (idempotent).
+    // Older rows stored the raw token; hash them in place and drop the cleartext
+    // so a DB leak no longer yields usable credentials.
+    try {
+      const { ApiToken } = require('./models');
+      const { hashToken } = require('./services/cryptoService');
+      const legacy = await ApiToken.findAll({ where: { token_hash: null } });
+      for (const row of legacy) {
+        if (row.token && /^isms_api_[0-9a-f]{64}$/.test(row.token)) {
+          row.token_hash = hashToken(row.token);
+          row.token_prefix = row.token.slice(0, 17);
+          row.token = null;
+          await row.save();
+        }
+      }
+      if (legacy.length > 0) console.log(`[DB] Migrated ${legacy.length} API token(s) to hashed storage`);
+    } catch (e) {
+      console.warn('[DB] Could not migrate API tokens to hashed storage:', e.message);
+    }
+
     // Seed admin user if none exists. Passwort über ADMIN_PASSWORD setzbar;
     // ohne Override greift der dokumentierte Standard, der sofort zu ändern ist.
     const { User } = require('./models');

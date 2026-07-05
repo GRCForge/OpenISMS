@@ -23,6 +23,12 @@ const includeAll = [
   { model: Incident, as: 'incidents', through: { attributes: [] } },
 ];
 
+// Per-record write authorization, mirroring the read scope in GET /:id: admin and
+// assessor may act on any risk; any other role only on risks they own. Prevents a
+// generic owner/it-staff/dpo user from modifying or signing off risks they cannot read.
+const canWriteRisk = (user, risk) =>
+  user.role === 'admin' || user.role === 'assessor' || risk.owner_id === user.id;
+
 // Standardisierte Skala/Matrix (fuer die Heatmap im Frontend)
 router.get('/scale', authenticate, (req, res) => res.json(scaleInfo()));
 
@@ -119,6 +125,7 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
+    if (!canWriteRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
     const fields = [
       'title', 'description', 'category', 'owner_id', 'likelihood', 'impact',
       'inherent_level', 'inherent_score', 'residual_likelihood', 'residual_impact',
@@ -155,6 +162,7 @@ router.patch('/:id/signoff', authenticate, requireRole('admin', 'assessor', 'own
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
+    if (!canWriteRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
     await risk.update({
       status: 'accepted',
       accepted_by_id: req.user.id,
@@ -172,6 +180,7 @@ router.patch('/:id/revoke', authenticate, requireRole('admin', 'assessor', 'owne
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
+    if (!canWriteRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
     await risk.update({ status: 'in_treatment', accepted_by_id: null, accepted_at: null, accepted_until: null });
     const full = await Risk.findByPk(risk.id, { include: includeAll });
     res.json(full);

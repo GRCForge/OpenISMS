@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { User, ApiToken } = require('../models');
 const { notify } = require('../services/notifyService');
+const { hashToken } = require('../services/cryptoService');
 
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
@@ -21,7 +22,7 @@ const authenticate = async (req, res, next) => {
       if (!/^isms_api_[0-9a-f]{64}$/.test(token)) {
         return res.status(401).json({ error: 'Invalid token' });
       }
-      const dbToken = await ApiToken.findOne({ where: { token } });
+      const dbToken = await ApiToken.findOne({ where: { token_hash: hashToken(token) } });
       if (!dbToken) return res.status(401).json({ error: 'Invalid token' });
 
       // Check for expiration

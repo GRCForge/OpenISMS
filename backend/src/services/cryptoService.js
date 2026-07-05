@@ -31,4 +31,9 @@ const decrypt = (data) => {
   }
 };
 
-module.exports = { encrypt, decrypt };
+// Fast one-way hash for high-entropy secrets (e.g. API tokens) so they are not
+// stored in cleartext. The token is 256-bit random, so a plain SHA-256 is
+// sufficient (no need for a slow password hash) and allows constant-cost lookup.
+const hashToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
+
+module.exports = { encrypt, decrypt, hashToken };

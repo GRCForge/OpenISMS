@@ -12,7 +12,7 @@ const { validate: validatePassword } = require('../services/passwordPolicy');
 const authenticator = new TOTP({
   crypto: new NobleCryptoPlugin(),
   base32: new ScureBase32Plugin(),
-  window: 2,
+  window: 1,
 });
 
 const rateLimit = require('express-rate-limit');
@@ -244,21 +244,24 @@ router.post('/login/totp', async (req, res) => {
     }
 
     const cleanToken = String(token).replace(/\s+/g, '');
-    const { valid } = await authenticator.verify(cleanToken, { secret: user.totp_secret });
-    if (!valid) {
+    const result = await authenticator.verify(cleanToken, { secret: user.totp_secret });
+    if (!result.valid) {
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'Ungültiger TOTP-Code' });
       await handleFailedLoginForIp(req, user.email);
       return res.status(401).json({ error: 'Ungültiger TOTP-Code' });
     }
 
-    // Replay prevention: store the 30s time-step so any code re-use within the same window is blocked
-    const currentStep = String(Math.floor(Date.now() / 30000));
-    if (user.totp_last_used === currentStep) {
+    // Replay prevention: reject any code whose matched time step was already used.
+    // Binding to the absolute time step of the matched code (not wall-clock) closes
+    // the intra-window replay gap — a code captured in one step cannot be reused at a
+    // neighbouring step still inside the acceptance window.
+    const lastStep = user.totp_last_used ? parseInt(user.totp_last_used, 10) : -1;
+    if (Number.isFinite(result.timeStep) && result.timeStep <= lastStep) {
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'TOTP-Code bereits verwendet' });
       await handleFailedLoginForIp(req, user.email);
       return res.status(401).json({ error: 'TOTP-Code bereits verwendet' });
     }
-    user.totp_last_used = currentStep;
+    user.totp_last_used = String(result.timeStep);
     await user.save();
 
     const sessionToken = jwt.sign(
