@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, ArrowRight, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 
 export type Framework = 'iso27001' | 'nis2' | 'bsi_grundschutz' | 'c5';
@@ -34,7 +35,6 @@ const FW_ROUTES: Record<Framework, string> = {
   c5: '/c5',
 };
 
-const TYPE_LABELS = { direct: 'Direkt', partial: 'Teilweise', related: 'Verwandt' };
 const TYPE_COLORS = {
   direct: 'text-green-600 dark:text-green-400',
   partial: 'text-amber-600 dark:text-amber-400',
@@ -49,6 +49,7 @@ interface Props {
 }
 
 export const ControlMappings: React.FC<Props> = ({ framework, ref: controlRef, exclude = [], compact = false }) => {
+  const { t } = useTranslation('controls');
   const [data, setData] = useState<MappedControl[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,16 +61,21 @@ export const ControlMappings: React.FC<Props> = ({ framework, ref: controlRef, e
       .finally(() => setLoading(false));
   }, [framework, controlRef]);
 
-  if (loading) return <div className="flex items-center gap-2 py-2 text-xs text-gray-400"><Loader2 size={12} className="animate-spin" />Querverweise laden…</div>;
+  if (loading) return <div className="flex items-center gap-2 py-2 text-xs text-gray-400"><Loader2 size={12} className="animate-spin" />{t('mapping.loading')}</div>;
 
   const visible = (data || []).filter(m => !exclude.includes(m.framework));
-  if (visible.length === 0) return compact ? null : <p className="text-xs text-gray-400 italic">Keine Querverweise verfügbar.</p>;
+  if (visible.length === 0) return compact ? null : <p className="text-xs text-gray-400 italic">{t('mapping.empty')}</p>;
+
+  const statusLabel = (status?: string) =>
+    status === 'implemented' ? t('status.implemented')
+    : status === 'in_progress' ? t('status.in_progress')
+    : t('status.open');
 
   if (compact) {
     return (
       <div className="flex flex-wrap gap-1">
         {visible.map((m, i) => (
-          <Link key={i} to={FW_ROUTES[m.framework]} title={`${FW_LABELS[m.framework]}: ${m.title} (${m.status === 'implemented' ? 'Erfüllt' : m.status === 'in_progress' ? 'In Arbeit' : 'Offen'})`}
+          <Link key={i} to={FW_ROUTES[m.framework]} title={`${FW_LABELS[m.framework]}: ${m.title} (${statusLabel(m.status)})`}
             className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity border ${
               m.status === 'implemented'
                 ? 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800/30'
@@ -105,12 +111,12 @@ export const ControlMappings: React.FC<Props> = ({ framework, ref: controlRef, e
               <div key={i} className="flex items-start gap-2">
                 <ArrowRight size={12} className="text-gray-400 mt-0.5 shrink-0" />
                 <div className="min-w-0">
-                  <span className={`text-[10px] font-semibold mr-1 ${TYPE_COLORS[m.type]}`}>{TYPE_LABELS[m.type]}</span>
+                  <span className={`text-[10px] font-semibold mr-1 ${TYPE_COLORS[m.type]}`}>{t(`mapping.typeLabels.${m.type}`)}</span>
                   <span className="text-xs font-mono text-gray-600 dark:text-slate-400 mr-1">{m.ref}</span>
                   <span className="text-xs text-gray-500 dark:text-slate-400 leading-tight">
                     {m.title}
-                    {m.status === 'implemented' && <span className="text-green-600 dark:text-green-400 font-bold ml-1.5" title="Erfüllt">✓</span>}
-                    {m.status === 'in_progress' && <span className="text-amber-500 font-semibold ml-1.5" title="In Arbeit">(In Arbeit)</span>}
+                    {m.status === 'implemented' && <span className="text-green-600 dark:text-green-400 font-bold ml-1.5" title={t('status.implemented')}>✓</span>}
+                    {m.status === 'in_progress' && <span className="text-amber-500 font-semibold ml-1.5" title={t('status.in_progress')}>({t('status.in_progress')})</span>}
                   </span>
                 </div>
                 <Link to={FW_ROUTES[fw as Framework]} className="shrink-0 ml-auto">
@@ -158,7 +164,7 @@ const getStatusBadgeClass = (status: string) => {
 
 const getTargetStatusClass = (status: string, isSourceImplemented: boolean) => {
   const isFulfilled = status === 'implemented' || isSourceImplemented;
-  
+
   if (isFulfilled) {
     if (status === 'implemented') {
       return 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-800/50';
@@ -166,11 +172,11 @@ const getTargetStatusClass = (status: string, isSourceImplemented: boolean) => {
       return 'bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/30';
     }
   }
-  
+
   if (status === 'in_progress') {
     return 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/30';
   }
-  
+
   if (status === 'not_applicable') {
     return 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700';
   }
@@ -189,6 +195,7 @@ const getLinkText = (m: MappedControl & { status: string }, isSourceImplemented:
 };
 
 export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
+  const { t } = useTranslation('controls');
   const [items, setItems] = useState<OverviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -215,17 +222,17 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
   const filtered = items.filter(it => {
     const matchesSearch = it.ref.toLowerCase().includes(filter.toLowerCase()) || it.title.toLowerCase().includes(filter.toLowerCase());
     if (!matchesSearch) return false;
-    
+
     if (statusFilter === 'fulfilled') {
       if (it.status === 'implemented') return true;
-      const anyTargetImplemented = Object.values(it.mappings).some((mappedArray) => 
+      const anyTargetImplemented = Object.values(it.mappings).some((mappedArray) =>
         mappedArray.some((m) => m.status === 'implemented')
       );
       return anyTargetImplemented;
     }
     if (statusFilter === 'pending') {
       if (it.status === 'implemented') return false;
-      const anyTargetImplemented = Object.values(it.mappings).some((mappedArray) => 
+      const anyTargetImplemented = Object.values(it.mappings).some((mappedArray) =>
         mappedArray.some((m) => m.status === 'implemented')
       );
       return !anyTargetImplemented;
@@ -235,6 +242,12 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
 
   const withMappings = filtered.filter(it => it.total_mappings > 0);
 
+  const statusLabel = (status: string) =>
+    status === 'implemented' ? t('status.implemented')
+    : status === 'in_progress' ? t('status.in_progress')
+    : status === 'not_applicable' ? t('status.not_applicable')
+    : t('status.open');
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
@@ -242,7 +255,7 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
           type="text"
           value={filter}
           onChange={e => setFilter(e.target.value)}
-          placeholder="Nach ID oder Titel filtern…"
+          placeholder={t('mapping.filterPlaceholder')}
           className="px-3 py-1.5 text-sm border dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
         />
 
@@ -251,13 +264,13 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
           onChange={e => setStatusFilter(e.target.value as any)}
           className="px-3 py-1.5 text-sm border dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
         >
-          <option value="all">Alle Umsetzungsstufen</option>
-          <option value="fulfilled">Erfüllt (ISO 27001 oder direkt)</option>
-          <option value="pending">Noch umzusetzen (offen)</option>
+          <option value="all">{t('mapping.allStatuses')}</option>
+          <option value="fulfilled">{t('mapping.fulfilledFilter')}</option>
+          <option value="pending">{t('mapping.pendingFilter')}</option>
         </select>
 
         <span className="text-xs text-gray-400 dark:text-slate-500">
-          {withMappings.length} / {filtered.length} Controls mit Querverweisen
+          {withMappings.length} / {filtered.length} {t('mapping.withMappings')}
         </span>
         {Object.entries(stats).filter(([k]) => k.includes(source) || source === 'iso27001').map(([key, count]) => {
           const pair = key.replace('iso27001-', '').replace('-iso27001', '');
@@ -276,7 +289,7 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
             <thead className="bg-gray-50 dark:bg-slate-800/50">
               <tr>
                 <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase tracking-wider w-20">Ref</th>
-                <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase tracking-wider">Bezeichnung & Status</th>
+                <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase tracking-wider">{t('mapping.nameAndStatus')}</th>
                 {targets.map(fw => (
                   <th key={fw} className="text-center px-3 py-2 font-bold text-gray-500 uppercase tracking-wider w-32">
                     {FW_LABELS[fw]}
@@ -292,7 +305,7 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
                     <div className="flex items-center gap-2 justify-between flex-wrap">
                       <span className="text-gray-600 dark:text-slate-400 truncate" title={item.title}>{item.title}</span>
                       <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase shrink-0 ${getStatusBadgeClass(item.status)}`}>
-                        {item.status === 'implemented' ? 'Erfüllt' : item.status === 'in_progress' ? 'In Arbeit' : item.status === 'not_applicable' ? 'N/A' : 'Offen'}
+                        {statusLabel(item.status)}
                       </span>
                     </div>
                   </td>
@@ -305,7 +318,7 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
                             {mapped.map((m, i) => {
                               const isSourceImplemented = item.status === 'implemented';
                               return (
-                                <Link key={i} to={FW_ROUTES[fw]} title={`${m.title} (${m.status === 'implemented' ? 'Erfüllt' : m.status === 'in_progress' ? 'In Arbeit' : 'Offen'})`}
+                                <Link key={i} to={FW_ROUTES[fw]} title={`${m.title} (${statusLabel(m.status)})`}
                                   className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded border hover:opacity-70 transition-opacity whitespace-nowrap ${getTargetStatusClass(m.status, isSourceImplemented)}`}>
                                   {getLinkText(m, isSourceImplemented)}
                                 </Link>

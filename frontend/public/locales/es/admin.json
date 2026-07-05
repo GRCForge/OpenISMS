@@ -235,7 +235,10 @@
     "vendors": "Service Providers",
     "import": "Import",
     "reports": "Management Reports",
-    "admin": "Administration"
+    "admin": "Administration",
+    "title": "Módulos de cumplimiento",
+    "description": "Activa o desactiva módulos de cumplimiento. Los módulos desactivados se ocultan de la navegación. El núcleo del SGSI (activos, riesgos, controles, políticas) siempre está activo. Los cambios se guardan inmediatamente.",
+    "saved": "Guardado"
   },
   "actions": {
     "view": "Read",

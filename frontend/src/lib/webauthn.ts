@@ -1,6 +1,14 @@
 // Minimal WebAuthn browser helpers — replaces @simplewebauthn/browser
 // to avoid dependency on the blocked xlsx CDN during npm install.
 
+export class PasskeyCancelledError extends Error {
+  readonly isCancelled = true;
+  constructor(msg = 'Passkey operation cancelled') {
+    super(msg);
+    this.name = 'PasskeyCancelledError';
+  }
+}
+
 function base64urlToBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const padding = '='.repeat((4 - (base64.length % 4)) % 4);
@@ -59,7 +67,7 @@ export async function startRegistration(options: RegistrationOptions) {
     },
   }) as PublicKeyCredential | null;
 
-  if (!cred) throw new Error('Passkey-Registrierung abgebrochen.');
+  if (!cred) throw new PasskeyCancelledError();
 
   const response = cred.response as AuthenticatorAttestationResponse;
   return {
@@ -90,7 +98,7 @@ export async function startAuthentication(options: AuthenticationOptions) {
     },
   }) as PublicKeyCredential | null;
 
-  if (!cred) throw new Error('Passkey-Anmeldung abgebrochen.');
+  if (!cred) throw new PasskeyCancelledError();
 
   const response = cred.response as AuthenticatorAssertionResponse;
   return {

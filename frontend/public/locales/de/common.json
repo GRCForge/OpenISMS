@@ -146,5 +146,14 @@
       "task": "Aufgabe",
       "policy": "Dokument"
     }
+  },
+
+  "ui": {
+    "addEntry": "+ \"{{value}}\" neu eintragen",
+    "new": "Neu",
+    "noOptions": "Keine Optionen verfügbar",
+    "noEntries": "Keine Einträge gefunden",
+    "pleaseSelect": "– bitte wählen –",
+    "search": "Suchen..."
   }
 }

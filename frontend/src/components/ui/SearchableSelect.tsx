@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Option {
   value: string;
@@ -22,11 +23,12 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   value,
   onChange,
   options,
-  placeholder = '– bitte wählen –',
+  placeholder,
   disabled = false,
   required = false,
   className = '',
 }) => {
+  const { t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   }, [isOpen]);
 
   const selectedOption = options.find((opt) => opt.value === value);
-  const displayLabel = selectedOption ? selectedOption.label : placeholder;
+  const displayLabel = selectedOption ? selectedOption.label : (placeholder ?? t('ui.pleaseSelect'));
 
   const filteredOptions = options.filter((opt) =>
     opt.label.toLowerCase().includes(search.toLowerCase())
@@ -105,7 +107,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Suchen..."
+              placeholder={t('ui.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden dark:text-white"
@@ -113,7 +115,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </div>
           <div className="max-h-48 overflow-y-auto p-1 space-y-0.5 custom-scrollbar">
             {filteredOptions.length === 0 ? (
-              <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">Keine Einträge gefunden</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('ui.noEntries')}</p>
             ) : (
               filteredOptions.map((opt) => (
                 <button

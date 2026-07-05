@@ -14,7 +14,9 @@
   "status": {
     "implemented": "Implementiert",
     "planned": "Geplant",
-    "not_applicable": "Nicht anwendbar"
+    "not_applicable": "Nicht anwendbar",
+    "in_progress": "In Bearbeitung",
+    "open": "Offen"
   },
   "stats": {
     "implemented": "Implementiert",
@@ -73,5 +75,20 @@
     "bulkDeleted_other": "{{count}} Steuerelemente gelöscht",
     "deleteError": "Fehler beim Löschen",
     "error": "Fehler"
+  },
+  "mapping": {
+    "typeLabels": {
+      "direct": "Direkt",
+      "partial": "Teilweise",
+      "related": "Verwandt"
+    },
+    "loading": "Querverweise laden…",
+    "empty": "Keine Querverweise verfügbar.",
+    "fulfilledFilter": "Erfüllt (ISO 27001 oder direkt)",
+    "pendingFilter": "Noch umzusetzen (offen)",
+    "allStatuses": "Alle Umsetzungsstufen",
+    "withMappings": "Controls mit Querverweisen",
+    "filterPlaceholder": "Nach ID oder Titel filtern…",
+    "nameAndStatus": "Bezeichnung & Status"
   }
 }

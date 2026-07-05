@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { IsmsLogo } from '../components/IsmsLogo';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
-import { startAuthentication } from '../lib/webauthn';
+import { startAuthentication, PasskeyCancelledError } from '../lib/webauthn';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 
@@ -81,7 +81,7 @@ export const Login: React.FC = () => {
       const verifyRes = await api.post('/auth/passkey/login-verify', assertion);
       loginWithToken(verifyRes.data.token);
     } catch (err: any) {
-      if (err.message?.includes('abgebrochen')) {
+      if (err instanceof PasskeyCancelledError) {
         setError('');
       } else {
         setError(err.response?.data?.error || err.message || t('passkeyLoginFailed'));
