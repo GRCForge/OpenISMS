@@ -21,8 +21,7 @@
 ## Description
 OpenISMS is a complete, practice-oriented Information Security Management System (ISMS) built on Node.js, React and MySQL — a GRCForge project designed to support **ISO 27001**, **NIS-2**, **GDPR**, **EU AI Act**, **TISAX**, **DORA** and **BSI C5**.
 
-> **Default login after initial setup:** `admin@isms.local` / `Admin1234!` — change immediately.
-> These credentials appear **only** in this README. For security reasons they are **not** pre-filled on the application login screen.
+> **Initial login:** the administrator account is `admin@isms.local`. There is **no** hard-coded default password — set `ADMIN_PASSWORD` before first start, or the app generates a random one-time password and prints it to the server/container logs on first start (the install script also stores and shows it). Change it after first login.
 
 ---
 
@@ -210,6 +209,7 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 ### Audit Log
 - Comprehensive logging: assets, assessments, risks, controls, incidents, users, vendors, documents, settings, logins
 - Filter by entity type, action, date, name; pagination; expandable before/after details
+- **Tamper-evidence**: each entry is signed with a per-row HMAC-SHA256 over its immutable content; admins can verify the whole log via `GET /api/auditlog/verify`, which reports any modified rows
 - Configurable retention period (automatic cleanup via cron)
 - CSV/Excel export
 
@@ -218,8 +218,10 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 - **Custom Roles**: create custom roles (name, description, base role) and assign them directly to users — in addition to OIDC group mapping
 - Create, edit, deactivate users (no hard delete)
 - Local login (email + password, JWT 24 h) with password policy enforcement
-- **Two-factor authentication (TOTP)**: TOTP authenticator app (RFC 6238) with replay protection
+- **Session invalidation**: changing or resetting a password immediately invalidates all previously issued tokens (the initiating session is re-issued a fresh token)
+- **Two-factor authentication (TOTP)**: TOTP authenticator app (RFC 6238) with counter-bound replay protection; TOTP secrets are stored AES-256-GCM encrypted at rest
 - **Passkeys (WebAuthn)**: hardware keys, Touch ID, Face ID; FIDO2 / WebAuthn Level 2
+- **API tokens** are stored only as a SHA-256 hash — the cleartext is shown once at creation and never again
 - **SSO (OIDC)**: generic for any OIDC provider (Authentik, Keycloak, Entra, Google, Zitadel …)
   - Configuration in the app under *Administration → Single Sign-On* (no restart required)
   - Authorization Code Flow with PKCE; client secret AES-256-GCM encrypted in DB
@@ -242,8 +244,8 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 - Group management under *Groups* (administrators only)
 
 ### API Documentation
-- **OpenAPI 3.0 specification** at `/api/openapi.json`
-- **Swagger UI** at `/api/docs` — interactive with JWT authentication in the browser
+- **OpenAPI 3.0 specification** at `/api/openapi.json` — **requires an authenticated session** (the full API surface is not exposed anonymously)
+- **Swagger UI** at `/api/docs` — interactive; sends the logged-in user's session token for the spec, "Try it out" and the spec download
 - All endpoints documented: assets, risks, incidents, assessments, controls, policies, users, admin, dashboard, audit log, vendors, import, system
 
 ### Administration
@@ -262,16 +264,16 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 
 | Component | Technology |
 |---|---|
-| Backend | Node.js 22 · Express 5 · Sequelize ORM |
+| Backend | Node.js ≥ 26.3 · Express 5 · Sequelize ORM |
 | Database | MySQL 8.0 |
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS 4 |
-| Authentication | JWT (24 h) · OIDC SSO (openid-client, PKCE) |
-| Security | helmet · rate-limit · CORS · AES-256-GCM |
-| File Upload | multer (Disk Storage, max. 25 MB) |
+| Authentication | JWT (24 h) · OIDC SSO (openid-client, PKCE) · TOTP · WebAuthn/passkeys |
+| Security | helmet (nonce CSP) · rate-limit · CORS · AES-256-GCM · bcrypt · hashed API tokens · HMAC audit integrity |
+| File Upload | multer (Disk Storage, max. 25 MB) · magic-byte + SHA-256 integrity |
 | Visualisation | Mermaid.js (Topology) · recharts (KPI charts, trend history) |
 | Scheduling | node-cron (overdue job, audit retention) |
 | Export | SheetJS (xlsx) · CSV |
-| API Docs | OpenAPI 3.0 · Swagger UI (CDN) |
+| API Docs | OpenAPI 3.0 · Swagger UI (self-hosted, auth-gated spec) |
 | Deployment | Docker (single container, GHCR) · systemd · install.sh |
 
 ---
@@ -358,13 +360,17 @@ docker run -d --name isms --restart unless-stopped \
 | `DATABASE_URL` | ✓¹ | `mysql://user:pass@host:3306/isms` |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | ✓¹ | Alternative to `DATABASE_URL` |
 | `JWT_SECRET` | ✓ | Token signing key (≥ 32 characters) |
-| `ENCRYPTION_KEY` | recommended | AES-256 key for OIDC secret encryption |
+| `ENCRYPTION_KEY` | recommended | AES-256 key for encrypting stored secrets (OIDC/SMTP/LLM secrets, TOTP secrets) |
 | `SESSION_SECRET` | recommended | Express session (OIDC flow) |
 | `APP_URL` | ✓² | Public URL (for OIDC callback and CORS) |
-| `SECURE_COOKIES` | – | `true` behind an HTTPS reverse proxy |
+| `SECURE_COOKIES` | – | `true` forces Secure cookies; auto-enabled when `APP_URL` is `https://` |
 | `PORT` | – | Default: `3001` |
 | `UPLOAD_DIR` | – | Default: `/app/uploads` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Override the seed administrator credentials |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Seed administrator credentials. **If `ADMIN_PASSWORD` is unset, a random one-time password is generated and printed to the logs on first start** (no known default) |
+| `DB_POOL_MIN` / `DB_POOL_MAX` | – | Sequelize connection pool (default `2` / `10`) |
+| `DB_CONNECT_TIMEOUT_MS` | – | MySQL connect timeout, fail fast on a dead DB (default `10000`) |
+| `KEEPALIVE_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` | – | HTTP keep-alive tuning; keep above the reverse-proxy idle timeout (default `65000` / `66000`) |
+| `UV_THREADPOOL_SIZE` | – | libuv threadpool for bcrypt/hash/zip/parse workloads (Docker image default `8`) |
 
 ¹ One of the two. ² Optional for local login, required for OIDC.
 
@@ -416,21 +422,22 @@ The REST API is fully documented using **OpenAPI 3.0**.
 
 | Endpoint | Description |
 |---|---|
-| `GET /api/docs` | Swagger UI (interactive, JWT authentication in the browser) |
-| `GET /api/openapi.json` | OpenAPI 3.0 specification (JSON) |
+| `GET /api/docs` | Swagger UI (interactive, uses the browser session token) |
+| `GET /api/openapi.json` | OpenAPI 3.0 specification (JSON) — **requires authentication** |
 
 **Authentication:**
 ```bash
-# Get token
+# Get token (use your admin credentials — the initial password is printed to the
+# server logs on first start unless you set ADMIN_PASSWORD)
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@isms.local","password":"Admin1234!"}' | jq -r .token)
+  -d '{"email":"admin@isms.local","password":"<your-password>"}' | jq -r .token)
 
 # Use token
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/assets
 ```
 
-In the Swagger UI the token is automatically injected from the browser's local storage after login.
+In the Swagger UI the token is automatically injected from the browser's local storage after login (this also applies to loading the spec itself, which now requires authentication).
 
 ---
 
@@ -570,7 +577,7 @@ If neither `MCP_SECRET` nor a valid API token or JWT is provided, the server rej
 
 | Table | Description |
 |---|---|
-| `users` | Users with 8 roles, avatar_url, last_seen_at |
+| `users` | Users with 8 roles, avatar_url, last_seen_at (TOTP secret encrypted at rest) |
 | `assets` | Asset register (type, classification, hosting, lifecycle, CVE, RTO/RPO, NIS-2, VVT, DPIA, parent/child) |
 | `assessments` | CIA assessments per asset (history, is_current, risk treatment, acceptance document) |
 | `risks` | Risk register (likelihood × impact, inherent/residual, treatment, acceptance with expiry date) |
@@ -590,7 +597,7 @@ If neither `MCP_SECRET` nor a valid API token or JWT is provided, the server rej
 | `policy_assets` | N:M link policies ↔ assets |
 | `vendors` | External vendors (type, website, NIS-2 supply chain) |
 | `vendor_contacts` | Contacts per vendor |
-| `audit_logs` | Comprehensive change log of all actions |
+| `audit_logs` | Comprehensive change log of all actions (per-row HMAC integrity hash) |
 | `settings` | System settings, OIDC configuration (secret encrypted), RBAC matrix |
 | `tasks` | Tasks (status, priority, due date, related_type/related_id, assigned_to_group_id, completed_by_id) |
 | `groups` | Groups/teams (name, description, colour) |
@@ -603,6 +610,7 @@ If neither `MCP_SECRET` nor a valid API token or JWT is provided, the server rej
 | `training_sessions` | Training sessions with title, date, type and participant list |
 | `training_participants` | N:M link training sessions ↔ users/employees |
 | `passkey_credentials` | WebAuthn/passkey credentials per user |
+| `api_tokens` | API/MCP tokens, stored as a SHA-256 hash + display prefix |
 
 ---
 
@@ -772,20 +780,23 @@ Siehe auch die Sicherheitsanweisungen in [SECURITY.md](SECURITY.md) für verantw
 ## Security Notes for Production
 
 - Set `JWT_SECRET` to at least 32 random characters
-- Set `ENCRYPTION_KEY` (AES-256-GCM for OIDC secret) — if changed, the secret must be re-entered
-- Change all database passwords in `.env`
-- Put HTTPS via a reverse proxy in front (nginx, Traefik, Caddy) and set `SECURE_COOKIES=true`
+- Set `ENCRYPTION_KEY` (AES-256-GCM) — used for OIDC/SMTP/LLM secrets **and** TOTP secrets at rest; if changed, those secrets must be re-entered
+- Change all database passwords in `.env`. The bundled `docker-compose.yml` binds MySQL to `127.0.0.1` only — do not expose the DB port to the network
+- Put HTTPS via a reverse proxy in front (nginx, Traefik, Caddy); Secure cookies auto-enable when `APP_URL` is `https://` (or force with `SECURE_COOKIES=true`)
 - Include the Docker volume `uploads` in your backup strategy
-- **Change the default admin password immediately after first login**
+- **Initial admin password:** if `ADMIN_PASSWORD` is not set, a random one-time password is generated and printed to the logs on first start — retrieve it there (or set `ADMIN_PASSWORD`) and change it after first login
 - Set up regular MySQL backups of the `isms` schema
-- Rate limiting active on login endpoint (20 attempts / 15 min per IP)
-- **Brute-force protection:** Local user accounts are temporarily locked after a configurable number of failed attempts (configurable in the admin area)
-- Login responses are intentionally generic to prevent account enumeration and protect valid email addresses.
-- Password reset requests return a generic success response, without revealing whether an account exists.
-- API tokens may be sent either as `Authorization: Bearer isms_api_<token>` or as `X-API-Key: isms_api_<token>`.
-- **SSO login exclusivity:** Accounts logged in via Single Sign-On (SSO) automatically disable local authentication (password, passkey) and local two-factor authentication (TOTP)
-- Security headers via `helmet` active (XSS, clickjacking, MIME sniff)
-- CORS restricted to `APP_URL`
+
+**Built-in hardening (already active):**
+- **Secrets at rest:** passwords are bcrypt-hashed (cost 12); API tokens are stored only as a SHA-256 hash (cleartext shown once); TOTP secrets and OIDC/SMTP/LLM secrets are AES-256-GCM encrypted
+- **Session invalidation:** a password change/reset invalidates all previously issued JWTs
+- **Audit-log integrity:** each entry carries a per-row HMAC; verify via `GET /api/auditlog/verify`
+- **Object-level authorization:** list and detail endpoints (assets, vendors, users, comments, risks, incidents, documents) are scoped to the caller's role/ownership; the OpenAPI spec requires authentication
+- Rate limiting active on login/2FA/passkey endpoints; **brute-force protection** locks local accounts after a configurable number of failed attempts (admin area)
+- Login and password-reset responses are intentionally generic (constant-time on the login path) to prevent account enumeration
+- API tokens may be sent as `Authorization: Bearer isms_api_<token>` or `X-API-Key: isms_api_<token>`
+- **SSO login exclusivity:** SSO accounts automatically disable local authentication (password, passkey) and local TOTP; explicitly unverified IdP emails are rejected
+- Security headers via `helmet` (nonce-based CSP, XSS, clickjacking, MIME sniff); CORS restricted to `APP_URL`; `trust proxy` pinned to one hop
 
 ## Browser Push Notifications & PWA
 

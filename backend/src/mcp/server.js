@@ -7,6 +7,7 @@ const { z } = require('zod');
 const { Op } = require('sequelize');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { hashToken } = require('../services/cryptoService');
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ async function mcpAuth(req, res, next) {
     }
     try {
       const { ApiToken, User } = getModels();
-      const dbToken = await ApiToken.findOne({ where: { token } });
+      const dbToken = await ApiToken.findOne({ where: { token_hash: hashToken(token) } });
       if (!dbToken) {
         return res.status(401).json({ error: 'MCP: Invalid token' });
       }
@@ -80,7 +81,18 @@ async function mcpAuth(req, res, next) {
   // Option C: regular JWT issued by /api/auth/login
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
-    req.mcpUser = payload;
+    // Reject pre-2FA temporary tokens — they must not grant full access.
+    if (payload.totp_pending) {
+      return res.status(401).json({ error: 'MCP: Two-factor authentication required' });
+    }
+    // Re-validate the user against the DB so deactivated/role-changed accounts
+    // lose access immediately instead of until token expiry.
+    const { User } = getModels();
+    const user = await User.findByPk(payload.id);
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'MCP: User not found or inactive' });
+    }
+    req.mcpUser = { id: user.id, name: user.name, role: user.role };
     return next();
   } catch {
     return res.status(401).json({ error: 'MCP: Invalid or expired token' });

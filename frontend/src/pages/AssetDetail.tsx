@@ -55,7 +55,8 @@ const MarkdownText: React.FC<{ text: string }> = ({ text }) => {
     // Images — before links
     .replace(/!\[([^\]]{0,200})\]\(((?:https?:\/\/|\/)[^)]{1,1000})\)/g, (_, alt, url) => {
       const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      return `<img src="${safeUrl}" alt="${alt}" class="max-w-full max-h-64 rounded-lg my-1 inline-block border dark:border-slate-700" loading="lazy" />`;
+      const safeAlt = alt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return `<img src="${safeUrl}" alt="${safeAlt}" class="max-w-full max-h-64 rounded-lg my-1 inline-block border dark:border-slate-700" loading="lazy" />`;
     })
     .replace(/\*\*([^*]{1,500})\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]{1,500})\*/g, '<em>$1</em>')

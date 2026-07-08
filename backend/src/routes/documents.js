@@ -42,6 +42,20 @@ const getSafePath = (filename) => {
 
 const ALLOWED_EXT = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.png', '.jpg', '.jpeg', '.zip'];
 
+// Server-side extension -> MIME map for inline rendering. Only these types may be
+// served with `Content-Disposition: inline`; everything else is forced to download.
+// The MIME is derived here, never from the client-supplied upload header, to avoid
+// content-type confusion (e.g. a .txt uploaded as text/html rendering as HTML).
+const INLINE_MIME = {
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+};
+
+// it-staff and viewer roles must not access contract documents (mirrors the list filter).
+const canAccessContract = (user) => user.role !== 'it-staff' && user.role !== 'viewer';
+
 const MAGIC_BYTES = {
   '.pdf':  [0x25, 0x50, 0x44, 0x46],
   '.zip':  [0x50, 0x4B, 0x03, 0x04],
@@ -195,6 +209,9 @@ router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) =
     if (req.params.incidentId && doc.incident_id !== parseInt(req.params.incidentId)) {
       return res.status(403).json({ error: 'Verboten' });
     }
+    if (doc.category === 'contract' && !canAccessContract(req.user)) {
+      return res.status(403).json({ error: 'Verboten' });
+    }
 
     const filePath = getSafePath(doc.filename);
     if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Datei nicht gefunden' });
@@ -213,16 +230,16 @@ router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) =
       }
     }
 
-    // nosniff verhindert, dass der Browser den vom Upload übernommenen
-    // (client-gesetzten) MIME-Typ überschreibt und z.B. eine als PDF
-    // deklarierte Datei als HTML/JS interpretiert -> Stored-XSS-Schutz.
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Content-SHA256', doc.file_hash || '');
-    if (req.query.inline === 'true') {
-      const safeMime = ALLOWED_EXT.includes(path.extname(doc.original_name || '').toLowerCase()) && doc.mimetype
-        ? doc.mimetype
-        : 'application/octet-stream';
-      res.setHeader('Content-Type', safeMime);
+    // Only render inline for an explicit server-side safe-type allowlist, with a
+    // MIME derived from the (validated) extension — never from the client-supplied
+    // upload header. Anything else is served as an attachment. This prevents a
+    // .txt uploaded as text/html from being rendered as HTML (stored XSS).
+    const ext = path.extname(doc.original_name || '').toLowerCase();
+    const inlineMime = INLINE_MIME[ext];
+    if (req.query.inline === 'true' && inlineMime) {
+      res.setHeader('Content-Type', inlineMime);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.original_name)}"`);
       return res.sendFile(filePath);
     }
@@ -243,6 +260,9 @@ router.delete('/:docId', authenticate, requireWriteAccess(), deleteLimiter, asyn
       return res.status(403).json({ error: 'Verboten' });
     }
     if (req.params.incidentId && doc.incident_id !== parseInt(req.params.incidentId)) {
+      return res.status(403).json({ error: 'Verboten' });
+    }
+    if (doc.category === 'contract' && !canAccessContract(req.user)) {
       return res.status(403).json({ error: 'Verboten' });
     }
 

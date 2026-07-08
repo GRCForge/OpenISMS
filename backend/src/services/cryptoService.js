@@ -31,4 +31,15 @@ const decrypt = (data) => {
   }
 };
 
-module.exports = { encrypt, decrypt };
+// Fast one-way hash for high-entropy secrets (e.g. API tokens) so they are not
+// stored in cleartext. The token is 256-bit random, so a plain SHA-256 is
+// sufficient (no need for a slow password hash) and allows constant-cost lookup.
+const hashToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
+
+// Keyed HMAC for tamper-evident audit rows. Derived from the same root secret via
+// a distinct label so it is independent of the encryption key. An attacker with DB
+// write access cannot forge a valid signature without this server-side key.
+const AUDIT_KEY = crypto.createHash('sha256').update('openisms-audit-integrity:' + rawKey).digest();
+const signAudit = (canonical) => crypto.createHmac('sha256', AUDIT_KEY).update(String(canonical)).digest('hex');
+
+module.exports = { encrypt, decrypt, hashToken, signAudit };

@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
 const { TOTP, NobleCryptoPlugin, ScureBase32Plugin } = require('otplib');
 const qrcode = require('qrcode');
@@ -12,8 +13,12 @@ const { validate: validatePassword } = require('../services/passwordPolicy');
 const authenticator = new TOTP({
   crypto: new NobleCryptoPlugin(),
   base32: new ScureBase32Plugin(),
-  window: 2,
+  window: 1,
 });
+
+// Precomputed bcrypt hash (cost 12) used to equalize login response time on the
+// user-not-found / SSO paths, preventing timing-based account enumeration.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 12);
 
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
@@ -149,6 +154,9 @@ router.post('/login', async (req, res) => {
 
     const user = await User.findOne({ where: { email, active: true } });
     if (!user) {
+      // Run a dummy bcrypt compare so the response time matches the valid-user
+      // path — otherwise the timing difference reveals whether an email exists.
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       await auditFromReq(req, 'login', 'auth', null, email, { success: false, email, reason: 'Benutzer nicht gefunden oder inaktiv' });
       await handleFailedLoginForIp(req, email);
       return res.status(401).json(genericLoginError);
@@ -159,6 +167,7 @@ router.post('/login', async (req, res) => {
       return res.status(403).json(genericLockoutError);
     }
     if (user.sso_user) {
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'SSO-Benutzer versucht Passwort-Login' });
       await handleFailedLoginForIp(req, user.email);
       return res.status(401).json(genericLoginError);
@@ -244,21 +253,24 @@ router.post('/login/totp', async (req, res) => {
     }
 
     const cleanToken = String(token).replace(/\s+/g, '');
-    const { valid } = await authenticator.verify(cleanToken, { secret: user.totp_secret });
-    if (!valid) {
+    const result = await authenticator.verify(cleanToken, { secret: user.totp_secret });
+    if (!result.valid) {
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'Ungültiger TOTP-Code' });
       await handleFailedLoginForIp(req, user.email);
       return res.status(401).json({ error: 'Ungültiger TOTP-Code' });
     }
 
-    // Replay prevention: store the 30s time-step so any code re-use within the same window is blocked
-    const currentStep = String(Math.floor(Date.now() / 30000));
-    if (user.totp_last_used === currentStep) {
+    // Replay prevention: reject any code whose matched time step was already used.
+    // Binding to the absolute time step of the matched code (not wall-clock) closes
+    // the intra-window replay gap — a code captured in one step cannot be reused at a
+    // neighbouring step still inside the acceptance window.
+    const lastStep = user.totp_last_used ? parseInt(user.totp_last_used, 10) : -1;
+    if (Number.isFinite(result.timeStep) && result.timeStep <= lastStep) {
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'TOTP-Code bereits verwendet' });
       await handleFailedLoginForIp(req, user.email);
       return res.status(401).json({ error: 'TOTP-Code bereits verwendet' });
     }
-    user.totp_last_used = currentStep;
+    user.totp_last_used = String(result.timeStep);
     await user.save();
 
     const sessionToken = jwt.sign(
@@ -287,9 +299,16 @@ router.post('/change-password', authenticate, async (req, res) => {
     const check = await validatePassword(new_password);
     if (!check.valid) return res.status(400).json({ error: `Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}` });
     user.password_hash = await User.hashPassword(new_password);
+    user.password_changed_at = new Date();
     await user.save();
     await auditFromReq(req, 'update', 'auth', user.id, user.name, { action: 'password_changed' });
-    res.json({ message: 'Passwort geändert' });
+    // Issue a fresh token so the current session survives the invalidation of all
+    // sessions predating this password change.
+    const jwtSecret = process.env.JWT_SECRET;
+    const token = jwtSecret
+      ? jwt.sign({ id: user.id, email: user.email, role: user.role }, jwtSecret, { expiresIn: '24h' })
+      : undefined;
+    res.json({ message: 'Passwort geändert', token });
   } catch (e) {
     console.error('[Change password error]', e);
     res.status(500).json(genericServerError);
@@ -461,6 +480,7 @@ router.post('/reset-password', resetPasswordLimiter, async (req, res) => {
     }
 
     user.password_hash = await User.hashPassword(new_password);
+    user.password_changed_at = new Date(); // invalidate any sessions issued before the reset
     user.reset_password_token = null;
     user.reset_password_expires = null;
     user.failed_login_attempts = 0; // reset lockout on password reset

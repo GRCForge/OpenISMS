@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { User, ApiToken } = require('../models');
 const { notify } = require('../services/notifyService');
+const { hashToken } = require('../services/cryptoService');
 
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
@@ -21,7 +22,7 @@ const authenticate = async (req, res, next) => {
       if (!/^isms_api_[0-9a-f]{64}$/.test(token)) {
         return res.status(401).json({ error: 'Invalid token' });
       }
-      const dbToken = await ApiToken.findOne({ where: { token } });
+      const dbToken = await ApiToken.findOne({ where: { token_hash: hashToken(token) } });
       if (!dbToken) return res.status(401).json({ error: 'Invalid token' });
 
       // Check for expiration
@@ -50,9 +51,22 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
     // Block temp TOTP-pending tokens from being used as full session tokens
     if (decoded.totp_pending) return res.status(401).json({ error: 'MFA erforderlich' });
-    const user = await User.findByPk(decoded.id, { attributes: { exclude: ['password_hash'] } });
+    // Never expose secrets on req.user (and thus on GET /auth/me).
+    const user = await User.findByPk(decoded.id, {
+      attributes: { exclude: ['password_hash', 'totp_secret', 'reset_password_token', 'reset_password_expires'] },
+    });
     if (!user || !user.active) return res.status(401).json({ error: 'Unauthorized' });
-    
+
+    // Invalidate sessions issued before the last password change/reset. Tokens
+    // predating password_changed_at are rejected (1s skew for the token minted by
+    // the change itself). Legacy tokens without iat and users who never changed
+    // their password are unaffected.
+    if (user.password_changed_at && decoded.iat) {
+      if (decoded.iat * 1000 < new Date(user.password_changed_at).getTime() - 1000) {
+        return res.status(401).json({ error: 'Session abgelaufen — bitte neu anmelden.' });
+      }
+    }
+
     // Update last seen (async, don't wait)
     user.last_seen_at = new Date();
     user.save().catch(e => console.error('Error updating last_seen_at:', e.message));
@@ -81,4 +95,11 @@ const isAssessor = (req) => req.user.role === 'admin' || req.user.role === 'asse
 const isDpo = (req) => req.user.role === 'admin' || req.user.role === 'dpo';
 const isItStaff = (req) => req.user.role === 'admin' || req.user.role === 'assessor' || req.user.role === 'it-staff';
 
-module.exports = { authenticate, requireRole, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff };
+// Asset visibility scope, shared by the asset detail, asset list and asset
+// comments so all three enforce the same rule: staff roles see every asset;
+// everyone else only assets they own or assess.
+const canViewAllAssets = (req) => ['admin', 'assessor', 'dpo', 'it-staff'].includes(req.user.role);
+const canViewAsset = (req, asset) =>
+  canViewAllAssets(req) || req.user.id === asset.owner_id || req.user.id === asset.assessor_id;
+
+module.exports = { authenticate, requireRole, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset };

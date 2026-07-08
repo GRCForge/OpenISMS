@@ -49,10 +49,20 @@ This repository uses an automated security pipeline on every pull request:
 
 ## Authentication Hardening
 
-- Login failures return generic error messages so attackers cannot infer whether an email address is registered.
-- Password reset requests are anonymous and always return the same confirmation text.
-- Reset tokens are stored only as SHA-256 hashes and expire after one hour.
+- Passwords are hashed with bcrypt (cost 12). Login failures return generic error messages and run a constant-time comparison on the user-not-found / SSO paths, so attackers cannot infer whether an email address is registered.
+- Password reset requests are anonymous and always return the same confirmation text. Reset tokens are stored only as SHA-256 hashes and expire after one hour.
+- Changing or resetting a password invalidates all previously issued session tokens.
+- Two-factor authentication: TOTP (RFC 6238) with replay protection bound to the matched time step; WebAuthn/passkeys with origin validation and signature-counter checks. TOTP secrets are stored AES-256-GCM encrypted at rest.
+- OIDC/SSO uses Authorization Code Flow with PKCE and state; explicitly unverified IdP emails are rejected.
 - Failed authentication and lockout events are audited internally, while client responses avoid leaking sensitive details.
+
+## Data & Application Hardening
+
+- **Secrets at rest**: API tokens are stored only as SHA-256 hashes (cleartext shown once at creation); OIDC/SMTP/LLM secrets and TOTP secrets are AES-256-GCM encrypted.
+- **Audit-log integrity**: every entry carries a per-row HMAC-SHA256 over its immutable content; administrators can verify the full log via `GET /api/auditlog/verify`.
+- **Access control**: list and detail endpoints are scoped to the caller's role/ownership (object-level authorization); the OpenAPI specification requires authentication.
+- **Uploads**: extension allow-list, magic-byte validation, randomized stored filenames, path-traversal guards and SHA-256 integrity verification on download.
+- **Transport & headers**: helmet with a nonce-based Content-Security-Policy, CORS restricted to `APP_URL`, `trust proxy` pinned to one hop, layered rate limiting on authentication and expensive endpoints.
 
 ## Verifikation von Abhängigkeiten
 

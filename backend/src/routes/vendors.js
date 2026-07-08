@@ -7,10 +7,14 @@ const { auditFromReq } = require('../services/auditService');
 
 router.get('/', authenticate, async (req, res) => {
   try {
-    const vendors = await Vendor.findAll({
-      include: [{ model: VendorContact, as: 'contacts' }],
-      order: [['name', 'ASC']]
-    });
+    // Staff (admin/assessor/it-staff/dpo) get the full vendor list with contacts —
+    // the same roles allowed on the detail view. Other roles still need a vendor
+    // list for reference/pickers (e.g. asset owners choosing a vendor), so they get
+    // only non-sensitive base fields and no contact details.
+    const staff = isItStaff(req) || isDpo(req);
+    const vendors = staff
+      ? await Vendor.findAll({ include: [{ model: VendorContact, as: 'contacts' }], order: [['name', 'ASC']] })
+      : await Vendor.findAll({ attributes: ['id', 'name', 'type', 'criticality'], order: [['name', 'ASC']] });
     res.json(vendors);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
