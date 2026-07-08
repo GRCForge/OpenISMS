@@ -4,7 +4,17 @@ const { Asset, Assessment, Kpi, KpiMeasurement, Audit, AuditFinding, UserTrainin
 const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const multer = require('multer');
-const upload = multer();
+const path = require('path');
+// Bounded in-memory upload for the bulk-training spreadsheet: cap size and restrict
+// to spreadsheet types so a large or unexpected body cannot exhaust memory (DoS).
+const upload = multer({
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (['.xlsx', '.xls', '.csv'].includes(ext)) cb(null, true);
+    else cb(new Error('Nur .xlsx, .xls oder .csv erlaubt.'));
+  },
+});
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');

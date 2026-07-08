@@ -1,6 +1,6 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { Asset, Assessment, Reminder, Notification, User } = require('../models');
+const { sequelize, Asset, Reminder, Notification, User } = require('../models');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
@@ -22,7 +22,7 @@ router.get('/', authenticate, async (req, res) => {
       { where: { status: 'pending', due_date: { [Op.lt]: todayStr } } }
     ).catch(e => console.error(e));
 
-    const [overdueRows, upcomingRows, activeAssets, userNotes] = await Promise.all([
+    const [overdueRows, upcomingRows, unassessedAssets, userNotes] = await Promise.all([
       Reminder.findAll({
         where: { status: 'overdue', dismissed: { [Op.not]: true } },
         include: [{ model: Asset, attributes: ['id', 'name', 'type', 'classification'], where: { status: 'active' } }],
@@ -33,10 +33,15 @@ router.get('/', authenticate, async (req, res) => {
         include: [{ model: Asset, attributes: ['id', 'name', 'type', 'classification'], where: { status: 'active' } }],
         order: [['due_date', 'ASC']],
       }),
+      // Only the assets with no current assessment — pushed into SQL via an
+      // anti-join subquery so we transfer just the gap rows, not every active
+      // asset, on this frequently-polled endpoint.
       Asset.findAll({
-        where: { status: 'active' },
+        where: {
+          status: 'active',
+          id: { [Op.notIn]: sequelize.literal('(SELECT asset_id FROM assessments WHERE is_current = 1 AND asset_id IS NOT NULL)') },
+        },
         attributes: ['id', 'name', 'type', 'classification'],
-        include: [{ model: Assessment, where: { is_current: true }, required: false, attributes: ['id'] }],
       }),
       Notification.findAll({
         where: { user_id: req.user.id, read: false },
@@ -58,16 +63,14 @@ router.get('/', authenticate, async (req, res) => {
 
     const overdue = overdueRows.map(mapReminder('overdue'));
     const upcoming = upcomingRows.map(mapReminder('upcoming'));
-    const neverAssessed = activeAssets
-      .filter(a => !a.Assessments || a.Assessments.length === 0)
-      .map(a => ({
-        type: 'never_assessed',
-        asset_id: a.id,
-        asset_name: a.name,
-        type_label: a.type,
-        classification: a.classification,
-        due_date: null,
-      }));
+    const neverAssessed = unassessedAssets.map(a => ({
+      type: 'never_assessed',
+      asset_id: a.id,
+      asset_name: a.name,
+      type_label: a.type,
+      classification: a.classification,
+      due_date: null,
+    }));
 
     res.json({
       overdue,

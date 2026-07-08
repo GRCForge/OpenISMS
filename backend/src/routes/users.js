@@ -8,16 +8,34 @@ const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
+// Secrets that must never be sent to a client in any user payload.
+const SENSITIVE_FIELDS = ['password_hash', 'totp_secret', 'totp_last_used', 'reset_password_token', 'reset_password_expires'];
+const stripSensitive = (userJson) => {
+  const out = { ...userJson };
+  for (const f of SENSITIVE_FIELDS) delete out[f];
+  return out;
+};
+
 router.get('/', authenticate, async (req, res) => {
   try {
-    const users = await User.findAll({
-      attributes: { exclude: ['password_hash'] },
-      include: [
-        { model: PasskeyCredential, as: 'passkeys', attributes: ['id', 'name'] },
-        { model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] },
-      ],
-      order: [['name', 'ASC']]
-    });
+    // Admins get the full directory (incl. security posture: passkeys, 2FA state,
+    // custom role) for user management. Every other role still needs a directory
+    // for assignee pickers and @-mentions, but must not see security-posture data —
+    // so they receive only the minimal, non-sensitive fields those features use.
+    const query = req.user.role === 'admin'
+      ? {
+          attributes: { exclude: SENSITIVE_FIELDS },
+          include: [
+            { model: PasskeyCredential, as: 'passkeys', attributes: ['id', 'name'] },
+            { model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] },
+          ],
+          order: [['name', 'ASC']],
+        }
+      : {
+          attributes: ['id', 'name', 'email', 'role', 'department', 'active', 'avatar_url', 'custom_role_id', 'last_seen_at'],
+          order: [['name', 'ASC']],
+        };
+    const users = await User.findAll(query);
     res.json(users);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -38,7 +56,7 @@ router.post('/', authenticate, requireRole('admin'), async (req, res) => {
       customRoleId = cr.id;
     }
     const user = await User.create({ name, email, password_hash, role: effectiveRole, department, custom_role_id: customRoleId });
-    const { password_hash: _, ...userData } = user.toJSON();
+    const userData = stripSensitive(user.toJSON());
     await auditFromReq(req, 'create', 'user', user.id, user.name, { role: user.role, custom_role_id: customRoleId, email: user.email });
     res.status(201).json(userData);
   } catch (e) { res.status(400).json({ error: e.message }); }
@@ -94,7 +112,7 @@ router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
       before,
       after: { name: user.name, role: user.role, custom_role_id: user.custom_role_id, active: user.active, email: user.email, department: user.department },
     });
-    const { password_hash: _, ...userData } = user.toJSON();
+    const userData = stripSensitive(user.toJSON());
     res.json(userData);
   } catch (e) { res.status(400).json({ error: e.message }); }
 });

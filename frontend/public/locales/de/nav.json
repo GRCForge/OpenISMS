@@ -28,24 +28,24 @@
       "hint": "ISO 27001 · NIS-2 · GDPR"
     },
     "controls": {
-      "label": "Maßnahmen",
-      "hint": "Maßnahmen & SoA"
+      "label": "Steuerelemente",
+      "hint": "SoA & Steuerung"
     },
     "policies": {
       "label": "Dokumente",
       "hint": "Richtlinien & Vorlagen"
     },
     "vvt": {
-      "label": "Datenschutz (VVT)",
-      "hint": "Verarbeitungsverzeichnis (Art. 30 DSGVO)"
+      "label": "Privatsphäre",
+      "hint": "RoPA (Art. 30 GDPR)"
     },
     "subjectRequests": {
-      "label": "Betroffenenrechte",
-      "hint": "Anfragen Art. 15–22 DSGVO"
+      "label": "Daten-Betreff Rechte",
+      "hint": "Anfrage Art. 15–22 DPR"
     },
     "legalRequirements": {
-      "label": "Rechtskataster",
-      "hint": "Gesetzliche & sonstige Anforderungen"
+      "label": "Gesetzliches Register",
+      "hint": "Rechtliche Anforderungen"
     },
     "iso27001": {
       "label": "ISO 27001",
@@ -97,11 +97,11 @@
     },
     "pentests": {
       "label": "Pentest",
-      "hint": "Pentest-Tracking & Befunde"
+      "hint": "Pentest Tracking & Erkenntnisse"
     },
     "vendors": {
-      "label": "Dienstleister",
-      "hint": "Dienstleister & Partner"
+      "label": "Diensteanbieter",
+      "hint": "Firmenverzeichnis"
     },
     "contacts": {
       "label": "Kontakte",
@@ -116,8 +116,8 @@
       "hint": "CIA-Bewertungen"
     },
     "reminders": {
-      "label": "Wiedervorlagen",
-      "hint": "Fällige Überprüfungen"
+      "label": "Bewertungen",
+      "hint": "Fällige Bewertungen"
     },
     "bcm": {
       "label": "BCM",

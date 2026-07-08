@@ -237,6 +237,11 @@ router.post('/process', authenticate, requireRole('admin', 'assessor', 'it-staff
   const mapping = JSON.parse(req.body.mapping || '{}');
   const config = ENTITY_CONFIGS[type];
   if (!config) return res.status(400).json({ error: 'Ungültiger Import-Typ' });
+  // Creating users (which carry a role/active flag) is a privilege boundary —
+  // restrict it to admins so a non-admin importer cannot provision admin accounts.
+  if (type === 'user' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Nur Administratoren dürfen Benutzer importieren.' });
+  }
 
   try {
     const { headers, rows } = await readRows(req.file);

@@ -106,6 +106,13 @@ router.get('/callback', async (req, res) => {
     } catch { info = claims; }
     const email = String(info.email || claims.email || info.preferred_username || '').toLowerCase();
     if (!email) throw new Error('Kein E-Mail-Claim im Token');
+    // Reject explicitly unverified emails: an IdP that lets users set an arbitrary
+    // unverified address must not be able to match/take over an existing account.
+    // (Undefined is allowed — many IdPs omit the claim — only an explicit false blocks.)
+    const emailVerified = info.email_verified ?? claims.email_verified;
+    if (emailVerified === false || emailVerified === 'false') {
+      throw new Error('E-Mail-Adresse ist beim Identity-Provider nicht verifiziert');
+    }
     const name = info.name || claims.name || email;
 
     // Try standard OIDC picture claim first; fall back to MS Graph for Azure/Entra

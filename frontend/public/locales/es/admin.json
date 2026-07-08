@@ -76,6 +76,8 @@
     "it-staff": "Personal de TI",
     "dpo": "Delegado de Protección de Datos",
     "owner": "Propietario de Activos",
+    "management": "Dirección",
+    "employee": "Empleado",
     "viewer": "Lector",
     "admin_short": "Admin",
     "assessor_short": "Asesor",
@@ -83,6 +85,7 @@
     "dpo_short": "DPO",
     "owner_short": "Propietario",
     "management_short": "Dirección",
+    "employee_short": "Empleado",
     "viewer_short": "Lector"
   },
   "security": {
