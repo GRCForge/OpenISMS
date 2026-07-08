@@ -102,12 +102,35 @@ ensure_env_secret() {
   esac
 }
 
+# Ensure a strong initial ADMIN_PASSWORD is set. If left empty the app generates a
+# random one and prints it to the container logs; setting it here lets the
+# installer show it to the operator directly. Sets GENERATED_ADMIN_PASSWORD when
+# it creates a new one.
+GENERATED_ADMIN_PASSWORD=""
+ensure_admin_password() {
+  local file="$1" cur
+  cur=$(grep -E "^ADMIN_PASSWORD=" "$file" 2>/dev/null | head -1 | cut -d= -f2-)
+  case "$cur" in
+    ''|your_*_here|changeme*)
+      GENERATED_ADMIN_PASSWORD="$(gen_secret | head -c 24)Aa1!"
+      if grep -qE "^ADMIN_PASSWORD=" "$file" 2>/dev/null; then
+        sed -i "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${GENERATED_ADMIN_PASSWORD}|" "$file"
+      else
+        echo "ADMIN_PASSWORD=${GENERATED_ADMIN_PASSWORD}" >> "$file"
+      fi
+      info "Generated a strong random ADMIN_PASSWORD"
+      ;;
+    *) : ;;  # already customised — keep it
+  esac
+}
+
 # Populate all required app secrets in the given .env file.
 ensure_env_secrets() {
   local file="$1"
   ensure_env_secret JWT_SECRET "$file"
   ensure_env_secret SESSION_SECRET "$file"
   ensure_env_secret ENCRYPTION_KEY "$file"
+  ensure_admin_password "$file"
 }
 
 usage() {
@@ -445,7 +468,13 @@ if [[ "$MODE" == "1" ]]; then
   echo ""
   info "ISMS is starting up!"
   info "App (Frontend + API): http://localhost:8080"
-  info "Default login: admin@isms.local / Admin1234!"
+  if [[ -n "$GENERATED_ADMIN_PASSWORD" ]]; then
+    info "Initial login: admin@isms.local / ${GENERATED_ADMIN_PASSWORD}"
+    info "(also stored as ADMIN_PASSWORD in .env — change it after first login)"
+  else
+    info "Initial login: admin@isms.local — password from your ADMIN_PASSWORD (.env);"
+    info "if unset, check the container logs for the generated one-time password."
+  fi
   echo ""
   exit 0
 fi
