@@ -208,8 +208,8 @@ echo ""
 # Detection
 IS_DOCKER=false
 IS_SYSTEMD=false
-if docker compose ps --format json | grep -q '"Project":"isms"'; then IS_DOCKER=true; fi
-if systemctl is-active --quiet isms-backend || systemctl is-active --quiet openisms; then IS_SYSTEMD=true; fi
+if command -v docker &>/dev/null && docker compose ps --format json 2>/dev/null | grep -q '"Project":"isms"'; then IS_DOCKER=true; fi
+if systemctl is-active --quiet isms-backend || systemctl is-active --quiet openisms || [[ -f /etc/systemd/system/isms-backend.service || -f /etc/systemd/system/openisms.service ]]; then IS_SYSTEMD=true; fi
 
 echo "Choose action:"
 echo "  1) Docker Compose  (new install / restart)"
