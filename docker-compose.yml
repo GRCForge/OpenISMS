@@ -13,8 +13,11 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-isms}
       MYSQL_USER: ${MYSQL_USER:-isms_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-isms_password}
+    # Bind only to the loopback interface: the app reaches the DB over the internal
+    # Docker network (isms-db:3306), so the host mapping is for local admin tools
+    # only and must not be exposed to the LAN/internet.
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:

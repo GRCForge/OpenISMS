@@ -55,7 +55,8 @@ const MarkdownText: React.FC<{ text: string }> = ({ text }) => {
     // Images — before links
     .replace(/!\[([^\]]{0,200})\]\(((?:https?:\/\/|\/)[^)]{1,1000})\)/g, (_, alt, url) => {
       const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      return `<img src="${safeUrl}" alt="${alt}" class="max-w-full max-h-64 rounded-lg my-1 inline-block border dark:border-slate-700" loading="lazy" />`;
+      const safeAlt = alt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return `<img src="${safeUrl}" alt="${safeAlt}" class="max-w-full max-h-64 rounded-lg my-1 inline-block border dark:border-slate-700" loading="lazy" />`;
     })
     .replace(/\*\*([^*]{1,500})\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]{1,500})\*/g, '<em>$1</em>')
@@ -1341,7 +1342,7 @@ export const AssetDetail: React.FC = () => {
                                        {h.original_filename?.toLowerCase().endsWith('.pdf') && (
                                           <button onClick={() => handleViewPdf(`/policies/${p.id}/versions/${h.id}/download?inline=true`)} className="text-blue-500 hover:underline flex items-center gap-1"><Eye size={10}/> {t('detail.view')}</button>
                                        )}
-                                       <a href={`/api/policies/${p.id}/versions/${h.id}/download`} target="_blank" rel="noreferrer" className="text-gray-500 hover:underline flex items-center gap-1"><Download size={10}/> Speichern</a>
+                                       <a href={`/api/policies/${p.id}/versions/${h.id}/download`} target="_blank" rel="noreferrer" className="text-gray-500 hover:underline flex items-center gap-1"><Download size={10}/> {t('detail.download')}</a>
                                     </div>
                                   ))}
                                </div>
@@ -1369,10 +1370,10 @@ export const AssetDetail: React.FC = () => {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-gray-700 dark:text-slate-300 flex items-center gap-2">
                   <FileText size={18} className="text-blue-500" />
-                  Asset-spezifische Dateien (Uploads)
+                  {t('detail.assetFiles')}
                 </h3>
                 {!isViewer && (
-                  <Button size="sm" onClick={() => setDocModalOpen(true)}><Upload size={14} />Hochladen</Button>
+                  <Button size="sm" onClick={() => setDocModalOpen(true)}><Upload size={14} />{t('detail.upload')}</Button>
                 )}
               </div>
               <Card>
@@ -1810,8 +1811,8 @@ export const AssetDetail: React.FC = () => {
           </div>
 
           <div className="flex gap-3 pt-4 sticky bottom-0 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={() => setEditSection(null)} className="flex-1">Abbrechen</Button>
-            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? 'Speichern…' : 'Speichern'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setEditSection(null)} className="flex-1">{t('detail.cancel')}</Button>
+            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? t('form.saving') : t('detail.saveFile')}</Button>
           </div>
         </form>
       </Modal>
@@ -1922,7 +1923,7 @@ export const AssetDetail: React.FC = () => {
 
                 {asset.cpe_resolved_at && (
                   <p className="text-xs text-gray-400 dark:text-slate-500">
-                    Zuletzt aufgelöst: {format(new Date(asset.cpe_resolved_at), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale })}
+                    {t('detail.cpeResolvedAt', { date: format(new Date(asset.cpe_resolved_at), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale }) })}
                   </p>
                 )}
               </div>
@@ -1965,8 +1966,8 @@ export const AssetDetail: React.FC = () => {
           </div>
 
           <div className="flex gap-3 pt-4 sticky bottom-0 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={() => setEditSection(null)} className="flex-1">Abbrechen</Button>
-            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? 'Speichern…' : 'Speichern'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setEditSection(null)} className="flex-1">{t('detail.cancel')}</Button>
+            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? t('form.saving') : t('detail.saveFile')}</Button>
           </div>
         </form>
       </Modal>
@@ -2049,7 +2050,7 @@ export const AssetDetail: React.FC = () => {
 
           <div className="flex gap-3 pt-2 sticky bottom-0 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
             <Button type="button" variant="secondary" onClick={() => { setAssessModalOpen(false); setRaDocFile(null); }} className="flex-1">{t('detail.cancel')}</Button>
-            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? 'Speichern…' : 'Bewertung speichern'}</Button>
+            <Button type="submit" disabled={saving || !canWrite} className="flex-1">{saving ? t('form.saving') : t('detail.saveAssessment')}</Button>
           </div>
         </form>
       </Modal>

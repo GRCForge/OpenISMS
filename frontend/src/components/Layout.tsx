@@ -3,7 +3,7 @@ import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   Shield, LayoutDashboard, Server, ClipboardCheck, Bell,
   Users, LogOut, Menu, ChevronRight, CheckCircle,
-  Upload, AlertTriangle, Building2, Sun, Moon, FileText, Network, Settings, ShieldAlert, ShieldCheck, AlertOctagon, BarChart3, BookOpen, CheckSquare, Fingerprint, Trash2, LayoutList, Radar, Copy, Check, KeyRound, Eye, EyeOff, Search, UserCheck, Scale,
+  Upload, AlertTriangle, Building2, Sun, Moon, FileText, Network, Settings, ShieldAlert, ShieldCheck, AlertOctagon, BarChart3, BookOpen, CheckSquare, Fingerprint, Trash2, LayoutList, Radar, Copy, Check, KeyRound, Search, UserCheck, Scale,
   Zap, Bot, LifeBuoy, Target, Car, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { IsmsLogo } from './IsmsLogo';
 import api from '../lib/api';
-import { startRegistration } from '../lib/webauthn';
+import { startRegistration, PasskeyCancelledError } from '../lib/webauthn';
 
 interface NavItem {
   path: string;
@@ -146,7 +146,7 @@ export const Layout: React.FC = () => {
   interface ApiToken {
     id: number;
     name: string;
-    token: string;
+    token_prefix: string | null;
     expires_at: string | null;
     created_at: string;
   }
@@ -155,8 +155,10 @@ export const Layout: React.FC = () => {
   const [newTokenExpiry, setNewTokenExpiry] = useState('');
   const [tokenMsg, setTokenMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [tokenLoading, setTokenLoading] = useState(false);
-  const [revealedTokens, setRevealedTokens] = useState<Record<number, boolean>>({});
   const [copiedTokens, setCopiedTokens] = useState<Record<number, boolean>>({});
+  // The cleartext token is only available once, right after creation. It is kept
+  // in memory (never re-fetched) so the user can copy it before it disappears.
+  const [createdToken, setCreatedToken] = useState<{ id: number; token: string } | null>(null);
 
   const handleGenerateToken = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,7 +168,9 @@ export const Layout: React.FC = () => {
     try {
       const expiresAt = newTokenExpiry ? new Date(newTokenExpiry).toISOString() : null;
       const r = await api.post('/auth/tokens', { name: newTokenName, expires_at: expiresAt });
-      setApiTokens(prev => [r.data, ...prev]);
+      const { token: plaintext, ...listEntry } = r.data;
+      setApiTokens(prev => [listEntry, ...prev]);
+      if (plaintext) setCreatedToken({ id: r.data.id, token: plaintext });
       setNewTokenName('');
       setNewTokenExpiry('');
       setTokenMsg({ ok: true, text: t('profile:apiTokens.generated') });
@@ -182,6 +186,7 @@ export const Layout: React.FC = () => {
     try {
       await api.delete(`/auth/tokens/${id}`);
       setApiTokens(prev => prev.filter(t => t.id !== id));
+      setCreatedToken(prev => (prev?.id === id ? null : prev));
       setTokenMsg({ ok: true, text: t('profile:apiTokens.deleted') });
     } catch (err: any) {
       setTokenMsg({ ok: false, text: err.response?.data?.error || t('common:status.error') });
@@ -194,10 +199,6 @@ export const Layout: React.FC = () => {
       setCopiedTokens(prev => ({ ...prev, [id]: true }));
       setTimeout(() => setCopiedTokens(prev => ({ ...prev, [id]: false })), 2000);
     } catch { /* clipboard unavailable */ }
-  };
-
-  const toggleRevealToken = (id: number) => {
-    setRevealedTokens(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   // Overdue badge: cheap dedicated endpoint, fetched once on mount and refreshed
@@ -241,7 +242,10 @@ export const Layout: React.FC = () => {
     e.preventDefault();
     setPwLoading(true); setPwMsg(null);
     try {
-      await api.post('/auth/change-password', { current_password: pwCurrent, new_password: pwNew });
+      const r = await api.post('/auth/change-password', { current_password: pwCurrent, new_password: pwNew });
+      // The server rotates the session token on password change; store the new one
+      // so the current session isn't invalidated along with the old tokens.
+      if (r.data?.token) localStorage.setItem('token', r.data.token);
       setPwMsg({ ok: true, text: t('profile:password.success') });
       setPwCurrent(''); setPwNew('');
     } catch (e: any) {
@@ -290,7 +294,7 @@ export const Layout: React.FC = () => {
       setPasskeys(updated.data);
       setPasskeyMsg({ ok: true, text: t('profile:passkeys.success') });
     } catch (e: any) {
-      if (!e.message?.includes('abgebrochen')) {
+      if (!(e instanceof PasskeyCancelledError)) {
         setPasskeyMsg({ ok: false, text: e.response?.data?.error || e.message || t('profile:passkeys.failed') });
       }
     } finally { setPasskeyLoading(false); }
@@ -669,27 +673,28 @@ export const Layout: React.FC = () => {
                             <Trash2 size={14} />
                           </button>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border dark:border-slate-850 font-mono text-[10px] break-all text-gray-600 dark:text-slate-300 select-all">
-                            {revealedTokens[token.id] ? token.token : '••••••••••••••••••••••••••••••••••••••••'}
+                        {createdToken?.id === token.id ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border dark:border-slate-850 font-mono text-[10px] break-all text-gray-600 dark:text-slate-300 select-all">
+                                {createdToken.token}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyToken(token.id, createdToken.token)}
+                                className="p-1.5 rounded border dark:border-slate-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                title={t('common:actions.copy')}
+                              >
+                                {copiedTokens[token.id] ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{t('profile:apiTokens.copyNow')}</p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => toggleRevealToken(token.id)}
-                            className="p-1.5 rounded border dark:border-slate-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
-                            title={revealedTokens[token.id] ? t('common:actions.hide') : t('common:actions.show')}
-                          >
-                            {revealedTokens[token.id] ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyToken(token.id, token.token)}
-                            className="p-1.5 rounded border dark:border-slate-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
-                            title={t('common:actions.copy')}
-                          >
-                            {copiedTokens[token.id] ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-                          </button>
-                        </div>
+                        ) : (
+                          <div className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border dark:border-slate-850 font-mono text-[10px] text-gray-400 dark:text-slate-500 select-all">
+                            {token.token_prefix ? `${token.token_prefix}…` : '••••••••'}
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -754,7 +759,8 @@ export const Layout: React.FC = () => {
             <kbd className="font-mono text-[10px] px-1 py-0.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded ml-1">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
-            <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}>
+            <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors" title={t(`nav:theme.${theme === 'light' ? 'dark' : 'light'}`)}
+            >
               {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </button>
             <NotificationBell />

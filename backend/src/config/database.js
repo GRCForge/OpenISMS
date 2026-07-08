@@ -1,6 +1,15 @@
 const { Sequelize } = require('sequelize');
 
-const poolConfig = { max: 10, min: 0, acquire: 30000, idle: 10000 };
+// min:2 keeps a small warm floor so the first request after an idle period does
+// not pay a full MySQL connect+auth handshake (min:0 dropped every idle conn).
+// connectTimeout fails fast on a dead DB instead of hanging up to `acquire` (30s).
+const poolConfig = {
+  max: Number(process.env.DB_POOL_MAX || 10),
+  min: Number(process.env.DB_POOL_MIN || 2),
+  acquire: 30000,
+  idle: 10000,
+};
+const dialectOptions = { connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS || 10000) };
 
 let sequelize;
 if (process.env.DATABASE_URL) {
@@ -8,6 +17,7 @@ if (process.env.DATABASE_URL) {
     dialect: 'mysql',
     logging: false,
     pool: poolConfig,
+    dialectOptions,
   });
 } else {
   sequelize = new Sequelize(
@@ -20,6 +30,7 @@ if (process.env.DATABASE_URL) {
       dialect: 'mysql',
       logging: false,
       pool: poolConfig,
+      dialectOptions,
     }
   );
 }

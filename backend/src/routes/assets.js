@@ -4,7 +4,7 @@ const {
   sequelize, Asset, User, Assessment, Reminder, Vendor, VendorContact, 
   Policy, PolicyVersion, VvtEntry, Incident, Risk 
 } = require('../models');
-const { authenticate, requireRole, requireWriteAccess, isAssessor, isItStaff, isAdmin } = require('../middleware/auth');
+const { authenticate, requireRole, requireWriteAccess, isAssessor, isItStaff, isAdmin, canViewAllAssets, canViewAsset } = require('../middleware/auth');
 const { requireModule } = require('../middleware/modules');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -46,6 +46,12 @@ router.get('/', authenticate, async (req, res) => {
       where.status = { [Op.ne]: 'decommissioned' };
     }
     if (search) where.name = { [Op.like]: `%${escapeLike(search)}%` };
+
+    // Non-staff roles (owner/viewer/employee/management) only see assets they own
+    // or assess — the same scope the detail endpoint enforces.
+    if (!canViewAllAssets(req)) {
+      where[Op.or] = [{ owner_id: req.user.id }, { assessor_id: req.user.id }];
+    }
 
     const assets = await Asset.findAll({
       where,
@@ -153,12 +159,9 @@ router.get('/:id', authenticate, async (req, res) => {
       ]
     });
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
-    
-    // Authorization: only admin, assessor, dpo, it-staff, owner, or assessor can view
-    const { isDpo } = require('../middleware/auth');
-    const canView = isAdmin(req) || isAssessor(req) || isDpo(req) || isItStaff(req) || 
-                    req.user.id === asset.owner_id || req.user.id === asset.assessor_id;
-    if (!canView) return res.status(403).json({ error: 'Forbidden' });
+
+    // Authorization: staff roles, or the asset's own owner/assessor (shared scope).
+    if (!canViewAsset(req, asset)) return res.status(403).json({ error: 'Forbidden' });
     
     res.json(asset);
   } catch (e) {

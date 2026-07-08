@@ -219,7 +219,9 @@ jobs:
             > startet die App nicht. Erzeugen z.B. mit `openssl rand -hex 32`.
             > Passkeys: in Produktion `WEBAUTHN_RP_ID` / `WEBAUTHN_ORIGIN` setzen.
 
-            Standard-Login: `admin@isms.local` / `Admin1234!`
+            Initiales Login: `admin@isms.local` — kein festes Standard-Passwort. Setze `ADMIN_PASSWORD`,
+            oder die App erzeugt beim ersten Start ein zufälliges Einmal-Passwort und schreibt es ins Log
+            (das Installationsskript speichert und zeigt es an). Nach dem ersten Login ändern.
             SSO/OIDC wird nach dem Login unter **Administration → Single Sign-On** konfiguriert.
 
   # ── Cleanup: prune untagged digests & keep the newest 10 tagged versions ────

@@ -34,6 +34,15 @@ const getAccessWhere = (user) => {
   return { ...base, is_security_incident: true };
 };
 
+// Single source of truth for per-record access — used by read AND write paths so
+// a scoped role cannot reach an out-of-scope incident via update.
+const canAccessIncident = (user, incident) => {
+  const access = getAccessWhere(user);
+  if (access.is_security_incident && !incident.is_security_incident) return false;
+  if (access.is_gdpr_incident && !incident.is_gdpr_incident) return false;
+  return true;
+};
+
 router.get('/stats', authenticate, async (req, res) => {
   try {
     const accessWhere = getAccessWhere(req.user);
@@ -60,10 +69,8 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     const incident = await Incident.findByPk(req.params.id, { include: includeAll });
     if (!incident || incident.deleted) return res.status(404).json({ error: 'Not found' });
-    
-    const access = getAccessWhere(req.user);
-    if (access.is_security_incident && !incident.is_security_incident) return res.status(403).json({ error: 'Forbidden' });
-    if (access.is_gdpr_incident && !incident.is_gdpr_incident) return res.status(403).json({ error: 'Forbidden' });
+
+    if (!canAccessIncident(req.user, incident)) return res.status(403).json({ error: 'Forbidden' });
 
     res.json(incident);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -115,12 +122,16 @@ router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
 router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   try {
     const incident = await Incident.findByPk(req.params.id);
-    if (!incident) return res.status(404).json({ error: 'Not found' });
-    
+    if (!incident || incident.deleted) return res.status(404).json({ error: 'Not found' });
+
+    // Enforce the same access scope as reads so a scoped role cannot read (via the
+    // returned record) or modify an incident outside its category.
+    if (!canAccessIncident(req.user, incident)) return res.status(403).json({ error: 'Forbidden' });
+
     const before = {};
     fields.forEach(f => before[f] = incident[f]);
     const prevAssignee = incident.assignee_id;
-    
+
     await incident.update(buildFields(req.body));
     await applyLinks(incident, req.body);
     

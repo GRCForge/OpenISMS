@@ -11,6 +11,9 @@ const AuditLog = sequelize.define('AuditLog', {
   actor_name: { type: DataTypes.STRING(100) },
   details: { type: DataTypes.JSON },
   ip_address: { type: DataTypes.STRING(45) },
+  // HMAC-SHA256 over the row's immutable content; lets tampering with an existing
+  // entry be detected (an attacker cannot recompute it without the server key).
+  integrity_hash: { type: DataTypes.STRING(64), allowNull: true },
 }, {
   tableName: 'audit_logs',
   timestamps: true,

@@ -1378,17 +1378,17 @@ export const Admin: React.FC = () => {
   const { t } = useTranslation('admin');
   const [tab, setTab] = useState<AdminTab>('users');
   const tabs: { key: AdminTab; label: string; icon: React.FC<any> }[] = [
-    { key: 'users', label: 'Benutzer', icon: UsersIcon },
-    { key: 'groups', label: 'Gruppen', icon: Tag },
-    { key: 'modules', label: 'Module', icon: Puzzle },
-    { key: 'audit', label: 'Audit Log', icon: History },
-    { key: 'security', label: 'Sicherheit & SSO', icon: ShieldCheck },
-    { key: 'smtp', label: 'E-Mail / SMTP', icon: Mail },
-    { key: 'settings', label: 'Allgemein', icon: SettingsIcon },
-    { key: 'rbac', label: 'Rollen & Rechte', icon: Lock },
-    { key: 'api', label: 'API Dokumentation', icon: BookOpen },
-    { key: 'backup', label: 'Backup & Restore', icon: Database },
-    { key: 'llm', label: 'KI / LLM', icon: Bot },
+    { key: 'users', label: t('tabs.users'), icon: UsersIcon },
+    { key: 'groups', label: t('tabs.groups'), icon: Tag },
+    { key: 'modules', label: t('tabs.modules'), icon: Puzzle },
+    { key: 'audit', label: t('tabs.audit'), icon: History },
+    { key: 'security', label: t('tabs.security'), icon: ShieldCheck },
+    { key: 'smtp', label: t('tabs.smtp'), icon: Mail },
+    { key: 'settings', label: t('tabs.settings'), icon: SettingsIcon },
+    { key: 'rbac', label: t('tabs.rbac'), icon: Lock },
+    { key: 'api', label: t('tabs.api'), icon: BookOpen },
+    { key: 'backup', label: t('tabs.backup'), icon: Database },
+    { key: 'llm', label: t('tabs.llm'), icon: Bot },
   ];
 
   return (

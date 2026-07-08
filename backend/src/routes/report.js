@@ -53,6 +53,23 @@ router.get('/trends', async (req, res) => {
       Task.findAll({ where: { status: { [Op.ne]: 'cancelled' } }, attributes: ['status'], raw: true }),
     ]);
 
+    // Second batch of independent aggregates — run in parallel instead of four
+    // sequential round-trips (none depend on the bucketing/distribution above).
+    const ninetyDaysAgo = new Date(now);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const [totalAssets, resolvedIncidents, kpis, openIncidents] = await Promise.all([
+      Asset.count({ where: { status: { [Op.ne]: 'decommissioned' } } }),
+      Incident.findAll({
+        where: { status: { [Op.in]: ['resolved', 'closed'] }, updated_at: { [Op.gte]: ninetyDaysAgo } },
+        attributes: ['created_at', 'updated_at'], raw: true,
+      }),
+      Kpi.findAll({
+        include: [{ model: KpiMeasurement, as: 'measurements', order: [['measured_at', 'DESC']], limit: 6 }],
+        order: [['title', 'ASC']],
+      }),
+      Incident.count({ where: { status: { [Op.in]: ['reported', 'investigating', 'contained'] } } }),
+    ]);
+
     // Monthly bucketing
     const monthly = months.map(m => {
       const inMonth = (dateStr) => {
@@ -82,7 +99,6 @@ router.get('/trends', async (req, res) => {
     allTasks.forEach(t => { if (taskStatus[t.status] !== undefined) taskStatus[t.status]++; });
 
     // Auto-computed KPIs
-    const totalAssets = await Asset.count({ where: { status: { [Op.ne]: 'decommissioned' } } });
     const assessedCount = allAssessments.length;
     const assessmentCoverage = totalAssets > 0 ? Math.round((assessedCount / totalAssets) * 100) : 0;
 
@@ -97,12 +113,7 @@ router.get('/trends', async (req, res) => {
     const taskCompletionRate = taskTotal > 0 ? Math.round((taskStatus.done / taskTotal) * 100) : 0;
 
     // MTTR: mean days from created_at to resolved incidents in last 90 days
-    const ninetyDaysAgo = new Date(now);
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-    const resolvedIncidents = await Incident.findAll({
-      where: { status: { [Op.in]: ['resolved', 'closed'] }, updated_at: { [Op.gte]: ninetyDaysAgo } },
-      attributes: ['created_at', 'updated_at'], raw: true,
-    });
+    // (resolvedIncidents was fetched in the parallel batch above)
     let mttr = null;
     if (resolvedIncidents.length > 0) {
       const totalDays = resolvedIncidents.reduce((sum, i) => {
@@ -119,11 +130,7 @@ router.get('/trends', async (req, res) => {
       Math.max(0, 1 - (riskDist.critical * 0.1 + riskDist.high * 0.03)) * 20
     );
 
-    // Fetch manual KPIs with latest measurements
-    const kpis = await Kpi.findAll({
-      include: [{ model: KpiMeasurement, as: 'measurements', order: [['measured_at', 'DESC']], limit: 6 }],
-      order: [['title', 'ASC']],
-    });
+    // (manual KPIs fetched in the parallel batch above)
 
     res.json({
       monthly,
@@ -139,7 +146,7 @@ router.get('/trends', async (req, res) => {
         task_completion_rate: taskCompletionRate,
         mttr_days: mttr,
         total_assets: totalAssets,
-        open_incidents: await Incident.count({ where: { status: { [Op.in]: ['reported', 'investigating', 'contained'] } } }),
+        open_incidents: openIncidents,
       },
       kpis: kpis.map(k => ({
         id: k.id, title: k.title, target: k.target,

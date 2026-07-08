@@ -147,6 +147,7 @@
       "policy": "Dokument"
     }
   },
+
   "ui": {
     "addEntry": "+ \"{{value}}\" neu eintragen",
     "new": "Neu",

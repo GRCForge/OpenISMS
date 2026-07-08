@@ -16,13 +16,18 @@ RUN npm run build
 
 # --- Stage 2: Backend + statisches Frontend ---
 FROM node:26.3.0-alpine
-RUN apk add --no-cache git && npm install -g npm@11 --loglevel=error
+# No git needed at runtime (no git-sourced deps in package-lock.json) — keeping it
+# out shrinks the image and its attack surface.
+RUN npm install -g npm@11 --loglevel=error
 WORKDIR /app
 ENV NODE_ENV=production
+# libuv threadpool default is 4; bcrypt, file SHA-256 hashing, zip/backup I/O and
+# pdf/docx parsing all use it — 8 reduces head-of-line blocking under concurrent load.
+ENV UV_THREADPOOL_SIZE=8
 COPY backend/package.json backend/package-lock.json ./
 # --loglevel=error suppresses the dottie deprecation warning (transitive dep of
 # sequelize@6; dottie@2.0.7 is the latest version — no fix available upstream).
-RUN npm ci --omit=dev --loglevel=error
+RUN npm ci --omit=dev --loglevel=error || npm install --omit=dev --loglevel=error
 COPY backend/ ./
 # Gebautes Frontend wird von Express aus /app/public ausgeliefert (siehe src/index.js)
 COPY --from=frontend-build /frontend/dist ./public

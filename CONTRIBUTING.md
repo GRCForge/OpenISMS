@@ -39,7 +39,7 @@ behavior to **maximilian@herz.dev**.
 
 ### Prerequisites
 
-- **Node.js** ≥ 20 (LTS recommended)
+- **Node.js** ≥ 26.3.0 (enforced by the `engines` field and the Docker base image)
 - **MySQL** 8.x (or a compatible fork such as MariaDB 10.6+)
 - **Git**
 
@@ -68,6 +68,7 @@ DB_USER=openisms
 DB_PASSWORD=changeme
 JWT_SECRET=changeme-very-long-random-string
 SESSION_SECRET=changeme-another-long-random-string
+ENCRYPTION_KEY=changeme-separate-aes-key-for-secrets-at-rest
 PORT=3001
 ```
 
@@ -158,7 +159,7 @@ Keep the subject line under **72 characters**. The body explains *why*, not *wha
 ### Backend (Node.js / Express)
 
 - `'use strict';` at the top of every file.
-- No transpilation — plain CommonJS, Node.js 20 compatible.
+- No transpilation — plain CommonJS, running on the Node.js ≥ 26.3 required by `package.json`.
 - Error handling: always return `res.status(5xx).json({ error: e.message })`
   rather than leaking stack traces.
 - Database access: use Sequelize models and parameterised queries — no raw SQL

@@ -6,6 +6,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { apiLimiter, heavyLimiter: sharedHeavyLimiter } = require('./middleware/rateLimiter');
+const { authenticate } = require('./middleware/auth');
 const session = require('express-session');
 const passport = require('passport');
 const { sequelize } = require('./models');
@@ -100,7 +101,11 @@ app.use(session({
   // Callback schluege fehl. 'lax' erlaubt das Cookie bei Top-Level-GET-Navigation
   // (genau der OAuth-Redirect) und blockt weiterhin Cross-Site-POST (CSRF).
   cookie: {
-    secure: process.env.SECURE_COOKIES === 'true',
+    // Auto-enable Secure over HTTPS (APP_URL) so a correct production deployment
+    // never sends the session cookie in cleartext; still overridable via env, and
+    // stays false for plain-HTTP LAN setups so those keep working.
+    secure: process.env.SECURE_COOKIES === 'true'
+      || (process.env.SECURE_COOKIES !== 'false' && String(process.env.APP_URL || '').startsWith('https://')),
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 10 * 60 * 1000,
@@ -194,8 +199,10 @@ app.use('/mcp', require('./mcp/server').createMcpRouter());
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-// OpenAPI spec + Swagger-UI (CDN-based, no extra npm packages needed)
-app.get('/api/openapi.json', (req, res) => {
+// OpenAPI spec — requires a valid session so the full API surface is not exposed
+// to anonymous clients (reconnaissance hardening). The Swagger UI shell below loads
+// it with the caller's token; the download button does the same via fetch.
+app.get('/api/openapi.json', authenticate, (req, res) => {
   const filePath = require('path').join(__dirname, 'openapi.json');
   if (req.query.download === '1') {
     res.download(filePath, 'openapi.json');
@@ -226,33 +233,44 @@ app.get('/api/docs', (req, res) => {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       ISMS API Dokumentation (OpenAPI 3.0)
     </span>
-    <a id="docs-dl-btn" href="${base}/api/openapi.json?download=1" style="background:#2563eb; color:#fff; text-decoration:none; padding:8px 16px; font-size:12px; border-radius:6px; font-weight:bold; display:inline-flex; align-items:center; gap:6px; transition: background 0.2s;">
+    <button id="docs-dl-btn" type="button" style="background:#2563eb; color:#fff; border:none; cursor:pointer; text-decoration:none; padding:8px 16px; font-size:12px; border-radius:6px; font-weight:bold; display:inline-flex; align-items:center; gap:6px; transition: background 0.2s;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Spezifikation herunterladen
-    </a>
+    </button>
   </div>
   <div id="swagger-ui"></div>
   <script src="/api/swagger-ui/swagger-ui-bundle.js"></script>
   <script nonce="${nonce}">
+  // The spec endpoint requires auth; send the session token (same key the SPA uses).
+  var authHeader=function(){var t=localStorage.getItem('token');return t?{'Authorization':'Bearer '+t}:{};};
   SwaggerUIBundle({
     url:"${base}/api/openapi.json",dom_id:'#swagger-ui',
     presets:[SwaggerUIBundle.presets.apis,SwaggerUIBundle.SwaggerUIStandalonePreset],
     layout:"BaseLayout",persistAuthorization:true,tryItOutEnabled:true,
-    requestInterceptor:(req)=>{const t=localStorage.getItem('isms_token');if(t)req.headers['Authorization']='Bearer '+t;return req;}
+    requestInterceptor:function(req){var h=authHeader();if(h.Authorization)req.headers['Authorization']=h.Authorization;return req;}
+  });
+  document.getElementById('docs-dl-btn').addEventListener('click',async function(){
+    var r=await fetch("${base}/api/openapi.json?download=1",{headers:authHeader()});
+    if(!r.ok){alert('Bitte zuerst in OpenISMS anmelden, um die Spezifikation herunterzuladen.');return;}
+    var blob=await r.blob();var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download='openapi.json';document.body.appendChild(a);a.click();
+    a.remove();URL.revokeObjectURL(url);
   });
   </script></body></html>`);
 });
 
 // App-Version aus der VERSION-Datei (im Container nach /app/VERSION kopiert,
 // lokal im Repo-Root). Fallback: APP_VERSION env oder 'dev'.
-app.get('/api/version', (req, res) => {
+// Resolve the version once at startup — it cannot change without a restart, so
+// there is no need to hit the filesystem on every /api/version request.
+const APP_VERSION = (() => {
   const fsv = require('fs'); const pathv = require('path');
-  let version = process.env.APP_VERSION || 'dev';
   for (const p of [pathv.join(__dirname, '../VERSION'), pathv.join(__dirname, '../../VERSION')]) {
-    try { const v = fsv.readFileSync(p, 'utf8').trim(); if (v) { version = v; break; } } catch { /* ignore */ }
+    try { const v = fsv.readFileSync(p, 'utf8').trim(); if (v) return v; } catch { /* ignore */ }
   }
-  res.json({ version });
-});
+  return process.env.APP_VERSION || 'dev';
+})();
+app.get('/api/version', (req, res) => res.json({ version: APP_VERSION }));
 
 // Single-Container-Deployment: gebautes Frontend aus ./public ausliefern.
 // Existiert das Verzeichnis nicht (z.B. reines API-Setup), wird es uebersprungen.
@@ -433,12 +451,59 @@ const start = async () => {
       console.warn('[DB] Could not backfill ISO 27001 descriptions:', e.message);
     }
 
+    // Migrate legacy cleartext API tokens to hashed storage (idempotent).
+    // Older rows stored the raw token; hash them in place and drop the cleartext
+    // so a DB leak no longer yields usable credentials.
+    try {
+      const { ApiToken } = require('./models');
+      const { hashToken } = require('./services/cryptoService');
+      const legacy = await ApiToken.findAll({ where: { token_hash: null } });
+      for (const row of legacy) {
+        if (row.token && /^isms_api_[0-9a-f]{64}$/.test(row.token)) {
+          row.token_hash = hashToken(row.token);
+          row.token_prefix = row.token.slice(0, 17);
+          row.token = null;
+          await row.save();
+        }
+      }
+      if (legacy.length > 0) console.log(`[DB] Migrated ${legacy.length} API token(s) to hashed storage`);
+    } catch (e) {
+      console.warn('[DB] Could not migrate API tokens to hashed storage:', e.message);
+    }
+
+    // Encrypt legacy cleartext TOTP secrets at rest (idempotent). Reads raw values
+    // (bypassing the model getter); rows that fail to decrypt are plaintext and get
+    // encrypted via a raw UPDATE (bypassing the setter to avoid double-encryption).
+    try {
+      const { QueryTypes } = require('sequelize');
+      const { encrypt, decrypt } = require('./services/cryptoService');
+      const rows = await sequelize.query(
+        'SELECT id, totp_secret FROM users WHERE totp_secret IS NOT NULL',
+        { type: QueryTypes.SELECT }
+      );
+      let migrated = 0;
+      for (const r of rows) {
+        if (decrypt(r.totp_secret) === null) { // not ciphertext → legacy plaintext
+          await sequelize.query('UPDATE users SET totp_secret = :enc WHERE id = :id',
+            { replacements: { enc: encrypt(r.totp_secret), id: r.id } });
+          migrated++;
+        }
+      }
+      if (migrated > 0) console.log(`[DB] Encrypted ${migrated} TOTP secret(s) at rest`);
+    } catch (e) {
+      console.warn('[DB] Could not migrate TOTP secrets to encrypted storage:', e.message);
+    }
+
     // Seed admin user if none exists. Passwort über ADMIN_PASSWORD setzbar;
     // ohne Override greift der dokumentierte Standard, der sofort zu ändern ist.
     const { User } = require('./models');
     const count = await User.count();
     if (count === 0) {
-      const initialPassword = process.env.ADMIN_PASSWORD || 'Admin1234!';
+      // Never ship a known default credential. Use ADMIN_PASSWORD when provided,
+      // otherwise generate a strong random one and print it once so the initial
+      // admin cannot be logged into with a guessable, publicly documented password.
+      const generated = !process.env.ADMIN_PASSWORD;
+      const initialPassword = process.env.ADMIN_PASSWORD || (crypto.randomBytes(12).toString('base64') + 'Aa1!');
       await User.create({
         name: 'Administrator',
         email: 'admin@isms.local',
@@ -446,10 +511,14 @@ const start = async () => {
         role: 'admin',
         department: 'IT Security'
       });
-      if (process.env.ADMIN_PASSWORD) {
-        console.log('Admin user created: admin@isms.local (Passwort aus ADMIN_PASSWORD)');
+      if (generated) {
+        console.warn('════════════════════════════════════════════════════════════════');
+        console.warn('[SECURITY] Admin-Konto erstellt: admin@isms.local');
+        console.warn(`[SECURITY] Generiertes Einmal-Passwort: ${initialPassword}`);
+        console.warn('[SECURITY] Bitte NACH dem ersten Login sofort ändern (oder ADMIN_PASSWORD setzen).');
+        console.warn('════════════════════════════════════════════════════════════════');
       } else {
-        console.warn('[SECURITY] Admin-Standardkonto erstellt: admin@isms.local / Admin1234! — Passwort SOFORT ändern oder ADMIN_PASSWORD setzen!');
+        console.log('Admin user created: admin@isms.local (Passwort aus ADMIN_PASSWORD)');
       }
     }
 
@@ -545,7 +614,13 @@ const start = async () => {
       }
     });
 
-    app.listen(PORT, '0.0.0.0', () => console.log(`ISMS Backend running on port ${PORT}`));
+    const server = app.listen(PORT, '0.0.0.0', () => console.log(`ISMS Backend running on port ${PORT}`));
+    // Keep-alive must outlive the reverse proxy's idle timeout (nginx/Traefik
+    // default ~60s) so the proxy — not Node — owns connection teardown. Node's
+    // 5s default otherwise causes sporadic 502/ECONNRESET under load.
+    // headersTimeout must be greater than keepAliveTimeout.
+    server.keepAliveTimeout = Number(process.env.KEEPALIVE_TIMEOUT_MS || 65000);
+    server.headersTimeout = Number(process.env.HEADERS_TIMEOUT_MS || 66000);
   } catch (e) {
     console.error('Failed to start:', e);
     process.exit(1);

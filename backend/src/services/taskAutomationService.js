@@ -75,44 +75,38 @@ const checkAndManageAssetTasks = async (asset) => {
     });
   }
 
+  // The three checks below are independent (different task title prefixes), so
+  // they run in parallel — this call runs synchronously on every asset PUT/DELETE.
+
   // 1. Completeness Check (Owner/Assessor task)
   const incompleteFields = [];
   if (!asset.description) incompleteFields.push('Beschreibung');
   if (!asset.classification) incompleteFields.push('Klassifizierung');
   if (!asset.location && asset.hosting_type === 'on-premise') incompleteFields.push('Standort');
-  
   const stammdatenTitle = `Stammdaten vervollständigen: ${asset.name}`;
-  if (incompleteFields.length > 0) {
-    const description = `Folgende Felder fehlen oder sind unvollständig: ${incompleteFields.join(', ')}.`;
-    // If owner is set, assign to individual, otherwise to owner role (conceptual) or first admin
-    // For now, we prefer individual owner if set
-    await createUniqueTask(stammdatenTitle, description, 'high', asset.owner_id, 'owner', 'asset', asset.id, ['Stammdaten']);
-  } else {
-    await completeRelatedTask('asset', asset.id, 'Stammdaten vervollständigen:');
-  }
 
   // 2. Privacy Check (DPO task) -> Assigned to ROLE 'dpo'
   const vvtTitle = `Datenschutz-Dokumentation (VVT): ${asset.name}`;
-  if (asset.data_category !== 'none' && (asset.vvt_status === 'none' || asset.vvt_status === 'pending')) {
-    const description = `Das Asset verarbeitet personenbezogene Daten (${asset.data_category}), aber der VVT-Status ist noch nicht 'complete'. Bitte Verarbeitungsverzeichnis prüfen.`;
-    await createUniqueTask(vvtTitle, description, 'medium', null, 'dpo', 'asset', asset.id, ['Datenschutz', 'VVT']);
-  } else {
-    await completeRelatedTask('asset', asset.id, 'Datenschutz-Dokumentation (VVT):');
-  }
+  const needsVvt = asset.data_category !== 'none' && (asset.vvt_status === 'none' || asset.vvt_status === 'pending');
 
   // 3. Risk Assessment Check (Assessor task) -> Assigned to ROLE 'assessor'
   const lastAssessment = asset.Assessments?.[0];
   const needsAssessment = !lastAssessment || (new Date() - new Date(lastAssessment.created_at) > 365 * 24 * 60 * 60 * 1000);
   const riskTitle = `Risikobewertung fällig: ${asset.name}`;
-  
-  if (needsAssessment) {
-    const description = lastAssessment 
-      ? `Die letzte Risikobewertung ist über ein Jahr alt (${new Date(lastAssessment.created_at).toLocaleDateString()}). Bitte neues Review durchführen.`
-      : `Für dieses Asset wurde noch nie eine Risikobewertung (CIA) durchgeführt.`;
-    await createUniqueTask(riskTitle, description, 'high', null, 'assessor', 'asset', asset.id, ['Risiko', 'Review']);
-  } else {
-    await completeRelatedTask('asset', asset.id, 'Risikobewertung fällig:');
-  }
+
+  await Promise.all([
+    incompleteFields.length > 0
+      ? createUniqueTask(stammdatenTitle, `Folgende Felder fehlen oder sind unvollständig: ${incompleteFields.join(', ')}.`, 'high', asset.owner_id, 'owner', 'asset', asset.id, ['Stammdaten'])
+      : completeRelatedTask('asset', asset.id, 'Stammdaten vervollständigen:'),
+    needsVvt
+      ? createUniqueTask(vvtTitle, `Das Asset verarbeitet personenbezogene Daten (${asset.data_category}), aber der VVT-Status ist noch nicht 'complete'. Bitte Verarbeitungsverzeichnis prüfen.`, 'medium', null, 'dpo', 'asset', asset.id, ['Datenschutz', 'VVT'])
+      : completeRelatedTask('asset', asset.id, 'Datenschutz-Dokumentation (VVT):'),
+    needsAssessment
+      ? createUniqueTask(riskTitle, lastAssessment
+          ? `Die letzte Risikobewertung ist über ein Jahr alt (${new Date(lastAssessment.created_at).toLocaleDateString()}). Bitte neues Review durchführen.`
+          : `Für dieses Asset wurde noch nie eine Risikobewertung (CIA) durchgeführt.`, 'high', null, 'assessor', 'asset', asset.id, ['Risiko', 'Review'])
+      : completeRelatedTask('asset', asset.id, 'Risikobewertung fällig:'),
+  ]);
 };
 
 /**
@@ -181,12 +175,13 @@ async function runMfaEnforcementAutomation() {
     }
   });
 
+  // Fetch all user_ids that own a passkey in one query, then test membership in
+  // memory — avoids a COUNT round-trip per user without a passkey.
+  const passkeyRows = await PasskeyCredential.findAll({ attributes: ['user_id'], group: ['user_id'], raw: true });
+  const usersWithPasskey = new Set(passkeyRows.map(r => r.user_id));
+
   for (const user of users) {
-    let hasMfa = user.totp_enabled;
-    if (!hasMfa) {
-      const passkeyCount = await PasskeyCredential.count({ where: { user_id: user.id } });
-      hasMfa = passkeyCount > 0;
-    }
+    const hasMfa = user.totp_enabled || usersWithPasskey.has(user.id);
 
     const taskTitle = `MFA einrichten: ${user.name}`;
     if (!hasMfa) {
