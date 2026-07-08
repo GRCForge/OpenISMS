@@ -11,6 +11,9 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 650,
     assetsDir: 'static',
+    // Skip gzip-sizing every chunk for the build log — speeds up `vite build`
+    // (CI + Docker stage 1) with zero effect on the emitted output.
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks(id) {

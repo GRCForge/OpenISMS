@@ -79,15 +79,15 @@ router.post('/', authenticate, requireWriteAccess(), requireAssetAccess, async (
       }
       if (groupNotices.length > 0) await Notification.bulkCreate(groupNotices);
 
-      for (const u of mentionedUsers) {
-        if (u.id === req.user.id || groupMemberIds.has(u.id)) continue;
-        await Notification.create({
+      const userNotices = mentionedUsers
+        .filter(u => u.id !== req.user.id && !groupMemberIds.has(u.id))
+        .map(u => ({
           user_id: u.id, actor_id: req.user.id, type: 'mention',
           title: 'Mentioned in comment',
           content: `${req.user.name} mentioned you on asset "${asset?.name || '?'}"`,
-          link: `/assets/${assetId}#comment-${comment.id}`,
-        });
-      }
+          link: `/assets/${assetId}#comment-${comment.id}`, read: false,
+        }));
+      if (userNotices.length > 0) await Notification.bulkCreate(userNotices);
     }
 
     // ── Auto-task creation from "- [ ] @mention Task title" lines ───────────

@@ -13,16 +13,25 @@ router.use(apiLimiter);
 // tampered with (or predate the integrity feature and cannot be verified).
 router.get('/verify', authenticate, requireRole('admin'), async (req, res) => {
   try {
-    const rows = await AuditLog.findAll({ order: [['id', 'ASC']] });
-    let intact = 0, tampered = 0, unverifiable = 0;
+    // Stream in batches so the append-only, unbounded audit_log never has to be
+    // fully materialized in memory.
+    const BATCH = 1000;
+    let offset = 0, total = 0, intact = 0, tampered = 0, unverifiable = 0;
     const tamperedIds = [];
-    for (const row of rows) {
-      const result = verifyAuditRow(row);
-      if (result === null) unverifiable++;
-      else if (result) intact++;
-      else { tampered++; if (tamperedIds.length < 100) tamperedIds.push(row.id); }
+    for (;;) {
+      const rows = await AuditLog.findAll({ order: [['id', 'ASC']], limit: BATCH, offset });
+      if (rows.length === 0) break;
+      for (const row of rows) {
+        total++;
+        const result = verifyAuditRow(row);
+        if (result === null) unverifiable++;
+        else if (result) intact++;
+        else { tampered++; if (tamperedIds.length < 100) tamperedIds.push(row.id); }
+      }
+      offset += rows.length;
+      if (rows.length < BATCH) break;
     }
-    res.json({ total: rows.length, intact, tampered, unverifiable, tamperedIds });
+    res.json({ total, intact, tampered, unverifiable, tamperedIds });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

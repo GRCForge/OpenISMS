@@ -261,14 +261,16 @@ app.get('/api/docs', (req, res) => {
 
 // App-Version aus der VERSION-Datei (im Container nach /app/VERSION kopiert,
 // lokal im Repo-Root). Fallback: APP_VERSION env oder 'dev'.
-app.get('/api/version', (req, res) => {
+// Resolve the version once at startup — it cannot change without a restart, so
+// there is no need to hit the filesystem on every /api/version request.
+const APP_VERSION = (() => {
   const fsv = require('fs'); const pathv = require('path');
-  let version = process.env.APP_VERSION || 'dev';
   for (const p of [pathv.join(__dirname, '../VERSION'), pathv.join(__dirname, '../../VERSION')]) {
-    try { const v = fsv.readFileSync(p, 'utf8').trim(); if (v) { version = v; break; } } catch { /* ignore */ }
+    try { const v = fsv.readFileSync(p, 'utf8').trim(); if (v) return v; } catch { /* ignore */ }
   }
-  res.json({ version });
-});
+  return process.env.APP_VERSION || 'dev';
+})();
+app.get('/api/version', (req, res) => res.json({ version: APP_VERSION }));
 
 // Single-Container-Deployment: gebautes Frontend aus ./public ausliefern.
 // Existiert das Verzeichnis nicht (z.B. reines API-Setup), wird es uebersprungen.
@@ -612,7 +614,13 @@ const start = async () => {
       }
     });
 
-    app.listen(PORT, '0.0.0.0', () => console.log(`ISMS Backend running on port ${PORT}`));
+    const server = app.listen(PORT, '0.0.0.0', () => console.log(`ISMS Backend running on port ${PORT}`));
+    // Keep-alive must outlive the reverse proxy's idle timeout (nginx/Traefik
+    // default ~60s) so the proxy — not Node — owns connection teardown. Node's
+    // 5s default otherwise causes sporadic 502/ECONNRESET under load.
+    // headersTimeout must be greater than keepAliveTimeout.
+    server.keepAliveTimeout = Number(process.env.KEEPALIVE_TIMEOUT_MS || 65000);
+    server.headersTimeout = Number(process.env.HEADERS_TIMEOUT_MS || 66000);
   } catch (e) {
     console.error('Failed to start:', e);
     process.exit(1);

@@ -80,18 +80,26 @@ const buildFields = (body) => {
   return f;
 };
 
-// Verknuepfungen (Assets, Bedrohungen, Controls mit Wirksamkeit) setzen
+// Verknuepfungen (Assets, Bedrohungen, Controls mit Wirksamkeit) setzen.
+// Die Zuordnungen betreffen unterschiedliche Verknüpfungstabellen und sind
+// voneinander unabhängig — daher parallel statt sequentiell.
 const applyLinks = async (risk, body) => {
-  if (Array.isArray(body.asset_ids)) await risk.setAssets(body.asset_ids);
-  if (Array.isArray(body.threat_ids)) await risk.setThreats(body.threat_ids);
+  const ops = [];
+  if (Array.isArray(body.asset_ids)) ops.push(risk.setAssets(body.asset_ids));
+  if (Array.isArray(body.threat_ids)) ops.push(risk.setThreats(body.threat_ids));
+  if (Array.isArray(body.vvt_ids)) ops.push(risk.setVvtEntries(body.vvt_ids));
+  if (Array.isArray(body.incident_ids)) ops.push(risk.setIncidents(body.incident_ids));
   if (Array.isArray(body.controls)) {
-    await risk.setControls([]);
-    for (const c of body.controls) {
-      if (c && c.id) await risk.addControl(c.id, { through: { effectiveness: parseInt(c.effectiveness) || 3 } });
-    }
+    ops.push((async () => {
+      await risk.setControls([]);
+      await Promise.all(
+        body.controls.filter(c => c && c.id).map(c =>
+          risk.addControl(c.id, { through: { effectiveness: parseInt(c.effectiveness) || 3 } })
+        )
+      );
+    })());
   }
-  if (Array.isArray(body.vvt_ids)) await risk.setVvtEntries(body.vvt_ids);
-  if (Array.isArray(body.incident_ids)) await risk.setIncidents(body.incident_ids);
+  await Promise.all(ops);
 };
 
 // Automatische Restrisiko-Berechnung aus umgesetzten Controls
