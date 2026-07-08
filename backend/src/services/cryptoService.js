@@ -1,10 +1,16 @@
 const crypto = require('crypto');
 
-// AES-256-GCM encryption for sensitive settings (e.g. OIDC client_secret).
-// Key is derived from ENCRYPTION_KEY (preferred) or JWT_SECRET — no hardcoded fallback.
-const rawKey = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET;
-if (!rawKey) { console.error('FATAL: ENCRYPTION_KEY or JWT_SECRET must be set for encryption'); process.exit(1); }
-const KEY = crypto.createHash('sha256').update(rawKey).digest(); // 32 bytes
+// AES-256-GCM encryption for sensitive data at rest (OIDC/SMTP/LLM secrets, TOTP
+// secrets). New encryption always uses the primary key (ENCRYPTION_KEY preferred,
+// otherwise JWT_SECRET). Decryption, however, tries EVERY configured key so that
+// data encrypted earlier under the JWT_SECRET fallback stays readable after an
+// ENCRYPTION_KEY is later introduced — otherwise such a key change would silently
+// make existing secrets (e.g. a user's TOTP seed) undecryptable.
+const rawKeys = [process.env.ENCRYPTION_KEY, process.env.JWT_SECRET].filter(Boolean);
+if (rawKeys.length === 0) { console.error('FATAL: ENCRYPTION_KEY or JWT_SECRET must be set for encryption'); process.exit(1); }
+const uniqueRawKeys = [...new Set(rawKeys)]; // dedupe, preserve order (primary first)
+const KEYS = uniqueRawKeys.map(k => crypto.createHash('sha256').update(k).digest()); // 32 bytes each
+const KEY = KEYS[0]; // primary — used for all new encryption
 
 const encrypt = (plain) => {
   if (plain == null || plain === '') return null;
@@ -18,17 +24,20 @@ const encrypt = (plain) => {
 
 const decrypt = (data) => {
   if (!data) return null;
-  try {
-    const buf = Buffer.from(data, 'base64');
-    const iv = buf.subarray(0, 12);
-    const tag = buf.subarray(12, 28);
-    const enc = buf.subarray(28);
-    const decipher = crypto.createDecipheriv('aes-256-gcm', KEY, iv);
-    decipher.setAuthTag(tag);
-    return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8');
-  } catch {
-    return null;
+  let buf;
+  try { buf = Buffer.from(data, 'base64'); } catch { return null; }
+  if (buf.length < 28) return null; // need at least iv(12) + tag(16)
+  const iv = buf.subarray(0, 12);
+  const tag = buf.subarray(12, 28);
+  const enc = buf.subarray(28);
+  for (const key of KEYS) {
+    try {
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(tag);
+      return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8');
+    } catch { /* wrong key or not ciphertext — try the next candidate */ }
   }
+  return null;
 };
 
 // Fast one-way hash for high-entropy secrets (e.g. API tokens) so they are not
@@ -36,10 +45,15 @@ const decrypt = (data) => {
 // sufficient (no need for a slow password hash) and allows constant-cost lookup.
 const hashToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
 
-// Keyed HMAC for tamper-evident audit rows. Derived from the same root secret via
-// a distinct label so it is independent of the encryption key. An attacker with DB
-// write access cannot forge a valid signature without this server-side key.
-const AUDIT_KEY = crypto.createHash('sha256').update('openisms-audit-integrity:' + rawKey).digest();
-const signAudit = (canonical) => crypto.createHmac('sha256', AUDIT_KEY).update(String(canonical)).digest('hex');
+// Keyed HMAC for tamper-evident audit rows. One HMAC key is derived per configured
+// root secret (distinct label so it is independent of the encryption key). Signing
+// uses the primary key; verification accepts any configured key so a key change
+// does not turn every previously-signed row into a false "tampered" result.
+const AUDIT_KEYS = uniqueRawKeys.map(k => crypto.createHash('sha256').update('openisms-audit-integrity:' + k).digest());
+const signAudit = (canonical) => crypto.createHmac('sha256', AUDIT_KEYS[0]).update(String(canonical)).digest('hex');
+const verifyAuditSignature = (canonical, hash) => {
+  if (!hash) return false;
+  return AUDIT_KEYS.some(key => crypto.createHmac('sha256', key).update(String(canonical)).digest('hex') === hash);
+};
 
-module.exports = { encrypt, decrypt, hashToken, signAudit };
+module.exports = { encrypt, decrypt, hashToken, signAudit, verifyAuditSignature };

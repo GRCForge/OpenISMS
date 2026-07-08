@@ -1,5 +1,5 @@
 const { AuditLog } = require('../models');
-const { signAudit } = require('./cryptoService');
+const { signAudit, verifyAuditSignature } = require('./cryptoService');
 
 // Deterministic serialization with recursively sorted object keys. This makes the
 // canonical form independent of key ordering, which matters because MySQL's JSON
@@ -53,7 +53,7 @@ const auditFromReq = async (req, action, entityType, entityId, entityName, detai
 // tampered, null if the row predates the integrity feature (cannot be verified).
 const verifyAuditRow = (row) => {
   if (!row.integrity_hash) return null;
-  return signAudit(canonicalize(row)) === row.integrity_hash;
+  return verifyAuditSignature(canonicalize(row), row.integrity_hash);
 };
 
 module.exports = { auditFromReq, verifyAuditRow, canonicalize };

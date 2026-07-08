@@ -101,11 +101,14 @@ app.use(session({
   // Callback schluege fehl. 'lax' erlaubt das Cookie bei Top-Level-GET-Navigation
   // (genau der OAuth-Redirect) und blockt weiterhin Cross-Site-POST (CSRF).
   cookie: {
-    // Auto-enable Secure over HTTPS (APP_URL) so a correct production deployment
-    // never sends the session cookie in cleartext; still overridable via env, and
-    // stays false for plain-HTTP LAN setups so those keep working.
-    secure: process.env.SECURE_COOKIES === 'true'
-      || (process.env.SECURE_COOKIES !== 'false' && String(process.env.APP_URL || '').startsWith('https://')),
+    // Secure cookies are strictly opt-in via SECURE_COOKIES=true. Do NOT auto-enable
+    // from APP_URL: express-session refuses to SET a Secure cookie unless it sees the
+    // request as HTTPS (req.secure / X-Forwarded-Proto via trust proxy). Many reverse
+    // proxies don't forward that header, so auto-enabling silently dropped the session
+    // cookie -> passkey/OIDC challenge lost ("Keine aktive Challenge" / "SSO-Sitzung
+    // ging verloren"). Operators on HTTPS set SECURE_COOKIES=true once proxy headers
+    // are correct.
+    secure: process.env.SECURE_COOKIES === 'true',
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 10 * 60 * 1000,
