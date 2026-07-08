@@ -18,14 +18,24 @@ const stripSensitive = (userJson) => {
 
 router.get('/', authenticate, async (req, res) => {
   try {
-    const users = await User.findAll({
-      attributes: { exclude: SENSITIVE_FIELDS },
-      include: [
-        { model: PasskeyCredential, as: 'passkeys', attributes: ['id', 'name'] },
-        { model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] },
-      ],
-      order: [['name', 'ASC']]
-    });
+    // Admins get the full directory (incl. security posture: passkeys, 2FA state,
+    // custom role) for user management. Every other role still needs a directory
+    // for assignee pickers and @-mentions, but must not see security-posture data —
+    // so they receive only the minimal, non-sensitive fields those features use.
+    const query = req.user.role === 'admin'
+      ? {
+          attributes: { exclude: SENSITIVE_FIELDS },
+          include: [
+            { model: PasskeyCredential, as: 'passkeys', attributes: ['id', 'name'] },
+            { model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] },
+          ],
+          order: [['name', 'ASC']],
+        }
+      : {
+          attributes: ['id', 'name', 'email', 'role', 'department', 'active', 'avatar_url', 'custom_role_id', 'last_seen_at'],
+          order: [['name', 'ASC']],
+        };
+    const users = await User.findAll(query);
     res.json(users);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

@@ -95,4 +95,11 @@ const isAssessor = (req) => req.user.role === 'admin' || req.user.role === 'asse
 const isDpo = (req) => req.user.role === 'admin' || req.user.role === 'dpo';
 const isItStaff = (req) => req.user.role === 'admin' || req.user.role === 'assessor' || req.user.role === 'it-staff';
 
-module.exports = { authenticate, requireRole, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff };
+// Asset visibility scope, shared by the asset detail, asset list and asset
+// comments so all three enforce the same rule: staff roles see every asset;
+// everyone else only assets they own or assess.
+const canViewAllAssets = (req) => ['admin', 'assessor', 'dpo', 'it-staff'].includes(req.user.role);
+const canViewAsset = (req, asset) =>
+  canViewAllAssets(req) || req.user.id === asset.owner_id || req.user.id === asset.assessor_id;
+
+module.exports = { authenticate, requireRole, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset };

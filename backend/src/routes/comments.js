@@ -1,13 +1,21 @@
 const express = require('express');
 const { Comment, User, Notification, Asset, Group, Task } = require('../models');
-const { authenticate, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requireWriteAccess, canViewAsset } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 const router = express.Router({ mergeParams: true });
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-router.get('/', authenticate, async (req, res) => {
+// Only users who may view the parent asset may read its comments (meeting notes).
+const requireAssetAccess = async (req, res, next) => {
+  const asset = await Asset.findByPk(req.params.assetId, { attributes: ['id', 'owner_id', 'assessor_id'] });
+  if (!asset) return res.status(404).json({ error: 'Asset not found' });
+  if (!canViewAsset(req, asset)) return res.status(403).json({ error: 'Forbidden' });
+  next();
+};
+
+router.get('/', authenticate, requireAssetAccess, async (req, res) => {
   try {
     const comments = await Comment.findAll({
       where: { asset_id: req.params.assetId },
@@ -18,7 +26,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/', authenticate, requireWriteAccess(), requireAssetAccess, async (req, res) => {
   try {
     const { content, meeting_date, parent_id } = req.body;
     const assetId = req.params.assetId;

@@ -6,6 +6,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { apiLimiter, heavyLimiter: sharedHeavyLimiter } = require('./middleware/rateLimiter');
+const { authenticate } = require('./middleware/auth');
 const session = require('express-session');
 const passport = require('passport');
 const { sequelize } = require('./models');
@@ -198,8 +199,10 @@ app.use('/mcp', require('./mcp/server').createMcpRouter());
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-// OpenAPI spec + Swagger-UI (CDN-based, no extra npm packages needed)
-app.get('/api/openapi.json', (req, res) => {
+// OpenAPI spec — requires a valid session so the full API surface is not exposed
+// to anonymous clients (reconnaissance hardening). The Swagger UI shell below loads
+// it with the caller's token; the download button does the same via fetch.
+app.get('/api/openapi.json', authenticate, (req, res) => {
   const filePath = require('path').join(__dirname, 'openapi.json');
   if (req.query.download === '1') {
     res.download(filePath, 'openapi.json');
@@ -230,19 +233,28 @@ app.get('/api/docs', (req, res) => {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       ISMS API Dokumentation (OpenAPI 3.0)
     </span>
-    <a id="docs-dl-btn" href="${base}/api/openapi.json?download=1" style="background:#2563eb; color:#fff; text-decoration:none; padding:8px 16px; font-size:12px; border-radius:6px; font-weight:bold; display:inline-flex; align-items:center; gap:6px; transition: background 0.2s;">
+    <button id="docs-dl-btn" type="button" style="background:#2563eb; color:#fff; border:none; cursor:pointer; text-decoration:none; padding:8px 16px; font-size:12px; border-radius:6px; font-weight:bold; display:inline-flex; align-items:center; gap:6px; transition: background 0.2s;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Spezifikation herunterladen
-    </a>
+    </button>
   </div>
   <div id="swagger-ui"></div>
   <script src="/api/swagger-ui/swagger-ui-bundle.js"></script>
   <script nonce="${nonce}">
+  // The spec endpoint requires auth; send the session token (same key the SPA uses).
+  var authHeader=function(){var t=localStorage.getItem('token');return t?{'Authorization':'Bearer '+t}:{};};
   SwaggerUIBundle({
     url:"${base}/api/openapi.json",dom_id:'#swagger-ui',
     presets:[SwaggerUIBundle.presets.apis,SwaggerUIBundle.SwaggerUIStandalonePreset],
     layout:"BaseLayout",persistAuthorization:true,tryItOutEnabled:true,
-    requestInterceptor:(req)=>{const t=localStorage.getItem('isms_token');if(t)req.headers['Authorization']='Bearer '+t;return req;}
+    requestInterceptor:function(req){var h=authHeader();if(h.Authorization)req.headers['Authorization']=h.Authorization;return req;}
+  });
+  document.getElementById('docs-dl-btn').addEventListener('click',async function(){
+    var r=await fetch("${base}/api/openapi.json?download=1",{headers:authHeader()});
+    if(!r.ok){alert('Bitte zuerst in OpenISMS anmelden, um die Spezifikation herunterzuladen.');return;}
+    var blob=await r.blob();var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download='openapi.json';document.body.appendChild(a);a.click();
+    a.remove();URL.revokeObjectURL(url);
   });
   </script></body></html>`);
 });
