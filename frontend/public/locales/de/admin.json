@@ -76,6 +76,8 @@
     "it-staff": "IT-Mitarbeiter",
     "dpo": "Datenschutzbeauftragter",
     "owner": "Asset-Besitzer",
+    "management": "Management",
+    "employee": "Mitarbeiter",
     "viewer": "Betrachter",
     "admin_short": "Admin",
     "assessor_short": "Assessor",
@@ -83,6 +85,7 @@
     "dpo_short": "DPO",
     "owner_short": "Besitzer",
     "management_short": "Management",
+    "employee_short": "Mitarbeiter",
     "viewer_short": "Betrachter"
   },
   "security": {

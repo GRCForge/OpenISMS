@@ -78,5 +78,59 @@
     "accessControl": "Personalsicherheit & Zugangssteuerung",
     "mfa": "Multi-Faktor-Authentifizierung",
     "reportingObligations": "Meldepflichten"
+  },
+  "measures": {
+    "Art. 21(2)(a)": {
+      "title": "Richtlinien zur Risikoanalyse und Sicherheit des Informationssystems",
+      "description": "Festlegung und Umsetzung von Richtlinien zur Risikoanalyse und Sicherheit des Informationssystems."
+    },
+    "Art. 21(2)(b)": {
+      "title": "Vorfall-Behandlung",
+      "description": "Richtlinien und Verfahren für die Behandlung von Vorfällen (Prävention, Erkennung und Reaktion)."
+    },
+    "Art. 21(2)(c)": {
+      "title": "Business Continuity und Krisenmanagement",
+      "description": "Maßnahmen für die Kontinuität der Unternehmen wie das Backup-Management und die Katastrophenerholung und das Krisenmanagement."
+    },
+    "Art. 21(2)(d)": {
+      "title": "Versorgungskettensicherheit",
+      "description": "Die Sicherheit der Lieferkette, einschließlich sicherheitsbezogener Aspekte in Bezug auf die Beziehungen zwischen jedem Unternehmen und seinen direkten Lieferanten oder Dienstleistern."
+    },
+    "Art. 21(2)(e)": {
+      "title": "Sicherheit bei Akquisition, Entwicklung und Wartung",
+      "description": "Sicherheit bei der Erfassung, Entwicklung und Wartung von Netz- und Informationssystemen, einschließlich Umgang mit Schwachstellen und Offenlegung."
+    },
+    "Art. 21(2)(f)": {
+      "title": "Bewertung der Wirksamkeit von Risikomanagement-Maßnahmen",
+      "description": "Richtlinien und Verfahren zur Bewertung der Wirksamkeit von Maßnahmen des Risikomanagements im Bereich der Cybersicherheit."
+    },
+    "Art. 21(2)(g)": {
+      "title": "Cyber-Hygiene und -Schulung",
+      "description": "Grundlegende Cyber-Hygienepraktiken und Cyber-Sicherheits-Training."
+    },
+    "Art. 21(2)(h)": {
+      "title": "Verwendung von Kryptographie und Verschlüsselung",
+      "description": "Konzepte und Verfahren für den Einsatz von Kryptografie und gegebenenfalls Verschlüsselung."
+    },
+    "Art. 21(2)(i)": {
+      "title": "Personalsicherheit, Zugangskontrolle und Vermögensverwaltung",
+      "description": "Personalsicherheit, Zugangskontrollpolitik und Vermögensverwaltung."
+    },
+    "Art. 21(2)(j)": {
+      "title": "Multi-Faktor-Authentifizierung und gesicherte Kommunikation",
+      "description": "Einsatz von Multi-Faktor-Authentifizierung oder kontinuierlichen Authentifizierungslösungen, gesicherte Sprach-, Video- und Textkommunikation und gesicherte Notfall-Kommunikationssysteme innerhalb der Organisation, wo es angebracht ist."
+    },
+    "Art. 23(1)": {
+      "title": "Frühe Warnung für signifikante Vorfälle (innerhalb von 24h)",
+      "description": "Einreichung einer Frühwarnung ohne unnötige Verzögerung, und in jedem Fall innerhalb von 24 Stunden nach Kenntnis des bedeutenden Vorfalls."
+    },
+    "Art. 23(2)": {
+      "title": "Ticket Benachrichtigung (innerhalb von 72 Stunde)",
+      "description": "Einreichung einer Meldung ohne unnötige Verzögerung, und in jedem Fall innerhalb von 72 Stunden nach Kenntnis des bedeutenden Vorfalls."
+    },
+    "Art. 23(4)": {
+      "title": "Abschlussbericht (spätestens einen Monat nach Benachrichtigung)",
+      "description": "Vorlage eines Abschlussberichts spätestens einen Monat nach Einreichung der Vorfallbenachrichtigung."
+    }
   }
 }
