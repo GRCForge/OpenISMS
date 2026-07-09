@@ -47,6 +47,17 @@ const checkMagicBytes = (filePath, ext) => {
   }
 };
 
+// Resolve an uploaded/stored policy file to an absolute path confined to
+// POLICIES_DIR. Strips any directory component and rejects escapes so the value —
+// which originates from the uploaded filename — can never be used to read/delete
+// files outside the policies directory (CWE-22 path injection).
+const safePolicyPath = (filePath) => {
+  if (!filePath) return null;
+  const resolved = path.resolve(POLICIES_DIR, path.basename(String(filePath)));
+  if (resolved !== POLICIES_DIR && !resolved.startsWith(POLICIES_DIR + path.sep)) return null;
+  return resolved;
+};
+
 const storage = multer.diskStorage({
   destination: 'uploads/policies/',
   filename: (req, file, cb) => {
@@ -101,13 +112,15 @@ router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.s
 
     if (req.file) {
       const ext = path.extname(req.file.originalname).toLowerCase();
-      if (!checkMagicBytes(req.file.path, ext)) {
-        fs.unlink(req.file.path, () => {});
+      const filePath = safePolicyPath(req.file.path);
+      if (!filePath) return res.status(400).json({ error: 'Ungültiger Dateipfad.' });
+      if (!checkMagicBytes(filePath, ext)) {
+        fs.unlink(filePath, () => {});
         return res.status(400).json({ error: 'Dateiinhalt stimmt nicht mit dem deklarierten Dateityp überein.' });
       }
       data.file_url = req.file.path;
       data.original_filename = req.file.originalname;
-      data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(req.file.path)).digest('hex');
+      data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
     }
     const policy = await Policy.create(data);
     
@@ -141,8 +154,10 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
 
     if (req.file) {
       const ext = path.extname(req.file.originalname).toLowerCase();
-      if (!checkMagicBytes(req.file.path, ext)) {
-        fs.unlink(req.file.path, () => {});
+      const filePath = safePolicyPath(req.file.path);
+      if (!filePath) return res.status(400).json({ error: 'Ungültiger Dateipfad.' });
+      if (!checkMagicBytes(filePath, ext)) {
+        fs.unlink(filePath, () => {});
         return res.status(400).json({ error: 'Dateiinhalt stimmt nicht mit dem deklarierten Dateityp überein.' });
       }
       // Archive the old file as a version entry — only if the policy already had a file
@@ -161,7 +176,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
 
       data.file_url = req.file.path;
       data.original_filename = req.file.originalname;
-      data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(req.file.path)).digest('hex');
+      data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
     }
 
     await policy.update(data);

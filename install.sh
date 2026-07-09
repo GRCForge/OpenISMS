@@ -133,6 +133,38 @@ ensure_env_secrets() {
   ensure_admin_password "$file"
 }
 
+# Write (or refresh) the systemd unit for the bare-metal deployment. Shared by the
+# install and update paths so an update can self-heal a missing/renamed unit file.
+write_systemd_unit() {
+  local env_file="${1:-$INSTALL_DIR/.env}"
+  local upload_dir="${2:-$INSTALL_DIR/uploads}"
+  cat > /etc/systemd/system/openisms.service <<EOF
+[Unit]
+Description=OpenISMS Backend API
+After=network.target mysql.service mariadb.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${SERVICE_USER}
+WorkingDirectory=${INSTALL_DIR}/backend
+EnvironmentFile=${env_file}
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=UPLOAD_DIR=${upload_dir}
+ExecStart=$(command -v node) src/index.js
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openisms-backend
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload
+}
+
 usage() {
   cat <<EOF
 Usage: $0 [install|update|uninstall|1|2|3] [OPTION]
@@ -205,11 +237,22 @@ echo "║       OpenISMS Installation Script           ║"
 echo "╚══════════════════════════════════════════════╝"
 echo ""
 
-# Detection
+# Detection — an installation counts as present regardless of whether it is
+# currently running, so a stopped/failed service can still be detected and updated.
 IS_DOCKER=false
 IS_SYSTEMD=false
-if command -v docker &>/dev/null && docker compose ps --format json 2>/dev/null | grep -q '"Project":"isms"'; then IS_DOCKER=true; fi
-if systemctl is-active --quiet isms-backend || systemctl is-active --quiet openisms || [[ -f /etc/systemd/system/isms-backend.service || -f /etc/systemd/system/openisms.service ]]; then IS_SYSTEMD=true; fi
+# Docker: match the 'isms' compose project even when its containers are stopped (-a).
+if command -v docker &>/dev/null && docker compose ps -a --format json 2>/dev/null | grep -q '"Project":"isms"'; then
+  IS_DOCKER=true
+fi
+# Systemd/bare-metal: prefer the unit file (installed), fall back to a running
+# service or an existing install directory so detection never depends on run state.
+if [[ -f /etc/systemd/system/openisms.service || -f /etc/systemd/system/isms-backend.service ]] \
+   || systemctl is-active --quiet openisms 2>/dev/null \
+   || systemctl is-active --quiet isms-backend 2>/dev/null \
+   || [[ -d "$INSTALL_DIR/backend" ]]; then
+  IS_SYSTEMD=true
+fi
 
 echo "Choose action:"
 echo "  1) Docker Compose  (new install / restart)"
@@ -269,10 +312,20 @@ if [[ "$MODE" == "3" ]]; then
     npm run build
     cd -
 
-    if systemctl is-active --quiet openisms; then
-      systemctl restart openisms
-    else
+    # Restart the service. Recreate the unit if it is missing (self-heal), then
+    # enable + restart — this works whether the service was running, stopped or
+    # failed. The old behaviour restarted the non-existent 'isms-backend' whenever
+    # 'openisms' was not currently active, which broke updates of a stopped service.
+    if [[ -f /etc/systemd/system/isms-backend.service && ! -f /etc/systemd/system/openisms.service ]]; then
+      # Legacy deployment still on the old unit name.
       systemctl restart isms-backend
+    else
+      if [[ ! -f /etc/systemd/system/openisms.service ]]; then
+        info "systemd unit missing — recreating it..."
+        write_systemd_unit
+      fi
+      systemctl enable openisms >/dev/null 2>&1 || true
+      systemctl restart openisms
     fi
 
     # Patch nginx config — two independent fixes, both non-destructive:
@@ -531,31 +584,8 @@ if [[ "$MODE" == "2" ]]; then
   # Auto-generate strong secrets so the service doesn't start with placeholders.
   ensure_env_secrets "$ENV_FILE"
 
-  # Write systemd unit
-  cat > /etc/systemd/system/openisms.service <<EOF
-[Unit]
-Description=OpenISMS Backend API
-After=network.target mysql.service mariadb.service
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=${SERVICE_USER}
-WorkingDirectory=${INSTALL_DIR}/backend
-EnvironmentFile=${ENV_FILE}
-Environment=NODE_ENV=production
-Environment=PORT=3001
-Environment=UPLOAD_DIR=${UPLOAD_DIR}
-ExecStart=$(command -v node) src/index.js
-Restart=on-failure
-RestartSec=5s
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=openisms-backend
-
-[Install]
-WantedBy=multi-user.target
-EOF
+  # Write systemd unit (shared with the update self-heal path)
+  write_systemd_unit "$ENV_FILE" "$UPLOAD_DIR"
 
   # nginx config
   NGINX_CONF="/etc/nginx/sites-available/isms"
