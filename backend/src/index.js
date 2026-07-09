@@ -503,10 +503,9 @@ const start = async () => {
     const count = await User.count();
     if (count === 0) {
       // Never ship a known default credential. Use ADMIN_PASSWORD when provided,
-      // otherwise generate a strong random one and print it once so the initial
-      // admin cannot be logged into with a guessable, publicly documented password.
-      const generated = !process.env.ADMIN_PASSWORD;
-      const initialPassword = process.env.ADMIN_PASSWORD || (crypto.randomBytes(12).toString('base64') + 'Aa1!');
+      // otherwise generate a strong random one.
+      const providedPassword = process.env.ADMIN_PASSWORD;
+      const initialPassword = providedPassword || (crypto.randomBytes(12).toString('base64') + 'Aa1!');
       await User.create({
         name: 'Administrator',
         email: 'admin@isms.local',
@@ -514,14 +513,24 @@ const start = async () => {
         role: 'admin',
         department: 'IT Security'
       });
-      if (generated) {
-        console.warn('════════════════════════════════════════════════════════════════');
-        console.warn('[SECURITY] Admin-Konto erstellt: admin@isms.local');
-        console.warn(`[SECURITY] Generiertes Einmal-Passwort: ${initialPassword}`);
-        console.warn('[SECURITY] Bitte NACH dem ersten Login sofort ändern (oder ADMIN_PASSWORD setzen).');
-        console.warn('════════════════════════════════════════════════════════════════');
+      if (providedPassword) {
+        console.log('Admin user created: admin@isms.local (password from ADMIN_PASSWORD)');
       } else {
-        console.log('Admin user created: admin@isms.local (Passwort aus ADMIN_PASSWORD)');
+        // Do NOT log the generated password in clear text. Write it to a protected
+        // file (0600) for the operator to read once, then delete. The log records
+        // only the file path, never the secret.
+        const fsMod = require('fs');
+        const pathMod = require('path');
+        const pwFile = pathMod.join(process.env.UPLOAD_DIR || pathMod.join(__dirname, '../uploads'), 'INITIAL_ADMIN_PASSWORD.txt');
+        let notice;
+        try {
+          fsMod.writeFileSync(pwFile, `email: admin@isms.local\npassword: ${initialPassword}\n`, { mode: 0o600 });
+          try { fsMod.chmodSync(pwFile, 0o600); } catch { /* best effort on non-POSIX FS */ }
+          notice = `one-time password written to ${pwFile} — read it, log in, then delete the file`;
+        } catch {
+          notice = 'could not write the password file — set ADMIN_PASSWORD and restart to define a known password';
+        }
+        console.warn(`[SECURITY] Initial admin created: admin@isms.local. ${notice}. Change it after first login.`);
       }
     }
 
