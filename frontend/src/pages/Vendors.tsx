@@ -85,6 +85,7 @@ export const Vendors: React.FC = () => {
   const [triageDocs, setTriageDocs] = useState<any[]>([]);
   const [triageRuns, setTriageRuns] = useState<any[]>([]);
   const [triageForm, setTriageForm] = useState({ document_id: '', doc_type: 'avv' });
+  const [triageProfiles, setTriageProfiles] = useState<Record<string, { label: string }>>({});
   const [triageStarting, setTriageStarting] = useState(false);
   const [expandedRun, setExpandedRun] = useState<number | null>(null);
   const [runDetails, setRunDetails] = useState<Record<number, any>>({});
@@ -160,6 +161,7 @@ export const Vendors: React.FC = () => {
       setTriageDocs(docs);
       if (docs.length > 0) setTriageForm(f => ({ ...f, document_id: String(docs[0].id) }));
     }).catch(() => setTriageDocs([]));
+    api.get('/triage-profiles').then(r => setTriageProfiles(r.data || {})).catch(() => setTriageProfiles({}));
     loadTriageRuns(v.id);
   };
 
@@ -593,12 +595,14 @@ export const Vendors: React.FC = () => {
                       label={t('vendors:triage.doc_type_label')}
                       value={triageForm.doc_type}
                       onChange={e => setTriageForm(f => ({ ...f, doc_type: e.target.value }))}
-                      options={[
-                        { value: 'avv', label: t('vendors:triage.doc_type_avv') },
-                        { value: 'tom', label: t('vendors:triage.doc_type_tom') },
-                        { value: 'soc2', label: t('vendors:triage.doc_type_soc2') },
-                        { value: 'other', label: t('vendors:triage.doc_type_other') },
-                      ]}
+                      options={
+                        Object.keys(triageProfiles).length > 0
+                          ? Object.entries(triageProfiles).map(([key, p]) => ({ value: key, label: p.label }))
+                          : [
+                              { value: 'avv', label: t('vendors:triage.doc_type_avv') },
+                              { value: 'other', label: t('vendors:triage.doc_type_other') },
+                            ]
+                      }
                     />
                   </div>
                   <div className="flex justify-end">

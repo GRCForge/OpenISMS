@@ -68,8 +68,9 @@ router.post('/', authenticate, async (req, res) => {
     const doc = await Document.findOne({ where: { id: document_id, vendor_id: vendorId } });
     if (!doc) return res.status(404).json({ error: 'Document not found for this vendor' });
 
-    const validDocTypes = ['avv', 'tom', 'soc2', 'other'];
-    const resolvedDocType = validDocTypes.includes(doc_type) ? doc_type : 'other';
+    const { getProfiles } = require('../services/triageProfiles');
+    const profiles = await getProfiles();
+    const resolvedDocType = profiles[doc_type] ? doc_type : 'other';
 
     const run = await VendorTriageRun.create({
       vendor_id: vendorId,

@@ -5,8 +5,10 @@ const VendorTriageRun = sequelize.define('VendorTriageRun', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   vendor_id: { type: DataTypes.INTEGER, allowNull: false },
   document_id: { type: DataTypes.INTEGER, allowNull: true },
+  // Profile key (avv, tom, soc2, sla, ola, encryption, other, …). STRING rather
+  // than ENUM so admin-configurable profiles are not tied to a DB migration.
   doc_type: {
-    type: DataTypes.ENUM('avv', 'tom', 'soc2', 'other'),
+    type: DataTypes.STRING(32),
     defaultValue: 'other',
   },
   status: {

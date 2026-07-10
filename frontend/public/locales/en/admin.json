@@ -398,5 +398,25 @@
         "API Token / MCP_SECRET Auth"
       ]
     }
+  },
+  "triageProfiles": {
+    "title": "Contract analysis profiles",
+    "description": "Per document type: the criteria catalog that drives the coverage matrix, plus an optional reference/baseline the AI compares against.",
+    "loading": "Loading profiles…",
+    "saved": "Profiles saved.",
+    "saveError": "Could not save profiles",
+    "criteriaCount": "{{count}} criteria",
+    "criteria": "Assessment criteria",
+    "noCriteria": "No criteria yet — the AI will assess general adequacy.",
+    "refPlaceholder": "Reference (e.g. GDPR Art. 28(3)(a))",
+    "requirementPlaceholder": "What must be covered",
+    "mandatory": "mandatory",
+    "mandatoryHint": "A missing mandatory criterion raises the risk verdict.",
+    "addCriterion": "Add criterion",
+    "reference": "Reference / baseline (optional)",
+    "referenceHint": "Paste example clauses / a sample contract or target values. Given to the AI as the gold standard.",
+    "referencePlaceholder": "e.g. sample AVV clauses, SLA target values, encryption requirements…",
+    "save": "Save profiles",
+    "saving": "Saving…"
   }
 }
