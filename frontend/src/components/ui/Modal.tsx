@@ -32,17 +32,18 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, si
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs" onClick={onClose} />
-      {/* max-h-[95vh] + flex-col keeps the header sticky and lets the body scroll */}
-      <div className={`relative bg-white dark:bg-slate-900 w-full ${sizes[size]} max-h-[95vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 scale-100`}>
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 flex-shrink-0">
+      {/* max-h keeps the header sticky and lets the body scroll; tighter padding on
+          phones gives the content more usable width. */}
+      <div className={`relative bg-white dark:bg-slate-900 w-full ${sizes[size]} max-h-[95vh] sm:max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 scale-100`}>
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 flex-shrink-0">
           <h2 className="text-base font-bold text-gray-900 dark:text-white truncate pr-4">{title}</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 dark:text-slate-500 transition-colors flex-shrink-0">
             <X size={20} />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
           {children}
         </div>
       </div>
