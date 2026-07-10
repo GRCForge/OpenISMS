@@ -6,8 +6,16 @@ const { authenticate, isItStaff, isDpo, isAdmin } = require('../middleware/auth'
 const { auditFromReq } = require('../services/auditService');
 const { runTriage } = require('../services/vendorTriageService');
 
+// Contract findings/coverage are sensitive — restrict all triage endpoints to the
+// same roles allowed to run an analysis.
+const requireTriageAccess = (req, res, next) => {
+  if (!isItStaff(req) && !isDpo(req) && !isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+  next();
+};
+router.use(authenticate, requireTriageAccess);
+
 // List triage runs for a vendor
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { vendorId } = req.params;
     const vendor = await Vendor.findByPk(vendorId);
@@ -26,16 +34,18 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Get a single triage run with findings
-router.get('/:runId', authenticate, async (req, res) => {
+router.get('/:runId', async (req, res) => {
   try {
     const { vendorId, runId } = req.params;
     const run = await VendorTriageRun.findOne({
       where: { id: runId, vendor_id: vendorId },
       include: [
-        { model: VendorFinding, as: 'findings', order: [['severity', 'ASC']] },
+        { model: VendorFinding, as: 'findings' },
         { model: Document, as: 'document', attributes: ['id', 'original_name', 'mimetype', 'category'] },
         { model: User, as: 'triggeredBy', attributes: ['id', 'name'] },
       ],
+      // Order the included findings by their sequential ref (VRM-001, VRM-002, …).
+      order: [[{ model: VendorFinding, as: 'findings' }, 'id', 'ASC']],
     });
     if (!run) return res.status(404).json({ error: 'Triage run not found' });
     res.json(run);
@@ -80,6 +90,29 @@ router.post('/', authenticate, async (req, res) => {
       console.error(`[Triage] Run ${run.id} failed:`, err.message);
     });
 
+    res.status(202).json(run);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Re-run an analysis (e.g. after an error or a config change) — creates a fresh run
+// from the same document and doc type.
+router.post('/:runId/retry', async (req, res) => {
+  try {
+    const { vendorId, runId } = req.params;
+    const prev = await VendorTriageRun.findOne({ where: { id: runId, vendor_id: vendorId } });
+    if (!prev) return res.status(404).json({ error: 'Triage run not found' });
+    if (!prev.document_id) return res.status(400).json({ error: 'Original document is no longer available' });
+    const doc = await Document.findOne({ where: { id: prev.document_id, vendor_id: vendorId } });
+    if (!doc) return res.status(404).json({ error: 'Document not found for this vendor' });
+
+    const run = await VendorTriageRun.create({
+      vendor_id: vendorId,
+      document_id: prev.document_id,
+      doc_type: prev.doc_type,
+      status: 'pending',
+      triggered_by_id: req.user.id,
+    });
+    runTriage(run.id).catch(err => console.error(`[Triage] Retry run ${run.id} failed:`, err.message));
     res.status(202).json(run);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Building2, Plus, Pencil, Trash2, Globe, ShieldCheck, ExternalLink, ShieldAlert, User, Clock, CheckCircle, Paperclip, Download, Bot, ChevronDown, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
+import { Building2, Plus, Pencil, Trash2, Globe, ShieldCheck, ExternalLink, ShieldAlert, User, Clock, CheckCircle, Paperclip, Download, Bot, ChevronDown, ChevronRight, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
@@ -204,6 +204,17 @@ export const Vendors: React.FC = () => {
       setRunDetails(d => { const nd = { ...d }; delete nd[runId]; return nd; });
       if (expandedRun === runId) setExpandedRun(null);
     } catch { /* ignore */ }
+  };
+
+  const retryTriage = async (runId: number) => {
+    if (!triageVendor) return;
+    try {
+      await api.post(`/vendors/${triageVendor.id}/triage/${runId}/retry`);
+      toast.success(t('vendors:triage.triage_started'));
+      loadTriageRuns(triageVendor.id);
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(() => { if (triageVendor) loadTriageRuns(triageVendor.id); }, 4000);
+    } catch { toast.error(t('vendors:triage.triage_error')); }
   };
 
   useEffect(() => {
@@ -621,6 +632,12 @@ export const Vendors: React.FC = () => {
                     medium: 'text-amber-600 dark:text-amber-400',
                     low: 'text-green-600 dark:text-green-400',
                   };
+                  const coverageColors: Record<string, string> = {
+                    met: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+                    partial: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                    missing: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                    na: 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400',
+                  };
                   return (
                     <div key={run.id} className="border dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
                       <div className="p-3 flex items-center gap-3">
@@ -639,7 +656,7 @@ export const Vendors: React.FC = () => {
                           <p className="text-[10px] text-gray-400 mt-0.5">
                             {format(new Date(run.created_at), 'Pp', { locale: dateFnsLocale })}
                             {run.llm_provider && ` · ${run.llm_provider} / ${run.llm_model}`}
-                            {run.triggered_by && ` · ${t('vendors:triage.triggered_by', { name: run.triggered_by.name })}`}
+                            {run.triggeredBy && ` · ${t('vendors:triage.triggered_by', { name: run.triggeredBy.name })}`}
                           </p>
                           {run.status === 'error' && run.error_message && (
                             <p className="text-xs text-red-500 mt-0.5">{t('vendors:triage.error_message', { message: run.error_message })}</p>
@@ -649,6 +666,11 @@ export const Vendors: React.FC = () => {
                           {run.status === 'done' && (
                             <button onClick={() => loadRunDetails(run.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 transition-colors">
                               {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </button>
+                          )}
+                          {run.status === 'error' && (
+                            <button onClick={() => retryTriage(run.id)} title={t('vendors:triage.retry')} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors">
+                              <RefreshCw size={14} />
                             </button>
                           )}
                           {user?.role === 'admin' && (
@@ -663,6 +685,31 @@ export const Vendors: React.FC = () => {
                         <div className="border-t dark:border-slate-700 p-4 bg-gray-50/50 dark:bg-slate-800/30 space-y-4">
                           {details.summary && (
                             <p className="text-sm text-gray-700 dark:text-slate-300 italic">{details.summary}</p>
+                          )}
+                          {details.truncated && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400">{t('vendors:triage.truncated_warning')}</p>
+                          )}
+                          {Array.isArray(details.coverage) && details.coverage.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('vendors:triage.coverage_title')}</h4>
+                              <div className="rounded-lg border dark:border-slate-700 bg-white dark:bg-slate-900 divide-y dark:divide-slate-800">
+                                {details.coverage.map((c: any) => (
+                                  <div key={c.ref} className="flex items-start gap-3 p-2.5">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${coverageColors[c.status] || ''}`}>
+                                      {t(`vendors:triage.coverage_status.${c.status}`)}
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-xs font-semibold dark:text-slate-200">{c.ref}</span>
+                                        {c.mandatory && <span className="text-[9px] uppercase text-gray-400">{t('vendors:triage.mandatory')}</span>}
+                                      </div>
+                                      <p className="text-[11px] text-gray-500 dark:text-slate-400">{c.requirement}</p>
+                                      {c.note && <p className="text-[11px] text-gray-400 dark:text-slate-500 italic mt-0.5">{c.note}</p>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
                           <div className="space-y-2">
                             <h4 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('vendors:triage.findings')}</h4>

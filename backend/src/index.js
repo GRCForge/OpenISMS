@@ -537,6 +537,14 @@ const start = async () => {
     await seedCatalog();
     startReminderService();
 
+    // Fail any vendor-triage runs left mid-flight by a previous crash/restart.
+    try {
+      const { markStaleRunsAsError } = require('./services/vendorTriageService');
+      await markStaleRunsAsError();
+    } catch (e) {
+      console.warn('[Triage] Could not reconcile stale runs:', e.message);
+    }
+
     // Run task automation on startup and then daily at 3:00 AM
     const { runTaskAutomation } = require('./services/taskAutomationService');
     runTaskAutomation();
