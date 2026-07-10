@@ -3,7 +3,7 @@ import { Bot, Plus, Trash2, Pencil, CalendarCheck, ExternalLink, Paperclip, Down
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
-import type { User, Vendor, AiActItem, AiRiskCategory, AiConformityStatus } from '../types';
+import type { User, Vendor, AiActItem, AiRiskCategory, AiConformityStatus, AiApprovalStatus } from '../types';
 import { Card, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -30,6 +30,11 @@ const conformityColors: Record<AiConformityStatus, string> = {
   non_compliant: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 };
 
+const approvalColors: Record<AiApprovalStatus, string> = {
+  approved: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  not_approved: 'bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300',
+};
+
 const emptyForm = {
   name: '',
   description: '',
@@ -41,6 +46,7 @@ const emptyForm = {
   deployed_since: '',
   owner_id: '',
   conformity_status: 'not_assessed' as AiConformityStatus,
+  approval_status: 'approved' as AiApprovalStatus,
   documentation_url: '',
   last_review_date: '',
   notes: '',
@@ -84,6 +90,11 @@ export const AiAct: React.FC = () => {
     in_assessment: t('conformityStatus.in_assessment'),
     compliant: t('conformityStatus.compliant'),
     non_compliant: t('conformityStatus.non_compliant'),
+  };
+
+  const approvalLabels: Record<AiApprovalStatus, string> = {
+    approved: t('approvalStatus.approved'),
+    not_approved: t('approvalStatus.not_approved'),
   };
 
   const loadDocs = (id: number) => {
@@ -182,6 +193,7 @@ export const AiAct: React.FC = () => {
       deployed_since: i.deployed_since || '',
       owner_id: i.owner_id ? String(i.owner_id) : '',
       conformity_status: i.conformity_status,
+      approval_status: i.approval_status || 'approved',
       documentation_url: i.documentation_url || '',
       last_review_date: i.last_review_date || '',
       notes: i.notes || '',
@@ -313,9 +325,15 @@ export const AiAct: React.FC = () => {
                     </span>
                   </Td>
                   <Td>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${conformityColors[i.conformity_status]}`}>
-                      {conformityLabels[i.conformity_status]}
-                    </span>
+                    {i.approval_status === 'not_approved' ? (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${approvalColors.not_approved}`}>
+                        {approvalLabels.not_approved}
+                      </span>
+                    ) : (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${conformityColors[i.conformity_status]}`}>
+                        {conformityLabels[i.conformity_status]}
+                      </span>
+                    )}
                   </Td>
                   <Td className="text-gray-500">{i.vendor?.name || i.provider || '–'}</Td>
                   <Td className="text-gray-500">{i.owner?.name || '–'}</Td>
@@ -419,6 +437,26 @@ export const AiAct: React.FC = () => {
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Select
+                label={t('modal.approvalLabel')}
+                value={form.approval_status}
+                onChange={e => {
+                  const v = e.target.value as AiApprovalStatus;
+                  // A not-approved system needs no assessment/start date — clear them.
+                  setForm(v === 'not_approved'
+                    ? { ...form, approval_status: v, conformity_status: 'not_assessed', deployed_since: '', last_review_date: '' }
+                    : { ...form, approval_status: v });
+                }}
+                options={Object.entries(approvalLabels).map(([val, l]) => ({ value: val, label: l }))}
+                disabled={!canWrite}
+              />
+              {form.approval_status === 'not_approved' && (
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{t('modal.notApprovedHint')}</p>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               label={t('modal.riskCategoryLabel')}
               value={form.risk_category}
@@ -431,7 +469,7 @@ export const AiAct: React.FC = () => {
               value={form.conformity_status}
               onChange={e => setForm({ ...form, conformity_status: e.target.value as AiConformityStatus })}
               options={Object.entries(conformityLabels).map(([v, l]) => ({ value: v, label: l }))}
-              disabled={!canWrite}
+              disabled={!canWrite || form.approval_status === 'not_approved'}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -456,7 +494,7 @@ export const AiAct: React.FC = () => {
               type="date"
               value={form.deployed_since}
               onChange={e => setForm({ ...form, deployed_since: e.target.value })}
-              disabled={!canWrite}
+              disabled={!canWrite || form.approval_status === 'not_approved'}
             />
             <div className="flex flex-col w-full relative">
               <Input

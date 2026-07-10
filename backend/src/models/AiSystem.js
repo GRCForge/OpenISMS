@@ -13,6 +13,10 @@ const AiSystem = sequelize.define('AiSystem', {
   deployed_since: { type: DataTypes.DATEONLY, allowNull: true },
   owner_id: { type: DataTypes.INTEGER, allowNull: true },
   conformity_status: { type: DataTypes.ENUM('not_assessed', 'in_assessment', 'compliant', 'non_compliant'), defaultValue: 'not_assessed' },
+  // Whether the system is approved/released for use. A 'not_approved' system is not
+  // in production, so it needs no conformity assessment, start date or periodic
+  // review — and the task automation creates no tasks for it.
+  approval_status: { type: DataTypes.ENUM('approved', 'not_approved'), defaultValue: 'approved' },
   documentation_url: { type: DataTypes.STRING(500) },
   last_review_date: { type: DataTypes.DATEONLY, allowNull: true },
   notes: { type: DataTypes.TEXT },
