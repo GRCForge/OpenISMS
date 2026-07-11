@@ -166,6 +166,7 @@ app.use('/api/compliance', require('./routes/compliance'));
 app.use('/api/import', require('./routes/import'));
 app.use('/api/vendors', require('./routes/vendors'));
 app.use('/api/vendors/:vendorId/triage', require('./routes/vendorTriage'));
+app.use('/api/triage-profiles', require('./routes/triageProfiles'));
 app.use('/api/policies', require('./routes/policies'));
 app.use('/api/admin/backup', require('./routes/backup'));
 const { requireModule } = require('./middleware/modules');
@@ -436,6 +437,11 @@ const start = async () => {
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_vvt_status ON vvt_entries(status)').catch(() => {});
     // UserTrainings: batch assignment looks up existing (user_id, training_id) pairs.
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_user_trainings_user_training ON user_trainings(user_id, training_id)').catch(() => {});
+    // Vendor triage: runs are listed per vendor newest-first; findings are joined by run.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_triage_runs_vendor ON vendor_triage_runs(vendor_id, created_at)').catch(() => {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_findings_run ON vendor_findings(triage_run_id)').catch(() => {});
+    // AI systems: the compliance scan and list filter by risk category.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_ai_systems_risk ON ai_systems(risk_category)').catch(() => {});
 
     // Backfill ISO 27001 control descriptions from catalog (idempotent)
     try {
@@ -536,6 +542,14 @@ const start = async () => {
 
     await seedCatalog();
     startReminderService();
+
+    // Fail any vendor-triage runs left mid-flight by a previous crash/restart.
+    try {
+      const { markStaleRunsAsError } = require('./services/vendorTriageService');
+      await markStaleRunsAsError();
+    } catch (e) {
+      console.warn('[Triage] Could not reconcile stale runs:', e.message);
+    }
 
     // Run task automation on startup and then daily at 3:00 AM
     const { runTaskAutomation } = require('./services/taskAutomationService');

@@ -556,6 +556,7 @@ export interface LegalRequirement {
 
 export type AiRiskCategory = 'prohibited' | 'high_risk' | 'limited' | 'minimal';
 export type AiConformityStatus = 'not_assessed' | 'in_assessment' | 'compliant' | 'non_compliant';
+export type AiApprovalStatus = 'approved' | 'not_approved';
 
 export interface AiActItem {
   id: number;
@@ -572,6 +573,7 @@ export interface AiActItem {
   owner_id?: number;
   owner?: User;
   conformity_status: AiConformityStatus;
+  approval_status?: AiApprovalStatus;
   documentation_url?: string;
   last_review_date?: string;
   notes?: string;

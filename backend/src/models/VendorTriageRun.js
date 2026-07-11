@@ -5,8 +5,10 @@ const VendorTriageRun = sequelize.define('VendorTriageRun', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   vendor_id: { type: DataTypes.INTEGER, allowNull: false },
   document_id: { type: DataTypes.INTEGER, allowNull: true },
+  // Profile key (avv, tom, soc2, sla, ola, encryption, other, …). STRING rather
+  // than ENUM so admin-configurable profiles are not tied to a DB migration.
   doc_type: {
-    type: DataTypes.ENUM('avv', 'tom', 'soc2', 'other'),
+    type: DataTypes.STRING(32),
     defaultValue: 'other',
   },
   status: {
@@ -20,6 +22,12 @@ const VendorTriageRun = sequelize.define('VendorTriageRun', {
     allowNull: true,
   },
   summary: { type: DataTypes.TEXT },
+  // Requirement coverage matrix (e.g. GDPR Art. 28(3)(a-h)): [{ ref, requirement,
+  // status: met|partial|missing|na, note }]. This is the actual "is the AVV
+  // sufficient?" verdict, alongside the findings.
+  coverage: { type: DataTypes.JSON, allowNull: true },
+  // Whether the document was truncated before analysis (very long contract).
+  truncated: { type: DataTypes.BOOLEAN, defaultValue: false },
   error_message: { type: DataTypes.TEXT },
   started_at: { type: DataTypes.DATE },
   completed_at: { type: DataTypes.DATE },

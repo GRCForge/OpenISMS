@@ -21,13 +21,13 @@ export const Tbody: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 export const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <th className={`px-5 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ${className}`}>
+  <th className={`px-3 sm:px-5 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ${className}`}>
     {children}
   </th>
 );
 
 export const Td: React.FC<{ children: React.ReactNode; className?: string; colSpan?: number; onClick?: (e: React.MouseEvent<HTMLTableCellElement>) => void }> = ({ children, className = '', colSpan, onClick }) => (
-  <td className={`px-5 py-3 text-sm dark:text-slate-300 ${className}`} colSpan={colSpan} onClick={onClick}>
+  <td className={`px-3 sm:px-5 py-3 text-sm dark:text-slate-300 ${className}`} colSpan={colSpan} onClick={onClick}>
     {children}
   </td>
 );
