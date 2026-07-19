@@ -14,6 +14,10 @@
     "compliant": "Compliant",
     "non_compliant": "Non-compliant"
   },
+  "approvalStatus": {
+    "approved": "Aprobado",
+    "not_approved": "No aprobado"
+  },
   "stats": {
     "total": "Total",
     "prohibited": "Prohibited",
@@ -63,7 +67,9 @@
     "cancel": "Cancel",
     "save": "Saving...",
     "update": "Update",
-    "create": "Create"
+    "create": "Create",
+    "approvalLabel": "Estado de aprobación",
+    "notApprovedHint": "No aprobado para su uso: no se requiere evaluación de conformidad, fecha de inicio ni revisión periódica."
   },
   "docs": {
     "modalTitle": "Documents: {{name}}",

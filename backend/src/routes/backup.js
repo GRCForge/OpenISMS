@@ -13,11 +13,16 @@ const { auditFromReq } = require('../services/auditService');
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024 * 1024 } }); // 1 GB
 
-// Read app version once at startup from the VERSION file at repo root
-const VERSION_FILE = path.join(__dirname, '../../../VERSION');
-const ISMS_VERSION = fs.existsSync(VERSION_FILE)
-  ? fs.readFileSync(VERSION_FILE, 'utf8').trim()
-  : 'unknown';
+// Read app version once at startup. The VERSION file sits at the repo root in dev
+// (backend/src/routes/../../../VERSION) but next to the app root in the Docker image
+// (/app/VERSION → ../../VERSION). Try both, then APP_VERSION, before giving up.
+const ISMS_VERSION = (() => {
+  if (process.env.APP_VERSION) return process.env.APP_VERSION;
+  for (const p of [path.join(__dirname, '../../../VERSION'), path.join(__dirname, '../../VERSION')]) {
+    try { const v = fs.readFileSync(p, 'utf8').trim(); if (v) return v; } catch { /* try next */ }
+  }
+  return 'unknown';
+})();
 
 // Max raw size for database.json before we even attempt JSON.parse (DoS guard)
 const DB_JSON_MAX_BYTES = 512 * 1024 * 1024; // 512 MB
@@ -163,12 +168,15 @@ router.post('/restore', upload.single('backup'), async (req, res) => {
         for (const [tbl, rows] of Object.entries(dbDump)) {
           if (!Array.isArray(rows) || !rows.length) continue;
 
-          // Fetch actual column names from the DB so we never use backup-supplied identifiers raw
+          // Fetch actual column names AND types from the DB so we never use
+          // backup-supplied identifiers raw, and so we can normalize values per type.
           const [schemaRows] = await sequelize.query(
             `SHOW COLUMNS FROM \`${tbl}\``, // NOSONAR(javascript:S3649) - tbl validated against DB allowlist
             { transaction: t }
           );
           const allowedCols = new Set(schemaRows.map(r => r.Field));
+          const colTypes = {};
+          schemaRows.forEach(r => { colTypes[r.Field] = String(r.Type || '').toLowerCase(); });
 
           const safeCols = Array.from(allowedCols);
           if (!safeCols.length) continue;
@@ -177,20 +185,25 @@ router.post('/restore', upload.single('backup'), async (req, res) => {
           const safeRows = rows.map(row => {
             const normalized = {};
             for (const col of safeCols) {
-              normalized[col] = row[col] !== undefined ? row[col] : null;
+              normalized[col] = normalizeValue(colTypes[col], row[col]);
             }
             return normalized;
           });
 
           const batchSize = 200;
-          for (let i = 0; i < safeRows.length; i += batchSize) {
-            const batch = safeRows.slice(i, i + batchSize);
-            const placeholders = batch.map(() => `(${safeCols.map(() => '?').join(', ')})`).join(', ');
-            const values = batch.flatMap(row => safeCols.map(col => row[col]));
-            await sequelize.query(
-              `INSERT INTO \`${tbl}\` (${cols}) VALUES ${placeholders}`,
-              { replacements: values, transaction: t }
-            );
+          try {
+            for (let i = 0; i < safeRows.length; i += batchSize) {
+              const batch = safeRows.slice(i, i + batchSize);
+              const placeholders = batch.map(() => `(${safeCols.map(() => '?').join(', ')})`).join(', ');
+              const values = batch.flatMap(row => safeCols.map(col => row[col]));
+              await sequelize.query(
+                `INSERT INTO \`${tbl}\` (${cols}) VALUES ${placeholders}`,
+                { replacements: values, transaction: t }
+              );
+            }
+          } catch (err) {
+            // Surface which table failed so a bad restore is diagnosable.
+            throw new Error(`Restore in Tabelle '${tbl}' fehlgeschlagen: ${err.message}`);
           }
         }
       } finally {
@@ -232,9 +245,36 @@ router.post('/restore', upload.single('backup'), async (req, res) => {
     });
   } catch (e) {
     console.error('[Backup restore]', e);
-    res.status(500).json({ error: 'Wiederherstellen fehlgeschlagen. Details im Server-Log.' });
+    // Admin-only endpoint — return the (controlled) error incl. the failing table
+    // so the operator can act on it instead of guessing.
+    res.status(500).json({ error: `Wiederherstellen fehlgeschlagen: ${e.message}` });
   }
 });
+
+// Normalize a value from the JSON dump for insertion, based on the target column
+// type. JSON columns come back from mysql2 as objects/arrays and must be
+// re-serialized to a JSON string (otherwise mysql2 renders them as invalid SQL in
+// a VALUES position — this is what previously broke restore for tables like
+// `settings` and `audit_logs`). Date/time columns get a form MySQL accepts in
+// strict mode.
+function normalizeValue(colType, val) {
+  if (val === undefined || val === null) return null;
+  const type = colType || '';
+  if (type.startsWith('json')) {
+    return typeof val === 'string' ? val : JSON.stringify(val);
+  }
+  if (type.startsWith('datetime') || type.startsWith('timestamp')) {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d; // mysql2 formats Date consistently (same-server round-trip)
+  }
+  if (type === 'date' || type.startsWith('date(')) {
+    // DATEONLY — keep just the calendar date to avoid any timezone shift.
+    return String(val).slice(0, 10);
+  }
+  // Defensive: any object/array reaching a non-JSON column would break the insert.
+  if (typeof val === 'object') return JSON.stringify(val);
+  return val;
+}
 
 async function getDirSize(dir) {
   if (!fs.existsSync(dir)) return 0;

@@ -363,7 +363,7 @@ docker run -d --name isms --restart unless-stopped \
 | `ENCRYPTION_KEY` | recommended | AES-256 key for encrypting stored secrets (OIDC/SMTP/LLM secrets, TOTP secrets) |
 | `SESSION_SECRET` | recommended | Express session (OIDC flow) |
 | `APP_URL` | ✓² | Public URL (for OIDC callback and CORS) |
-| `SECURE_COOKIES` | – | `true` forces Secure cookies; auto-enabled when `APP_URL` is `https://` |
+| `SECURE_COOKIES` | – | `true` marks the session cookie Secure. Only enable behind HTTPS **with** `X-Forwarded-Proto` forwarded by the proxy, otherwise the session cookie is not set |
 | `PORT` | – | Default: `3001` |
 | `UPLOAD_DIR` | – | Default: `/app/uploads` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Seed administrator credentials. **If `ADMIN_PASSWORD` is unset, a random one-time password is generated and printed to the logs on first start** (no known default) |
@@ -782,7 +782,7 @@ Siehe auch die Sicherheitsanweisungen in [SECURITY.md](SECURITY.md) für verantw
 - Set `JWT_SECRET` to at least 32 random characters
 - Set `ENCRYPTION_KEY` (AES-256-GCM) — used for OIDC/SMTP/LLM secrets **and** TOTP secrets at rest; if changed, those secrets must be re-entered
 - Change all database passwords in `.env`. The bundled `docker-compose.yml` binds MySQL to `127.0.0.1` only — do not expose the DB port to the network
-- Put HTTPS via a reverse proxy in front (nginx, Traefik, Caddy); Secure cookies auto-enable when `APP_URL` is `https://` (or force with `SECURE_COOKIES=true`)
+- Put HTTPS via a reverse proxy in front (nginx, Traefik, Caddy). Set `SECURE_COOKIES=true` only once the proxy forwards `X-Forwarded-Proto: https` — otherwise the Secure flag prevents the session cookie from being set (breaks passkey/OIDC login)
 - Include the Docker volume `uploads` in your backup strategy
 - **Initial admin password:** if `ADMIN_PASSWORD` is not set, a random one-time password is generated and printed to the logs on first start — retrieve it there (or set `ADMIN_PASSWORD`) and change it after first login
 - Set up regular MySQL backups of the `isms` schema

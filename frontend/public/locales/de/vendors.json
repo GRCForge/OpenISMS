@@ -149,7 +149,17 @@
     "error_message": "Fehler: {{message}}",
     "triage_started": "KI-Analyse gestartet.",
     "triage_error": "Fehler beim Starten der Analyse.",
-    "llm_not_configured": "Kein KI-Anbieter konfiguriert. Bitte in Administration → KI / LLM einen Anbieter einrichten."
+    "llm_not_configured": "Kein KI-Anbieter konfiguriert. Bitte in Administration → KI / LLM einen Anbieter einrichten.",
+    "coverage_title": "Anforderungsabdeckung",
+    "coverage_status": {
+      "met": "Erfüllt",
+      "partial": "Teilweise",
+      "missing": "Fehlt",
+      "na": "N/V"
+    },
+    "mandatory": "Pflicht",
+    "retry": "Analyse erneut ausführen",
+    "truncated_warning": "Das Dokument wurde vor der Analyse gekürzt (sehr lang) — Ergebnisse können unvollständig sein."
   },
   "toast": {
     "docUploaded": "Dokument erfolgreich hochgeladen",

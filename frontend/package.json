@@ -1,6 +1,6 @@
 {
   "name": "openisms-frontend",
-  "version": "2.2.10",
+  "version": "2.2.14",
   "type": "module",
   "engines": {
     "node": ">=26.3.0"
@@ -17,7 +17,7 @@
   "dependencies": {
     "axios": "^1.18.1",
     "date-fns": "^4.4.0",
-    "i18next": "^26.3.4",
+    "i18next": "^26.3.6",
     "i18next-browser-languagedetector": "^8.2.1",
     "i18next-http-backend": "^4.0.0",
     "lucide-react": "^1.23.0",
@@ -26,7 +26,7 @@
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.8",
     "react-router-dom": "^7.18.1",
-    "recharts": "^3.9.1",
+    "recharts": "^3.9.2",
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
@@ -34,11 +34,11 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
-    "autoprefixer": "^10.5.2",
-    "postcss": "^8.5.16",
+    "autoprefixer": "^10.5.3",
+    "postcss": "^8.5.19",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3",
-    "vite": "^8.1.2"
+    "typescript": "^7.0.2",
+    "vite": "^8.1.4"
   },
   "overrides": {
     "uuid": "^11.1.1",

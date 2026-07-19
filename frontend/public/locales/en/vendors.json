@@ -149,7 +149,17 @@
     "error_message": "Error: {{message}}",
     "triage_started": "AI analysis started.",
     "triage_error": "Error starting analysis.",
-    "llm_not_configured": "No AI provider configured. Please set up a provider in Administration → AI / LLM."
+    "llm_not_configured": "No AI provider configured. Please set up a provider in Administration → AI / LLM.",
+    "coverage_title": "Requirement coverage",
+    "coverage_status": {
+      "met": "Met",
+      "partial": "Partial",
+      "missing": "Missing",
+      "na": "N/A"
+    },
+    "mandatory": "mandatory",
+    "retry": "Re-run analysis",
+    "truncated_warning": "The document was truncated before analysis (very long) — results may be incomplete."
   },
   "toast": {
     "docUploaded": "Document uploaded successfully",

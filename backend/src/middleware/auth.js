@@ -67,9 +67,15 @@ const authenticate = async (req, res, next) => {
       }
     }
 
-    // Update last seen (async, don't wait)
-    user.last_seen_at = new Date();
-    user.save().catch(e => console.error('Error updating last_seen_at:', e.message));
+    // Update last-seen, throttled to at most once per minute per user (async, don't
+    // wait). Writing it on every authenticated request was a DB write per API call;
+    // 1-minute granularity is plenty for the online indicator. `silent` avoids
+    // bumping updated_at, and `fields` limits the UPDATE to the one column.
+    const lastSeenMs = user.last_seen_at ? new Date(user.last_seen_at).getTime() : 0;
+    if (Date.now() - lastSeenMs > 60 * 1000) {
+      user.last_seen_at = new Date();
+      user.save({ fields: ['last_seen_at'], silent: true }).catch(e => console.error('Error updating last_seen_at:', e.message));
+    }
 
     req.user = user;
     next();

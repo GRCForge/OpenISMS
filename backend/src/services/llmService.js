@@ -83,10 +83,29 @@ function getApiKey(providerConfig) {
   return providerConfig.apiKey || null;
 }
 
-async function callLlm({ systemPrompt, userPrompt }) {
+// Reject if a provider call hangs — a wedged provider otherwise stalls a run
+// indefinitely (there is no built-in timeout across all SDKs).
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(ms / 1000)}s`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+// Extract the first text block from an Anthropic response without assuming index 0
+// is text (a refusal or tool block would otherwise throw).
+function anthropicText(message) {
+  const block = (message.content || []).find(b => b && b.type === 'text' && typeof b.text === 'string');
+  if (!block) throw new Error('Anthropic returned no text content');
+  return block.text;
+}
+
+async function callLlm({ systemPrompt, userPrompt, json = false, timeoutMs = 120000, maxTokens = 4096 }) {
   const config = await getLlmConfig();
   const provider = config.provider || 'anthropic';
   const providerCfg = config[provider] || {};
+  const signal = AbortSignal.timeout(timeoutMs);
 
   if (provider === 'anthropic') {
     const apiKey = getApiKey(providerCfg);
@@ -94,13 +113,14 @@ async function callLlm({ systemPrompt, userPrompt }) {
     const Anthropic = getSdk('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey });
     const model = providerCfg.model || LLM_DEFAULTS.anthropic.model;
-    const message = await client.messages.create({
+    // Anthropic has no response_format; JSON is enforced via the prompt.
+    const message = await withTimeout(client.messages.create({
       model,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
-    });
-    return { text: message.content[0].text, provider: 'anthropic', model };
+    }, { signal }), timeoutMs, 'Anthropic');
+    return { text: anthropicText(message), provider: 'anthropic', model };
   }
 
   if (provider === 'openai') {
@@ -111,14 +131,16 @@ async function callLlm({ systemPrompt, userPrompt }) {
     if (providerCfg.baseUrl) opts.baseURL = providerCfg.baseUrl;
     const client = new OpenAI(opts);
     const model = providerCfg.model || LLM_DEFAULTS.openai.model;
-    const completion = await client.chat.completions.create({
+    const body = {
       model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      max_tokens: 4096,
-    });
+      max_tokens: maxTokens,
+    };
+    if (json) body.response_format = { type: 'json_object' };
+    const completion = await withTimeout(client.chat.completions.create(body, { signal }), timeoutMs, 'OpenAI');
     return { text: completion.choices[0].message.content, provider: 'openai', model };
   }
 
@@ -128,8 +150,9 @@ async function callLlm({ systemPrompt, userPrompt }) {
     const { GoogleGenerativeAI } = getSdk('@google/generative-ai');
     const client = new GoogleGenerativeAI(apiKey);
     const model = providerCfg.model || LLM_DEFAULTS.gemini.model;
-    const genModel = client.getGenerativeModel({ model });
-    const result = await genModel.generateContent(`${systemPrompt}\n\n${userPrompt}`);
+    const generationConfig = json ? { responseMimeType: 'application/json' } : undefined;
+    const genModel = client.getGenerativeModel({ model, generationConfig });
+    const result = await withTimeout(genModel.generateContent(`${systemPrompt}\n\n${userPrompt}`), timeoutMs, 'Gemini');
     return { text: result.response.text(), provider: 'gemini', model };
   }
 
@@ -138,13 +161,15 @@ async function callLlm({ systemPrompt, userPrompt }) {
     const baseUrl = providerCfg.baseUrl || LLM_DEFAULTS.ollama.baseUrl;
     const client = new OpenAI({ apiKey: 'ollama', baseURL: `${baseUrl}/v1` });
     const model = providerCfg.model || LLM_DEFAULTS.ollama.model;
-    const completion = await client.chat.completions.create({
+    const body = {
       model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-    });
+    };
+    if (json) body.response_format = { type: 'json_object' };
+    const completion = await withTimeout(client.chat.completions.create(body, { signal }), timeoutMs, 'Ollama');
     return { text: completion.choices[0].message.content, provider: 'ollama', model };
   }
 

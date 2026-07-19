@@ -273,8 +273,18 @@ async function runAiSystemAutomation() {
   console.log('[Automation] Running EU AI Act compliance scan...');
   
   const systems = await AiSystem.findAll();
-  
+
   for (const system of systems) {
+    // Systems that are not approved/released for use are out of scope: no
+    // conformity assessment, documentation, start date or periodic review is
+    // required. Clear any tasks that were created while it was still approved.
+    if (system.approval_status === 'not_approved') {
+      await completeRelatedTask('ai_system', system.id, `Konformitätsprüfung fällig: KI-System`);
+      await completeRelatedTask('ai_system', system.id, `Technische Dokumentation fehlt: KI-System`);
+      await completeRelatedTask('ai_system', system.id, `KI-System Überprüfung fällig:`);
+      continue;
+    }
+
     // 1. High Risk / Prohibited Conformity Check
     if ((system.risk_category === 'high_risk' || system.risk_category === 'prohibited') && 
         (system.conformity_status === 'not_assessed' || system.conformity_status === 'non_compliant')) {

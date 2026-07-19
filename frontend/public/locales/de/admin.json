@@ -398,5 +398,25 @@
         "API Token / MCP_SECRET Auth"
       ]
     }
+  },
+  "triageProfiles": {
+    "title": "Vertragsanalyse-Profile",
+    "description": "Je Dokumenttyp: der Kriterienkatalog, der die Abdeckungsmatrix steuert, plus eine optionale Referenz/Vorgabe, gegen die die KI vergleicht.",
+    "loading": "Profile werden geladen…",
+    "saved": "Profile gespeichert.",
+    "saveError": "Profile konnten nicht gespeichert werden",
+    "criteriaCount": "{{count}} Kriterien",
+    "criteria": "Prüfkriterien",
+    "noCriteria": "Noch keine Kriterien — die KI bewertet die allgemeine Angemessenheit.",
+    "refPlaceholder": "Referenz (z.B. DSGVO Art. 28(3)(a))",
+    "requirementPlaceholder": "Was abgedeckt sein muss",
+    "mandatory": "Pflicht",
+    "mandatoryHint": "Ein fehlendes Pflichtkriterium erhöht die Risikobewertung.",
+    "addCriterion": "Kriterium hinzufügen",
+    "reference": "Referenz / Vorgabe (optional)",
+    "referenceHint": "Musterklauseln / einen Beispielvertrag oder Zielwerte einfügen. Wird der KI als Goldstandard mitgegeben.",
+    "referencePlaceholder": "z.B. Muster-AVV-Klauseln, SLA-Zielwerte, Verschlüsselungsvorgaben…",
+    "save": "Profile speichern",
+    "saving": "Speichern…"
   }
 }

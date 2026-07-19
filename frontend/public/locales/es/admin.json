@@ -398,5 +398,25 @@
         "API Token / MCP_SECRET Auth"
       ]
     }
+  },
+  "triageProfiles": {
+    "title": "Perfiles de análisis de contratos",
+    "description": "Por tipo de documento: el catálogo de criterios que impulsa la matriz de cobertura, más una referencia/base opcional con la que compara la IA.",
+    "loading": "Cargando perfiles…",
+    "saved": "Perfiles guardados.",
+    "saveError": "No se pudieron guardar los perfiles",
+    "criteriaCount": "{{count}} criterios",
+    "criteria": "Criterios de evaluación",
+    "noCriteria": "Aún sin criterios: la IA evaluará la adecuación general.",
+    "refPlaceholder": "Referencia (p. ej. RGPD Art. 28(3)(a))",
+    "requirementPlaceholder": "Qué debe cubrirse",
+    "mandatory": "obligatorio",
+    "mandatoryHint": "Un criterio obligatorio ausente aumenta el veredicto de riesgo.",
+    "addCriterion": "Añadir criterio",
+    "reference": "Referencia / base (opcional)",
+    "referenceHint": "Pegue cláusulas de ejemplo / un contrato modelo o valores objetivo. Se da a la IA como patrón.",
+    "referencePlaceholder": "p. ej. cláusulas de un AVV modelo, valores SLA, requisitos de cifrado…",
+    "save": "Guardar perfiles",
+    "saving": "Guardando…"
   }
 }

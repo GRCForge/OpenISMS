@@ -9,6 +9,7 @@ import { Select } from '../components/ui/Select';
 import { Users } from './Users';
 import { AuditLogPage } from './AuditLog';
 import { Groups } from './Groups';
+import { TriageProfilesSettings } from '../components/settings/TriageProfilesSettings';
 import { useModules } from '../contexts/ModulesContext';
 import type { ModuleKey } from '../contexts/ModulesContext';
 
@@ -1433,7 +1434,7 @@ export const Admin: React.FC = () => {
       {tab === 'rbac' && <RbacEditor />}
       {tab === 'api' && <ApiDocs />}
       {tab === 'backup' && <BackupRestore />}
-      {tab === 'llm' && <LlmSettings />}
+      {tab === 'llm' && <div className="space-y-6"><LlmSettings /><TriageProfilesSettings /></div>}
     </div>
   );
 };
