@@ -26,7 +26,7 @@
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.10",
     "react-router-dom": "^7.18.1",
-    "recharts": "^3.9.2",
+    "recharts": "^3.10.0",
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.5.4",
-    "postcss": "^8.5.19",
+    "postcss": "^8.5.20",
     "tailwindcss": "^4.3.0",
     "typescript": "^7.0.2",
     "vite": "^8.1.5"
