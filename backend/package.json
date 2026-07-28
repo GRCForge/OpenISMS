@@ -14,7 +14,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.4",
     "@google/generative-ai": "^0.24.1",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@simplewebauthn/server": "^13.3.2",
     "adm-zip": "^0.6.0",
     "archiver": "^8.0.0",
