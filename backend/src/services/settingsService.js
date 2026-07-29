@@ -22,6 +22,10 @@ const DEFAULTS = {
     ssoAutoProvision: true,
     ssoDefaultRole: 'viewer',
     ssoAllowedDomains: '',
+    // Off by default: switching it on downgrades every SSO user who matches no
+    // claim mapping, including ones an admin assigned manually. Opting in makes
+    // the IdP authoritative for roles, so removing a group there revokes access.
+    ssoStrictRoleSync: false,
     auditLogRetentionMonths: 15,
     passwordPolicy: {
       minLength: 10,
