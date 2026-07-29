@@ -74,21 +74,21 @@
   },
   "roles": {
     "admin": "Administrator",
-    "assessor": "Assessor",
+    "assessor": "Auditor / Prüfer",
     "it-staff": "IT-Mitarbeiter",
     "dpo": "Datenschutzbeauftragter",
-    "owner": "Asset-Besitzer",
-    "management": "Management",
+    "owner": "Asset-Verantwortlicher",
+    "management": "Geschäftsleitung",
     "employee": "Mitarbeiter",
-    "viewer": "Betrachter",
+    "viewer": "Nur Lesezugriff",
     "admin_short": "Admin",
-    "assessor_short": "Assessor",
-    "it-staff_short": "IT-Mitarbeiter",
-    "dpo_short": "DPO",
-    "owner_short": "Besitzer",
-    "management_short": "Management",
+    "assessor_short": "Auditor",
+    "it-staff_short": "IT",
+    "dpo_short": "DSB",
+    "owner_short": "Verantwortlich",
+    "management_short": "Leitung",
     "employee_short": "Mitarbeiter",
-    "viewer_short": "Betrachter"
+    "viewer_short": "Lesend"
   },
   "security": {
     "purge_confirm": "Audit Log Einträge über die Speicherzeit hinaus löschen? Dieser Prozess ist unwiderruflich.",
@@ -124,7 +124,10 @@
     "name_placeholder": "Name (z.B. Cloud-Admin)",
     "add_btn": "Rolle hinzufügen",
     "saved": "Gespeichert.",
-    "error": "Fehler"
+    "error": "Fehler",
+    "own_permissions": "Eigene Berechtigungen für diese Rolle festlegen",
+    "own_permissions_hint": "Ohne eigene Berechtigungen gelten die Rechte der Basisrolle. Aktionen, die hier nicht aufgeführt sind, richten sich weiterhin nach der Basisrolle.",
+    "edit_title": "Rolle bearbeiten: {{name}}"
   },
   "oidc_mappings": {
     "title": "OIDC Anspruchszuordnungen",
@@ -246,14 +249,14 @@
     "saved": "Gespeichert"
   },
   "actions": {
-    "view": "Lesen",
+    "view": "Ansehen",
     "create": "Anlegen",
     "edit": "Bearbeiten",
     "delete": "Löschen",
-    "access": "Zugang",
-    "edit_basics": "Basis-Daten bearbeiten",
-    "edit_compliance": "Compliance bearbeiten",
-    "edit_security": "Sicherheit bearbeiten"
+    "access": "Zugriff",
+    "edit_basics": "Stammdaten bearbeiten",
+    "edit_compliance": "Compliance-Daten bearbeiten",
+    "edit_security": "Sicherheitsdaten bearbeiten"
   },
   "llm": {
     "title": "AI / LLM Konfiguration",
