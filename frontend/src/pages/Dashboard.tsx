@@ -11,7 +11,7 @@ import api from '../lib/api';
 import type { DashboardData, RiskLevel, Classification } from '../types';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Skeleton, SkeletonStatCard, SkeletonCard } from '../components/ui/Skeleton';
 
 const riskColors: Record<RiskLevel, string> = { low: 'bg-green-500', medium: 'bg-yellow-500', high: 'bg-orange-500', critical: 'bg-red-500' };

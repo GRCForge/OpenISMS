@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router';
 import { 
   ArrowLeft, Plus, Upload, Trash2, Download, MessageSquare, FileText,
   ClipboardCheck, Clock, Building2, Mail, Phone, Edit, Shield,

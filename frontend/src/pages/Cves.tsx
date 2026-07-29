@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Search, ExternalLink, ShieldAlert, AlertTriangle, Bug, Server, Shield, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
