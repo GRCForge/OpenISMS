@@ -512,13 +512,22 @@ const start = async () => {
       // otherwise generate a strong random one.
       const providedPassword = process.env.ADMIN_PASSWORD;
       const initialPassword = providedPassword || (crypto.randomBytes(12).toString('base64') + 'Aa1!');
-      await User.create({
-        name: 'Administrator',
-        email: 'admin@isms.local',
-        password_hash: await User.hashPassword(initialPassword),
-        role: 'admin',
-        department: 'IT Security'
-      });
+      // Keep this INSERT's failures away from the generic startup handler. That
+      // handler logs the raw error object, and console printing expands a driver
+      // error's own properties — for this statement the bound parameters, i.e.
+      // the credential derived from initialPassword. Log a message, not the error.
+      try {
+        await User.create({
+          name: 'Administrator',
+          email: 'admin@isms.local',
+          password_hash: await User.hashPassword(initialPassword),
+          role: 'admin',
+          department: 'IT Security'
+        });
+      } catch (e) {
+        console.error('[SECURITY] Could not seed the initial admin user:', e.message);
+        throw new Error('initial admin user could not be created');
+      }
       if (providedPassword) {
         console.log('Admin user created: admin@isms.local (password from ADMIN_PASSWORD)');
       } else {
