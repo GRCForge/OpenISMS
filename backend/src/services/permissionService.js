@@ -44,14 +44,19 @@ const resolvePermissions = async (user) => {
     if (own && typeof own === 'object') return own;
   }
   const global = await getGlobalMatrix();
-  const result = {};
+  // The global matrix merges admin-supplied overrides from the settings table, so
+  // its keys get the same treatment as a custom role's before being written.
+  const result = Object.create(null);
   for (const [module, actions] of Object.entries(global)) {
-    result[module] = {};
+    if (!isSafeKey(module) || !actions || typeof actions !== 'object') continue;
+    const projected = Object.create(null);
     for (const [action, roles] of Object.entries(actions)) {
-      result[module][action] = Array.isArray(roles) && roles.includes(user.role);
+      if (!isSafeKey(action)) continue;
+      projected[action] = Array.isArray(roles) && roles.includes(user.role);
     }
+    result[module] = { ...projected };
   }
-  return result;
+  return { ...result };
 };
 
 // true / false when the matrix decides, undefined when it says nothing about this
@@ -64,6 +69,14 @@ const can = async (user, module, action) => {
   return typeof entry === 'boolean' ? entry : undefined;
 };
 
+// Module and action names are identifiers the admin UI picks from, never free
+// text, so bounding them to that shape costs nothing. Without it a request body
+// carrying __proto__ or constructor would have its key written straight into the
+// accumulator and reach the prototype chain (CodeQL js/remote-property-injection).
+const SAFE_KEY = /^[a-zA-Z0-9_-]{1,64}$/;
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const isSafeKey = (key) => typeof key === 'string' && SAFE_KEY.test(key) && !FORBIDDEN_KEYS.has(key);
+
 // Reduce arbitrary client input to { module: { action: boolean } }. Anything that
 // is not a boolean is dropped rather than coerced, so a malformed value becomes an
 // absent entry — which falls through to the route's own check — instead of an
@@ -71,16 +84,18 @@ const can = async (user, module, action) => {
 const sanitizeMatrix = (input) => {
   if (input === null || input === undefined || input === '') return null;
   if (typeof input !== 'object' || Array.isArray(input)) throw new Error('permissions muss ein Objekt sein');
-  const out = {};
+  const out = Object.create(null);
   for (const [module, actions] of Object.entries(input)) {
+    if (!isSafeKey(module)) continue;
     if (!actions || typeof actions !== 'object' || Array.isArray(actions)) continue;
-    const cleaned = {};
+    const cleaned = Object.create(null);
     for (const [action, value] of Object.entries(actions)) {
+      if (!isSafeKey(action)) continue;
       if (typeof value === 'boolean') cleaned[action] = value;
     }
-    if (Object.keys(cleaned).length) out[module] = cleaned;
+    if (Object.keys(cleaned).length) out[module] = { ...cleaned };
   }
-  return Object.keys(out).length ? out : null;
+  return Object.keys(out).length ? { ...out } : null;
 };
 
 module.exports = { resolvePermissions, can, invalidatePermissionCache, sanitizeMatrix };
