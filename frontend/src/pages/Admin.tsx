@@ -209,7 +209,7 @@ const OidcSettings: React.FC = () => {
 };
 
 // ---------------- Allgemeine Einstellungen ----------------
-interface GeneralState { appName: string; reviewIntervalMonths: number; ssoAutoProvision: boolean; ssoDefaultRole: string; }
+interface GeneralState { appName: string; reviewIntervalMonths: number; ssoAutoProvision: boolean; ssoDefaultRole: string; ssoStrictRoleSync: boolean; }
 
 const GeneralSettings: React.FC = () => {
   const { t } = useTranslation('admin');
@@ -246,6 +246,13 @@ const GeneralSettings: React.FC = () => {
         <label className="flex items-center gap-3 p-3 rounded-lg border bg-gray-50 dark:bg-slate-800/40 dark:border-slate-700 cursor-pointer">
           <input type="checkbox" checked={s.ssoAutoProvision} onChange={e => setS({ ...s, ssoAutoProvision: e.target.checked })} className="w-4 h-4 rounded text-blue-600" />
           <span className="text-sm font-medium dark:text-slate-200">{t('general.sso_autoprovision')}</span>
+        </label>
+        <label className="flex items-start gap-3 p-3 rounded-lg border bg-gray-50 dark:bg-slate-800/40 dark:border-slate-700 cursor-pointer">
+          <input type="checkbox" checked={!!s.ssoStrictRoleSync} onChange={e => setS({ ...s, ssoStrictRoleSync: e.target.checked })} className="w-4 h-4 mt-0.5 rounded text-blue-600" />
+          <span>
+            <span className="block text-sm font-medium dark:text-slate-200">{t('general.sso_strict_role_sync')}</span>
+            <span className="block text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('general.sso_strict_role_sync_hint')}</span>
+          </span>
         </label>
         <div className="flex items-center gap-3 pt-2">
           <Button onClick={save} disabled={saving}>{saving ? t('save_saving') : t('save')}</Button>

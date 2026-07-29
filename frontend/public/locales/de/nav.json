@@ -40,8 +40,8 @@
       "hint": "RoPA (Art. 30 GDPR)"
     },
     "subjectRequests": {
-      "label": "Daten-Betreff Rechte",
-      "hint": "Anfrage Art. 15–22 DPR"
+      "label": "Betroffenenrechte",
+      "hint": "Anfragen nach Art. 15–22 DSGVO"
     },
     "legalRequirements": {
       "label": "Gesetzliches Register",
@@ -76,7 +76,7 @@
       "hint": "Inventar & Klassifizierung"
     },
     "discovery": {
-      "label": "Entdeckung",
+      "label": "Netzwerk-Erkennung",
       "hint": "Netzwerk & Agenten"
     },
     "risks": {
@@ -100,7 +100,7 @@
       "hint": "Pentest Tracking & Erkenntnisse"
     },
     "vendors": {
-      "label": "Diensteanbieter",
+      "label": "Dienstleister",
       "hint": "Firmenverzeichnis"
     },
     "contacts": {

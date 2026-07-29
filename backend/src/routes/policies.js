@@ -8,7 +8,7 @@ const fs = require('fs');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, PolicyAcknowledgment } = require('../models');
-const { authenticate, requireRole, isAssessor, isItStaff } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 // Rate limiting for policy downloads to mitigate DoS (CWE-770)
@@ -86,7 +86,7 @@ const upload = multer({
 if (!fs.existsSync(POLICIES_DIR)) fs.mkdirSync(POLICIES_DIR, { recursive: true });
 
 // List all policies
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('policies','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const isRestricted = req.user.role === 'it-staff' || req.user.role === 'viewer';
     const where = {};
@@ -108,7 +108,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Create policy (Admin, Assessor or DPO)
-router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.single('file'), async (req, res) => {
+router.post('/', authenticate, requirePermission('policies','create','admin','assessor','dpo'), upload.single('file'), async (req, res) => {
   try {
     const { asset_ids, control_ids, ...data } = stripFileMeta(req.body);
     
@@ -145,7 +145,7 @@ router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.s
 });
 
 // Update policy (PUT) - Supports version updates and file replacement
-router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.single('file'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('policies','edit','admin','assessor','dpo'), upload.single('file'), async (req, res) => {
   try {
     const policy = await Policy.findByPk(req.params.id);
     if (!policy) return res.status(404).json({ error: 'Dokument nicht gefunden' });
@@ -295,7 +295,7 @@ router.get('/:id/download', authenticate, downloadLimiter, async (req, res) => {
 });
 
 // Delete policy
-router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('policies','delete','admin'), async (req, res) => {
   try {
     const policy = await Policy.findByPk(req.params.id);
     if (!policy) return res.status(404).json({ error: 'Not found' });

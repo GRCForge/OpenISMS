@@ -6,7 +6,7 @@ const OidcClaimMapping = sequelize.define('OidcClaimMapping', {
   claim_path: { type: DataTypes.STRING(255), allowNull: false },
   claim_value: { type: DataTypes.STRING(255), allowNull: false },
   role: {
-    type: DataTypes.ENUM('admin', 'assessor', 'dpo', 'it-staff', 'owner', 'viewer', 'employee'),
+    type: DataTypes.ENUM('admin', 'assessor', 'dpo', 'it-staff', 'owner', 'viewer', 'employee', 'management'),
     allowNull: true,
   },
   custom_role_id: { type: DataTypes.INTEGER, allowNull: true },

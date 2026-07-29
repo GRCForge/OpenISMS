@@ -1,5 +1,5 @@
 {
-  "title": "Betreff Rechte",
+  "title": "Betroffenenrechte",
   "subtitle": "Anfragen nach Art. 15–22 DPR · 30-Tage-Frist",
   "newButton": "Neue Anfrage",
   "type": {
@@ -55,13 +55,13 @@
   "empty": {
     "filterTitle": "Keine Anfragen stimmen mit den ausgewählten Filtern überein.",
     "filterReset": "Filter zurücksetzen",
-    "title": "Noch keine Betreffanfragen",
+    "title": "Noch keine Betroffenenanfragen",
     "description": "Aufzeichnungsanfragen nach Zugriff, Löschung und anderen Rechten gemäß §15–22 GDPR.",
     "createButton": "Erstelle erste Anfrage"
   },
   "modal": {
     "editTitle": "Anfrage bearbeiten",
-    "newTitle": "Neue Betreffanfrage",
+    "newTitle": "Neue Betroffenenanfrage",
     "typeLabel": "Anfragetyp *",
     "statusLabel": "Status",
     "requesterName": "Name des Antragstellers *",

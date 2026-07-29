@@ -7,6 +7,16 @@ const { Asset, Assessment, Risk, VvtEntry, Vendor, Incident, Task, PasskeyCreden
 
 router.use(authenticate);
 
+// Effective permission matrix for the caller, so the UI can hide what the API
+// would refuse anyway. Authorisation is still decided server-side on every
+// request — this is for presentation, never the only gate.
+router.get('/permissions', async (req, res) => {
+  try {
+    const { resolvePermissions } = require('../services/permissionService');
+    res.json({ permissions: await resolvePermissions(req.user), role: req.user.role, custom_role_id: req.user.custom_role_id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.get('/overview', async (req, res) => {
   try {
     const { user } = req;

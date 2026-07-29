@@ -1,17 +1,23 @@
 const { Setting } = require('../models');
 const { encrypt, decrypt } = require('./cryptoService');
 
+// Baseline for the role matrix. Until now nothing read it — the routes carried
+// hardcoded role checks — so the two had drifted apart and enabling enforcement
+// against the old values would have taken access away from roles that have it
+// today (owner/it-staff/dpo on risks, it-staff on import, and more). These lists
+// were reconciled against the guards the routes actually apply, so switching
+// enforcement on changes no access; tightening is now a deliberate admin edit.
 const DEFAULT_PERMISSIONS = {
   assets:      { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], edit_basics: ['admin','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','assessor','it-staff'], delete: ['admin'] },
-  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
-  incidents:   { view: ['admin','assessor','it-staff','dpo','management','viewer'], create: ['admin','assessor','it-staff'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },
-  assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'] },
-  controls:    { view: ['admin','assessor','it-staff','dpo','management','viewer'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
-  policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
+  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'] },
+  incidents:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin','assessor'] },
+  assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor'] },
+  controls:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },
+  policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
   reminders:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'] },
   vendors:     { view: ['admin','assessor','it-staff','dpo','management','viewer'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
-  import:      { access: ['admin','assessor'] },
-  reports:     { view: ['admin','assessor','dpo','owner','management'] },
+  import:      { access: ['admin','assessor','it-staff'] },
+  reports:     { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'] },
   admin:       { access: ['admin'] },
 };
 
@@ -22,6 +28,10 @@ const DEFAULTS = {
     ssoAutoProvision: true,
     ssoDefaultRole: 'viewer',
     ssoAllowedDomains: '',
+    // Off by default: switching it on downgrades every SSO user who matches no
+    // claim mapping, including ones an admin assigned manually. Opting in makes
+    // the IdP authoritative for roles, so removing a group there revokes access.
+    ssoStrictRoleSync: false,
     auditLogRetentionMonths: 15,
     passwordPolicy: {
       minLength: 10,

@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Risk, Asset, User, Document, Threat, Control, VvtEntry, Incident, Task } = require('../models');
-const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { computeLevel, scaleInfo } = require('../services/riskScale');
@@ -32,7 +32,7 @@ const canWriteRisk = (user, risk) =>
 // Standardisierte Skala/Matrix (fuer die Heatmap im Frontend)
 router.get('/scale', authenticate, (req, res) => res.json(scaleInfo()));
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('risks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { status, treatment, level, search } = req.query;
     const where = {};
@@ -45,7 +45,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('risks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id, { include: includeAll });
     if (!risk) return res.status(404).json({ error: 'Not found' });
@@ -109,7 +109,7 @@ const recomputeResidual = async (risk) => {
   await risk.update(computeResidual(risk.likelihood, risk.impact, links));
 };
 
-router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/', authenticate, requirePermission('risks','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     if (!req.body.title) return res.status(400).json({ error: 'Titel ist erforderlich' });
     const risk = await Risk.create(buildFields(req.body));
@@ -129,7 +129,7 @@ router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('risks','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
@@ -195,7 +195,7 @@ router.patch('/:id/revoke', authenticate, requireRole('admin', 'assessor', 'owne
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('risks','delete','admin'), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
