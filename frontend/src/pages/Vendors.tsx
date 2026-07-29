@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Building2, Plus, Pencil, Trash2, Globe, ShieldCheck, ExternalLink, ShieldAlert, User, Clock, CheckCircle, Paperclip, Download, Bot, ChevronDown, ChevronRight, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import type { Vendor, RiskLevel } from '../types';

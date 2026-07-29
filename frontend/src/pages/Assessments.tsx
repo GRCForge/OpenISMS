@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { TrendingUp, TrendingDown, Minus, Download, FileSpreadsheet, FolderOpen, FileText } from 'lucide-react';

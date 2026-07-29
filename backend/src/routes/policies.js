@@ -58,6 +58,12 @@ const safePolicyPath = (filePath) => {
   return resolved;
 };
 
+// File metadata is derived server-side from the multer upload — never accept it
+// from the request body. Both handlers spread the remaining body into the model,
+// so without this a client could set file_url on a policy created without an
+// upload and steer the download/delete handlers at an arbitrary stored file.
+const stripFileMeta = ({ file_url: _u, original_filename: _n, file_hash: _h, ...rest }) => rest;
+
 const storage = multer.diskStorage({
   destination: 'uploads/policies/',
   filename: (req, file, cb) => {
@@ -104,7 +110,7 @@ router.get('/', authenticate, async (req, res) => {
 // Create policy (Admin, Assessor or DPO)
 router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), upload.single('file'), async (req, res) => {
   try {
-    const { asset_ids, control_ids, file_hash: _h, ...data } = req.body;
+    const { asset_ids, control_ids, ...data } = stripFileMeta(req.body);
     
     // Sanitize dates
     if (data.valid_from === '' || data.valid_from === 'Invalid date') data.valid_from = null;
@@ -144,7 +150,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
     const policy = await Policy.findByPk(req.params.id);
     if (!policy) return res.status(404).json({ error: 'Dokument nicht gefunden' });
 
-    const { asset_ids, control_ids, file_hash: _h, ...data } = req.body;
+    const { asset_ids, control_ids, ...data } = stripFileMeta(req.body);
 
     // Sanitize dates
     if (data.valid_from === '' || data.valid_from === 'Invalid date') data.valid_from = null;
@@ -232,17 +238,6 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), upload
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-const safeFilePath = (fileUrl) => {
-  if (!fileUrl) return null;
-  const resolved = path.resolve(fileUrl);
-  const rootDir = path.resolve(POLICIES_DIR);
-  const uploadsDir = path.resolve('uploads');
-  
-  if (resolved.startsWith(rootDir + path.sep)) return resolved;
-  if (resolved.startsWith(uploadsDir + path.sep)) return resolved;
-  return null;
-};
-
 const verifyFileHash = async (filePath, storedHash) => {
   if (!storedHash) return true;
   const computed = await new Promise((resolve, reject) => {
@@ -260,7 +255,7 @@ router.get('/:id/versions/:versionId/download', authenticate, downloadLimiter, a
   try {
     const version = await PolicyVersion.findOne({ where: { id: req.params.versionId, policy_id: req.params.id } });
     if (!version) return res.status(404).json({ error: 'Version nicht gefunden' });
-    const filePath = safeFilePath(version.file_url);
+    const filePath = safePolicyPath(version.file_url);
     if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Datei nicht vorhanden' });
     if (!await verifyFileHash(filePath, version.file_hash)) {
       console.error(`[Security] Integrity check failed for policy version ${version.id}`);
@@ -282,7 +277,7 @@ router.get('/:id/download', authenticate, downloadLimiter, async (req, res) => {
   try {
     const policy = await Policy.findByPk(req.params.id);
     if (!policy || !policy.file_url) return res.status(404).json({ error: 'Datei nicht gefunden' });
-    const filePath = safeFilePath(policy.file_url);
+    const filePath = safePolicyPath(policy.file_url);
     if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Datei nicht vorhanden' });
     if (!await verifyFileHash(filePath, policy.file_hash)) {
       console.error(`[Security] Integrity check failed for policy ${policy.id}`);
@@ -305,13 +300,13 @@ router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
     const policy = await Policy.findByPk(req.params.id);
     if (!policy) return res.status(404).json({ error: 'Not found' });
     
-    const filePath = safeFilePath(policy.file_url);
+    const filePath = safePolicyPath(policy.file_url);
     if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
     
     // Also delete old versions
     const versions = await PolicyVersion.findAll({ where: { policy_id: policy.id } });
     versions.forEach(v => {
-      const vPath = safeFilePath(v.file_url);
+      const vPath = safePolicyPath(v.file_url);
       if (vPath && fs.existsSync(vPath)) fs.unlinkSync(vPath);
     });
     await PolicyVersion.destroy({ where: { policy_id: policy.id } });

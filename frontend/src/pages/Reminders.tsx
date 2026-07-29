@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { CheckCircle, AlertTriangle, Download, FileSpreadsheet } from 'lucide-react';
 import { FilterBar } from '../components/ui/FilterBar';
 import { format } from 'date-fns';
