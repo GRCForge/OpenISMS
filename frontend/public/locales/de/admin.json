@@ -59,8 +59,8 @@
     "redirect_uri_help": "URI umleiten (Konfigurieren im Identitätsanbieter):",
     "copy": "Kopieren",
     "save_success": "Konfiguration gespeichert.",
-    "discovery_success": "Entdeckung erfolgreich: {{issuer}}",
-    "discovery_failed": "Entdeckung fehlgeschlagen."
+    "discovery_success": "Discovery erfolgreich: {{issuer}}",
+    "discovery_failed": "Discovery fehlgeschlagen."
   },
   "general": {
     "title": "Allgemeine Einstellungen",
@@ -68,6 +68,8 @@
     "review_interval": "Standard-Überprüfungsintervall (Monate)",
     "sso_default_role": "Standardrolle für neue SSO-Benutzer",
     "sso_autoprovision": "Neue SSO-Benutzer automatisch erstellen (Auto-Bereitstellung)",
+    "sso_strict_role_sync": "Rollen strikt aus dem Identity Provider synchronisieren",
+    "sso_strict_role_sync_hint": "Benutzer, auf die keine Claim-Zuordnung passt, werden bei der Anmeldung auf die SSO-Standardrolle zurückgesetzt. Damit entzieht das Entfernen einer Gruppe im Identity Provider auch hier die Rechte. Betrifft auch manuell vergebene Rollen; der letzte aktive Administrator wird nie herabgestuft.",
     "saved": " Gespeichert"
   },
   "roles": {
@@ -235,7 +237,7 @@
     "controls": "Steuerung & SoA",
     "policies": "Richtlinien-Bibliothek",
     "reminders": "Erinnerungen",
-    "vendors": "Diensteanbieter",
+    "vendors": "Dienstleister",
     "import": "Importieren",
     "reports": "Managementberichte",
     "admin": "Verwaltung",

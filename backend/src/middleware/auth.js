@@ -89,6 +89,26 @@ const requireRole = (...roles) => (req, res, next) => {
   next();
 };
 
+// Permission-matrix guard. Where the effective matrix defines module+action it is
+// authoritative — that is the point of an editable matrix, and of letting a custom
+// role carry its own. Where it defines nothing, fallbackRoles decides, which is the
+// role list the route carried before, so behaviour is unchanged until an admin
+// actually edits the matrix. Passing no fallbackRoles means "deny when undefined".
+const requirePermission = (module, action, ...fallbackRoles) => async (req, res, next) => {
+  try {
+    const { can } = require('../services/permissionService');
+    const verdict = await can(req.user, module, action);
+    if (verdict === true) return next();
+    if (verdict === false) return res.status(403).json({ error: 'Forbidden' });
+    if (fallbackRoles.includes(req.user.role)) return next();
+    return res.status(403).json({ error: 'Forbidden' });
+  } catch (e) {
+    // Never fail open: a broken matrix lookup must not hand out access.
+    console.error('[Permissions] check failed:', e.message);
+    return res.status(500).json({ error: 'Permission check failed' });
+  }
+};
+
 const requireWriteAccess = () => (req, res, next) => {
   if (req.user.role === 'viewer' || req.user.role === 'management' || req.user.role === 'employee') {
     return res.status(403).json({ error: 'Diese Rolle hat keine Berechtigung für schreibende Zugriffe.' });
@@ -108,4 +128,4 @@ const canViewAllAssets = (req) => ['admin', 'assessor', 'dpo', 'it-staff'].inclu
 const canViewAsset = (req, asset) =>
   canViewAllAssets(req) || req.user.id === asset.owner_id || req.user.id === asset.assessor_id;
 
-module.exports = { authenticate, requireRole, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset };
+module.exports = { authenticate, requireRole, requirePermission, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset };

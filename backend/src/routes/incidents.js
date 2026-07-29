@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Incident, Asset, User, Risk, Vendor, VvtEntry, Task } = require('../models');
-const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { escapeLike } = require('../utils/sqlUtils');
@@ -53,7 +53,7 @@ router.get('/stats', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { status, severity, search } = req.query;
     const where = { ...getAccessWhere(req.user) };
@@ -65,7 +65,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const incident = await Incident.findByPk(req.params.id, { include: includeAll });
     if (!incident || incident.deleted) return res.status(404).json({ error: 'Not found' });
@@ -103,7 +103,7 @@ const applyLinks = async (incident, body) => {
   if (Array.isArray(body.vvt_ids)) await incident.setVvtEntries(body.vvt_ids);
 };
 
-router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/', authenticate, requirePermission('incidents','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     if (!req.body.title) return res.status(400).json({ error: 'Titel ist erforderlich' });
     const incident = await Incident.create({ ...buildFields(req.body), reporter_id: req.user.id });
@@ -119,7 +119,7 @@ router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('incidents','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const incident = await Incident.findByPk(req.params.id);
     if (!incident || incident.deleted) return res.status(404).json({ error: 'Not found' });
@@ -148,7 +148,7 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('incidents','delete','admin','assessor'), async (req, res) => {
   try {
     const incident = await Incident.findByPk(req.params.id);
     if (!incident) return res.status(404).json({ error: 'Not found' });

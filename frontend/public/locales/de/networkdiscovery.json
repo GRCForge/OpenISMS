@@ -1,6 +1,6 @@
 {
-  "title": "Netzwerkentdeckung",
-  "subtitle": "Assets im Netzwerk automatisch entdecken",
+  "title": "Netzwerk-Erkennung",
+  "subtitle": "Assets im Netzwerk automatisch erkennen",
   "tabs": {
     "scan": "Netzwerk-Scan",
     "agent": "Discovery Agent",

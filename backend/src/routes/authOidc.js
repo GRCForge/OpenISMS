@@ -214,8 +214,35 @@ router.get('/callback', async (req, res) => {
           break;
         }
       }
+      // No mapping matched. With mappings configured the IdP is the authority on
+      // entitlements, so a user who no longer matches any of them has lost the
+      // grant that raised their role — leaving it untouched means an IdP group
+      // removal never revokes access here. Only strict mode acts on that, because
+      // the reset also catches roles an admin assigned by hand.
+      if (!mappedRole && mappings.length > 0 && general.ssoStrictRoleSync) {
+        const fallbackRole = general.ssoDefaultRole || 'viewer';
+        if (user.role !== fallbackRole || user.custom_role_id !== null) {
+          // Never strand the deployment without an administrator.
+          const lastAdmin = user.role === 'admin' && (await User.count({ where: { role: 'admin', active: true } })) <= 1;
+          if (lastAdmin) {
+            console.warn(`[OIDC] strict role sync skipped for ${user.email}: last active admin`);
+          } else {
+            mappedRole = fallbackRole;
+            mappedCustomRoleId = null;
+          }
+        }
+      }
+
       if (mappedRole && (user.role !== mappedRole || user.custom_role_id !== mappedCustomRoleId)) {
+        const before = { role: user.role, custom_role_id: user.custom_role_id };
         await user.update({ role: mappedRole, custom_role_id: mappedCustomRoleId });
+        // A privilege change with no audit entry is invisible to a later review;
+        // every other path that changes a role writes one.
+        await auditFromReq(req, 'update', 'user', user.id, user.name, {
+          source: 'oidc_claim_mapping',
+          before,
+          after: { role: mappedRole, custom_role_id: mappedCustomRoleId },
+        });
       }
     } catch (e) {
       console.error('[OIDC] claim mapping error (non-fatal):', e.message);
