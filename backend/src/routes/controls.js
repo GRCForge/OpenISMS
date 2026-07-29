@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Control, Policy, Iso27001Control } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -29,7 +29,7 @@ router.get('/stats', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('controls','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { framework, status, type, search } = req.query;
     const where = {};
@@ -47,7 +47,7 @@ const applyLinks = async (control, body) => {
 };
 
 // SoA-Pflege: Status + Begruendung (Anwendbarkeit)
-router.put('/:id', authenticate, requireRole('admin', 'assessor', 'it-staff'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('controls','edit','admin','assessor','it-staff'), async (req, res) => {
   try {
     const control = await Control.findByPk(req.params.id);
     if (!control) return res.status(404).json({ error: 'Not found' });
@@ -75,7 +75,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'it-staff'), a
 });
 
 // Eigene (custom) Massnahme anlegen
-router.post('/', authenticate, requireRole('admin'), async (req, res) => {
+router.post('/', authenticate, requirePermission('controls','create','admin'), async (req, res) => {
   try {
     const { code, title, description, type, status, policy_ids } = req.body;
     if (!title) return res.status(400).json({ error: 'Titel ist erforderlich' });
@@ -87,7 +87,7 @@ router.post('/', authenticate, requireRole('admin'), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('controls','delete','admin'), async (req, res) => {
   try {
     const control = await Control.findByPk(req.params.id);
     if (!control) return res.status(404).json({ error: 'Not found' });
@@ -98,7 +98,7 @@ router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/bulk-delete', authenticate, requireRole('admin'), async (req, res) => {
+router.post('/bulk-delete', authenticate, requirePermission('controls','delete','admin'), async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {

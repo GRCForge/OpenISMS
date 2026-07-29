@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const { readSheet } = require('read-excel-file/node');
 const { Asset, User, Vendor, VendorContact, Risk } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -188,7 +188,7 @@ const readRows = async (file) => {
   return { headers, rows };
 };
 
-router.post('/preview', authenticate, requireRole('admin', 'assessor', 'it-staff'), upload.single('file'), async (req, res) => {
+router.post('/preview', authenticate, requirePermission('import','access','admin','assessor','it-staff'), upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Keine Datei hochgeladen' });
   const type = req.body.type || 'asset';
   const config = ENTITY_CONFIGS[type];
@@ -231,7 +231,7 @@ router.post('/preview', authenticate, requireRole('admin', 'assessor', 'it-staff
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/process', authenticate, requireRole('admin', 'assessor', 'it-staff'), upload.single('file'), async (req, res) => {
+router.post('/process', authenticate, requirePermission('import','access','admin','assessor','it-staff'), upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Keine Datei hochgeladen' });
   const type = req.body.type || 'asset';
   const mapping = JSON.parse(req.body.mapping || '{}');
