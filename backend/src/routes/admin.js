@@ -10,6 +10,7 @@ const { sendEmail, testSmtp, getSmtpConfig } = require('../services/emailService
 const { encrypt: encryptValue } = require('../services/cryptoService');
 const { invalidate, getCallbackUrl } = require('../services/oidcService');
 const { auditFromReq } = require('../services/auditService');
+const { invalidatePermissionCache, sanitizeMatrix } = require('../services/permissionService');
 const { AuditLog, CustomRole, OidcClaimMapping, User } = require('../models');
 
 // Rate limiting for expensive system logs retrieval
@@ -85,6 +86,7 @@ router.put('/permissions', async (req, res) => {
     if (!permissions || typeof permissions !== 'object') return res.status(400).json({ error: 'permissions object required' });
     const before = await getPermissions();
     const saved = await setPermissions(permissions);
+    invalidatePermissionCache();
     await auditFromReq(req, 'update', 'settings', null, 'Rollen & Rechte', { before, after: saved });
     res.json({ permissions: saved });
   } catch (e) { res.status(400).json({ error: e.message }); }
@@ -94,6 +96,7 @@ router.post('/permissions/reset', async (req, res) => {
   try {
     const { Setting } = require('../models');
     await Setting.destroy({ where: { key: 'permissions' } });
+    invalidatePermissionCache();
     await auditFromReq(req, 'update', 'settings', null, 'Rollen & Rechte zurückgesetzt', {});
     res.json({ permissions: await getPermissions() });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -117,10 +120,16 @@ router.get('/custom-roles', async (req, res) => {
 
 router.post('/custom-roles', async (req, res) => {
   try {
-    const { name, description, base_role } = req.body || {};
+    const { name, description, base_role, permissions } = req.body || {};
     if (!name?.trim()) return res.status(400).json({ error: 'Name erforderlich' });
-    const role = await CustomRole.create({ name: name.trim(), description: description || null, base_role: base_role || 'viewer' });
-    await auditFromReq(req, 'create', 'custom_role', role.id, role.name, {});
+    const role = await CustomRole.create({
+      name: name.trim(),
+      description: description || null,
+      base_role: base_role || 'viewer',
+      permissions: sanitizeMatrix(permissions),
+    });
+    invalidatePermissionCache();
+    await auditFromReq(req, 'create', 'custom_role', role.id, role.name, { permissions: role.permissions });
     res.status(201).json(role);
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
@@ -129,18 +138,20 @@ router.put('/custom-roles/:id', async (req, res) => {
   try {
     const role = await CustomRole.findByPk(req.params.id);
     if (!role) return res.status(404).json({ error: 'Nicht gefunden' });
-    const { name, description, base_role } = req.body || {};
-    const before = { name: role.name, description: role.description, base_role: role.base_role };
+    const { name, description, base_role, permissions } = req.body || {};
+    const before = { name: role.name, description: role.description, base_role: role.base_role, permissions: role.permissions };
     await role.update({
       ...(name !== undefined && { name: name.trim() }),
       ...(description !== undefined && { description }),
       ...(base_role !== undefined && { base_role }),
+      ...(permissions !== undefined && { permissions: sanitizeMatrix(permissions) }),
     });
     // Basisrolle geändert: effektive Rolle aller zugewiesenen Benutzer nachziehen.
     if (base_role !== undefined && base_role !== before.base_role) {
       await User.update({ role: base_role }, { where: { custom_role_id: role.id } });
     }
-    const after = { name: role.name, description: role.description, base_role: role.base_role };
+    invalidatePermissionCache();
+    const after = { name: role.name, description: role.description, base_role: role.base_role, permissions: role.permissions };
     await auditFromReq(req, 'update', 'custom_role', role.id, role.name, { before, after });
     res.json(role);
   } catch (e) { res.status(400).json({ error: e.message }); }
@@ -154,6 +165,7 @@ router.delete('/custom-roles/:id', async (req, res) => {
     // Zuweisung bei Benutzern entfernen (Basisrolle bleibt als effektive Rolle erhalten).
     await User.update({ custom_role_id: null }, { where: { custom_role_id: role.id } });
     await role.destroy();
+    invalidatePermissionCache();
     await auditFromReq(req, 'delete', 'custom_role', req.params.id, name, {});
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }

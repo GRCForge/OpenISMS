@@ -1,6 +1,6 @@
 const express = require('express');
 const { Assessment, Asset, User, Reminder, Task } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 
@@ -8,7 +8,7 @@ const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('assessments','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { asset_id } = req.query;
     const where = asset_id ? { asset_id } : {};
@@ -24,7 +24,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/', authenticate, requirePermission('assessments','create','admin','assessor'), async (req, res) => {
   try {
     const {
       asset_id, confidentiality, integrity, availability, notes, mitigation,

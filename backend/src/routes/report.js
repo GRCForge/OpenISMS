@@ -3,9 +3,10 @@ const { heavyLimiter } = require('../middleware/rateLimiter');
 router.use(heavyLimiter);
 const { Op, fn, col, literal } = require('sequelize');
 const { sequelize, Asset, Assessment, Risk, Incident, Control, Task, Reminder, AuditLog, Kpi, KpiMeasurement } = require('../models');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 
 router.use(authenticate);
+router.use(requirePermission('reports','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'));
 
 // Build array of last N months as { label, start, end }
 function lastNMonths(n) {

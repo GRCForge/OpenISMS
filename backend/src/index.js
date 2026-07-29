@@ -403,6 +403,12 @@ const start = async () => {
       ALTER TABLE oidc_claim_mappings MODIFY COLUMN role ENUM('admin','assessor','dpo','it-staff','owner','viewer','employee','management') NULL
     `).catch(e => console.warn('[DB] Could not alter oidc_claim_mappings.role:', e.message));
 
+    // Per-custom-role permission matrix. NULL on existing rows, which keeps them on
+    // the global matrix for their base_role until an admin edits them.
+    await sequelize.query(`
+      ALTER TABLE custom_roles ADD COLUMN permissions JSON NULL
+    `).catch(() => { /* column already present */ });
+
     // Drop old camelCase columns from push_subscriptions
     await sequelize.query(`
       ALTER TABLE push_subscriptions DROP COLUMN createdAt, DROP COLUMN updatedAt
