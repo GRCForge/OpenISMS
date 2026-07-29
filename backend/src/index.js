@@ -397,6 +397,12 @@ const start = async () => {
       ALTER TABLE custom_roles MODIFY COLUMN base_role ENUM('admin','assessor','dpo','it-staff','owner','viewer','employee','management') NOT NULL DEFAULT 'viewer'
     `).catch(e => console.warn('[DB] Could not alter custom_roles.base_role:', e.message));
 
+    // 'management' was missing here while users.role and custom_roles.base_role
+    // both carry it, so a claim could not be mapped to that role directly.
+    await sequelize.query(`
+      ALTER TABLE oidc_claim_mappings MODIFY COLUMN role ENUM('admin','assessor','dpo','it-staff','owner','viewer','employee','management') NULL
+    `).catch(e => console.warn('[DB] Could not alter oidc_claim_mappings.role:', e.message));
+
     // Drop old camelCase columns from push_subscriptions
     await sequelize.query(`
       ALTER TABLE push_subscriptions DROP COLUMN createdAt, DROP COLUMN updatedAt

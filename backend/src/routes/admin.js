@@ -32,13 +32,14 @@ router.get('/settings', async (req, res) => {
 
 router.put('/settings', async (req, res) => {
   try {
-    const { appName, reviewIntervalMonths, ssoAutoProvision, ssoDefaultRole, ssoAllowedDomains, auditLogRetentionMonths, passwordPolicy, bruteForcePolicy } = req.body || {};
+    const { appName, reviewIntervalMonths, ssoAutoProvision, ssoDefaultRole, ssoAllowedDomains, ssoStrictRoleSync, auditLogRetentionMonths, passwordPolicy, bruteForcePolicy } = req.body || {};
     const patch = {};
     if (appName !== undefined) patch.appName = appName;
     if (reviewIntervalMonths !== undefined) patch.reviewIntervalMonths = parseInt(reviewIntervalMonths) || 12;
     if (ssoAutoProvision !== undefined) patch.ssoAutoProvision = !!ssoAutoProvision;
     if (ssoDefaultRole !== undefined) patch.ssoDefaultRole = ssoDefaultRole;
     if (ssoAllowedDomains !== undefined) patch.ssoAllowedDomains = String(ssoAllowedDomains).toLowerCase().trim();
+    if (ssoStrictRoleSync !== undefined) patch.ssoStrictRoleSync = !!ssoStrictRoleSync;
     if (auditLogRetentionMonths !== undefined) patch.auditLogRetentionMonths = Math.max(3, parseInt(auditLogRetentionMonths) || 15);
     if (passwordPolicy !== undefined) patch.passwordPolicy = passwordPolicy;
     if (bruteForcePolicy !== undefined) patch.bruteForcePolicy = bruteForcePolicy;

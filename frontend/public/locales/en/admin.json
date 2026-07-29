@@ -68,6 +68,8 @@
     "review_interval": "Default Review Interval (months)",
     "sso_default_role": "Default Role for New SSO Users",
     "sso_autoprovision": "Automatically create new SSO users (Auto-Provisioning)",
+    "sso_strict_role_sync": "Strictly sync roles from the identity provider",
+    "sso_strict_role_sync_hint": "Users matching no claim mapping are reset to the SSO default role on login, so removing a group in the identity provider also revokes access here. This affects manually assigned roles too; the last active administrator is never downgraded.",
     "saved": " Saved"
   },
   "roles": {
