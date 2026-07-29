@@ -16,6 +16,24 @@ const DEFAULT_PERMISSIONS = {
   policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
   reminders:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'] },
   vendors:     { view: ['admin','assessor','it-staff','dpo','management','viewer'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
+  // Compliance modules. requireModule() only says whether a module exists in this
+  // installation — it never looks at the user — so until now "this role may read
+  // the VVT but not edit it" could not be expressed. These entries mirror the
+  // guards each route already applies, so enforcement changes no access. DSGVO is
+  // one toggle but three areas, and each gets its own entry.
+  vvt:              { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], view_details: ['admin','assessor','dpo'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
+  dataflows:        { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
+  subject_requests: { view: ['admin','assessor','dpo'], create: ['admin','dpo'], edit: ['admin','dpo'], delete: ['admin'] },
+  iso27001:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
+  bsi_grundschutz:  { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
+  c5:               { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
+  nis2:             { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','dpo'], delete: ['admin','assessor'] },
+  tisax:            { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'] },
+  dora:             { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'] },
+  ai_act:           { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'] },
+  bcm:              { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin','assessor'] },
+  pentests:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'], delete_findings: ['admin','assessor','it-staff'] },
+  discovery:        { access: ['admin','it-staff'] },
   import:      { access: ['admin','assessor','it-staff'] },
   reports:     { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'] },
   admin:       { access: ['admin'] },

@@ -2,11 +2,11 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Nis2Measure, User } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/nis2Catalog');
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('nis2','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await Nis2Measure.findAll({
       include: [{ model: User, as: 'responsible', attributes: ['id', 'name', 'email'] }],
@@ -16,7 +16,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/seed', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/seed', authenticate, requirePermission('nis2','seed','admin','assessor'), async (req, res) => {
   try {
     const count = await Nis2Measure.count();
     if (count > 0) return res.status(409).json({ error: 'Katalog bereits geladen.' });
@@ -26,7 +26,7 @@ router.post('/seed', authenticate, requireRole('admin', 'assessor'), async (req,
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('nis2','edit','admin','assessor','dpo'), async (req, res) => {
   try {
     const item = await Nis2Measure.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -39,7 +39,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), async 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('nis2','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await Nis2Measure.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });

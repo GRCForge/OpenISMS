@@ -2,14 +2,14 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { TisaxAssessment, TisaxRequirement, User } = require('../models');
-const { authenticate, requireWriteAccess, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const tisaxCatalog = require('../services/tisaxCatalog');
 
 // ── VDA-ISA-Anforderungen (Reifegrad-Selbstbewertung) ────────────
 // Wichtig: vor den parametrischen /:id-Routen definiert.
 
-router.get('/requirements', authenticate, async (req, res) => {
+router.get('/requirements', authenticate, requirePermission('tisax','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await TisaxRequirement.findAll({ order: [['ref', 'ASC']] });
     res.json(items);
@@ -17,7 +17,7 @@ router.get('/requirements', authenticate, async (req, res) => {
 });
 
 // Lädt den VDA-ISA-Katalog, falls noch keine Anforderungen existieren
-router.post('/requirements/seed', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/requirements/seed', authenticate, requirePermission('tisax','seed','admin','assessor'), async (req, res) => {
   try {
     const count = await TisaxRequirement.count();
     if (count > 0) return res.status(409).json({ error: 'Katalog bereits geladen.' });
@@ -27,7 +27,7 @@ router.post('/requirements/seed', authenticate, requireRole('admin', 'assessor')
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/requirements', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/requirements', authenticate, requirePermission('tisax','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const { ref, chapter, title, question, maturity_level, target_level, status, notes } = req.body;
     const item = await TisaxRequirement.create({ ref, chapter, title, question, maturity_level, target_level, status, notes });
@@ -36,7 +36,7 @@ router.post('/requirements', authenticate, requireWriteAccess(), async (req, res
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/requirements/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/requirements/:id', authenticate, requirePermission('tisax','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const item = await TisaxRequirement.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -47,7 +47,7 @@ router.put('/requirements/:id', authenticate, requireWriteAccess(), async (req, 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/requirements/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/requirements/:id', authenticate, requirePermission('tisax','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await TisaxRequirement.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -59,7 +59,7 @@ router.delete('/requirements/:id', authenticate, requireRole('admin', 'assessor'
 
 // ── Assessments (Label-Tracking) ─────────────────────────────────
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('tisax','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await TisaxAssessment.findAll({
       include: [{ model: User, as: 'owner', attributes: ['id', 'name', 'email'] }],
@@ -69,7 +69,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/', authenticate, requirePermission('tisax','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const { scope_description, assessment_level, label_requested, status, auditor_company, assessment_date, label_valid_until, owner_id, notes } = req.body;
     const item = await TisaxAssessment.create({ scope_description, assessment_level, label_requested, status, auditor_company, assessment_date, label_valid_until, owner_id, notes });
@@ -78,7 +78,7 @@ router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('tisax','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const item = await TisaxAssessment.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -89,7 +89,7 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('tisax','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await TisaxAssessment.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });

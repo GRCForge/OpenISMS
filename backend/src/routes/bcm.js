@@ -2,13 +2,13 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { BcmProcess, BcmExercise, User } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 // ── Übungsprotokoll ──────────────────────────────────────────────
 // Wichtig: vor den parametrischen /:id-Routen definiert.
 
-router.get('/exercises', authenticate, async (req, res) => {
+router.get('/exercises', authenticate, requirePermission('bcm','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await BcmExercise.findAll({
       include: [{ model: BcmProcess, as: 'process', attributes: ['id', 'name', 'criticality'] }],
@@ -18,7 +18,7 @@ router.get('/exercises', authenticate, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.post('/exercises', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/exercises', authenticate, requirePermission('bcm','create','admin','assessor'), async (req, res) => {
   try {
     const { process_id, title, exercise_type, exercise_date, participants, result, findings, actions, notes } = req.body;
     const item = await BcmExercise.create({ process_id, title, exercise_type, exercise_date, participants, result, findings, actions, notes });
@@ -27,7 +27,7 @@ router.post('/exercises', authenticate, requireRole('admin', 'assessor'), async 
   } catch (e) { console.error('[BCM] POST /exercises', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.put('/exercises/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.put('/exercises/:id', authenticate, requirePermission('bcm','edit','admin','assessor'), async (req, res) => {
   try {
     const item = await BcmExercise.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -38,7 +38,7 @@ router.put('/exercises/:id', authenticate, requireRole('admin', 'assessor'), asy
   } catch (e) { console.error('[BCM] PUT /exercises/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.delete('/exercises/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/exercises/:id', authenticate, requirePermission('bcm','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await BcmExercise.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -50,7 +50,7 @@ router.delete('/exercises/:id', authenticate, requireRole('admin', 'assessor'), 
 
 // ── Prozessregister (BIA) ────────────────────────────────────────
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('bcm','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await BcmProcess.findAll({
       include: [{ model: User, as: 'owner', attributes: ['id', 'name', 'email'] }],
@@ -60,7 +60,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.post('/', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/', authenticate, requirePermission('bcm','create','admin','assessor'), async (req, res) => {
   try {
     const { name, description, criticality, rto_hours, rpo_hours, owner_id, dependencies, recovery_strategy, status, last_test_date, next_test_date, notes } = req.body;
     const item = await BcmProcess.create({ name, description, criticality, rto_hours, rpo_hours, owner_id, dependencies, recovery_strategy, status, last_test_date, next_test_date, notes });
@@ -69,7 +69,7 @@ router.post('/', authenticate, requireRole('admin', 'assessor'), async (req, res
   } catch (e) { console.error('[BCM] POST /', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.put('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('bcm','edit','admin','assessor'), async (req, res) => {
   try {
     const item = await BcmProcess.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -80,7 +80,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor'), async (req, r
   } catch (e) { console.error('[BCM] PUT /:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('bcm','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await BcmProcess.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
