@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Control, Policy, Iso27001Control } = require('../models');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 

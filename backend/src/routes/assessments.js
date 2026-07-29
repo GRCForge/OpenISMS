@@ -1,6 +1,6 @@
 const express = require('express');
 const { Assessment, Asset, User, Reminder, Task } = require('../models');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 

@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const { readSheet } = require('read-excel-file/node');
 const { Asset, User, Vendor, VendorContact, Risk } = require('../models');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });

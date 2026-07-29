@@ -8,7 +8,7 @@ const fs = require('fs');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, PolicyAcknowledgment } = require('../models');
-const { authenticate, requireRole, isAssessor, isItStaff, requirePermission } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 // Rate limiting for policy downloads to mitigate DoS (CWE-770)
