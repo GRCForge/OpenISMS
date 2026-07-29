@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import {
   CheckCircle, AlertTriangle, ChevronRight, Shield, FileWarning, Lock, Server, UserCheck, GitMerge,
   Plus, Trash2, Calendar, TrendingUp, Gauge, ClipboardCheck, Activity, Award, FileText, Pencil, ExternalLink, Paperclip, Download

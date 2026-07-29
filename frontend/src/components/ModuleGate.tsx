@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { useModules } from '../contexts/ModulesContext';
 import type { ModuleKey } from '../contexts/ModulesContext';
 

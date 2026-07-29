@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Plus, ShieldAlert, Grid3x3, Trash2, AlertTriangle, CheckCircle, ShieldCheck, Download, FileSpreadsheet, ChevronRight, Search, Shield, FolderOpen, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useKeyShortcut } from '../hooks/useKeyShortcut';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, AlertTriangle, Clock, ShieldAlert, X, Trash2, ChevronRight, AtSign, BellOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { format } from 'date-fns';
