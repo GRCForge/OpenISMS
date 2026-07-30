@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { AuditLog } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { verifyAuditRow } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -11,7 +11,7 @@ router.use(apiLimiter);
 
 // Integrity check: recompute the HMAC for every audit row and report any that were
 // tampered with (or predate the integrity feature and cannot be verified).
-router.get('/verify', authenticate, requireRole('admin'), async (req, res) => {
+router.get('/verify', authenticate, requirePermission('auditlog','verify','admin'), async (req, res) => {
   try {
     // Stream in batches so the append-only, unbounded audit_log never has to be
     // fully materialized in memory.
@@ -37,7 +37,7 @@ router.get('/verify', authenticate, requireRole('admin'), async (req, res) => {
   }
 });
 
-router.get('/', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.get('/', authenticate, requirePermission('auditlog','view','admin','assessor'), async (req, res) => {
   try {
     const { entity_type, action, actor_id, from, to, search, limit = 200, offset = 0 } = req.query;
     const where = {};

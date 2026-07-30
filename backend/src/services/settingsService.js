@@ -20,7 +20,17 @@ const DEFAULT_PERMISSIONS = {
   assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor'] },
   controls:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },
   policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
-  reminders:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'] },
+  // reminders had no 'create' route at all; what exists is acknowledging and
+  // dismissing, both behind requireWriteAccess. Renamed to match reality, and view
+  // reconciled to the eight roles the route actually admits.
+  reminders:   { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], acknowledge: ['admin','owner','assessor','it-staff','dpo'] },
+  tasks:       { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','owner','assessor','it-staff','dpo'], maintenance: ['admin'] },
+  groups:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], manage: ['admin'] },
+  threats:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin'] },
+  review:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], sign_off: ['admin','assessor'] },
+  modules:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], edit: ['admin'] },
+  auditlog:    { view: ['admin','assessor'], verify: ['admin'] },
+  comments:    { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','owner','assessor','it-staff','dpo'] },
   // vendors.js guarded inline with isItStaff()||isDpo(), which resolves to
   // admin/assessor/it-staff/dpo — wider than the create/edit lists shipped here.
   // Reconciled to what the handlers actually enforced. The two remaining inline

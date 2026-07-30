@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Task, User, Group, GroupMember, Notification, Asset, Risk, Incident, Training, AiSystem, SubjectRequest } = require('../models');
-const { authenticate, requireWriteAccess, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { Op } = require('sequelize');
 
@@ -47,7 +47,7 @@ async function getInactiveAssetIds() {
 }
 
 // List tasks with optional filters
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('tasks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const where = {};
     if (req.query.status) where.status = req.query.status;
@@ -78,7 +78,7 @@ router.get('/', async (req, res) => {
 });
 
 // My tasks — includes tasks directly assigned AND group tasks for user's groups
-router.get('/my', authenticate, async (req, res) => {
+router.get('/my', authenticate, requirePermission('tasks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     // Get the groups this user belongs to
     const memberOf = await GroupMember.findAll({ where: { user_id: req.user.id } });
@@ -104,7 +104,7 @@ router.get('/my', authenticate, async (req, res) => {
 });
 
 // Stats
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('tasks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     // Exclude tasks linked to inactive or decommissioned assets from stats
     const inactiveAssetIds = await getInactiveAssetIds();
@@ -128,7 +128,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // Count orphaned tasks (admin only) — safe preview before purge
-router.get('/orphaned-count', authenticate, requireRole('admin'), async (req, res) => {
+router.get('/orphaned-count', authenticate, requirePermission('tasks','maintenance','admin'), async (req, res) => {
   try {
     let total = 0;
     for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
@@ -148,7 +148,7 @@ router.get('/orphaned-count', authenticate, requireRole('admin'), async (req, re
 });
 
 // Purge orphaned tasks (admin only) — deletes tasks whose related object no longer exists
-router.delete('/orphaned', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/orphaned', authenticate, requirePermission('tasks','maintenance','admin'), async (req, res) => {
   try {
     let purged = 0;
     for (const [relType, { model, where }] of Object.entries(ORPHAN_CHECKS)) {
@@ -173,7 +173,7 @@ router.delete('/orphaned', authenticate, requireRole('admin'), async (req, res) 
 });
 
 // Get single task (verify user has access)
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('tasks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id, { include: taskInclude });
     if (!task) return res.status(404).json({ error: 'Not found' });
@@ -192,7 +192,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Create task
-router.post('/', requireWriteAccess(), async (req, res) => {
+router.post('/', requirePermission('tasks','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const payload = { ...req.body, created_by_id: req.user.id };
     // Mutually exclusive: group assignment clears user assignment and vice versa
@@ -224,7 +224,7 @@ router.post('/', requireWriteAccess(), async (req, res) => {
 });
 
 // Update task
-router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('tasks','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id);
     if (!task) return res.status(404).json({ error: 'Not found' });
@@ -286,7 +286,7 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
 
 
 // Delete task
-router.delete('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('tasks','delete','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id);
     if (!task) return res.status(404).json({ error: 'Not found' });

@@ -1,6 +1,6 @@
 const express = require('express');
 const { Reminder, Asset, Task } = require('../models');
-const { authenticate, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { Op } = require('sequelize');
 const { auditFromReq } = require('../services/auditService');
 
@@ -8,7 +8,7 @@ const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('reminders','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { status } = req.query;
     const where = status ? { status } : {};
@@ -21,7 +21,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.patch('/:id/acknowledge', authenticate, requireWriteAccess(), async (req, res) => {
+router.patch('/:id/acknowledge', authenticate, requirePermission('reminders','acknowledge','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const reminder = await Reminder.findByPk(req.params.id);
     if (!reminder) return res.status(404).json({ error: 'Not found' });
@@ -40,7 +40,7 @@ router.patch('/:id/acknowledge', authenticate, requireWriteAccess(), async (req,
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.patch('/:id/dismiss', authenticate, requireWriteAccess(), async (req, res) => {
+router.patch('/:id/dismiss', authenticate, requirePermission('reminders','acknowledge','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const reminder = await Reminder.findByPk(req.params.id);
     if (!reminder) return res.status(404).json({ error: 'Not found' });
