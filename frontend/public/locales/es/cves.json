@@ -14,7 +14,8 @@
     "high": "High",
     "medium": "Medium",
     "low": "Low",
-    "allSources": "All Sources"
+    "allSources": "All Sources",
+    "highCritical": "Alta y crítica"
   },
   "searchPlaceholder": "Search CVE ID, description or asset...",
   "table": {

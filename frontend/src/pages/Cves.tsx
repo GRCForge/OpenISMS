@@ -30,7 +30,9 @@ export const Cves: React.FC = () => {
   const [cves, setCves] = useState<CveItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('');
+  // The page opens on the actionable findings — high and critical — rather than on
+  // every CVE ever reported. 'allSeverities' is still one click away.
+  const [severityFilter, setSeverityFilter] = useState('high_critical');
   const [sourceFilter, setSourceFilter] = useState('');
 
   const load = () => {
@@ -61,7 +63,9 @@ export const Cves: React.FC = () => {
 
   const filtered = useMemo(() => {
     return cves.filter(c => {
-      if (severityFilter && c.severity !== severityFilter) return false;
+      if (severityFilter === 'high_critical') {
+        if (c.severity !== 'high' && c.severity !== 'critical') return false;
+      } else if (severityFilter && c.severity !== severityFilter) return false;
       if (sourceFilter && c.source !== sourceFilter) return false;
       
       if (search) {
@@ -147,13 +151,14 @@ export const Cves: React.FC = () => {
           onSearch={setSearch}
           searchPlaceholder={t('searchPlaceholder')}
           activeCount={[severityFilter, sourceFilter].filter(Boolean).length}
-          onReset={() => { setSearch(''); setSeverityFilter(''); setSourceFilter(''); }}
+          onReset={() => { setSearch(''); setSeverityFilter('high_critical'); setSourceFilter(''); }}
         >
           <Select
             className="w-44"
             value={severityFilter}
             onChange={e => setSeverityFilter(e.target.value)}
             options={[
+              { value: 'high_critical', label: t('filters.highCritical') },
               { value: '', label: t('filters.allSeverities') },
               { value: 'critical', label: t('filters.critical') },
               { value: 'high', label: t('filters.high') },

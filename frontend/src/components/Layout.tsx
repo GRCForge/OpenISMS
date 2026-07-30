@@ -68,6 +68,7 @@ const NAV_GROUPS: NavGroup[] = [
     groupKey: 'operations',
     items: [
       { path: '/assets',    icon: Server,       labelKey: 'assets' },
+      { path: '/cves',      icon: AlertTriangle, labelKey: 'cves', module: 'discovery', roles: ['admin', 'assessor', 'it-staff'] },
       { path: '/discovery', icon: Radar,        labelKey: 'discovery',  adminOnly: true, module: 'discovery' },
       { path: '/risks',     icon: ShieldAlert,  labelKey: 'risks' },
       { path: '/incidents', icon: AlertOctagon, labelKey: 'incidents' },

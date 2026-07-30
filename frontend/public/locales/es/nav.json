@@ -143,5 +143,6 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar"
   },
-  "version": "OpenISMS v{{version}} · © 2026 Maximilian Herz"
+  "version": "OpenISMS v{{version}} · © 2026 Maximilian Herz",
+  "cves": "Resumen de CVE"
 }

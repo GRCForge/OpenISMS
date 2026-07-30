@@ -14,6 +14,7 @@ import { Layout } from './components/Layout';
 const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
 const Assets = lazy(() => import('./pages/Assets').then(m => ({ default: m.Assets })));
+const Cves = lazy(() => import('./pages/Cves').then(m => ({ default: m.Cves })));
 const AssetDetail = lazy(() => import('./pages/AssetDetail').then(m => ({ default: m.AssetDetail })));
 const Topology = lazy(() => import('./pages/Topology').then(m => ({ default: m.Topology })));
 const Risks = lazy(() => import('./pages/Risks').then(m => ({ default: m.Risks })));
@@ -63,6 +64,7 @@ const App: React.FC = () => (
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="assets" element={<Assets />} />
+              <Route path="cves" element={<RoleGate roles={['admin', 'assessor', 'it-staff']}><Cves /></RoleGate>} />
               <Route path="assets/:id" element={<AssetDetail />} />
               <Route path="topology" element={<Topology />} />
               <Route path="risks" element={<Risks />} />
