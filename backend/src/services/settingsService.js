@@ -15,7 +15,11 @@ const DEFAULT_PERMISSIONS = {
   controls:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },
   policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
   reminders:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'] },
-  vendors:     { view: ['admin','assessor','it-staff','dpo','management','viewer'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
+  // vendors.js guarded inline with isItStaff()||isDpo(), which resolves to
+  // admin/assessor/it-staff/dpo — wider than the create/edit lists shipped here.
+  // Reconciled to what the handlers actually enforced. The two remaining inline
+  // checks shape which fields come back, not who may call the route, so they stay.
+  vendors:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit: ['admin','assessor','it-staff','dpo'], delete: ['admin'], contacts: ['admin','assessor','it-staff','dpo'], assess: ['admin','assessor','it-staff','dpo'] },
   // Compliance content areas. compliance.js serves three unrelated things behind one
   // path — KPIs, audits with their findings, and trainings — with different guards
   // each, so they get separate entries rather than one that flattens the difference.
