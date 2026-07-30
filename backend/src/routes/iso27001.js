@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Iso27001Control, User, Control } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/iso27001Catalog');
 
@@ -14,7 +14,7 @@ const ISO_TO_SOA = {
   in_progress: 'planned',
 };
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('iso27001','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await Iso27001Control.findAll({
       include: [{ model: User, as: 'owner', attributes: ['id', 'name', 'email'] }],
@@ -24,7 +24,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/seed', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/seed', authenticate, requirePermission('iso27001','seed','admin','assessor'), async (req, res) => {
   try {
     const count = await Iso27001Control.count();
     if (count > 0) return res.status(409).json({ error: 'Katalog bereits geladen.' });
@@ -34,7 +34,7 @@ router.post('/seed', authenticate, requireRole('admin', 'assessor'), async (req,
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireRole('admin', 'assessor', 'it-staff'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('iso27001','edit','admin','assessor','it-staff'), async (req, res) => {
   try {
     const item = await Iso27001Control.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -52,7 +52,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'it-staff'), a
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('iso27001','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await Iso27001Control.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });

@@ -1,6 +1,6 @@
 {
   "name": "openisms-backend",
-  "version": "2.2.18",
+  "version": "2.2.19",
   "engines": {
     "node": ">=26.3.0"
   },
@@ -32,7 +32,7 @@
     "mysql2": "^3.23.2",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.3",
-    "openai": "^7.0.0",
+    "openai": "^7.1.0",
     "openid-client": "^6.8.4",
     "otplib": "^13.4.1",
     "passport": "^0.7.0",

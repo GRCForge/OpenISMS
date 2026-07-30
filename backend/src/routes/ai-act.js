@@ -3,10 +3,10 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { AiSystem, User, Vendor, Task } = require('../models');
 const { Op } = require('sequelize');
-const { authenticate, requireWriteAccess, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('ai_act','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await AiSystem.findAll({
       include: [
@@ -19,7 +19,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/', authenticate, requirePermission('ai_act','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const data = { ...req.body };
     ['owner_id', 'vendor_id'].forEach(f => { if (data[f] === '') data[f] = null; });
@@ -31,7 +31,7 @@ router.post('/', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('ai_act','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const item = await AiSystem.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -46,7 +46,7 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('ai_act','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await AiSystem.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });

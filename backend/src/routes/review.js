@@ -1,14 +1,14 @@
 const express = require('express');
 const { fn, col, Op } = require('sequelize');
 const { Asset, Risk, Control, Incident, Reminder, ReviewSignOff, User } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
 // Aggregierte Kennzahlen fuer das Management-Review (ISO 27001 Kap. 9.3).
-router.get('/kpis', authenticate, async (req, res) => {
+router.get('/kpis', authenticate, requirePermission('review','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const [
       totalAssets, activeAssets,
@@ -47,7 +47,7 @@ router.get('/kpis', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.get('/sign-offs', authenticate, async (req, res) => {
+router.get('/sign-offs', authenticate, requirePermission('review','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const signOffs = await ReviewSignOff.findAll({
       include: [{ model: User, as: 'approvedBy', attributes: ['id', 'name', 'email'] }],
@@ -57,7 +57,7 @@ router.get('/sign-offs', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/sign-off', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/sign-off', authenticate, requirePermission('review','sign_off','admin','assessor'), async (req, res) => {
   try {
     const { report_date, notes } = req.body;
     const signOff = await ReviewSignOff.create({

@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { DataFlow, Asset } = require('../models');
-const { authenticate, requireRole, isAdmin, isAssessor, isDpo } = require('../middleware/auth');
+const { authenticate, isAdmin, isAssessor, isDpo, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -13,7 +13,7 @@ const flowInclude = [
 ];
 
 // List all data flows
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('dataflows','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const where = {};
     if (req.query.status) where.status = req.query.status;
@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get single flow (only admin, assessor, dpo can access)
-router.get('/:id', async (req, res) => {
+router.get('/:id', requirePermission('dataflows','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     // Verify authorization: only admin, assessor, dpo
     if (!isAdmin(req) && !isAssessor(req) && !isDpo(req)) {
@@ -43,7 +43,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create
-router.post('/', requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/', requirePermission('dataflows','create','admin','assessor'), async (req, res) => {
   try {
     const { name, description, source_id, target_id, data_categories, transfer_mechanism, encryption, frequency, contains_personal_data, notes, status } = req.body;
     const flow = await DataFlow.create({ name, description, source_id, target_id, data_categories, transfer_mechanism, encryption, frequency, contains_personal_data, notes, status });
@@ -58,7 +58,7 @@ router.post('/', requireRole('admin', 'assessor'), async (req, res) => {
 });
 
 // Update
-router.put('/:id', requireRole('admin', 'assessor'), async (req, res) => {
+router.put('/:id', requirePermission('dataflows','edit','admin','assessor'), async (req, res) => {
   try {
     const flow = await DataFlow.findByPk(req.params.id);
     if (!flow) return res.status(404).json({ error: 'Not found' });
@@ -87,7 +87,7 @@ router.put('/:id', requireRole('admin', 'assessor'), async (req, res) => {
 });
 
 // Delete
-router.delete('/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:id', requirePermission('dataflows','delete','admin'), async (req, res) => {
   try {
     const flow = await DataFlow.findByPk(req.params.id);
     if (!flow) return res.status(404).json({ error: 'Not found' });

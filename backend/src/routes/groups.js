@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Group, GroupMember, User } = require('../models');
-const { authenticate, requireWriteAccess, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -12,7 +12,7 @@ const groupInclude = [
 ];
 
 // List all groups
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('groups','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const groups = await Group.findAll({ include: groupInclude, order: [['name', 'ASC']] });
     res.json(groups);
@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get single group (all authenticated users can view)
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('groups','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id, { include: groupInclude });
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -30,7 +30,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Create group (admin only)
-router.post('/', requireRole('admin'), async (req, res) => {
+router.post('/', requirePermission('groups','manage','admin'), async (req, res) => {
   try {
     const { name, description, color } = req.body;
     if (!name?.trim()) return res.status(400).json({ error: 'Name erforderlich' });
@@ -42,7 +42,7 @@ router.post('/', requireRole('admin'), async (req, res) => {
 });
 
 // Update group (admin only)
-router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('groups','manage','admin'), async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id);
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -55,7 +55,7 @@ router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
 });
 
 // Delete group (admin only)
-router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('groups','manage','admin'), async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id);
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -67,7 +67,7 @@ router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
 });
 
 // Add member to group (admin only)
-router.post('/:id/members', requireRole('admin'), async (req, res) => {
+router.post('/:id/members', requirePermission('groups','manage','admin'), async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id);
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -82,7 +82,7 @@ router.post('/:id/members', requireRole('admin'), async (req, res) => {
 });
 
 // Remove member from group (admin only)
-router.delete('/:id/members/:userId', requireRole('admin'), async (req, res) => {
+router.delete('/:id/members/:userId', requirePermission('groups','manage','admin'), async (req, res) => {
   try {
     const deleted = await GroupMember.destroy({ where: { group_id: req.params.id, user_id: req.params.userId } });
     if (!deleted) return res.status(404).json({ error: 'Mitglied nicht gefunden' });

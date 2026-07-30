@@ -4,7 +4,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { SubjectRequest, User, Task } = require('../models');
 const { Op } = require('sequelize');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -15,7 +15,7 @@ const include = [
   { model: User, as: 'handler', attributes: ['id', 'name', 'email'] },
 ];
 
-router.get('/', requireRole('admin', 'dpo', 'assessor'), async (req, res) => {
+router.get('/', requirePermission('subject_requests','view','admin','dpo','assessor'), async (req, res) => {
   try {
     const requests = await SubjectRequest.findAll({
       include,
@@ -27,7 +27,7 @@ router.get('/', requireRole('admin', 'dpo', 'assessor'), async (req, res) => {
   }
 });
 
-router.post('/', canWrite, async (req, res) => {
+router.post('/', requirePermission('subject_requests','create','admin','dpo'), async (req, res) => {
   try {
     const body = { ...req.body };
 
@@ -55,7 +55,7 @@ const ALLOWED_UPDATE_FIELDS = [
   'description', 'decision', 'notes', 'handler_id',
 ];
 
-router.put('/:id', canWrite, async (req, res) => {
+router.put('/:id', requirePermission('subject_requests','edit','admin','dpo'), async (req, res) => {
   try {
     const request = await SubjectRequest.findByPk(req.params.id);
     if (!request) return res.status(404).json({ error: 'Not found' });
@@ -84,7 +84,7 @@ router.put('/:id', canWrite, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('subject_requests','delete','admin'), async (req, res) => {
   try {
     const request = await SubjectRequest.findByPk(req.params.id);
     if (!request) return res.status(404).json({ error: 'Not found' });
