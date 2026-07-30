@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Nis2Measure, User } = require('../models');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/nis2Catalog');
 
@@ -31,7 +31,7 @@ router.put('/:id', authenticate, requirePermission('nis2','edit','admin','assess
     const item = await Nis2Measure.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
     
-    // Verify user has authorization (already checked by requireRole middleware above)
+    // Authorization is settled by the requirePermission guard on the route above.
     const { implementation_status, responsible_id, evidence, deadline, notes, last_review_date } = req.body;
     await item.update({ implementation_status, responsible_id, evidence, deadline, notes, last_review_date });
     await auditFromReq(req, 'update', 'nis2_measure', item.id, item.article_ref, {});
@@ -44,7 +44,7 @@ router.delete('/:id', authenticate, requirePermission('nis2','delete','admin','a
     const item = await Nis2Measure.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
     
-    // Verify user has authorization (already checked by requireRole middleware above)
+    // Authorization is settled by the requirePermission guard on the route above.
     await auditFromReq(req, 'delete', 'nis2_measure', item.id, item.article_ref, {});
     await item.destroy();
     res.json({ ok: true });
