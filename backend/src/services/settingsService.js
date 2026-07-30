@@ -8,7 +8,13 @@ const { encrypt, decrypt } = require('./cryptoService');
 // were reconciled against the guards the routes actually apply, so switching
 // enforcement on changes no access; tightening is now a deliberate admin edit.
 const DEFAULT_PERMISSIONS = {
-  assets:      { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], edit_basics: ['admin','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','assessor','it-staff'], delete: ['admin'] },
+  // assets.js authorises on three levels and only the first is an endpoint
+  // decision: the route guard (below), then a per-record check (owner/assessor of
+  // that asset may edit it), then a per-field one (classification, nis2_relevant,
+  // rto, rpo need assessor/dpo/admin). Only the route level moves into the matrix;
+  // the other two stay in the handler, where they belong. edit_compliance names the
+  // protected-field rule so it is at least visible and adjustable.
+  assets:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit_basics: ['admin','owner','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','assessor','it-staff'], delete: ['admin'], cve: ['admin','assessor','it-staff'] },
   risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'] },
   incidents:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin','assessor'] },
   assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor'] },
