@@ -16,6 +16,16 @@ const DEFAULT_PERMISSIONS = {
   policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
   reminders:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'] },
   vendors:     { view: ['admin','assessor','it-staff','dpo','management','viewer'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
+  // Compliance content areas. compliance.js serves three unrelated things behind one
+  // path — KPIs, audits with their findings, and trainings — with different guards
+  // each, so they get separate entries rather than one that flattens the difference.
+  // Where a route combined requireRole with requireWriteAccess the list below is the
+  // intersection, which is what actually applied.
+  compliance:            { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'] },
+  compliance_kpis:       { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'], measure: ['admin','owner','assessor','it-staff','dpo'] },
+  compliance_audits:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'], create_findings: ['admin','assessor'], edit_findings: ['admin','owner','assessor','it-staff','dpo'], delete_findings: ['admin','assessor'] },
+  compliance_trainings:  { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin','assessor'], contest: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'] },
+
   // Compliance modules. requireModule() only says whether a module exists in this
   // installation — it never looks at the user — so until now "this role may read
   // the VVT but not edit it" could not be expressed. These entries mirror the
