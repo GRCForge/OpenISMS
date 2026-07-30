@@ -74,21 +74,21 @@
   },
   "roles": {
     "admin": "Administrator",
-    "assessor": "Assessor",
+    "assessor": "Assessor / Auditor",
     "it-staff": "IT Staff",
     "dpo": "Data Protection Officer",
     "owner": "Asset Owner",
     "management": "Management",
     "employee": "Employee",
-    "viewer": "Viewer",
+    "viewer": "Read-only",
     "admin_short": "Admin",
     "assessor_short": "Assessor",
-    "it-staff_short": "IT-Staff",
+    "it-staff_short": "IT",
     "dpo_short": "DPO",
     "owner_short": "Owner",
-    "management_short": "Management",
+    "management_short": "Mgmt",
     "employee_short": "Employee",
-    "viewer_short": "Viewer"
+    "viewer_short": "Read-only"
   },
   "security": {
     "purge_confirm": "Delete audit log entries beyond the retention period now? This process is irreversible.",
@@ -124,7 +124,10 @@
     "name_placeholder": "Name (e.g. Cloud-Admin)",
     "add_btn": "Add Role",
     "saved": "Saved.",
-    "error": "Error"
+    "error": "Error",
+    "own_permissions": "Define dedicated permissions for this role",
+    "own_permissions_hint": "Without dedicated permissions the base role applies. Actions not listed here keep following the base role.",
+    "edit_title": "Edit role: {{name}}"
   },
   "oidc_mappings": {
     "title": "OIDC Claim Mappings",
@@ -246,14 +249,14 @@
     "saved": "Saved"
   },
   "actions": {
-    "view": "Read",
+    "view": "View",
     "create": "Create",
     "edit": "Edit",
     "delete": "Delete",
     "access": "Access",
-    "edit_basics": "Edit Base Data",
-    "edit_compliance": "Edit Compliance",
-    "edit_security": "Edit Security"
+    "edit_basics": "Edit basics",
+    "edit_compliance": "Edit compliance data",
+    "edit_security": "Edit security data"
   },
   "llm": {
     "title": "AI / LLM Configuration",

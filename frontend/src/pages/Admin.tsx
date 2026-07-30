@@ -387,12 +387,9 @@ const SecuritySettings: React.FC = () => {
 };
 
 // ---------------- RBAC / Rollen & Rechte ----------------
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Admin', assessor: 'Assessor', 'it-staff': 'IT-Staff', dpo: 'DPO', owner: 'Owner', management: 'Management', viewer: 'Viewer',
-};
-
 // ---- Custom Roles ----
-interface CustomRoleItem { id: number; name: string; description: string | null; base_role: string; users_count?: number; }
+type PermMatrix = Record<string, Record<string, boolean>>;
+interface CustomRoleItem { id: number; name: string; description: string | null; base_role: string; users_count?: number; permissions?: PermMatrix | null; }
 interface OidcMappingItem { id: number; claim_path: string; claim_value: string; role: string | null; custom_role_id: number | null; priority: number; customRole?: { id: number; name: string; base_role: string } | null; }
 
 const BASE_ROLES = ['admin', 'assessor', 'dpo', 'employee', 'it-staff', 'management', 'owner', 'viewer'] as const;
@@ -405,19 +402,44 @@ const CustomRolesEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const load = () => api.get('/admin/custom-roles').then(r => setRoles(r.data)).catch(() => {});
-  useEffect(() => { load(); }, []);
+  // Module/action skeleton comes from the global matrix, so a role editor always
+  // offers exactly the permissions the backend knows about.
+  const [skeleton, setSkeleton] = useState<Record<string, string[]>>({});
+  const [ownPerms, setOwnPerms] = useState(false);
+  const [matrix, setMatrix] = useState<PermMatrix>({});
 
-  const startEdit = (r: CustomRoleItem) => { setEditId(r.id); setForm({ name: r.name, description: r.description || '', base_role: r.base_role }); };
-  const cancelEdit = () => { setEditId(null); setForm({}); };
+  const load = () => api.get('/admin/custom-roles').then(r => setRoles(r.data)).catch(() => {});
+  useEffect(() => {
+    load();
+    api.get('/admin/permissions')
+      .then(r => setSkeleton(Object.fromEntries(
+        Object.entries(r.data.permissions as Record<string, Record<string, string[]>>)
+          .map(([m, actions]) => [m, Object.keys(actions)]))))
+      .catch(() => {});
+  }, []);
+
+  const resetPerms = () => { setOwnPerms(false); setMatrix({}); };
+  const startEdit = (r: CustomRoleItem) => {
+    setEditId(r.id);
+    setForm({ name: r.name, description: r.description || '', base_role: r.base_role });
+    setOwnPerms(!!r.permissions);
+    setMatrix(r.permissions || {});
+  };
+  const cancelEdit = () => { setEditId(null); setForm({}); resetPerms(); };
+
+  const togglePerm = (module: string, action: string) =>
+    setMatrix(m => ({ ...m, [module]: { ...m[module], [action]: !m[module]?.[action] } }));
 
   const save = async () => {
     if (!form.name?.trim()) return;
     setSaving(true); setMsg('');
     try {
-      if (editId) { await api.put(`/admin/custom-roles/${editId}`, form); }
-      else { await api.post('/admin/custom-roles', form); }
-      setForm({}); setEditId(null); await load(); setMsg(t('custom_roles.saved'));
+      // null means "no matrix of its own" — the role then follows the global
+      // matrix for its base role, which is what every role did before this editor.
+      const body = { ...form, permissions: ownPerms ? matrix : null };
+      if (editId) { await api.put(`/admin/custom-roles/${editId}`, body); }
+      else { await api.post('/admin/custom-roles', body); }
+      setForm({}); setEditId(null); resetPerms(); await load(); setMsg(t('custom_roles.saved'));
     } catch (e: any) { setMsg(e.response?.data?.error || t('custom_roles.error')); }
     finally { setSaving(false); }
   };
@@ -455,7 +477,7 @@ const CustomRolesEditor: React.FC = () => {
                         <td className="px-4 py-2"><Input value={form.name || ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="text-sm" /></td>
                         <td className="px-4 py-2">
                           <Select value={form.base_role || 'viewer'} onChange={e => setForm(f => ({ ...f, base_role: e.target.value }))}>
-                            {BASE_ROLES.map(br => <option key={br} value={br}>{t('roles.' + br + '_short', { defaultValue: br })}</option>)}
+                            {BASE_ROLES.map(br => <option key={br} value={br}>{t('roles.' + br, { defaultValue: br })}</option>)}
                           </Select>
                         </td>
                         <td className="px-4 py-2 hidden sm:table-cell"><Input value={form.description || ''} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="text-sm" placeholder={t('custom_roles.description_placeholder')} /></td>
@@ -489,16 +511,47 @@ const CustomRolesEditor: React.FC = () => {
           </div>
         )}
         <div className="border dark:border-slate-700 rounded-xl p-4 bg-gray-50/50 dark:bg-slate-800/30">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{t('custom_roles.add_title')}</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            {editId ? t('custom_roles.edit_title', { name: form.name || '' }) : t('custom_roles.add_title')}
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input placeholder={t('custom_roles.name_placeholder')} value={form.name || ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             <Select value={form.base_role || 'viewer'} onChange={e => setForm(f => ({ ...f, base_role: e.target.value }))}>
-              {BASE_ROLES.map(br => <option key={br} value={br}>{t('roles.' + br + '_short', { defaultValue: br })}</option>)}
+              {BASE_ROLES.map(br => <option key={br} value={br}>{t('roles.' + br, { defaultValue: br })}</option>)}
             </Select>
             <Input placeholder={t('custom_roles.description_placeholder')} value={form.description || ''} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
           </div>
-          <div className="flex items-center gap-3 mt-3">
-            <Button size="sm" onClick={save} disabled={saving || !form.name?.trim()}>{saving ? t('save_saving') : t('custom_roles.add_btn')}</Button>
+          <label className="flex items-start gap-3 mt-4 cursor-pointer">
+            <input type="checkbox" checked={ownPerms} onChange={e => { setOwnPerms(e.target.checked); if (!e.target.checked) setMatrix({}); }} className="w-4 h-4 mt-0.5 rounded text-blue-600" />
+            <span>
+              <span className="block text-sm font-medium dark:text-slate-200">{t('custom_roles.own_permissions')}</span>
+              <span className="block text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('custom_roles.own_permissions_hint')}</span>
+            </span>
+          </label>
+
+          {ownPerms && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {Object.entries(skeleton).map(([module, actions]) => (
+                <div key={module} className="border dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900/50">
+                  <div className="px-3 py-2 bg-gray-50 dark:bg-slate-800/50 border-b dark:border-slate-700">
+                    <span className="text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">{t('modules.' + module, { defaultValue: module })}</span>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    {actions.map(action => (
+                      <label key={action} className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input type="checkbox" checked={!!matrix[module]?.[action]} onChange={() => togglePerm(module, action)} className="w-4 h-4 rounded text-blue-600" />
+                        <span className="dark:text-slate-300">{t('actions.' + action, { defaultValue: action })}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 mt-4">
+            <Button size="sm" onClick={save} disabled={saving || !form.name?.trim()}>{saving ? t('save_saving') : (editId ? t('save') : t('custom_roles.add_btn'))}</Button>
+            {editId && <Button size="sm" variant="secondary" onClick={cancelEdit}>{t('cancel', { defaultValue: '✕' })}</Button>}
             {msg && <span className="text-xs text-green-600 dark:text-green-400">{msg}</span>}
           </div>
         </div>
@@ -602,7 +655,7 @@ const OidcMappingsEditor: React.FC = () => {
                 </Select>
               ) : (
                 <Select label={t('oidc_mappings.standard_role_label')} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
-                  {BASE_ROLES.map(r => <option key={r} value={r}>{t('roles.' + r + '_short', { defaultValue: r })}</option>)}
+                  {BASE_ROLES.map(r => <option key={r} value={r}>{t('roles.' + r, { defaultValue: r })}</option>)}
                 </Select>
               )}
             </div>
@@ -676,7 +729,7 @@ const RbacEditor: React.FC = () => {
             <div className="w-full sm:w-64">
               <Select value={selectedRole} onChange={e => setSelectedRole(e.target.value)}>
                 {roles.map(r => (
-                  <option key={r} value={r}>{t('roles.' + r + '_short', { defaultValue: r })}</option>
+                  <option key={r} value={r}>{t('roles.' + r, { defaultValue: r })}</option>
                 ))}
               </Select>
             </div>
@@ -1407,7 +1460,10 @@ export const Admin: React.FC = () => {
       </div>
 
       <div className="border-b border-gray-200 dark:border-slate-800">
-        <nav className="flex gap-1 -mb-px overflow-x-auto no-scrollbar scroll-smooth">
+        {/* Eleven tabs no longer fit one row on a laptop. The bar scrolled, but
+            no-scrollbar hid the only hint that it did, so the last entries just
+            looked cut off. Wrap from md up; keep the swipe on narrow screens. */}
+        <nav className="flex gap-1 -mb-px overflow-x-auto no-scrollbar scroll-smooth md:flex-wrap md:overflow-x-visible">
           {tabs.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${

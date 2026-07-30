@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { VvtEntry, User, Vendor, Asset, Dsfa } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -20,7 +20,7 @@ const applyLinks = async (entry, body) => {
 };
 
 // List all VVT entries
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('vvt','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const entries = await VvtEntry.findAll({
       include: includeAll,
@@ -33,7 +33,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Get single entry
-router.get('/:id', requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.get('/:id', requirePermission('vvt','view_details','admin','assessor','dpo'), async (req, res) => {
   try {
     const entry = await VvtEntry.findByPk(req.params.id, {
       include: includeAll,
@@ -51,7 +51,7 @@ const pickVvtFields = (body) => {
 };
 
 // Create entry (dpo, admin, assessor)
-router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.post('/', authenticate, requirePermission('vvt','create','admin','assessor','dpo'), async (req, res) => {
   try {
     const fields = pickVvtFields(req.body);
     const entry = await VvtEntry.create(fields);
@@ -65,7 +65,7 @@ router.post('/', authenticate, requireRole('admin', 'assessor', 'dpo'), async (r
 });
 
 // Update entry
-router.put('/:id', requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.put('/:id', requirePermission('vvt','edit','admin','assessor','dpo'), async (req, res) => {
   try {
     const entry = await VvtEntry.findByPk(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Not found' });
@@ -97,7 +97,7 @@ router.put('/:id', requireRole('admin', 'assessor', 'dpo'), async (req, res) => 
 // ── DSFA (Datenschutz-Folgenabschätzung, Art. 35) ──────────────────────────
 // Must be defined before /:id routes to avoid conflicts.
 
-router.get('/:vvtId/dsfa', requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.get('/:vvtId/dsfa', requirePermission('vvt','view_details','admin','assessor','dpo'), async (req, res) => {
   try {
     const item = await Dsfa.findOne({
       where: { vvt_id: req.params.vvtId },
@@ -112,7 +112,7 @@ const pickDsfaFields = (body) => {
   return { title, processing_description, necessity_assessment, risks_identified, measures_taken, residual_risk, dpa_consultation_required, status, approver_id, approval_date, next_review_date, notes };
 };
 
-router.post('/:vvtId/dsfa', requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.post('/:vvtId/dsfa', requirePermission('vvt','create','admin','assessor','dpo'), async (req, res) => {
   try {
     const existing = await Dsfa.findOne({ where: { vvt_id: req.params.vvtId } });
     if (existing) return res.status(409).json({ error: 'DSFA für diesen Eintrag bereits vorhanden.' });
@@ -122,7 +122,7 @@ router.post('/:vvtId/dsfa', requireRole('admin', 'assessor', 'dpo'), async (req,
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/:vvtId/dsfa/:id', requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.put('/:vvtId/dsfa/:id', requirePermission('vvt','edit','admin','assessor','dpo'), async (req, res) => {
   try {
     const item = await Dsfa.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -132,7 +132,7 @@ router.put('/:vvtId/dsfa/:id', requireRole('admin', 'assessor', 'dpo'), async (r
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:vvtId/dsfa/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:vvtId/dsfa/:id', requirePermission('vvt','delete','admin'), async (req, res) => {
   try {
     const item = await Dsfa.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -145,7 +145,7 @@ router.delete('/:vvtId/dsfa/:id', requireRole('admin'), async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 
 // Delete entry (admin/dpo only)
-router.delete('/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:id', requirePermission('vvt','delete','admin'), async (req, res) => {
   try {
     const entry = await VvtEntry.findByPk(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Not found' });

@@ -124,7 +124,10 @@
     "name_placeholder": "Name (e.g. Cloud-Admin)",
     "add_btn": "Add Role",
     "saved": "Saved.",
-    "error": "Error"
+    "error": "Error",
+    "own_permissions": "Define dedicated permissions for this role",
+    "own_permissions_hint": "Without dedicated permissions the base role applies. Actions not listed here keep following the base role.",
+    "edit_title": "Edit role: {{name}}"
   },
   "oidc_mappings": {
     "title": "OIDC Claim Mappings",
