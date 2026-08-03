@@ -32,7 +32,7 @@
     "mysql2": "^3.23.2",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.3",
-    "openai": "^7.1.0",
+    "openai": "^7.3.0",
     "openid-client": "^6.8.4",
     "otplib": "^13.4.1",
     "passport": "^0.7.0",
