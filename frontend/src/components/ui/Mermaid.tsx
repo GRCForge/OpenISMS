@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { useTheme } from '../../contexts/ThemeContext';
+import { renderMermaidSvg } from '../../lib/mermaid';
 
 interface MermaidProps {
   chart: string;
@@ -47,7 +48,12 @@ export const Mermaid: React.FC<MermaidProps> = ({ chart, className = '' }) => {
       .render(id, chart)
       .then(({ svg, bindFunctions }: { svg: string; bindFunctions?: (el: Element) => void }) => {
         if (cancelled || !ref.current) return;
-        ref.current.innerHTML = svg; // NOSONAR(typescript:S5247) - SVG from Mermaid with securityLevel:'strict'; htmlLabels:false
+        // No innerHTML: the SVG string is parsed, scrubbed of anything
+        // executable and adopted as a DOM node (see lib/mermaid.ts).
+        if (!renderMermaidSvg(ref.current, svg)) {
+          setError(true);
+          return;
+        }
         bindFunctions?.(ref.current);
         setError(false);
 

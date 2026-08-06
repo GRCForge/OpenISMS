@@ -14,10 +14,40 @@ const requireTriageAccess = (req, res, next) => {
 };
 router.use(authenticate, requireTriageAccess);
 
+// Every identifier that ends up in a Sequelize `where` clause is coerced to a
+// positive integer first. Values taken straight from req.params/req.body may be
+// objects or arrays (a JSON body can send `{"document_id": {"ne": 0}}`), and
+// Sequelize interprets a nested object as an operator expression rather than an
+// equality check — that turns a scoped lookup into an attacker-controlled query.
+const parsePositiveInt = (value) => {
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+// Resolves :vendorId (and :runId where present) once per request; rejects
+// anything that is not a plain positive integer with 400.
+const parseIds = (req, res) => {
+  const vendorId = parsePositiveInt(req.params.vendorId);
+  if (vendorId === null) {
+    res.status(400).json({ error: 'Invalid vendor id' });
+    return null;
+  }
+  if (req.params.runId === undefined) return { vendorId };
+  const runId = parsePositiveInt(req.params.runId);
+  if (runId === null) {
+    res.status(400).json({ error: 'Invalid run id' });
+    return null;
+  }
+  return { vendorId, runId };
+};
+
 // List triage runs for a vendor
 router.get('/', async (req, res) => {
   try {
-    const { vendorId } = req.params;
+    const ids = parseIds(req, res);
+    if (!ids) return;
+    const { vendorId } = ids;
     const vendor = await Vendor.findByPk(vendorId);
     if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
 
@@ -36,7 +66,9 @@ router.get('/', async (req, res) => {
 // Get a single triage run with findings
 router.get('/:runId', async (req, res) => {
   try {
-    const { vendorId, runId } = req.params;
+    const ids = parseIds(req, res);
+    if (!ids) return;
+    const { vendorId, runId } = ids;
     const run = await VendorTriageRun.findOne({
       where: { id: runId, vendor_id: vendorId },
       include: [
@@ -57,20 +89,25 @@ router.post('/', authenticate, async (req, res) => {
   if (!isItStaff(req) && !isDpo(req) && !isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
 
   try {
-    const { vendorId } = req.params;
+    const ids = parseIds(req, res);
+    if (!ids) return;
+    const { vendorId } = ids;
     const { document_id, doc_type } = req.body;
 
     const vendor = await Vendor.findByPk(vendorId);
     if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
 
-    if (!document_id) return res.status(400).json({ error: 'document_id is required' });
+    const documentId = parsePositiveInt(document_id);
+    if (documentId === null) return res.status(400).json({ error: 'document_id is required' });
 
-    const doc = await Document.findOne({ where: { id: document_id, vendor_id: vendorId } });
+    const doc = await Document.findOne({ where: { id: documentId, vendor_id: vendorId } });
     if (!doc) return res.status(404).json({ error: 'Document not found for this vendor' });
 
     const { getProfiles } = require('../services/triageProfiles');
     const profiles = await getProfiles();
-    const resolvedDocType = profiles[doc_type] ? doc_type : 'other';
+    // doc_type indexes into the profile map — only accept a string key, so a
+    // crafted body cannot reach the lookup with an object or array.
+    const resolvedDocType = typeof doc_type === 'string' && Object.hasOwn(profiles, doc_type) ? doc_type : 'other';
 
     const run = await VendorTriageRun.create({
       vendor_id: vendorId,
@@ -80,7 +117,7 @@ router.post('/', authenticate, async (req, res) => {
       triggered_by_id: req.user.id,
     });
 
-    await auditFromReq(req, 'create', 'vendor', parseInt(vendorId), vendor.name, {
+    await auditFromReq(req, 'create', 'vendor', vendorId, vendor.name, {
       action: 'triage_started',
       run_id: run.id,
       document: doc.original_name,
@@ -99,7 +136,9 @@ router.post('/', authenticate, async (req, res) => {
 // from the same document and doc type.
 router.post('/:runId/retry', async (req, res) => {
   try {
-    const { vendorId, runId } = req.params;
+    const ids = parseIds(req, res);
+    if (!ids) return;
+    const { vendorId, runId } = ids;
     const prev = await VendorTriageRun.findOne({ where: { id: runId, vendor_id: vendorId } });
     if (!prev) return res.status(404).json({ error: 'Triage run not found' });
     if (!prev.document_id) return res.status(400).json({ error: 'Original document is no longer available' });
@@ -122,7 +161,9 @@ router.post('/:runId/retry', async (req, res) => {
 router.delete('/:runId', authenticate, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
   try {
-    const { vendorId, runId } = req.params;
+    const ids = parseIds(req, res);
+    if (!ids) return;
+    const { vendorId, runId } = ids;
     const run = await VendorTriageRun.findOne({ where: { id: runId, vendor_id: vendorId } });
     if (!run) return res.status(404).json({ error: 'Not found' });
     await VendorFinding.destroy({ where: { triage_run_id: run.id } });
