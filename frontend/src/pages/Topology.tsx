@@ -5,6 +5,7 @@ import api from '../lib/api';
 import type { Asset, RiskLevel } from '../types';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Mermaid } from '../components/ui/Mermaid';
+import { mermaidLabel } from '../lib/mermaid';
 import { Skeleton, SkeletonStatCard, SkeletonCard } from '../components/ui/Skeleton';
 import { Select } from '../components/ui/Select';
 
@@ -84,7 +85,7 @@ export const Topology: React.FC = () => {
     if (!filtered.length) return '';
     const ids = new Set(filtered.map(a => a.id));
     const nid = (id: number) => `n${id}`;
-    const esc = (s?: string) => (s || 'Unbenannt').replace(/"/g, "'").replace(/[`#;{}[\]/\\]/g, '').replace(/[\n\r]+/g, ' ').trim().slice(0, 42);
+    const esc = (s?: string) => mermaidLabel(s, 42) || 'Unbenannt';
 
     const connectedIds = new Set<number>();
     filtered.forEach(a => {
