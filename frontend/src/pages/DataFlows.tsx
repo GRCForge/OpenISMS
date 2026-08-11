@@ -13,13 +13,8 @@ import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
-import mermaid from 'mermaid';
-
-mermaid.initialize({
-  startOnLoad: false,
-  theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
-  flowchart: { curve: 'basis', nodeSpacing: 50, rankSpacing: 60 },
-});
+import { Mermaid } from '../components/ui/Mermaid';
+import { mermaidLabel } from '../lib/mermaid';
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
@@ -39,25 +34,6 @@ const emptyForm = {
   contains_personal_data: false,
   notes: '',
   status: 'active',
-};
-
-const MermaidDiagram: React.FC<{ chart: string }> = ({ chart }) => {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!ref.current || !chart) return;
-    const id = `df-${Date.now()}`;
-    setError('');
-    mermaid.render(id, chart).then(({ svg }) => {
-      if (ref.current) ref.current.innerHTML = svg; // NOSONAR(typescript:S5247) - SVG from Mermaid with securityLevel:'strict'; htmlLabels:false
-    }).catch(e => {
-      setError(String(e));
-    });
-  }, [chart]);
-
-  if (error) return <p className="text-red-500 text-sm p-4">{error}</p>;
-  return <div ref={ref} className="flex justify-center overflow-x-auto p-4" />;
 };
 
 export const DataFlows: React.FC = () => {
@@ -164,12 +140,15 @@ export const DataFlows: React.FC = () => {
     c += '  classDef personal fill:#fef3c7,stroke:#f59e0b,color:#92400e\n';
     c += '  classDef encrypted fill:#d1fae5,stroke:#10b981,color:#065f46\n';
     c += '  classDef standard fill:#e0f2fe,stroke:#0ea5e9,color:#0c4a6e\n';
+    // Asset names and mechanism labels come from the API — run every value
+    // through mermaidLabel so it cannot break out of the quoted label and
+    // inject additional diagram syntax.
     activeFlows.forEach(f => {
       const srcId = nodeId(f.source!.name);
       const tgtId = nodeId(f.target!.name);
-      if (!nodes.has(srcId)) { c += `  ${srcId}["${f.source!.name}"]\n`; nodes.add(srcId); }
-      if (!nodes.has(tgtId)) { c += `  ${tgtId}["${f.target!.name}"]\n`; nodes.add(tgtId); }
-      const label = mechanismLabels[f.transfer_mechanism] || f.transfer_mechanism;
+      if (!nodes.has(srcId)) { c += `  ${srcId}["${mermaidLabel(f.source!.name)}"]\n`; nodes.add(srcId); }
+      if (!nodes.has(tgtId)) { c += `  ${tgtId}["${mermaidLabel(f.target!.name)}"]\n`; nodes.add(tgtId); }
+      const label = mermaidLabel(mechanismLabels[f.transfer_mechanism] || f.transfer_mechanism);
       const encLabel = f.encryption ? ' 🔒' : '';
       c += `  ${srcId} -->|"${label}${encLabel}"| ${tgtId}\n`;
       if (f.contains_personal_data) c += `  class ${srcId} personal\n`;
@@ -220,7 +199,7 @@ export const DataFlows: React.FC = () => {
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-sky-100 border border-sky-400 inline-block" /> {t('diagram.standard')}</span>
                 <span className="text-gray-400">{t('diagram.encryptedIcon')}</span>
               </div>
-              <MermaidDiagram chart={mermaidChart} />
+              <Mermaid chart={mermaidChart} />
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-gray-400">
