@@ -38,7 +38,7 @@
     "passport": "^0.7.0",
     "pdf-parse": "^2.4.5",
     "qrcode": "^1.5.4",
-    "read-excel-file": "^9.3.7",
+    "read-excel-file": "^9.3.8",
     "rotating-file-stream": "^3.2.9",
     "sequelize": "^6.37.8",
     "swagger-ui-dist": "^5.32.12",
