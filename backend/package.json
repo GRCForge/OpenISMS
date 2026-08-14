@@ -33,7 +33,7 @@
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.5",
     "openai": "^7.4.0",
-    "openid-client": "^6.8.4",
+    "openid-client": "^6.8.5",
     "otplib": "^13.4.1",
     "passport": "^0.7.0",
     "pdf-parse": "^2.4.5",
@@ -41,7 +41,7 @@
     "read-excel-file": "^9.3.10",
     "rotating-file-stream": "^3.2.9",
     "sequelize": "^6.37.8",
-    "swagger-ui-dist": "^5.32.12",
+    "swagger-ui-dist": "^5.32.13",
     "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
