@@ -70,7 +70,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4.37.6
         with:
-          languages: javascript-typescript
+          languages: javascript-typescript, actions
           queries: security-extended
           # js/missing-token-validation is a structural false positive: all API
           # routes authenticate via Bearer JWT (Authorization header), not via
@@ -90,8 +90,6 @@ jobs:
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4.37.6
-        with:
-          category: /language:javascript-typescript
 
   # ── Frontend: TypeScript type-check + build ────────────────────────────────
   frontend-build:
