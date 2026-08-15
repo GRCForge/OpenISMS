@@ -313,6 +313,11 @@ if [[ "$MODE" == "3" ]]; then
     cd -
 
     chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+    # o+rX on dist alone is not enough: nginx (www-data) also needs the execute
+    # (traverse) bit on every parent directory to even reach it. A restrictive
+    # umask (027/077) leaves INSTALL_DIR/frontend at e.g. drwxr-x--- and nginx
+    # gets 403 Forbidden despite dist/ itself being world-readable.
+    chmod o+x "$INSTALL_DIR" "$INSTALL_DIR/frontend"
     chmod -R o+rX "$INSTALL_DIR/frontend/dist"
 
     # Restart the service. Recreate the unit if it is missing (self-heal), then
@@ -576,6 +581,11 @@ if [[ "$MODE" == "2" ]]; then
   UPLOAD_DIR="${INSTALL_DIR}/uploads"
   mkdir -p "$UPLOAD_DIR"
   chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR" "$UPLOAD_DIR"
+  # o+rX on dist alone is not enough: nginx (www-data) also needs the execute
+  # (traverse) bit on every parent directory to even reach it. A restrictive
+  # umask (027/077) leaves INSTALL_DIR/frontend at e.g. drwxr-x--- and nginx
+  # gets 403 Forbidden despite dist/ itself being world-readable.
+  chmod o+x "$INSTALL_DIR" "$INSTALL_DIR/frontend"
   chmod -R o+rX "$INSTALL_DIR/frontend/dist"
 
   # .env defaults
