@@ -312,6 +312,8 @@ if [[ "$MODE" == "3" ]]; then
     npm run build
     cd -
 
+    chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+
     # Restart the service. Recreate the unit if it is missing (self-heal), then
     # enable + restart — this works whether the service was running, stopped or
     # failed. The old behaviour restarted the non-existent 'isms-backend' whenever
