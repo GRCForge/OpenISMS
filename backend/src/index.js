@@ -34,8 +34,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// HSTS explizit konfigurieren statt auf den Helmet-Default (180 Tage, kein
+// preload) zu vertrauen: Scanner werten alles unter einem Jahr als fehlend.
+// Browser ignorieren den Header auf reinem HTTP, ein HTTP-only-Setup (z.B.
+// Unraid ohne Reverse-Proxy) bleibt also unberührt. Wer OpenISMS hinter einem
+// Terminierungs-Proxy betreibt, muss dort sicherstellen, dass der Header nicht
+// gefiltert wird — sonst sieht ihn der Browser nie.
+//   HSTS_MAX_AGE=0        deaktiviert den Header komplett
+//   HSTS_PRELOAD=true     ergänzt `preload` (nur setzen, wenn die Domain samt
+//                         aller Subdomains dauerhaft per HTTPS erreichbar ist)
+const configuredHstsMaxAge = Number(process.env.HSTS_MAX_AGE);
+const hstsMaxAge = Number.isFinite(configuredHstsMaxAge) && configuredHstsMaxAge >= 0
+  ? configuredHstsMaxAge
+  : 31536000; // 1 Jahr
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
+  hsts: hstsMaxAge > 0 && {
+    maxAge: hstsMaxAge,
+    includeSubDomains: process.env.HSTS_INCLUDE_SUBDOMAINS !== 'false',
+    preload: process.env.HSTS_PRELOAD === 'true',
+  },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],

@@ -8,14 +8,62 @@ const { encrypt, decrypt } = require('./cryptoService');
 // were reconciled against the guards the routes actually apply, so switching
 // enforcement on changes no access; tightening is now a deliberate admin edit.
 const DEFAULT_PERMISSIONS = {
-  assets:      { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], edit_basics: ['admin','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','assessor','it-staff'], delete: ['admin'] },
+  // assets.js authorises on three levels and only the first is an endpoint
+  // decision: the route guard (below), then a per-record check (owner/assessor of
+  // that asset may edit it), then a per-field one (classification, nis2_relevant,
+  // rto, rpo need assessor/dpo/admin). Only the route level moves into the matrix;
+  // the other two stay in the handler, where they belong. edit_compliance names the
+  // protected-field rule so it is at least visible and adjustable.
+  assets:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit_basics: ['admin','owner','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','assessor','it-staff'], delete: ['admin'], cve: ['admin','assessor','it-staff'] },
   risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'] },
   incidents:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin','assessor'] },
   assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor'] },
   controls:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },
   policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
-  reminders:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], create: ['admin','assessor'] },
-  vendors:     { view: ['admin','assessor','it-staff','dpo','management','viewer'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
+  // reminders had no 'create' route at all; what exists is acknowledging and
+  // dismissing, both behind requireWriteAccess. Renamed to match reality, and view
+  // reconciled to the eight roles the route actually admits.
+  reminders:   { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], acknowledge: ['admin','owner','assessor','it-staff','dpo'] },
+  tasks:       { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','owner','assessor','it-staff','dpo'], maintenance: ['admin'] },
+  groups:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], manage: ['admin'] },
+  threats:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin'] },
+  review:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], sign_off: ['admin','assessor'] },
+  modules:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], edit: ['admin'] },
+  auditlog:    { view: ['admin','assessor'], verify: ['admin'] },
+  comments:    { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','owner','assessor','it-staff','dpo'] },
+  // vendors.js guarded inline with isItStaff()||isDpo(), which resolves to
+  // admin/assessor/it-staff/dpo — wider than the create/edit lists shipped here.
+  // Reconciled to what the handlers actually enforced. The two remaining inline
+  // checks shape which fields come back, not who may call the route, so they stay.
+  vendors:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit: ['admin','assessor','it-staff','dpo'], delete: ['admin'], contacts: ['admin','assessor','it-staff','dpo'], assess: ['admin','assessor','it-staff','dpo'] },
+  // Compliance content areas. compliance.js serves three unrelated things behind one
+  // path — KPIs, audits with their findings, and trainings — with different guards
+  // each, so they get separate entries rather than one that flattens the difference.
+  // Where a route combined requireRole with requireWriteAccess the list below is the
+  // intersection, which is what actually applied.
+  compliance:            { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'] },
+  compliance_kpis:       { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'], measure: ['admin','owner','assessor','it-staff','dpo'] },
+  compliance_audits:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'], create_findings: ['admin','assessor'], edit_findings: ['admin','owner','assessor','it-staff','dpo'], delete_findings: ['admin','assessor'] },
+  compliance_trainings:  { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin','assessor'], contest: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'] },
+
+  // Compliance modules. requireModule() only says whether a module exists in this
+  // installation — it never looks at the user — so until now "this role may read
+  // the VVT but not edit it" could not be expressed. These entries mirror the
+  // guards each route already applies, so enforcement changes no access. DSGVO is
+  // one toggle but three areas, and each gets its own entry.
+  vvt:              { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], view_details: ['admin','assessor','dpo'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
+  dataflows:        { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
+  subject_requests: { view: ['admin','assessor','dpo'], create: ['admin','dpo'], edit: ['admin','dpo'], delete: ['admin'] },
+  iso27001:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
+  bsi_grundschutz:  { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
+  c5:               { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
+  nis2:             { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','dpo'], delete: ['admin','assessor'] },
+  tisax:            { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'] },
+  dora:             { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'] },
+  ai_act:           { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'] },
+  bcm:              { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin','assessor'] },
+  pentests:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'], delete_findings: ['admin','assessor','it-staff'] },
+  discovery:        { access: ['admin','it-staff'] },
   import:      { access: ['admin','assessor','it-staff'] },
   reports:     { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'] },
   admin:       { access: ['admin'] },

@@ -1,6 +1,6 @@
 const express = require('express');
 const { Comment, User, Notification, Asset, Group, Task } = require('../models');
-const { authenticate, requireWriteAccess, canViewAsset } = require('../middleware/auth');
+const { authenticate, canViewAsset, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 const router = express.Router({ mergeParams: true });
@@ -15,7 +15,7 @@ const requireAssetAccess = async (req, res, next) => {
   next();
 };
 
-router.get('/', authenticate, requireAssetAccess, async (req, res) => {
+router.get('/', authenticate, requirePermission('comments','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), requireAssetAccess, async (req, res) => {
   try {
     const comments = await Comment.findAll({
       where: { asset_id: req.params.assetId },
@@ -26,7 +26,7 @@ router.get('/', authenticate, requireAssetAccess, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', authenticate, requireWriteAccess(), requireAssetAccess, async (req, res) => {
+router.post('/', authenticate, requirePermission('comments','create','admin','owner','assessor','it-staff','dpo'), requireAssetAccess, async (req, res) => {
   try {
     const { content, meeting_date, parent_id } = req.body;
     const assetId = req.params.assetId;
@@ -170,7 +170,7 @@ router.post('/', authenticate, requireWriteAccess(), requireAssetAccess, async (
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/:commentId', authenticate, requireWriteAccess(), async (req, res) => {
+router.delete('/:commentId', authenticate, requirePermission('comments','delete','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const comment = await Comment.findByPk(req.params.commentId);
     if (!comment) return res.status(404).json({ error: 'Not found' });

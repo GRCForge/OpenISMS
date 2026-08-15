@@ -28,6 +28,7 @@ import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { Input } from '../components/ui/Input';
 import { InputSelect } from '../components/ui/InputSelect';
 import { Mermaid } from '../components/ui/Mermaid';
+import { mermaidLabel } from '../lib/mermaid';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -523,8 +524,9 @@ export const AssetDetail: React.FC = () => {
   const generateMermaid = () => {
     if (!asset || !allAssets.length) return '';
     const shp = (type: string, label: string) => {
-      // Always use quoted labels to prevent Mermaid parse errors from special chars
-      const s = label.replace(/"/g, "'").replace(/[\n\r]+/g, ' ').slice(0, 38);
+      // Always use quoted labels, with the name stripped of characters that
+      // would break out of the label (parse errors as well as injection)
+      const s = mermaidLabel(label, 38);
       switch (type) {
         case 'hardware':      return `["🖥 ${s}"]`;
         case 'software':      return `("💾 ${s}")`;

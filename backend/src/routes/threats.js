@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Threat } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -9,7 +9,7 @@ const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('threats','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { source, search } = req.query;
     const where = {};
@@ -21,7 +21,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Eigene Bedrohung ergaenzen
-router.post('/', authenticate, requireRole('admin'), async (req, res) => {
+router.post('/', authenticate, requirePermission('threats','create','admin'), async (req, res) => {
   try {
     if (!req.body.title) return res.status(400).json({ error: 'Titel ist erforderlich' });
     const threat = await Threat.create({ source: 'custom', code: req.body.code || null, title: req.body.title, description: req.body.description });

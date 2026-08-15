@@ -4,7 +4,7 @@ const {
   sequelize, Asset, User, Assessment, Reminder, Vendor, VendorContact, 
   Policy, PolicyVersion, VvtEntry, Incident, Risk 
 } = require('../models');
-const { authenticate, requireRole, requireWriteAccess, isAssessor, isItStaff, isAdmin, canViewAllAssets, canViewAsset } = require('../middleware/auth');
+const { authenticate, isAssessor, isItStaff, isAdmin, canViewAllAssets, canViewAsset, requirePermission } = require('../middleware/auth');
 const { requireModule } = require('../middleware/modules');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -33,7 +33,7 @@ const notifyDpos = async (asset, actorId) => {
   }
 };
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('assets','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { type, classification, status, lifecycle_status, search } = req.query;
     const where = {};
@@ -69,7 +69,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Aggregated CVEs across all assets
-router.get('/cves', authenticate, requireModule('discovery'), async (req, res) => {
+router.get('/cves', authenticate, requireModule('discovery'), requirePermission('assets','cve','admin','assessor','it-staff'), async (req, res) => {
   try {
     const assets = await Asset.findAll({
       attributes: ['id', 'name', 'cve_ids'],
@@ -121,7 +121,7 @@ router.get('/cves', authenticate, requireModule('discovery'), async (req, res) =
 });
 
 // Get all distinct location strings from assets table
-router.get('/locations', authenticate, async (req, res) => {
+router.get('/locations', authenticate, requirePermission('assets','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const locations = await Asset.findAll({
       attributes: [[sequelize.fn('DISTINCT', sequelize.col('location')), 'location']],
@@ -139,7 +139,7 @@ router.get('/locations', authenticate, async (req, res) => {
   }
 });
 
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('assets','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const asset = await Asset.findByPk(req.params.id, {
       include: [
@@ -170,7 +170,7 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, requireRole('admin', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
+router.post('/', authenticate, requirePermission('assets','create','admin','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const data = { ...req.body };
     ['owner_id', 'assessor_id', 'vendor_id', 'parent_id'].forEach(f => {
@@ -203,7 +203,7 @@ router.post('/', authenticate, requireRole('admin', 'assessor', 'it-staff', 'dpo
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const asset = await Asset.findByPk(req.params.id);
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
@@ -270,9 +270,8 @@ router.put('/:id', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('assets','delete','admin'), async (req, res) => {
   try {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Only admins can decommission assets' });
     const asset = await Asset.findByPk(req.params.id);
     if (!asset) return res.status(404).json({ error: 'Not found' });
     await asset.update({ status: 'decommissioned' });
@@ -282,9 +281,8 @@ router.delete('/:id', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/bulk-delete', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/bulk-delete', authenticate, requirePermission('assets','delete','admin'), async (req, res) => {
   try {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Only admins can decommission assets' });
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'Ungültige IDs' });
@@ -303,7 +301,7 @@ router.post('/bulk-delete', authenticate, requireWriteAccess(), async (req, res)
 });
 
 // Suggest CPEs: returns top-10 matches from NVD for user selection (no save)
-router.post('/:id/cpe-suggestions', authenticate, requireModule('discovery'), requireRole('admin', 'assessor', 'it-staff'), async (req, res) => {
+router.post('/:id/cpe-suggestions', authenticate, requireModule('discovery'), requirePermission('assets','cve','admin','assessor','it-staff'), async (req, res) => {
   try {
     const asset = await Asset.findByPk(req.params.id);
     if (!asset) return res.status(404).json({ error: 'Asset nicht gefunden' });
@@ -322,7 +320,7 @@ router.post('/:id/cpe-suggestions', authenticate, requireModule('discovery'), re
 });
 
 // Save a CPE — either auto-resolved (best match) or user-selected from suggestions
-router.post('/:id/resolve-cpe', authenticate, requireModule('discovery'), requireRole('admin', 'assessor', 'it-staff'), async (req, res) => {
+router.post('/:id/resolve-cpe', authenticate, requireModule('discovery'), requirePermission('assets','cve','admin','assessor','it-staff'), async (req, res) => {
   try {
     const asset = await Asset.findByPk(req.params.id);
     if (!asset) return res.status(404).json({ error: 'Asset nicht gefunden' });
@@ -354,7 +352,7 @@ router.post('/:id/resolve-cpe', authenticate, requireModule('discovery'), requir
 });
 
 // CVE refresh: query NVD / Shodan CVEDB for the given asset
-router.post('/:id/refresh-cves', authenticate, requireModule('discovery'), requireRole('admin', 'assessor', 'it-staff'), async (req, res) => {
+router.post('/:id/refresh-cves', authenticate, requireModule('discovery'), requirePermission('assets','cve','admin','assessor','it-staff'), async (req, res) => {
   try {
     const asset = await Asset.findByPk(req.params.id);
     if (!asset) return res.status(404).json({ error: 'Asset nicht gefunden' });

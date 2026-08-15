@@ -364,6 +364,9 @@ docker run -d --name isms --restart unless-stopped \
 | `SESSION_SECRET` | recommended | Express session (OIDC flow) |
 | `APP_URL` | ✓² | Public URL (for OIDC callback and CORS) |
 | `SECURE_COOKIES` | – | `true` marks the session cookie Secure. Only enable behind HTTPS **with** `X-Forwarded-Proto` forwarded by the proxy, otherwise the session cookie is not set |
+| `HSTS_MAX_AGE` | – | `Strict-Transport-Security` max-age in seconds (default `31536000` = 1 year). `0` disables the header. Browsers ignore it on plain HTTP, so the default is safe for HTTP-only setups |
+| `HSTS_INCLUDE_SUBDOMAINS` | – | `false` drops the `includeSubDomains` directive (default: on) |
+| `HSTS_PRELOAD` | – | `true` adds `preload`. Only set this if the domain **and all its subdomains** are permanently served over HTTPS |
 | `PORT` | – | Default: `3001` |
 | `UPLOAD_DIR` | – | Default: `/app/uploads` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Seed administrator credentials. **If `ADMIN_PASSWORD` is unset, a random one-time password is generated and printed to the logs on first start** (no known default) |
@@ -796,7 +799,8 @@ Siehe auch die Sicherheitsanweisungen in [SECURITY.md](SECURITY.md) für verantw
 - Login and password-reset responses are intentionally generic (constant-time on the login path) to prevent account enumeration
 - API tokens may be sent as `Authorization: Bearer isms_api_<token>` or `X-API-Key: isms_api_<token>`
 - **SSO login exclusivity:** SSO accounts automatically disable local authentication (password, passkey) and local TOTP; explicitly unverified IdP emails are rejected
-- Security headers via `helmet` (nonce-based CSP, XSS, clickjacking, MIME sniff); CORS restricted to `APP_URL`; `trust proxy` pinned to one hop
+- Security headers via `helmet` (nonce-based CSP, XSS, clickjacking, MIME sniff, HSTS with a 1-year max-age); CORS restricted to `APP_URL`; `trust proxy` pinned to one hop
+  - If a scanner reports a missing `Strict-Transport-Security` header on your instance, the terminating reverse proxy is filtering or replacing upstream headers — check the proxy config (e.g. nginx `proxy_pass_header` / a competing `add_header` block, which resets inherited headers in that scope)
 
 ## Browser Push Notifications & PWA
 

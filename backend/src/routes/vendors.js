@@ -2,10 +2,10 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Vendor, VendorContact, Asset, User, Incident, VvtEntry } = require('../models');
-const { authenticate, isItStaff, isAdmin, isDpo } = require('../middleware/auth');
+const { authenticate, isItStaff, isAdmin, isDpo, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('vendors','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     // Staff (admin/assessor/it-staff/dpo) get the full vendor list with contacts —
     // the same roles allowed on the detail view. Other roles still need a vendor
@@ -20,7 +20,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Get single vendor
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('vendors','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const vendor = await Vendor.findByPk(req.params.id, {
       include: [
@@ -44,8 +44,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Create vendor (admin/assessor/it-staff/dpo)
-router.post('/', authenticate, async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req)) return res.status(403).json({ error: 'Forbidden' });
+router.post('/', authenticate, requirePermission('vendors','create','admin','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const { name, type, website, phone, address, notes } = req.body;
     const vendor = await Vendor.create({ name, type, website, phone, address, notes });
@@ -57,8 +56,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // Update vendor
-router.put('/:id', authenticate, async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req) && !isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+router.put('/:id', authenticate, requirePermission('vendors','edit','admin','assessor','it-staff','dpo'), async (req, res) => {
   const vendor = await Vendor.findByPk(req.params.id);
   if (!vendor) return res.status(404).json({ error: 'Not found' });
   
@@ -77,8 +75,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // Delete vendor (admin only)
-router.delete('/:id', authenticate, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+router.delete('/:id', authenticate, requirePermission('vendors','delete','admin'), async (req, res) => {
   const vendor = await Vendor.findByPk(req.params.id);
   if (!vendor) return res.status(404).json({ error: 'Not found' });
   const name = vendor.name;
@@ -90,8 +87,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 // ── Contacts ──────────────────────────────────────────────────────────────────
 
 // Add contact to vendor
-router.post('/:id/contacts', authenticate, async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req)) return res.status(403).json({ error: 'Forbidden' });
+router.post('/:id/contacts', authenticate, requirePermission('vendors','contacts','admin','assessor','it-staff','dpo'), async (req, res) => {
   const vendor = await Vendor.findByPk(req.params.id);
   if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
   try {
@@ -105,8 +101,7 @@ router.post('/:id/contacts', authenticate, async (req, res) => {
 });
 
 // Update contact
-router.put('/:id/contacts/:contactId', authenticate, async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req)) return res.status(403).json({ error: 'Forbidden' });
+router.put('/:id/contacts/:contactId', authenticate, requirePermission('vendors','contacts','admin','assessor','it-staff','dpo'), async (req, res) => {
   const vendor = await Vendor.findByPk(req.params.id);
   if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
   const contact = await VendorContact.findOne({ where: { id: req.params.contactId, vendor_id: req.params.id } });
@@ -119,8 +114,7 @@ router.put('/:id/contacts/:contactId', authenticate, async (req, res) => {
 });
 
 // Delete contact (admin/assessor/it-staff/dpo)
-router.delete('/:id/contacts/:contactId', authenticate, async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req)) return res.status(403).json({ error: 'Forbidden' });
+router.delete('/:id/contacts/:contactId', authenticate, requirePermission('vendors','contacts','admin','assessor','it-staff','dpo'), async (req, res) => {
   const vendor = await Vendor.findByPk(req.params.id);
   if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
   const contact = await VendorContact.findOne({ where: { id: req.params.contactId, vendor_id: req.params.id } });
@@ -133,7 +127,6 @@ router.delete('/:id/contacts/:contactId', authenticate, async (req, res) => {
 
 // Risk Assessment
 const handleAssess = async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req)) return res.status(403).json({ error: 'Forbidden' });
   const vendor = await Vendor.findByPk(req.params.id);
   if (!vendor) return res.status(404).json({ error: 'Not found' });
   try {
@@ -184,7 +177,7 @@ const handleAssess = async (req, res) => {
   }
 };
 
-router.post('/:id/assess', authenticate, handleAssess);
-router.patch('/:id/assessment', authenticate, handleAssess);
+router.post('/:id/assess', authenticate, requirePermission('vendors','assess','admin','assessor','it-staff','dpo'), handleAssess);
+router.patch('/:id/assessment', authenticate, requirePermission('vendors','assess','admin','assessor','it-staff','dpo'), handleAssess);
 
 module.exports = router;

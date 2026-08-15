@@ -9,7 +9,7 @@ const http    = require('http');
 const https   = require('https');
 const { Op }  = require('sequelize');
 const { Asset, User, DiscoveredSoftware } = require('../models');
-const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
 
 // ── Port → service map ────────────────────────────────────────────────────────
 
@@ -281,7 +281,7 @@ async function detectHostSystem(ip, openPorts) {
 
 // ── Download discovery agent script ──────────────────────────────────────────
 
-router.get('/agent', authenticate, requireRole('admin', 'it-staff'), (req, res) => {
+router.get('/agent', authenticate, requirePermission('discovery','access','admin','it-staff'), (req, res) => {
   const platform = (req.query.platform || 'windows').toLowerCase();
   const appUrl   = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
   const date     = new Date().toISOString().split('T')[0];
@@ -406,7 +406,7 @@ fi
 
 // ── Process agent report ──────────────────────────────────────────────────────
 
-router.post('/report', authenticate, requireRole('admin', 'it-staff'), requireWriteAccess(), async (req, res) => {
+router.post('/report', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   try {
     const { hostname, ip, os, software = [] } = req.body;
     if (!hostname || !Array.isArray(software)) {
@@ -478,7 +478,7 @@ router.post('/report', authenticate, requireRole('admin', 'it-staff'), requireWr
 });
 
 // GET all staged software
-router.get('/staged', authenticate, requireRole('admin', 'it-staff'), async (req, res) => {
+router.get('/staged', authenticate, requirePermission('discovery','access','admin','it-staff'), async (req, res) => {
   try {
     const list = await DiscoveredSoftware.findAll({
       order: [['created_at', 'DESC']]
@@ -490,7 +490,7 @@ router.get('/staged', authenticate, requireRole('admin', 'it-staff'), async (req
 });
 
 // Approve a staged item -> create Asset
-router.post('/staged/:id/approve', authenticate, requireRole('admin', 'it-staff'), requireWriteAccess(), async (req, res) => {
+router.post('/staged/:id/approve', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   const { id } = req.params;
   try {
     const item = await DiscoveredSoftware.findByPk(id);
@@ -548,7 +548,7 @@ router.post('/staged/:id/approve', authenticate, requireRole('admin', 'it-staff'
 });
 
 // Ignore a staged software
-router.post('/staged/:id/ignore', authenticate, requireRole('admin', 'it-staff'), requireWriteAccess(), async (req, res) => {
+router.post('/staged/:id/ignore', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   const { id } = req.params;
   try {
     const item = await DiscoveredSoftware.findByPk(id);
@@ -562,7 +562,7 @@ router.post('/staged/:id/ignore', authenticate, requireRole('admin', 'it-staff')
 });
 
 // Delete a staged software record
-router.delete('/staged/:id', authenticate, requireRole('admin', 'it-staff'), requireWriteAccess(), async (req, res) => {
+router.delete('/staged/:id', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   const { id } = req.params;
   try {
     const item = await DiscoveredSoftware.findByPk(id);
@@ -578,7 +578,7 @@ router.delete('/staged/:id', authenticate, requireRole('admin', 'it-staff'), req
 
 // ── Network sweep ─────────────────────────────────────────────────────────────
 
-router.post('/network-scan', authenticate, requireRole('admin', 'it-staff'), async (req, res) => {
+router.post('/network-scan', authenticate, requirePermission('discovery','access','admin','it-staff'), async (req, res) => {
   try {
     const { cidr, ports: customPorts } = req.body;
     if (typeof cidr !== 'string' || !/^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([1-2][0-9]|3[0-2]|[1-9]))?$/.test(cidr)) {
@@ -627,7 +627,7 @@ router.post('/network-scan', authenticate, requireRole('admin', 'it-staff'), asy
 
 // ── Stage selected scan results for review ────────────────────────────────────
 
-router.post('/import', authenticate, requireRole('admin', 'it-staff'), requireWriteAccess(), async (req, res) => {
+router.post('/import', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   try {
     const { hosts } = req.body;
     if (!Array.isArray(hosts) || !hosts.length) {

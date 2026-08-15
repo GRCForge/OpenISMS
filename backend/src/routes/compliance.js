@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Asset, Assessment, Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, User, Task, Training } = require('../models');
-const { authenticate, requireRole, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const multer = require('multer');
 const path = require('path');
@@ -20,7 +20,7 @@ const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('compliance','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const assets = await Asset.findAll({
       where: { status: 'active' },
@@ -76,7 +76,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // ── KPI & Effectiveness Measurement ──────────────────────────────────
-router.get('/kpis', authenticate, async (req, res) => {
+router.get('/kpis', authenticate, requirePermission('compliance_kpis','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await Kpi.findAll({
       include: [
@@ -89,7 +89,7 @@ router.get('/kpis', authenticate, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.post('/kpis', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/kpis', authenticate, requirePermission('compliance_kpis','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const { title, description, target, current_value, status, owner_id } = req.body;
     const item = await Kpi.create({ title, description, target, current_value, status, owner_id });
@@ -103,7 +103,7 @@ router.post('/kpis', authenticate, requireWriteAccess(), async (req, res) => {
   } catch (e) { console.error('[Compliance] POST /kpis', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.put('/kpis/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/kpis/:id', authenticate, requirePermission('compliance_kpis','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const item = await Kpi.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -130,7 +130,7 @@ router.put('/kpis/:id', authenticate, requireWriteAccess(), async (req, res) => 
   } catch (e) { console.error('[Compliance] PUT /kpis/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.delete('/kpis/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
+router.delete('/kpis/:id', authenticate, requirePermission('compliance_kpis','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await Kpi.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -141,7 +141,7 @@ router.delete('/kpis/:id', authenticate, requireRole('admin', 'assessor'), requi
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.post('/kpis/:id/measurements', authenticate, requireWriteAccess(), async (req, res) => {
+router.post('/kpis/:id/measurements', authenticate, requirePermission('compliance_kpis','measure','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const kpi = await Kpi.findByPk(req.params.id);
     if (!kpi) return res.status(404).json({ error: 'KPI nicht gefunden' });
@@ -160,7 +160,7 @@ router.post('/kpis/:id/measurements', authenticate, requireWriteAccess(), async 
 });
 
 // ── Audit & CAPA Module ────────────────────────────────────────────
-router.get('/audits', authenticate, async (req, res) => {
+router.get('/audits', authenticate, requirePermission('compliance_audits','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await Audit.findAll({
       include: [
@@ -179,7 +179,7 @@ router.get('/audits', authenticate, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.post('/audits', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
+router.post('/audits', authenticate, requirePermission('compliance_audits','create','admin','assessor'), async (req, res) => {
   try {
     const { title, scope, audit_type, status, auditor, start_date, end_date, report_link, notes } = req.body;
     const item = await Audit.create({ title, scope, audit_type, status, auditor, start_date, end_date, report_link, notes });
@@ -195,7 +195,7 @@ router.post('/audits', authenticate, requireRole('admin', 'assessor'), requireWr
   } catch (e) { console.error('[Compliance] POST /audits', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.put('/audits/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
+router.put('/audits/:id', authenticate, requirePermission('compliance_audits','edit','admin','assessor'), async (req, res) => {
   try {
     const item = await Audit.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -228,7 +228,7 @@ router.put('/audits/:id', authenticate, requireRole('admin', 'assessor'), requir
   } catch (e) { console.error('[Compliance] PUT /audits/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.delete('/audits/:id', authenticate, requireRole('admin'), requireWriteAccess(), async (req, res) => {
+router.delete('/audits/:id', authenticate, requirePermission('compliance_audits','delete','admin'), async (req, res) => {
   try {
     const item = await Audit.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -239,7 +239,7 @@ router.delete('/audits/:id', authenticate, requireRole('admin'), requireWriteAcc
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.post('/audits/:id/findings', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
+router.post('/audits/:id/findings', authenticate, requirePermission('compliance_audits','create_findings','admin','assessor'), async (req, res) => {
   try {
     const audit = await Audit.findByPk(req.params.id);
     if (!audit) return res.status(404).json({ error: 'Audit nicht gefunden' });
@@ -258,7 +258,7 @@ router.post('/audits/:id/findings', authenticate, requireRole('admin', 'assessor
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.put('/findings/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.put('/findings/:id', authenticate, requirePermission('compliance_audits','edit_findings','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const item = await AuditFinding.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -287,7 +287,7 @@ router.put('/findings/:id', authenticate, requireWriteAccess(), async (req, res)
   } catch (e) { console.error('[Compliance] PUT /findings/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.delete('/findings/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
+router.delete('/findings/:id', authenticate, requirePermission('compliance_audits','delete_findings','admin','assessor'), async (req, res) => {
   try {
     const item = await AuditFinding.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -300,7 +300,7 @@ router.delete('/findings/:id', authenticate, requireRole('admin', 'assessor'), r
 
 // ── Awareness & Training Tracking ──────────────────────────────────
 // GET master list of trainings
-router.get('/trainings-list', authenticate, async (req, res) => {
+router.get('/trainings-list', authenticate, requirePermission('compliance_trainings','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await Training.findAll({
       include: [{
@@ -332,7 +332,7 @@ router.get('/trainings-list', authenticate, async (req, res) => {
 });
 
 // POST create a new training course
-router.post('/trainings-list', authenticate, requireRole('admin', 'assessor', 'dpo'), requireWriteAccess(), async (req, res) => {
+router.post('/trainings-list', authenticate, requirePermission('compliance_trainings','create','admin','assessor','dpo'), async (req, res) => {
   try {
     const { title, description, date, mandatory } = req.body;
     if (!title?.trim()) return res.status(400).json({ error: 'Schulungstitel ist erforderlich' });
@@ -355,7 +355,7 @@ router.post('/trainings-list', authenticate, requireRole('admin', 'assessor', 'd
 });
 
 // PUT update a training course
-router.put('/trainings-list/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), requireWriteAccess(), async (req, res) => {
+router.put('/trainings-list/:id', authenticate, requirePermission('compliance_trainings','edit','admin','assessor','dpo'), async (req, res) => {
   try {
     const item = await Training.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Schulung nicht gefunden' });
@@ -384,7 +384,7 @@ router.put('/trainings-list/:id', authenticate, requireRole('admin', 'assessor',
 });
 
 // DELETE a training course
-router.delete('/trainings-list/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
+router.delete('/trainings-list/:id', authenticate, requirePermission('compliance_trainings','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await Training.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Schulung nicht gefunden' });
@@ -401,7 +401,7 @@ router.delete('/trainings-list/:id', authenticate, requireRole('admin', 'assesso
 });
 
 // GET all user training assignments
-router.get('/trainings', authenticate, async (req, res) => {
+router.get('/trainings', authenticate, requirePermission('compliance_trainings','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const whereClause = req.user.role === 'employee' ? { user_id: req.user.id } : {};
     const items = await UserTraining.findAll({
@@ -417,7 +417,7 @@ router.get('/trainings', authenticate, async (req, res) => {
 });
 
 // POST contest a user training assignment
-router.post('/trainings/:id/contest', authenticate, async (req, res) => {
+router.post('/trainings/:id/contest', authenticate, requirePermission('compliance_trainings','contest','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const item = await UserTraining.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Schulungsteilnahme nicht gefunden' });
@@ -460,7 +460,7 @@ router.post('/trainings/:id/contest', authenticate, async (req, res) => {
 });
 
 // POST assign users to a training (manual and/or Excel mapping list)
-router.post('/trainings/bulk', authenticate, requireRole('admin', 'assessor', 'dpo'), requireWriteAccess(), upload.single('file'), async (req, res) => {
+router.post('/trainings/bulk', authenticate, requirePermission('compliance_trainings','create','admin','assessor','dpo'), upload.single('file'), async (req, res) => {
   try {
     const { training_id, training_title, completed_at, expires_at, certificate_url, mark_completed } = req.body;
     let user_ids = [];
@@ -633,7 +633,7 @@ router.post('/trainings/bulk', authenticate, requireRole('admin', 'assessor', 'd
 });
 
 // POST create single user training assignment (backward compatibility)
-router.post('/trainings', authenticate, requireRole('admin', 'assessor', 'dpo'), requireWriteAccess(), async (req, res) => {
+router.post('/trainings', authenticate, requirePermission('compliance_trainings','create','admin','assessor','dpo'), async (req, res) => {
   try {
     const data = { ...req.body };
     if (data.training_id) {
@@ -663,7 +663,7 @@ router.post('/trainings', authenticate, requireRole('admin', 'assessor', 'dpo'),
 });
 
 // PUT update user training assignment
-router.put('/trainings/:id', authenticate, requireRole('admin', 'assessor', 'dpo'), requireWriteAccess(), async (req, res) => {
+router.put('/trainings/:id', authenticate, requirePermission('compliance_trainings','edit','admin','assessor','dpo'), async (req, res) => {
   try {
     const item = await UserTraining.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -708,7 +708,7 @@ router.put('/trainings/:id', authenticate, requireRole('admin', 'assessor', 'dpo
 });
 
 // DELETE user training assignment
-router.delete('/trainings/:id', authenticate, requireRole('admin', 'assessor'), requireWriteAccess(), async (req, res) => {
+router.delete('/trainings/:id', authenticate, requirePermission('compliance_trainings','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await UserTraining.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });

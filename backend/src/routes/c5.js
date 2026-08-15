@@ -2,11 +2,11 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { C5Criterion, User } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/c5Catalog');
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('c5','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const items = await C5Criterion.findAll({
       include: [{ model: User, as: 'responsible', attributes: ['id', 'name', 'email'] }],
@@ -16,7 +16,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/seed', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.post('/seed', authenticate, requirePermission('c5','seed','admin','assessor'), async (req, res) => {
   try {
     const force = req.query.force === 'true' || req.body?.force === true;
     const count = await C5Criterion.count();
@@ -38,7 +38,7 @@ router.post('/seed', authenticate, requireRole('admin', 'assessor'), async (req,
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireRole('admin', 'assessor', 'it-staff'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('c5','edit','admin','assessor','it-staff'), async (req, res) => {
   try {
     const item = await C5Criterion.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -49,7 +49,7 @@ router.put('/:id', authenticate, requireRole('admin', 'assessor', 'it-staff'), a
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'assessor'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('c5','delete','admin','assessor'), async (req, res) => {
   try {
     const item = await C5Criterion.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });

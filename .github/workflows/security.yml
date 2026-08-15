@@ -68,9 +68,9 @@ jobs:
             backend/package-lock.json
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v4.37.6
         with:
-          languages: javascript-typescript
+          languages: javascript-typescript, actions
           queries: security-extended
           # js/missing-token-validation is a structural false positive: all API
           # routes authenticate via Bearer JWT (Authorization header), not via
@@ -86,12 +86,10 @@ jobs:
           threads: 1
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+        uses: github/codeql-action/autobuild@v4.37.6
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: /language:javascript-typescript
+        uses: github/codeql-action/analyze@v4.37.6
 
   # ── Frontend: TypeScript type-check + build ────────────────────────────────
   frontend-build:
