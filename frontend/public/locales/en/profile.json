@@ -56,7 +56,6 @@
     "delete": "Delete",
     "confirmDelete": "Really delete this API token?",
     "generated": "API token successfully generated.",
-    "copyNow": "Copy this token now — for security it will not be shown again.",
     "generateError": "Error generating token",
     "deleted": "API token deleted.",
     "deleteError": "Error deleting token",
