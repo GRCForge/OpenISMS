@@ -313,6 +313,7 @@ if [[ "$MODE" == "3" ]]; then
     cd -
 
     chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+    chmod -R o+rX "$INSTALL_DIR/frontend/dist"
 
     # Restart the service. Recreate the unit if it is missing (self-heal), then
     # enable + restart — this works whether the service was running, stopped or
@@ -575,6 +576,7 @@ if [[ "$MODE" == "2" ]]; then
   UPLOAD_DIR="${INSTALL_DIR}/uploads"
   mkdir -p "$UPLOAD_DIR"
   chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR" "$UPLOAD_DIR"
+  chmod -R o+rX "$INSTALL_DIR/frontend/dist"
 
   # .env defaults
   ENV_FILE="$INSTALL_DIR/.env"
