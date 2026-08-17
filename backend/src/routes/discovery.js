@@ -483,7 +483,34 @@ router.get('/staged', authenticate, requirePermission('discovery','access','admi
     const list = await DiscoveredSoftware.findAll({
       order: [['created_at', 'DESC']]
     });
-    res.json(list);
+
+    // Fuer offene Agent-Software-Meldungen (kein Netzwerk-Scan) pruefen, ob
+    // bereits ein gleichnamiges Asset existiert - Grundlage fuer die
+    // "wird mit bestehendem Asset zusammengefuehrt statt dupliziert"-Anzeige
+    // im Frontend, siehe auch die Freigabe-Logik unten (approve).
+    const pendingNames = [...new Set(
+      list.filter(i => i.status === 'pending' && i.source !== 'network-scan').map(i => i.name)
+    )];
+    let matchedByName = {};
+    if (pendingNames.length) {
+      const matches = await Asset.findAll({
+        where: { name: { [Op.in]: pendingNames }, status: { [Op.ne]: 'decommissioned' } },
+        attributes: ['id', 'name', 'version'],
+      });
+      matchedByName = Object.fromEntries(matches.map(a => [a.name, { id: a.id, version: a.version }]));
+    }
+
+    const enriched = list.map(i => {
+      const plain = i.toJSON();
+      const match = i.status === 'pending' && i.source !== 'network-scan' ? matchedByName[i.name] : undefined;
+      if (match) {
+        plain.matched_asset_id = match.id;
+        plain.matched_asset_version = match.version;
+      }
+      return plain;
+    });
+
+    res.json(enriched);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -506,7 +533,45 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
       where: { ...searchWhere, status: { [Op.ne]: 'decommissioned' } }
     });
 
-    if (!existing) {
+    // Namentlicher Abgleich: existiert bereits ein (nicht ausgemustertes)
+    // Asset mit identischem Namen, wird dieses nur aktualisiert (Version,
+    // Hersteller falls noch leer, zusaetzliche Host-/IP-Herkunft als Tag) -
+    // es entsteht bewusst KEIN Duplikat. Genau dieses Verhalten verspricht
+    // bereits der Info-Text im Frontend ("agent.assetMatchingDesc"), bislang
+    // wurde es hier beim Freigeben aber nicht tatsaechlich umgesetzt.
+    if (existing) {
+      const patch = {};
+      if (item.version && item.version !== existing.version) patch.version = item.version;
+      if (item.vendor && !existing.vendor) patch.vendor = item.vendor;
+
+      const existingTags = Array.isArray(existing.tags) ? existing.tags : [];
+      const newTags = [...existingTags];
+      if (!isNetworkScan && item.hostname) {
+        const hostTag = `host:${item.hostname}`;
+        if (!newTags.includes(hostTag)) newTags.push(hostTag);
+      }
+      if (item.ip) {
+        const ipTag = `ip:${item.ip}`;
+        if (!newTags.includes(ipTag)) newTags.push(ipTag);
+      }
+      if (newTags.length !== existingTags.length) patch.tags = newTags;
+
+      if (Object.keys(patch).length) {
+        await existing.update(patch);
+      }
+
+      await item.update({ status: 'approved' });
+      return res.json({
+        success: true,
+        matched: true,
+        asset_id: existing.id,
+        message: patch.version
+          ? `Bereits vorhandenes Asset "${existing.name}" auf Version ${patch.version} aktualisiert (kein Duplikat angelegt).`
+          : `Entspricht bereits vorhandenem Asset "${existing.name}" — kein Duplikat angelegt.`
+      });
+    }
+
+    {
       let tags, description;
       const today = new Date().toISOString().split('T')[0];
 

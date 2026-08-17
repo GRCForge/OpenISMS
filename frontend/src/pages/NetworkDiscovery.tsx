@@ -23,6 +23,8 @@ interface DiscoveredSoftware {
   asset_type: 'software' | 'hardware';
   open_ports: string | null; // JSON-encoded port array
   created_at: string;
+  matched_asset_id?: number;
+  matched_asset_version?: string | null;
 }
 
 interface ScanHost {
@@ -656,6 +658,14 @@ export const NetworkDiscovery: React.FC = () => {
                                 }`}>
                                   {item.asset_type === 'hardware' ? t('staged.hardware') : t('staged.software')}
                                 </span>
+                                {item.matched_asset_id && (
+                                  <span
+                                    className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                    title={t('staged.matchedBadgeTitle', { version: item.matched_asset_version || '—' })}
+                                  >
+                                    {t('staged.matchedBadge')}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </Td>

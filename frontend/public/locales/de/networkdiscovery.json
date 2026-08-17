@@ -72,6 +72,8 @@
     "sourceAgent": "Agent",
     "hardware": "Hardware",
     "software": "Software",
+    "matchedBadge": "Match gefunden",
+    "matchedBadgeTitle": "Es existiert bereits ein Asset mit identischem Namen. Bei Freigabe wird kein Duplikat angelegt, sondern nur die Version aktualisiert (aktuell im Asset: {{version}}).",
     "tooltips": {
       "approveAndAdd": "Freigabe & Hinzufügen zu Assets",
       "ignore": "Ignorieren",

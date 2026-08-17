@@ -72,6 +72,8 @@
     "sourceAgent": "Agent",
     "hardware": "Hardware",
     "software": "Software",
+    "matchedBadge": "Match found",
+    "matchedBadgeTitle": "An asset with an identical name already exists. Approving this entry will not create a duplicate — only the version will be updated (current asset version: {{version}}).",
     "tooltips": {
       "approveAndAdd": "Approve & add to assets",
       "ignore": "Ignore",
