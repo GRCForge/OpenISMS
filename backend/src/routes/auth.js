@@ -25,12 +25,18 @@ const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
+// IPv6-sicherer IP-Anteil des Keys, gleiches Muster wie emailOrIpKey (index.js)
+// und userOrIpKey (middleware/rateLimiter.js) - ipKeyGenerator normalisiert
+// IPv6-Adressen (Subnetz statt Einzel-IP), sonst liessen sich IPv6-Clients
+// durch Adress-Rotation am Rate-Limit vorbeimogeln.
+const ipKey = (req) => (typeof rateLimit.ipKeyGenerator === 'function' ? rateLimit.ipKeyGenerator(req.ip) : req.ip);
+
 const resetPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.body?.token ? String(req.body.token).slice(0, 64) + req.ip : req.ip,
+  keyGenerator: (req) => req.body?.token ? String(req.body.token).slice(0, 64) + ipKey(req) : ipKey(req),
   message: { error: 'Zu viele Anfragen. Bitte warten Sie 15 Minuten.' },
 });
 
