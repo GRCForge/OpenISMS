@@ -68,7 +68,14 @@ app.use(helmet({
       baseUri: ["'self'"],
       formAction: ["'self'"],
       frameAncestors: ["'self'"],
-      upgradeInsecureRequests: [],
+      // Nur setzen, wenn der Betreiber bestaetigt hinter HTTPS/TLS laeuft
+      // (SECURE_COOKIES=true, siehe Cookie-Konfiguration unten). Unconditional
+      // upgrade-insecure-requests brach reine HTTP-Deployments (z.B. Docker-
+      // Default auf Port 8080, systemd/nginx-Default auf Port 80 ohne TLS):
+      // der Browser hebt dann JEDE Subressource (JS/CSS/API) auf https:// an,
+      // was dort ins Leere laeuft -> alle Requests schlagen fehl -> weisse Seite,
+      // da das React-Bundle nie laedt.
+      ...(process.env.SECURE_COOKIES === 'true' ? { upgradeInsecureRequests: [] } : {}),
     },
   },
 }));

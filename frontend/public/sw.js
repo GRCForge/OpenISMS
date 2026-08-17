@@ -19,6 +19,23 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('/api/')) return; // never cache API calls
 
+  // Navigations (the HTML shell) must go network-first: a stale cached
+  // index.html references hashed JS/CSS chunk filenames from whatever build
+  // was live when it was cached. After a deploy those old-named chunks no
+  // longer exist on the server, so serving the stale HTML first (as the
+  // stale-while-revalidate strategy below does for everything else) breaks
+  // the app with a blank page until the background revalidation catches up
+  // on the *next* load. Only fall back to the cache when offline.
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        return res;
+      }).catch(() => caches.match(e.request).then(cached => cached || caches.match('/index.html')))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       const fresh = fetch(e.request).then(res => {
