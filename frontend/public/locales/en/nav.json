@@ -75,6 +75,10 @@
       "label": "Assets",
       "hint": "Inventory & Classification"
     },
+    "cves": {
+      "label": "Vulnerabilities (CVE)",
+      "hint": "Aggregated CVEs across all assets"
+    },
     "discovery": {
       "label": "Discovery",
       "hint": "Network & Agents"

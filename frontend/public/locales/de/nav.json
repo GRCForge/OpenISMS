@@ -75,6 +75,10 @@
       "label": "Assets",
       "hint": "Inventar & Klassifizierung"
     },
+    "cves": {
+      "label": "Schwachstellen (CVE)",
+      "hint": "Aggregierte CVEs aller Assets"
+    },
     "discovery": {
       "label": "Netzwerk-Erkennung",
       "hint": "Netzwerk & Agenten"
