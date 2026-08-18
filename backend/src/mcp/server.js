@@ -272,12 +272,13 @@ const TOOL_GATES = {
   'isms_resolve_cpe': { moduleKey: 'discovery', needsWrite: true },
   'isms_create_assessment': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
-  // --- Risks ---
+  // --- Risks & Threats ---
   'isms_create_risk': { needsWrite: true },
   'isms_update_risk': { needsWrite: true },
   'isms_signoff_risk': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
   'isms_revoke_risk_signoff': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
   'isms_delete_risk': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_create_threat': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
   // --- Management Reviews ---
   'isms_create_review_signoff': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
@@ -286,14 +287,54 @@ const TOOL_GATES = {
   'isms_create_incident': { needsWrite: true },
   'isms_update_incident_status': { needsWrite: true },
   'isms_update_incident': { needsWrite: true },
+  'isms_delete_incident': { requiredRoles: ['admin'], needsWrite: true },
 
-  // --- Tasks ---
+  // --- Tasks & Reminders ---
   'isms_create_task': { needsWrite: true },
+  'isms_update_task': { needsWrite: true },
   'isms_complete_task': { needsWrite: true },
+  'isms_delete_task': { needsWrite: true },
+  'isms_acknowledge_reminder': { needsWrite: true },
+  'isms_dismiss_reminder': { needsWrite: true },
 
   // --- Controls ---
+  'isms_create_control': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_update_control_status': { needsWrite: true },
   'isms_update_control': { needsWrite: true },
+  'isms_delete_control': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+
+  // --- Compliance Catalogs ---
+  'isms_list_iso27001_controls': { moduleKey: 'iso27001' },
+  'isms_update_iso27001_control': { moduleKey: 'iso27001', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_list_bsi_requirements': { moduleKey: 'bsi_grundschutz' },
+  'isms_update_bsi_requirement': { moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_list_nis2_measures': { moduleKey: 'nis2' },
+  'isms_update_nis2_measure': { moduleKey: 'nis2', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_list_c5_criteria': { moduleKey: 'c5' },
+  'isms_update_c5_criterion': { moduleKey: 'c5', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_list_tisax_requirements': { moduleKey: 'tisax' },
+  'isms_update_tisax_requirement': { moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_list_tisax_assessments': { moduleKey: 'tisax' },
+  'isms_create_tisax_assessment': { moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_tisax_assessment': { moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_tisax_assessment': { moduleKey: 'tisax', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+
+  // --- Trainings ---
+  'isms_create_training_course': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_training_course': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_training_course': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_record_user_training': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_user_training': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_user_training': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+
+  // --- Audit Logs ---
+  'isms_list_audit_logs': { requiredRoles: ['admin', 'assessor'] },
+  'isms_verify_audit_logs': { requiredRoles: ['admin'] },
+
+  // --- Legal Requirements ---
+  'isms_create_legal_requirement': { needsWrite: true },
+  'isms_update_legal_requirement': { needsWrite: true },
+  'isms_delete_legal_requirement': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
   // --- EU AI Act ---
   'isms_list_ai_systems': { moduleKey: 'ai_act' },
@@ -301,52 +342,123 @@ const TOOL_GATES = {
   'isms_update_ai_system': { moduleKey: 'ai_act', needsWrite: true },
   'isms_delete_ai_system': { moduleKey: 'ai_act', requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
-  // --- Policies ---
+  // --- Policies & Templates ---
   'isms_create_policy': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
   'isms_update_policy': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_delete_policy': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_acknowledge_policy': { needsWrite: true },
+  'isms_delete_template': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
   // --- Audits, CAPA & KPIs ---
   'isms_create_audit': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_update_audit': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_audit': { requiredRoles: ['admin'], needsWrite: true },
   'isms_create_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_update_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_create_kpi': { requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_kpi': { requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_kpi': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_record_kpi_measurement': { needsWrite: true },
 
-  // --- Settings / Admin ---
+  // --- Settings & Admin ---
   'isms_set_feature_status': { requiredRoles: ['admin'] },
+  'isms_get_settings': { requiredRoles: ['admin'] },
+  'isms_update_settings': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_get_permissions': { requiredRoles: ['admin'] },
+  'isms_update_permissions': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_list_custom_roles': { requiredRoles: ['admin'] },
+  'isms_create_custom_role': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_update_custom_role': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_delete_custom_role': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_run_automation': { requiredRoles: ['admin'], needsWrite: true },
+
+  // --- Users, Groups & Tokens ---
+  'isms_create_user': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_update_user': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_delete_user': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_create_group': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_update_group': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_delete_group': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_add_group_member': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_remove_group_member': { requiredRoles: ['admin'], needsWrite: true },
+  'isms_create_api_token': { needsWrite: true },
+  'isms_revoke_api_token': { needsWrite: true },
 
   // --- Pentests ---
   'isms_list_pentests': { moduleKey: 'pentest' },
   'isms_create_pentest': { moduleKey: 'pentest', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_pentest': { moduleKey: 'pentest', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_pentest': { moduleKey: 'pentest', requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_list_pentest_findings': { moduleKey: 'pentest' },
   'isms_create_pentest_finding': { moduleKey: 'pentest', needsWrite: true },
   'isms_update_pentest_finding': { moduleKey: 'pentest', needsWrite: true },
+  'isms_delete_pentest_finding': { moduleKey: 'pentest', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
 
   // --- GDPR / DSGVO ---
   'isms_list_vvt_entries': { moduleKey: 'dsgvo' },
+  'isms_get_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
   'isms_create_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
+  'isms_get_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
+  'isms_create_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
+  'isms_list_dataflows': { moduleKey: 'dsgvo' },
+  'isms_get_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
+  'isms_create_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
   'isms_list_subject_requests': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo', 'assessor'] },
   'isms_create_subject_request': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
   'isms_update_subject_request_status': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
+  'isms_delete_subject_request': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
 
   // --- Vendors ---
+  'isms_get_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
   'isms_create_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_vendor': { requiredRoles: ['admin'], needsWrite: true },
   'isms_assess_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_add_vendor_contact': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_vendor_contact': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_vendor_contact': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_list_vendor_triage_runs': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_get_vendor_triage_run': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_get_triage_profiles': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_update_triage_profiles': { requiredRoles: ['admin'], needsWrite: true },
 
   // --- BCM ---
   'isms_list_bcm_processes': { moduleKey: 'bcm' },
+  'isms_create_bcm_process': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_bcm_process': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_bcm_process': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_list_bcm_exercises': { moduleKey: 'bcm' },
   'isms_create_bcm_exercise': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_bcm_exercise': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_bcm_exercise': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
   // --- DORA ---
   'isms_list_dora_third_parties': { moduleKey: 'dora' },
+  'isms_create_dora_third_party': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_dora_third_party': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_dora_third_party': { moduleKey: 'dora', requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_list_dora_tests': { moduleKey: 'dora' },
+  'isms_create_dora_test': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_dora_test': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_dora_test': { moduleKey: 'dora', requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
   // --- Auto-Discovery ---
   'isms_list_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'] },
   'isms_approve_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
   'isms_ignore_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
+  'isms_delete_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
+
+  // --- Comments & Documents ---
+  'isms_add_asset_comment': { needsWrite: true },
+  'isms_delete_asset_comment': { needsWrite: true },
+  'isms_delete_document': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 };
 
 async function gateTool(mcpUser, moduleKey = null, requiredRoles = null, needsWrite = false) {
@@ -2579,6 +2691,2617 @@ server.tool(
     return { content: [{ type: 'text', text: JSON.stringify(measurement, null, 2) }] };
   }
 );
+
+
+
+
+// ─── Threats ─────────────────────────────────────────────────────────────────
+
+server.tool(
+  'isms_create_threat',
+  'Add a custom cybersecurity threat to the ISMS threat catalog.',
+  {
+    name: z.string().min(1).describe('Threat name / title'),
+    category: z.string().optional().describe('Threat category (e.g. Malware, Phishing, Physical, Human Error)'),
+    description: z.string().optional().describe('Threat description'),
+    default_likelihood: z.number().int().min(1).max(5).default(3).describe('Default likelihood (1-5)'),
+    default_impact: z.number().int().min(1).max(5).default(3).describe('Default impact (1-5)'),
+  },
+  async (args, { mcpUser }) => {
+    const { Threat } = getModels();
+    const item = await Threat.create(args);
+    await logAudit('create', 'threat', item.id, item.name, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+// ─── Incident Deletion ───────────────────────────────────────────────────────
+
+server.tool(
+  'isms_delete_incident',
+  'Delete / remove a security incident from the incident register.',
+  { id: z.number().int().describe('Incident ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Incident } = getModels();
+    const item = await Incident.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Incident not found' }], isError: true };
+    await logAudit('delete', 'incident', item.id, item.title || `Incident #${item.id}`, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Task Details, Stats & Deletion ──────────────────────────────────────────
+
+server.tool(
+  'isms_get_task',
+  'Get full details of a specific task including assignee, group members, and creator.',
+  { id: z.number().int().describe('Task ID') },
+  async ({ id }) => {
+    const { Task, User, Group } = getModels();
+    const item = await Task.findByPk(id, {
+      include: [
+        { model: User, as: 'assignee', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'createdBy', attributes: ['id', 'name'] },
+        { model: User, as: 'completedBy', attributes: ['id', 'name'] },
+        {
+          model: Group,
+          as: 'assignedGroup',
+          attributes: ['id', 'name', 'color'],
+          include: [{ model: User, as: 'members', attributes: ['id', 'name', 'email'], through: { attributes: [] } }],
+        },
+      ],
+    });
+    if (!item) return { content: [{ type: 'text', text: 'Task not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_task',
+  'Update details, status, priority, due date, or assignees of a task.',
+  {
+    id: z.number().int().describe('Task ID'),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    status: z.enum(['open', 'in_progress', 'done', 'cancelled']).optional(),
+    priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+    due_date: z.string().optional().describe('ISO date (YYYY-MM-DD)'),
+    reminder_date: z.string().optional().describe('ISO date (YYYY-MM-DD)'),
+    assigned_to_id: z.number().int().nullable().optional(),
+    assigned_to_group_id: z.number().int().nullable().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Task } = getModels();
+    const item = await Task.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'Task not found' }], isError: true };
+    const { id, ...updates } = args;
+    if (updates.status === 'done' && !item.completed_at) {
+      updates.completed_at = new Date();
+      updates.completed_by_id = await getValidUserId(mcpUser);
+    }
+    await item.update(updates);
+    await logAudit('update', 'task', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_task',
+  'Delete a task from the system.',
+  { id: z.number().int().describe('Task ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Task } = getModels();
+    const item = await Task.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Task not found' }], isError: true };
+    await logAudit('delete', 'task', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_get_task_stats',
+  'Get aggregated task counts (open, in_progress, done, overdue).',
+  {},
+  async () => {
+    const { Task, Asset } = getModels();
+    const inactiveAssets = await Asset.findAll({
+      where: { status: { [Op.in]: ['inactive', 'decommissioned'] } },
+      attributes: ['id'],
+      raw: true,
+    });
+    const inactiveAssetIds = new Set(inactiveAssets.map(a => a.id));
+    const activeAssetFilter = inactiveAssetIds.size > 0 ? {
+      [Op.or]: [
+        { related_type: { [Op.ne]: 'asset' } },
+        { related_type: null },
+        { related_id: { [Op.notIn]: [...inactiveAssetIds] } },
+      ]
+    } : {};
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const [open, in_progress, done, overdue] = await Promise.all([
+      Task.count({ where: { status: 'open', ...activeAssetFilter } }),
+      Task.count({ where: { status: 'in_progress', ...activeAssetFilter } }),
+      Task.count({ where: { status: 'done', ...activeAssetFilter } }),
+      Task.count({ where: { status: { [Op.notIn]: ['done', 'cancelled'] }, due_date: { [Op.lt]: todayStr }, ...activeAssetFilter } }),
+    ]);
+    return { content: [{ type: 'text', text: JSON.stringify({ open, in_progress, done, overdue }, null, 2) }] };
+  }
+);
+
+// ─── Reminders, Notifications & User Dashboard ───────────────────────────────
+
+server.tool(
+  'isms_list_reminders',
+  'List active and pending asset review reminders.',
+  {
+    status: z.enum(['pending', 'acknowledged', 'overdue', 'all']).default('all'),
+  },
+  async ({ status }) => {
+    const { Reminder, Asset } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.status = status;
+    const items = await Reminder.findAll({
+      where,
+      include: [{ model: Asset, attributes: ['id', 'name', 'type', 'classification'] }],
+      order: [['due_date', 'ASC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_acknowledge_reminder',
+  'Acknowledge / complete an asset review reminder, auto-closing any associated task.',
+  { id: z.number().int().describe('Reminder ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Reminder, Task } = getModels();
+    const item = await Reminder.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Reminder not found' }], isError: true };
+    const userId = await getValidUserId(mcpUser);
+    await item.update({ status: 'acknowledged', acknowledged_at: new Date(), acknowledged_by: userId });
+    if (item.task_id) {
+      await Task.update({ status: 'done', completed_at: new Date(), completed_by_id: userId }, { where: { id: item.task_id } });
+    }
+    await logAudit('acknowledge', 'reminder', item.id, `Reminder #${item.id}`, { asset_id: item.asset_id }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_dismiss_reminder',
+  'Dismiss an asset review reminder.',
+  { id: z.number().int().describe('Reminder ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Reminder } = getModels();
+    const item = await Reminder.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Reminder not found' }], isError: true };
+    await item.update({ dismissed: true });
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, id }) }] };
+  }
+);
+
+server.tool(
+  'isms_list_notifications',
+  'List pending notifications, overdue reminders, and assets requiring review.',
+  {},
+  async (args, { mcpUser }) => {
+    const { Reminder, Asset, Notification, User, sequelize } = getModels();
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const in30 = new Date(now);
+    in30.setDate(in30.getDate() + 30);
+    const in30Str = in30.toISOString().split('T')[0];
+    const userId = mcpUser?.id || 1;
+
+    const [overdueRows, upcomingRows, unassessedAssets, userNotes] = await Promise.all([
+      Reminder.findAll({
+        where: { status: 'overdue', dismissed: { [Op.not]: true } },
+        include: [{ model: Asset, attributes: ['id', 'name', 'type', 'classification'], where: { status: 'active' } }],
+        order: [['due_date', 'ASC']],
+      }),
+      Reminder.findAll({
+        where: { status: 'pending', due_date: { [Op.between]: [todayStr, in30Str] }, dismissed: { [Op.not]: true } },
+        include: [{ model: Asset, attributes: ['id', 'name', 'type', 'classification'], where: { status: 'active' } }],
+        order: [['due_date', 'ASC']],
+      }),
+      Asset.findAll({
+        where: {
+          status: 'active',
+          id: { [Op.notIn]: sequelize.literal('(SELECT asset_id FROM assessments WHERE is_current = 1 AND asset_id IS NOT NULL)') },
+        },
+        attributes: ['id', 'name', 'type', 'classification'],
+      }),
+      Notification.findAll({
+        where: { user_id: userId, read: false },
+        include: [{ model: User, as: 'actor', attributes: ['name'] }],
+        order: [['created_at', 'DESC']],
+        limit: 20,
+      }),
+    ]);
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          overdueReminders: overdueRows,
+          upcomingReminders: upcomingRows,
+          unassessedAssets,
+          unreadNotifications: userNotes,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+server.tool(
+  'isms_get_my_overview',
+  'Get personalized user dashboard summary (assigned assets, open tasks, unread notifications, pending policy acknowledgments, training statuses).',
+  {},
+  async (args, { mcpUser }) => {
+    const { Asset, Task, Notification, Policy, PolicyAcknowledgment, UserTraining, GroupMember } = getModels();
+    const userId = mcpUser?.id || 1;
+
+    const memberOf = await GroupMember.findAll({ where: { user_id: userId } });
+    const groupIds = memberOf.map(m => m.group_id);
+    const taskOr = [{ assigned_to_id: userId }];
+    if (groupIds.length > 0) taskOr.push({ assigned_to_group_id: { [Op.in]: groupIds } });
+
+    const [ownedAssets, myTasks, unreadNotifs, trainings, allPolicies, acks] = await Promise.all([
+      Asset.findAll({ where: { owner_id: userId, status: 'active' }, attributes: ['id', 'name', 'type', 'classification'] }),
+      Task.findAll({ where: { [Op.or]: taskOr, status: { [Op.notIn]: ['done', 'cancelled'] } }, order: [['due_date', 'ASC']] }),
+      Notification.findAll({ where: { user_id: userId, read: false }, limit: 10 }),
+      UserTraining.findAll({ where: { user_id: userId }, order: [['created_at', 'DESC']] }),
+      Policy.findAll({ where: { status: 'published' }, attributes: ['id', 'title', 'version'] }),
+      PolicyAcknowledgment.findAll({ where: { user_id: userId } }),
+    ]);
+
+    const ackPolicyIds = new Set(acks.map(a => a.policy_id));
+    const pendingPolicies = allPolicies.filter(p => !ackPolicyIds.has(p.id));
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          user: { id: userId, name: mcpUser?.name, role: mcpUser?.role },
+          ownedAssetsCount: ownedAssets.length,
+          ownedAssets,
+          openTasksCount: myTasks.length,
+          openTasks: myTasks,
+          unreadNotificationsCount: unreadNotifs.length,
+          unreadNotifications: unreadNotifs,
+          pendingPolicyAcknowledgmentsCount: pendingPolicies.length,
+          pendingPolicies,
+          trainings,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// ─── Controls Management ─────────────────────────────────────────────────────
+
+server.tool(
+  'isms_create_control',
+  'Create a new custom security control in the Statement of Applicability (SoA) register.',
+  {
+    code: z.string().min(1).describe('Control reference code (e.g. C-01, ISO-5.1)'),
+    framework: z.string().default('custom').describe('Framework identifier (iso27001, bsi, nis2, c5, custom)'),
+    title: z.string().min(1).describe('Control title'),
+    description: z.string().optional(),
+    category: z.string().optional(),
+    status: z.enum(['not_applicable', 'planned', 'in_progress', 'implemented']).default('planned'),
+    justification: z.string().optional(),
+    owner_id: z.number().int().optional(),
+    evidence: z.string().optional(),
+    implementation_notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Control } = getModels();
+    const item = await Control.create(args);
+    await logAudit('create', 'control', item.id, `${item.code}: ${item.title}`, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_control',
+  'Delete a security control from the Statement of Applicability register.',
+  { id: z.number().int().describe('Control ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Control } = getModels();
+    const item = await Control.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Control not found' }], isError: true };
+    await logAudit('delete', 'control', item.id, `${item.code}: ${item.title}`, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── User, Group & API Token Management ──────────────────────────────────────
+
+server.tool(
+  'isms_create_user',
+  'Create a new user account (admin only).',
+  {
+    name: z.string().min(1).describe('User display name'),
+    email: z.string().email().describe('User email address'),
+    password: z.string().min(8).describe('Initial password'),
+    role: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).default('viewer'),
+    department: z.string().optional(),
+    custom_role_id: z.number().int().nullable().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { User, CustomRole } = getModels();
+    const { validate: validatePassword } = require('../services/passwordPolicy');
+    const check = await validatePassword(args.password);
+    if (!check.valid) {
+      return { content: [{ type: 'text', text: `Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}` }], isError: true };
+    }
+    const password_hash = await User.hashPassword(args.password);
+    let effectiveRole = args.role;
+    let customRoleId = null;
+    if (args.custom_role_id) {
+      const cr = await CustomRole.findByPk(args.custom_role_id);
+      if (!cr) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
+      effectiveRole = cr.base_role;
+      customRoleId = cr.id;
+    }
+    const user = await User.create({
+      name: args.name,
+      email: args.email.toLowerCase().trim(),
+      password_hash,
+      role: effectiveRole,
+      department: args.department || null,
+      custom_role_id: customRoleId,
+    });
+    await logAudit('create', 'user', user.id, user.name, { role: user.role, email: user.email }, mcpUser);
+    const userJson = user.toJSON();
+    delete userJson.password_hash;
+    return { content: [{ type: 'text', text: JSON.stringify(userJson, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_user',
+  'Update user details, role, department, or active status (admin only).',
+  {
+    id: z.number().int().describe('User ID'),
+    name: z.string().optional(),
+    email: z.string().email().optional(),
+    role: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).optional(),
+    department: z.string().optional(),
+    active: z.boolean().optional(),
+    password: z.string().min(8).optional(),
+    custom_role_id: z.number().int().nullable().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { User, CustomRole } = getModels();
+    const user = await User.findByPk(args.id);
+    if (!user) return { content: [{ type: 'text', text: 'User not found' }], isError: true };
+    const { id, password, custom_role_id, role, ...updates } = args;
+
+    if (custom_role_id) {
+      const cr = await CustomRole.findByPk(custom_role_id);
+      if (!cr) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
+      updates.role = cr.base_role;
+      updates.custom_role_id = cr.id;
+    } else if (custom_role_id === null) {
+      updates.custom_role_id = null;
+      if (role) updates.role = role;
+    } else if (role) {
+      updates.role = role;
+      updates.custom_role_id = null;
+    }
+
+    if (password) {
+      const { validate: validatePassword } = require('../services/passwordPolicy');
+      const check = await validatePassword(password);
+      if (!check.valid) {
+        return { content: [{ type: 'text', text: `Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}` }], isError: true };
+      }
+      updates.password_hash = await User.hashPassword(password);
+    }
+
+    await user.update(updates);
+    await logAudit('update', 'user', user.id, user.name, updates, mcpUser);
+    const userJson = user.toJSON();
+    delete userJson.password_hash;
+    return { content: [{ type: 'text', text: JSON.stringify(userJson, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_user',
+  'Deactivate / delete a user account (admin only).',
+  { id: z.number().int().describe('User ID') },
+  async ({ id }, { mcpUser }) => {
+    const { User } = getModels();
+    const user = await User.findByPk(id);
+    if (!user) return { content: [{ type: 'text', text: 'User not found' }], isError: true };
+    if (user.id === mcpUser?.id) return { content: [{ type: 'text', text: 'Cannot delete own account' }], isError: true };
+    await logAudit('delete', 'user', user.id, user.name, {}, mcpUser);
+    await user.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_get_group',
+  'Get details of a group / team including its members.',
+  { id: z.number().int().describe('Group ID') },
+  async ({ id }) => {
+    const { Group, User } = getModels();
+    const group = await Group.findByPk(id, {
+      include: [{ model: User, as: 'members', attributes: ['id', 'name', 'email', 'role'], through: { attributes: [] } }],
+    });
+    if (!group) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(group, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_group',
+  'Create a new team / group for task assignments and notifications (admin only).',
+  {
+    name: z.string().min(1).describe('Group name'),
+    description: z.string().optional(),
+    color: z.string().default('#3b82f6').describe('Hex color code'),
+  },
+  async (args, { mcpUser }) => {
+    const { Group } = getModels();
+    const userId = await getValidUserId(mcpUser);
+    const item = await Group.create({ ...args, created_by_id: userId });
+    await logAudit('create', 'group', item.id, item.name, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_group',
+  'Update group name, description, or color (admin only).',
+  {
+    id: z.number().int().describe('Group ID'),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    color: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Group } = getModels();
+    const item = await Group.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'group', item.id, item.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_group',
+  'Delete a group (admin only).',
+  { id: z.number().int().describe('Group ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Group } = getModels();
+    const item = await Group.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
+    await logAudit('delete', 'group', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_add_group_member',
+  'Add a user as member to a group (admin only).',
+  {
+    group_id: z.number().int().describe('Group ID'),
+    user_id: z.number().int().describe('User ID to add'),
+  },
+  async ({ group_id, user_id }, { mcpUser }) => {
+    const { Group, User, GroupMember } = getModels();
+    const group = await Group.findByPk(group_id);
+    if (!group) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
+    const user = await User.findByPk(user_id);
+    if (!user) return { content: [{ type: 'text', text: 'User not found' }], isError: true };
+    const [, created] = await GroupMember.findOrCreate({ where: { group_id, user_id } });
+    if (!created) return { content: [{ type: 'text', text: 'User is already a member of this group' }], isError: true };
+    await logAudit('update', 'group', group.id, group.name, { action: 'add_member', user_name: user.name }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, group_id, user_id }) }] };
+  }
+);
+
+server.tool(
+  'isms_remove_group_member',
+  'Remove a user from a group (admin only).',
+  {
+    group_id: z.number().int().describe('Group ID'),
+    user_id: z.number().int().describe('User ID to remove'),
+  },
+  async ({ group_id, user_id }, { mcpUser }) => {
+    const { Group, GroupMember } = getModels();
+    const group = await Group.findByPk(group_id);
+    if (!group) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
+    const deleted = await GroupMember.destroy({ where: { group_id, user_id } });
+    if (!deleted) return { content: [{ type: 'text', text: 'User is not a member of this group' }], isError: true };
+    await logAudit('update', 'group', group.id, group.name, { action: 'remove_member', user_id }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, group_id, user_id }) }] };
+  }
+);
+
+server.tool(
+  'isms_list_api_tokens',
+  'List active API tokens for the authenticated user.',
+  {},
+  async (args, { mcpUser }) => {
+    const { ApiToken } = getModels();
+    const userId = mcpUser?.id || 1;
+    const tokens = await ApiToken.findAll({
+      where: { user_id: userId },
+      attributes: ['id', 'user_id', 'name', 'token_prefix', 'expires_at', 'created_at', 'updated_at'],
+      order: [['created_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(tokens, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_api_token',
+  'Generate a new API token for the authenticated user (returns plaintext token string once).',
+  {
+    name: z.string().min(1).describe('Token description / name (e.g. CI/CD Pipeline, MCP Assistant)'),
+    expires_at: z.string().optional().describe('Expiration ISO date (YYYY-MM-DD)'),
+  },
+  async ({ name, expires_at }, { mcpUser }) => {
+    const { ApiToken } = getModels();
+    const crypto = require('crypto');
+    const userId = await getValidUserId(mcpUser);
+    const tokenStr = 'isms_api_' + crypto.randomBytes(32).toString('hex');
+    const newToken = await ApiToken.create({
+      user_id: userId,
+      name: name.trim(),
+      token: null,
+      token_hash: hashToken(tokenStr),
+      token_prefix: tokenStr.slice(0, 17),
+      expires_at: expires_at ? new Date(expires_at) : null,
+    });
+    await logAudit('create', 'api_token', newToken.id, newToken.name, { expires_at }, mcpUser);
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          id: newToken.id,
+          name: newToken.name,
+          token_prefix: newToken.token_prefix,
+          token: tokenStr,
+          expires_at: newToken.expires_at,
+          warning: 'Please save this token now. It cannot be retrieved again.',
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+server.tool(
+  'isms_revoke_api_token',
+  'Revoke / delete an API token.',
+  { id: z.number().int().describe('API Token ID') },
+  async ({ id }, { mcpUser }) => {
+    const { ApiToken } = getModels();
+    const userId = mcpUser?.id;
+    const where = { id };
+    if (mcpUser?.role !== 'admin' && userId) where.user_id = userId;
+    const token = await ApiToken.findOne({ where });
+    if (!token) return { content: [{ type: 'text', text: 'API token not found' }], isError: true };
+    await logAudit('delete', 'api_token', token.id, token.name, {}, mcpUser);
+    await token.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Vendor Management & Triage ──────────────────────────────────────────────
+
+server.tool(
+  'isms_get_vendor',
+  'Get full details of a single vendor / third-party processor including contacts, linked incidents, and VVT entries.',
+  { id: z.number().int().describe('Vendor ID') },
+  async ({ id }) => {
+    const { Vendor, VendorContact, User, Incident, VvtEntry } = getModels();
+    const item = await Vendor.findByPk(id, {
+      include: [
+        { model: VendorContact, as: 'contacts' },
+        { model: User, as: 'assessedBy', attributes: ['id', 'name'] },
+        { model: Incident, as: 'incidents', through: { attributes: [] } },
+        { model: VvtEntry, as: 'vvtEntries', through: { attributes: [] } },
+      ],
+    });
+    if (!item) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_vendor',
+  'Update vendor information (name, type, website, phone, address, notes).',
+  {
+    id: z.number().int().describe('Vendor ID'),
+    name: z.string().optional(),
+    type: z.string().optional(),
+    website: z.string().optional(),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Vendor } = getModels();
+    const item = await Vendor.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'vendor', item.id, item.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_vendor',
+  'Delete a vendor from the register.',
+  { id: z.number().int().describe('Vendor ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Vendor } = getModels();
+    const item = await Vendor.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+    await logAudit('delete', 'vendor', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_add_vendor_contact',
+  'Add a contact person to a vendor.',
+  {
+    vendor_id: z.number().int().describe('Vendor ID'),
+    name: z.string().min(1).describe('Contact person name'),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    role: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Vendor, VendorContact } = getModels();
+    const vendor = await Vendor.findByPk(args.vendor_id);
+    if (!vendor) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+    const contact = await VendorContact.create(args);
+    await logAudit('create', 'vendor', vendor.id, vendor.name, { action: 'add_contact', contact_name: contact.name }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(contact, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_vendor_contact',
+  'Update a vendor contact person.',
+  {
+    vendor_id: z.number().int().describe('Vendor ID'),
+    contact_id: z.number().int().describe('Contact ID'),
+    name: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    role: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Vendor, VendorContact } = getModels();
+    const vendor = await Vendor.findByPk(args.vendor_id);
+    if (!vendor) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+    const contact = await VendorContact.findOne({ where: { id: args.contact_id, vendor_id: args.vendor_id } });
+    if (!contact) return { content: [{ type: 'text', text: 'Contact not found' }], isError: true };
+    const { vendor_id, contact_id, ...updates } = args;
+    await contact.update(updates);
+    await logAudit('update', 'vendor', vendor.id, vendor.name, { action: 'update_contact', contact_name: contact.name }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(contact, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_vendor_contact',
+  'Delete a vendor contact person.',
+  {
+    vendor_id: z.number().int().describe('Vendor ID'),
+    contact_id: z.number().int().describe('Contact ID'),
+  },
+  async ({ vendor_id, contact_id }, { mcpUser }) => {
+    const { Vendor, VendorContact } = getModels();
+    const vendor = await Vendor.findByPk(vendor_id);
+    if (!vendor) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+    const contact = await VendorContact.findOne({ where: { id: contact_id, vendor_id } });
+    if (!contact) return { content: [{ type: 'text', text: 'Contact not found' }], isError: true };
+    const contactName = contact.name;
+    await contact.destroy();
+    await logAudit('delete', 'vendor', vendor.id, vendor.name, { action: 'delete_contact', contact_name: contactName }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedContactId: contact_id }) }] };
+  }
+);
+
+server.tool(
+  'isms_list_vendor_triage_runs',
+  'List AI contract analysis triage runs for a vendor.',
+  { vendor_id: z.number().int().describe('Vendor ID') },
+  async ({ vendor_id }) => {
+    const { VendorTriageRun, Document, User } = getModels();
+    const runs = await VendorTriageRun.findAll({
+      where: { vendor_id },
+      include: [
+        { model: Document, as: 'document', attributes: ['id', 'original_name', 'mimetype', 'category'] },
+        { model: User, as: 'triggeredBy', attributes: ['id', 'name'] },
+      ],
+      order: [['created_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(runs, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_vendor_triage_run',
+  'Get full analysis findings and summary of a specific vendor contract triage run.',
+  {
+    vendor_id: z.number().int().describe('Vendor ID'),
+    run_id: z.number().int().describe('Triage run ID'),
+  },
+  async ({ vendor_id, run_id }) => {
+    const { VendorTriageRun, VendorFinding, Document, User } = getModels();
+    const run = await VendorTriageRun.findOne({
+      where: { id: run_id, vendor_id },
+      include: [
+        { model: VendorFinding, as: 'findings' },
+        { model: Document, as: 'document', attributes: ['id', 'original_name', 'mimetype', 'category'] },
+        { model: User, as: 'triggeredBy', attributes: ['id', 'name'] },
+      ],
+      order: [[{ model: VendorFinding, as: 'findings' }, 'id', 'ASC']],
+    });
+    if (!run) return { content: [{ type: 'text', text: 'Triage run not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(run, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_triage_profiles',
+  'Get vendor contract analysis triage criteria profiles and reference baselines.',
+  {},
+  async () => {
+    const { getProfiles } = require('../services/triageProfiles');
+    const profiles = await getProfiles();
+    return { content: [{ type: 'text', text: JSON.stringify(profiles, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_triage_profiles',
+  'Update vendor contract analysis triage criteria profiles (admin only).',
+  { profiles: z.record(z.any()).describe('Custom profile overrides dictionary') },
+  async ({ profiles }, { mcpUser }) => {
+    const { saveProfiles } = require('../services/triageProfiles');
+    const saved = await saveProfiles(profiles || {});
+    await logAudit('update', 'settings', null, 'Vertragsanalyse-Profile', { profiles: Object.keys(saved) }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(saved, null, 2) }] };
+  }
+);
+
+// ─── BCM & DORA Enhancements ─────────────────────────────────────────────────
+
+server.tool(
+  'isms_create_bcm_process',
+  'Register a critical business process in the BIA (Business Impact Analysis) register.',
+  {
+    name: z.string().min(1).describe('Process name'),
+    description: z.string().optional(),
+    criticality: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
+    rto_hours: z.number().optional().describe('Recovery Time Objective in hours'),
+    rpo_hours: z.number().optional().describe('Recovery Point Objective in hours'),
+    owner_id: z.number().int().optional(),
+    dependencies: z.string().optional(),
+    recovery_strategy: z.string().optional(),
+    status: z.enum(['active', 'in_review', 'archived']).default('active'),
+    last_test_date: z.string().optional(),
+    next_test_date: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { BcmProcess } = getModels();
+    const item = await BcmProcess.create(args);
+    await logAudit('create', 'bcm_process', item.id, item.name, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_bcm_process',
+  'Update details, RTO, RPO, or recovery strategy of a BCM process.',
+  {
+    id: z.number().int().describe('BCM process ID'),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    criticality: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+    rto_hours: z.number().optional(),
+    rpo_hours: z.number().optional(),
+    owner_id: z.number().int().nullable().optional(),
+    dependencies: z.string().optional(),
+    recovery_strategy: z.string().optional(),
+    status: z.enum(['active', 'in_review', 'archived']).optional(),
+    last_test_date: z.string().optional(),
+    next_test_date: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { BcmProcess } = getModels();
+    const item = await BcmProcess.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'BCM process not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'bcm_process', item.id, item.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_bcm_process',
+  'Delete a BCM business process from the BIA register.',
+  { id: z.number().int().describe('BCM process ID') },
+  async ({ id }, { mcpUser }) => {
+    const { BcmProcess } = getModels();
+    const item = await BcmProcess.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'BCM process not found' }], isError: true };
+    await logAudit('delete', 'bcm_process', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_update_bcm_exercise',
+  'Update a BCM test, exercise, or drill record.',
+  {
+    id: z.number().int().describe('BCM exercise ID'),
+    process_id: z.number().int().nullable().optional(),
+    title: z.string().optional(),
+    exercise_type: z.enum(['tabletop', 'simulation', 'parallel', 'full_interruption']).optional(),
+    exercise_date: z.string().optional(),
+    participants: z.string().optional(),
+    result: z.enum(['passed', 'partially_passed', 'failed']).optional(),
+    findings: z.string().optional(),
+    actions: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { BcmExercise } = getModels();
+    const item = await BcmExercise.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'BCM exercise not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'bcm_exercise', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_bcm_exercise',
+  'Delete a BCM exercise record.',
+  { id: z.number().int().describe('BCM exercise ID') },
+  async ({ id }, { mcpUser }) => {
+    const { BcmExercise } = getModels();
+    const item = await BcmExercise.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'BCM exercise not found' }], isError: true };
+    await logAudit('delete', 'bcm_exercise', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_create_dora_third_party',
+  'Register an ICT third-party service provider under DORA (EU 2022/2554) regulations.',
+  {
+    name: z.string().min(1).describe('Service provider name'),
+    ict_service: z.string().min(1).describe('ICT service type (e.g. Cloud Hosting, Core Banking SaaS)'),
+    criticality: z.enum(['critical', 'important', 'standard']).default('important'),
+    contract_start: z.string().optional(),
+    contract_end: z.string().optional(),
+    country: z.string().optional(),
+    contact_name: z.string().optional(),
+    contact_email: z.string().optional(),
+    sla_rto_hours: z.number().optional(),
+    sla_rpo_hours: z.number().optional(),
+    last_review_date: z.string().optional(),
+    next_review_date: z.string().optional(),
+    status: z.enum(['active', 'in_onboarding', 'terminated']).default('active'),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { DoraThirdParty } = getModels();
+    const item = await DoraThirdParty.create(args);
+    await logAudit('create', 'dora_third_party', item.id, item.name, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_dora_third_party',
+  'Update a DORA ICT third-party provider record.',
+  {
+    id: z.number().int().describe('DORA provider ID'),
+    name: z.string().optional(),
+    ict_service: z.string().optional(),
+    criticality: z.enum(['critical', 'important', 'standard']).optional(),
+    contract_start: z.string().optional(),
+    contract_end: z.string().optional(),
+    country: z.string().optional(),
+    contact_name: z.string().optional(),
+    contact_email: z.string().optional(),
+    sla_rto_hours: z.number().optional(),
+    sla_rpo_hours: z.number().optional(),
+    last_review_date: z.string().optional(),
+    next_review_date: z.string().optional(),
+    status: z.enum(['active', 'in_onboarding', 'terminated']).optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { DoraThirdParty } = getModels();
+    const item = await DoraThirdParty.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'DORA third-party not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'dora_third_party', item.id, item.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_dora_third_party',
+  'Delete a DORA ICT third-party provider record.',
+  { id: z.number().int().describe('DORA provider ID') },
+  async ({ id }, { mcpUser }) => {
+    const { DoraThirdParty } = getModels();
+    const item = await DoraThirdParty.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'DORA third-party not found' }], isError: true };
+    await logAudit('delete', 'dora_third_party', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_create_dora_test',
+  'Register a DORA digital operational resilience test (Art. 24-26, e.g. vulnerability scan, TLPT, penetration test).',
+  {
+    title: z.string().min(1).describe('Test title'),
+    test_type: z.enum(['vulnerability_scan', 'pentest', 'tlpt_threat_led', 'gap_analysis', 'scenario_test', 'source_code_review']).default('pentest'),
+    test_date: z.string().min(1).describe('Date of test (YYYY-MM-DD)'),
+    performed_by: z.string().optional().describe('Internal auditor or external security testing company'),
+    status: z.enum(['planned', 'in_progress', 'completed', 'cancelled']).default('planned'),
+    result: z.enum(['passed', 'passed_with_findings', 'failed']).optional(),
+    findings: z.string().optional(),
+    remediation: z.string().optional(),
+    next_test_date: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { DoraResilienceTest } = getModels();
+    const item = await DoraResilienceTest.create(args);
+    await logAudit('create', 'dora_test', item.id, item.title, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_dora_test',
+  'Update details, results, or remediation of a DORA resilience test.',
+  {
+    id: z.number().int().describe('DORA test ID'),
+    title: z.string().optional(),
+    test_type: z.enum(['vulnerability_scan', 'pentest', 'tlpt_threat_led', 'gap_analysis', 'scenario_test', 'source_code_review']).optional(),
+    test_date: z.string().optional(),
+    performed_by: z.string().optional(),
+    status: z.enum(['planned', 'in_progress', 'completed', 'cancelled']).optional(),
+    result: z.enum(['passed', 'passed_with_findings', 'failed']).optional(),
+    findings: z.string().optional(),
+    remediation: z.string().optional(),
+    next_test_date: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { DoraResilienceTest } = getModels();
+    const item = await DoraResilienceTest.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'DORA test not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'dora_test', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_dora_test',
+  'Delete a DORA resilience test record.',
+  { id: z.number().int().describe('DORA test ID') },
+  async ({ id }, { mcpUser }) => {
+    const { DoraResilienceTest } = getModels();
+    const item = await DoraResilienceTest.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'DORA test not found' }], isError: true };
+    await logAudit('delete', 'dora_test', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Pentests (Update & Delete) ──────────────────────────────────────────────
+
+server.tool(
+  'isms_update_pentest',
+  'Update an existing pentest project.',
+  {
+    id: z.number().int().describe('Pentest project ID'),
+    title: z.string().optional(),
+    scope: z.string().optional(),
+    vendor: z.string().optional(),
+    start_date: z.string().optional(),
+    end_date: z.string().optional(),
+    status: z.enum(['planned', 'in_progress', 'completed', 'retesting', 'closed']).optional(),
+    report_url: z.string().optional(),
+    owner_id: z.number().int().nullable().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { PentestProject } = getModels();
+    const item = await PentestProject.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'Pentest project not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'pentest_project', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_pentest',
+  'Delete a pentest project and all of its associated findings.',
+  { id: z.number().int().describe('Pentest project ID') },
+  async ({ id }, { mcpUser }) => {
+    const { PentestProject, PentestFinding } = getModels();
+    const item = await PentestProject.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Pentest project not found' }], isError: true };
+    await logAudit('delete', 'pentest_project', item.id, item.title, {}, mcpUser);
+    await PentestFinding.destroy({ where: { project_id: id } });
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_pentest_finding',
+  'Delete a finding from a pentest project.',
+  {
+    project_id: z.number().int().describe('Pentest project ID'),
+    id: z.number().int().describe('Finding ID'),
+  },
+  async ({ project_id, id }, { mcpUser }) => {
+    const { PentestFinding } = getModels();
+    const item = await PentestFinding.findOne({ where: { id, project_id } });
+    if (!item) return { content: [{ type: 'text', text: 'Pentest finding not found' }], isError: true };
+    await logAudit('delete', 'pentest_finding', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Policies & Templates (Delete) ───────────────────────────────────────────
+
+server.tool(
+  'isms_delete_policy',
+  'Delete a security policy from the repository.',
+  { id: z.number().int().describe('Policy ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Policy } = getModels();
+    const item = await Policy.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Policy not found' }], isError: true };
+    await logAudit('delete', 'policy', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_get_policy_acknowledgments',
+  'List employee acknowledgments / signatures for a specific security policy.',
+  { id: z.number().int().describe('Policy ID') },
+  async ({ id }) => {
+    const { PolicyAcknowledgment, User } = getModels();
+    const acks = await PolicyAcknowledgment.findAll({
+      where: { policy_id: id },
+      include: [{ model: User, attributes: ['id', 'name', 'email', 'department'] }],
+      order: [['acknowledged_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(acks, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_templates',
+  'List policy and ISMS document templates available in the template library.',
+  {},
+  async () => {
+    const { Template } = getModels();
+    const items = await Template.findAll({ order: [['name', 'ASC']] });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_template',
+  'Delete a document template from the library.',
+  { id: z.number().int().describe('Template ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Template } = getModels();
+    const item = await Template.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Template not found' }], isError: true };
+    await logAudit('delete', 'template', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Audits, Findings & KPIs (Delete & Create) ───────────────────────────────
+
+server.tool(
+  'isms_delete_audit',
+  'Delete a compliance audit.',
+  { id: z.number().int().describe('Audit ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Audit } = getModels();
+    const item = await Audit.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Audit not found' }], isError: true };
+    await logAudit('delete', 'audit', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_audit_finding',
+  'Delete an audit finding / deviation.',
+  { id: z.number().int().describe('Audit finding ID') },
+  async ({ id }, { mcpUser }) => {
+    const { AuditFinding } = getModels();
+    const item = await AuditFinding.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Audit finding not found' }], isError: true };
+    await logAudit('delete', 'audit_finding', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_create_kpi',
+  'Create a new security or compliance KPI metric to track.',
+  {
+    title: z.string().min(1).describe('KPI title'),
+    description: z.string().optional(),
+    target: z.number().describe('Target metric value'),
+    current_value: z.number().default(0),
+    status: z.enum(['green', 'yellow', 'red']).default('green'),
+    owner_id: z.number().int().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Kpi } = getModels();
+    const item = await Kpi.create(args);
+    await logAudit('create', 'kpi', item.id, item.title, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_kpi',
+  'Update an existing security KPI (target, current value, status, owner).',
+  {
+    id: z.number().int().describe('KPI ID'),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    target: z.number().optional(),
+    current_value: z.number().optional(),
+    status: z.enum(['green', 'yellow', 'red']).optional(),
+    owner_id: z.number().int().nullable().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Kpi } = getModels();
+    const item = await Kpi.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'KPI not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'kpi', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_kpi',
+  'Delete a security KPI metric.',
+  { id: z.number().int().describe('KPI ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Kpi } = getModels();
+    const item = await Kpi.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'KPI not found' }], isError: true };
+    await logAudit('delete', 'kpi', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Auto-Discovery Software Deletion ────────────────────────────────────────
+
+server.tool(
+  'isms_delete_discovered_software',
+  'Delete a staged discovered host or software item from the discovery inbox.',
+  { id: z.number().int().describe('Discovery item ID') },
+  async ({ id }, { mcpUser }) => {
+    const { DiscoveredSoftware } = getModels();
+    const item = await DiscoveredSoftware.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Discovered software item not found' }], isError: true };
+    await logAudit('delete', 'discovered_software', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+
+
+// ─── Compliance Catalogs (ISO 27001, BSI, NIS-2, C5, TISAX) ────────────────
+
+server.tool(
+  'isms_list_iso27001_controls',
+  'List all ISO 27001 Annex A controls including applicability, implementation status, owner, evidence, and notes.',
+  {
+    search: z.string().optional().describe('Search in control reference or title'),
+    status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable', 'all']).default('all').describe('Filter by implementation status'),
+    applicable: z.boolean().optional().describe('Filter by applicability'),
+    limit: z.number().int().min(1).max(500).default(100).describe('Max results'),
+  },
+  async ({ search, status, applicable, limit }) => {
+    const { Iso27001Control, User } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.implementation_status = status;
+    if (applicable !== undefined) where.applicable = applicable;
+    if (search) {
+      where[Op.or] = [
+        { ref: { [Op.like]: `%${search}%` } },
+        { title: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const items = await Iso27001Control.findAll({
+      where,
+      include: [{ model: User, as: 'owner', attributes: ['id', 'name', 'email'] }],
+      order: [['ref', 'ASC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_iso27001_control',
+  'Update details, applicability, justification, or implementation status of an ISO 27001 Annex A control.',
+  {
+    id: z.number().int().describe('ISO 27001 control record ID'),
+    applicable: z.boolean().optional().describe('Whether the control is applicable'),
+    implementation_status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable']).optional(),
+    justification: z.string().optional().describe('Justification for inclusion or exclusion'),
+    owner_id: z.number().int().nullable().optional().describe('User ID of the control owner'),
+    evidence: z.string().optional().describe('Audit evidence / documentation description'),
+    notes: z.string().optional(),
+    last_review_date: z.string().optional().describe('ISO date (YYYY-MM-DD) of last review'),
+  },
+  async (args, { mcpUser }) => {
+    const { Iso27001Control, Control } = getModels();
+    const item = await Iso27001Control.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'ISO 27001 control not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    const ISO_TO_SOA = { implemented: 'implemented', not_applicable: 'not_applicable', not_started: 'planned', in_progress: 'planned' };
+    if (updates.implementation_status && ISO_TO_SOA[updates.implementation_status]) {
+      Control.update(
+        { status: ISO_TO_SOA[updates.implementation_status] },
+        { where: { framework: 'iso27001', code: item.ref } }
+      ).catch(() => {});
+    }
+    await logAudit('update', 'iso27001_control', item.id, item.ref, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_bsi_requirements',
+  'List BSI IT-Grundschutz requirements and Bausteine with implementation status.',
+  {
+    search: z.string().optional().describe('Search in req_id, baustein_id, or title'),
+    layer: z.string().optional().describe('Filter by layer (ISMS, ORG, CON, OPS, DER, APP, SYS, IND, INF, NET)'),
+    status: z.enum(['ja', 'teilweise', 'nein', 'entbehrlich', 'all']).default('all').describe('Implementation status'),
+    limit: z.number().int().min(1).max(500).default(100).describe('Max results'),
+  },
+  async ({ search, layer, status, limit }) => {
+    const { BsiRequirement, User } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.implementation_status = status;
+    if (layer) where.layer = layer;
+    if (search) {
+      where[Op.or] = [
+        { req_id: { [Op.like]: `%${search}%` } },
+        { baustein_id: { [Op.like]: `%${search}%` } },
+        { title: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const items = await BsiRequirement.findAll({
+      where,
+      include: [{ model: User, as: 'responsible', attributes: ['id', 'name', 'email'] }],
+      order: [['layer', 'ASC'], ['baustein_id', 'ASC'], ['req_id', 'ASC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_bsi_requirement',
+  'Update implementation status or responsible person of a BSI IT-Grundschutz requirement.',
+  {
+    id: z.number().int().describe('BSI requirement ID'),
+    implementation_status: z.enum(['ja', 'teilweise', 'nein', 'entbehrlich']).optional(),
+    responsible_id: z.number().int().nullable().optional(),
+    notes: z.string().optional(),
+    last_review_date: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { BsiRequirement } = getModels();
+    const item = await BsiRequirement.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'BSI requirement not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'bsi_requirement', item.id, item.req_id, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_nis2_measures',
+  'List NIS-2 cybersecurity measures according to Art. 21 NIS-2 / § 30 BSIG.',
+  {
+    search: z.string().optional().describe('Search in article_ref or title'),
+    status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable', 'all']).default('all'),
+    limit: z.number().int().min(1).max(500).default(100),
+  },
+  async ({ search, status, limit }) => {
+    const { Nis2Measure, User } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.implementation_status = status;
+    if (search) {
+      where[Op.or] = [
+        { article_ref: { [Op.like]: `%${search}%` } },
+        { title: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const items = await Nis2Measure.findAll({
+      where,
+      include: [{ model: User, as: 'responsible', attributes: ['id', 'name', 'email'] }],
+      order: [['article_ref', 'ASC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_nis2_measure',
+  'Update implementation status, responsible person, deadline, or evidence of a NIS-2 measure.',
+  {
+    id: z.number().int().describe('NIS-2 measure ID'),
+    implementation_status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable']).optional(),
+    responsible_id: z.number().int().nullable().optional(),
+    evidence: z.string().optional(),
+    deadline: z.string().optional(),
+    notes: z.string().optional(),
+    last_review_date: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Nis2Measure } = getModels();
+    const item = await Nis2Measure.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'NIS-2 measure not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'nis2_measure', item.id, item.article_ref, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_c5_criteria',
+  'List BSI C5 (Cloud Computing Compliance Criteria Catalogue) criteria.',
+  {
+    search: z.string().optional().describe('Search in criterion_id or title'),
+    domain: z.string().optional().describe('Filter by domain (e.g. OAS, OIS, SEC, CRY, …)'),
+    status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable', 'all']).default('all'),
+    limit: z.number().int().min(1).max(500).default(100),
+  },
+  async ({ search, domain, status, limit }) => {
+    const { C5Criterion, User } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.implementation_status = status;
+    if (domain) where.domain = domain;
+    if (search) {
+      where[Op.or] = [
+        { criterion_id: { [Op.like]: `%${search}%` } },
+        { title: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const items = await C5Criterion.findAll({
+      where,
+      include: [{ model: User, as: 'responsible', attributes: ['id', 'name', 'email'] }],
+      order: [['domain', 'ASC'], ['criterion_id', 'ASC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_c5_criterion',
+  'Update implementation status, responsible person, or evidence of a C5 criterion.',
+  {
+    id: z.number().int().describe('C5 criterion ID'),
+    implementation_status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable']).optional(),
+    responsible_id: z.number().int().nullable().optional(),
+    evidence: z.string().optional(),
+    notes: z.string().optional(),
+    last_review_date: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { C5Criterion } = getModels();
+    const item = await C5Criterion.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'C5 criterion not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'c5_criterion', item.id, item.criterion_id, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_tisax_requirements',
+  'List VDA-ISA requirements for TISAX assessment.',
+  {
+    search: z.string().optional().describe('Search in ref or title'),
+    chapter: z.string().optional().describe('Filter by chapter'),
+    status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable', 'all']).default('all'),
+    limit: z.number().int().min(1).max(500).default(100),
+  },
+  async ({ search, chapter, status, limit }) => {
+    const { TisaxRequirement } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.status = status;
+    if (chapter) where.chapter = chapter;
+    if (search) {
+      where[Op.or] = [
+        { ref: { [Op.like]: `%${search}%` } },
+        { title: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const items = await TisaxRequirement.findAll({ where, order: [['ref', 'ASC']], limit });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_tisax_requirement',
+  'Update maturity level, target level, status, or notes of a TISAX VDA-ISA requirement.',
+  {
+    id: z.number().int().describe('TISAX requirement ID'),
+    maturity_level: z.number().min(0).max(5).optional(),
+    target_level: z.number().min(0).max(5).optional(),
+    status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable']).optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { TisaxRequirement } = getModels();
+    const item = await TisaxRequirement.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'TISAX requirement not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'tisax_requirement', item.id, item.ref, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_tisax_assessments',
+  'List TISAX assessment projects and label tracking records.',
+  {
+    status: z.enum(['planned', 'in_progress', 'passed', 'failed', 'all']).default('all'),
+    limit: z.number().int().min(1).max(500).default(50),
+  },
+  async ({ status, limit }) => {
+    const { TisaxAssessment, User } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.status = status;
+    const items = await TisaxAssessment.findAll({
+      where,
+      include: [{ model: User, as: 'owner', attributes: ['id', 'name', 'email'] }],
+      order: [['created_at', 'DESC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_tisax_assessment',
+  'Register a new TISAX assessment / label tracking project.',
+  {
+    scope_description: z.string().min(1).describe('Assessment scope description'),
+    assessment_level: z.enum(['AL1', 'AL2', 'AL3']).default('AL2'),
+    label_requested: z.string().optional().describe('E.g. Info High, Info Very High, Prototype, Data Protection'),
+    status: z.enum(['planned', 'in_progress', 'passed', 'failed']).default('planned'),
+    auditor_company: z.string().optional().describe('Audit provider / testing service provider'),
+    assessment_date: z.string().optional().describe('ISO date of audit'),
+    label_valid_until: z.string().optional().describe('ISO date of validity (usually 3 years)'),
+    owner_id: z.number().int().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { TisaxAssessment } = getModels();
+    const item = await TisaxAssessment.create(args);
+    await logAudit('create', 'tisax_assessment', item.id, `TISAX Assessment ${item.id}`, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_tisax_assessment',
+  'Update an existing TISAX assessment record.',
+  {
+    id: z.number().int().describe('TISAX assessment ID'),
+    scope_description: z.string().optional(),
+    assessment_level: z.enum(['AL1', 'AL2', 'AL3']).optional(),
+    label_requested: z.string().optional(),
+    status: z.enum(['planned', 'in_progress', 'passed', 'failed']).optional(),
+    auditor_company: z.string().optional(),
+    assessment_date: z.string().optional(),
+    label_valid_until: z.string().optional(),
+    owner_id: z.number().int().nullable().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { TisaxAssessment } = getModels();
+    const item = await TisaxAssessment.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'TISAX assessment not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'tisax_assessment', item.id, `TISAX Assessment ${item.id}`, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_tisax_assessment',
+  'Delete a TISAX assessment record.',
+  { id: z.number().int().describe('TISAX assessment ID') },
+  async ({ id }, { mcpUser }) => {
+    const { TisaxAssessment } = getModels();
+    const item = await TisaxAssessment.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'TISAX assessment not found' }], isError: true };
+    await logAudit('delete', 'tisax_assessment', item.id, `TISAX Assessment ${item.id}`, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Framework Mappings ──────────────────────────────────────────────────────
+
+server.tool(
+  'isms_lookup_framework_mappings',
+  'Look up cross-framework mappings for a specific control reference across ISO 27001, NIS-2, BSI IT-Grundschutz, and C5.',
+  {
+    framework: z.enum(['iso27001', 'nis2', 'bsi_grundschutz', 'c5']).describe('Source framework'),
+    ref: z.string().min(1).describe('Control reference code (e.g. 5.1, A.5.1, OPS.1.1.4.A1, CRY-01)'),
+  },
+  async ({ framework, ref }) => {
+    const controlMappings = require('../services/controlMappings');
+    const { Iso27001Control, Nis2Measure, BsiRequirement, C5Criterion } = getModels();
+    const related = controlMappings.lookup(framework, ref);
+
+    const [isoDb, nisDb, bsiDb, c5Db] = await Promise.all([
+      Iso27001Control.findAll({ attributes: ['ref', 'implementation_status'] }).catch(() => []),
+      Nis2Measure.findAll({ attributes: ['article_ref', 'implementation_status'] }).catch(() => []),
+      BsiRequirement.findAll({ attributes: ['req_id', 'implementation_status'] }).catch(() => []),
+      C5Criterion.findAll({ attributes: ['criterion_id', 'implementation_status'] }).catch(() => []),
+    ]);
+
+    const statusMap = {
+      iso27001: new Map(isoDb.map(x => [x.ref, x.implementation_status])),
+      nis2: new Map(nisDb.map(x => [x.article_ref, x.implementation_status])),
+      bsi_grundschutz: new Map(bsiDb.map(x => [x.req_id, x.implementation_status])),
+      c5: new Map(c5Db.map(x => [x.criterion_id, x.implementation_status])),
+    };
+
+    const enriched = related.map(m => ({
+      framework: m.framework,
+      ref: m.ref,
+      type: m.type,
+      status: statusMap[m.framework]?.get(m.ref) || 'not_started',
+    }));
+
+    return { content: [{ type: 'text', text: JSON.stringify({ framework, ref, related: enriched }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_framework_mapping_stats',
+  'Get statistics on cross-framework control mappings between ISO 27001, NIS-2, BSI IT-Grundschutz, and C5.',
+  {},
+  async () => {
+    const controlMappings = require('../services/controlMappings');
+    return { content: [{ type: 'text', text: JSON.stringify(controlMappings.stats(), null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_framework_mapping_overview',
+  'Get a complete overview table matrix of cross-framework control mappings.',
+  {},
+  async () => {
+    const controlMappings = require('../services/controlMappings');
+    const { Iso27001Control, Nis2Measure, BsiRequirement, C5Criterion } = getModels();
+
+    const [isoControls, nisMeasures, bsiReqs, c5Criteria] = await Promise.all([
+      Iso27001Control.findAll({ attributes: ['ref', 'title', 'implementation_status'] }).catch(() => []),
+      Nis2Measure.findAll({ attributes: ['article_ref', 'title', 'implementation_status'] }).catch(() => []),
+      BsiRequirement.findAll({ attributes: ['req_id', 'title', 'implementation_status'] }).catch(() => []),
+      C5Criterion.findAll({ attributes: ['criterion_id', 'title', 'implementation_status'] }).catch(() => []),
+    ]);
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          stats: controlMappings.stats(),
+          iso27001Count: isoControls.length,
+          nis2Count: nisMeasures.length,
+          bsiCount: bsiReqs.length,
+          c5Count: c5Criteria.length,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// ─── Awareness & Trainings ───────────────────────────────────────────────────
+
+server.tool(
+  'isms_list_training_courses',
+  'List compliance and security training courses / curriculum with assignment and completion stats.',
+  {
+    search: z.string().optional().describe('Search in training title or description'),
+    mandatory: z.boolean().optional().describe('Filter by mandatory flag'),
+    limit: z.number().int().min(1).max(500).default(50),
+  },
+  async ({ search, mandatory, limit }) => {
+    const { Training, UserTraining, User } = getModels();
+    const where = {};
+    if (mandatory !== undefined) where.mandatory = mandatory;
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const items = await Training.findAll({
+      where,
+      include: [{
+        model: UserTraining,
+        as: 'assignments',
+        include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'department'] }]
+      }],
+      order: [['date', 'DESC']],
+      limit,
+    });
+    const formatted = items.map(t => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      date: t.date,
+      mandatory: t.mandatory,
+      total_assigned: t.assignments?.length || 0,
+      total_completed: (t.assignments || []).filter(a => a.completed_at !== null).length,
+      assignments: t.assignments,
+    }));
+    return { content: [{ type: 'text', text: JSON.stringify(formatted, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_training_course',
+  'Create a new security awareness or compliance training course in the catalog.',
+  {
+    title: z.string().min(1).describe('Training title (e.g. Information Security Awareness 2026)'),
+    description: z.string().optional().describe('Training course description and learning objectives'),
+    date: z.string().min(1).describe('Training date or deadline (YYYY-MM-DD)'),
+    mandatory: z.boolean().default(true).describe('Whether this training is mandatory for employees'),
+  },
+  async (args, { mcpUser }) => {
+    const { Training } = getModels();
+    const item = await Training.create(args);
+    await logAudit('create', 'training', item.id, item.title, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_training_course',
+  'Update an existing training course details.',
+  {
+    id: z.number().int().describe('Training course ID'),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    date: z.string().optional(),
+    mandatory: z.boolean().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Training, UserTraining } = getModels();
+    const item = await Training.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'Training course not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    if (updates.title) {
+      await UserTraining.update({ training_title: updates.title }, { where: { training_id: item.id } });
+    }
+    await logAudit('update', 'training', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_training_course',
+  'Delete a training course and cancel associated tasks.',
+  { id: z.number().int().describe('Training course ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Training, Task } = getModels();
+    const item = await Training.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Training course not found' }], isError: true };
+    await Task.update(
+      { status: 'cancelled' },
+      { where: { related_type: 'training', related_id: id, status: { [Op.notIn]: ['done', 'cancelled'] } } }
+    );
+    await logAudit('delete', 'training', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_list_user_trainings',
+  'List user training participation and completion records.',
+  {
+    user_id: z.number().int().optional().describe('Filter by specific user ID'),
+    training_id: z.number().int().optional().describe('Filter by training course ID'),
+    status: z.enum(['pending', 'valid', 'expired', 'all']).default('all'),
+    limit: z.number().int().min(1).max(500).default(100),
+  },
+  async ({ user_id, training_id, status, limit }) => {
+    const { UserTraining, User, Training } = getModels();
+    const where = {};
+    if (user_id) where.user_id = user_id;
+    if (training_id) where.training_id = training_id;
+    if (status && status !== 'all') where.status = status;
+    const items = await UserTraining.findAll({
+      where,
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'email', 'department'] },
+        { model: Training, as: 'training' },
+      ],
+      order: [['completed_at', 'DESC'], ['created_at', 'DESC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_record_user_training',
+  'Record a training completion or assign a training to a registered user or external employee.',
+  {
+    user_id: z.number().int().nullable().optional().describe('User ID if registered user'),
+    training_id: z.number().int().nullable().optional().describe('Training course ID'),
+    training_title: z.string().optional().describe('Title of training if not linked to course ID'),
+    employee_name: z.string().optional().describe('External employee name'),
+    employee_email: z.string().optional().describe('External employee email'),
+    completed_at: z.string().nullable().optional().describe('ISO date (YYYY-MM-DD) of completion'),
+    expires_at: z.string().nullable().optional().describe('ISO date (YYYY-MM-DD) of validity expiration'),
+    certificate_url: z.string().optional(),
+    status: z.enum(['pending', 'valid', 'expired']).default('valid'),
+  },
+  async (args, { mcpUser }) => {
+    const { UserTraining, Training } = getModels();
+    const data = { ...args };
+    if (data.training_id && !data.training_title) {
+      const tr = await Training.findByPk(data.training_id);
+      if (tr) data.training_title = tr.title;
+    }
+    if (data.completed_at) {
+      data.status = 'valid';
+    } else {
+      data.status = 'pending';
+    }
+    const item = await UserTraining.create(data);
+    await logAudit('create', 'user_training', item.id, item.training_title || 'Training Record', args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_user_training',
+  'Update an individual user training record (completion date, expiration, certificate).',
+  {
+    id: z.number().int().describe('User training record ID'),
+    completed_at: z.string().nullable().optional(),
+    expires_at: z.string().nullable().optional(),
+    certificate_url: z.string().optional(),
+    status: z.enum(['pending', 'valid', 'expired']).optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { UserTraining } = getModels();
+    const item = await UserTraining.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'User training record not found' }], isError: true };
+    const { id, ...updates } = args;
+    if (updates.completed_at !== undefined) {
+      updates.status = updates.completed_at ? 'valid' : 'pending';
+    }
+    await item.update(updates);
+    await logAudit('update', 'user_training', item.id, item.training_title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_user_training',
+  'Delete a user training record.',
+  { id: z.number().int().describe('User training record ID') },
+  async ({ id }, { mcpUser }) => {
+    const { UserTraining } = getModels();
+    const item = await UserTraining.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'User training record not found' }], isError: true };
+    await logAudit('delete', 'user_training', item.id, item.training_title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Audit Logs & Verification ──────────────────────────────────────────────
+
+server.tool(
+  'isms_list_audit_logs',
+  'Query immutable ISMS audit log entries with filters.',
+  {
+    entity_type: z.string().optional().describe('Filter by entity type (asset, risk, incident, user, etc.)'),
+    action: z.string().optional().describe('Filter by action (create, update, delete, assess, signoff, etc.)'),
+    actor_id: z.number().int().optional().describe('Filter by actor user ID'),
+    search: z.string().optional().describe('Search in entity name'),
+    from: z.string().optional().describe('Start date (YYYY-MM-DD)'),
+    to: z.string().optional().describe('End date (YYYY-MM-DD)'),
+    limit: z.number().int().min(1).max(500).default(100),
+    offset: z.number().int().min(0).default(0),
+  },
+  async ({ entity_type, action, actor_id, search, from, to, limit, offset }) => {
+    const { AuditLog } = getModels();
+    const where = {};
+    if (entity_type) where.entity_type = entity_type;
+    if (action) where.action = action;
+    if (actor_id) where.actor_id = actor_id;
+    if (search) where.entity_name = { [Op.like]: `%${search}%` };
+    if (from || to) {
+      where.created_at = {};
+      if (from) where.created_at[Op.gte] = new Date(from);
+      if (to) where.created_at[Op.lte] = new Date(to + 'T23:59:59');
+    }
+    const { rows, count } = await AuditLog.findAndCountAll({
+      where,
+      order: [['created_at', 'DESC']],
+      limit,
+      offset,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify({ total: count, logs: rows }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_verify_audit_logs',
+  'Verify the cryptographic HMAC tamper-evidence integrity chain of the entire ISMS audit log.',
+  {},
+  async () => {
+    const { AuditLog } = getModels();
+    const { verifyAuditRow } = require('../services/auditService');
+    const BATCH = 1000;
+    let offset = 0, total = 0, intact = 0, tampered = 0, unverifiable = 0;
+    const tamperedIds = [];
+    for (;;) {
+      const rows = await AuditLog.findAll({ order: [['id', 'ASC']], limit: BATCH, offset });
+      if (rows.length === 0) break;
+      for (const row of rows) {
+        total++;
+        const result = verifyAuditRow(row);
+        if (result === null) unverifiable++;
+        else if (result) intact++;
+        else { tampered++; if (tamperedIds.length < 100) tamperedIds.push(row.id); }
+      }
+      offset += rows.length;
+      if (rows.length < BATCH) break;
+    }
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          total,
+          intact,
+          tampered,
+          unverifiable,
+          tamperedIds,
+          isCompromised: tampered > 0,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// ─── Legal Requirements / Rechtskataster ────────────────────────────────────
+
+server.tool(
+  'isms_list_legal_requirements',
+  'List legal and regulatory compliance requirements in the legal register (Rechtskataster).',
+  {
+    category: z.string().optional().describe('Filter by category (e.g. Datenschutz, IT-Sicherheit, Arbeitsrecht)'),
+    status: z.enum(['compliant', 'partially_compliant', 'non_compliant', 'not_applicable', 'all']).default('all'),
+    search: z.string().optional().describe('Search in title or description'),
+    limit: z.number().int().min(1).max(500).default(100),
+  },
+  async ({ category, status, search, limit }) => {
+    const { LegalRequirement, User } = getModels();
+    const where = {};
+    if (category) where.category = category;
+    if (status && status !== 'all') where.status = status;
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const items = await LegalRequirement.findAll({
+      where,
+      include: [{ model: User, as: 'owner', attributes: ['id', 'name', 'email'] }],
+      order: [['title', 'ASC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_legal_requirement',
+  'Add a new legal requirement or regulation to the legal register.',
+  {
+    title: z.string().min(1).describe('Law / Regulation title (e.g. DSGVO, BSIG, TKG, NIS-2-Umsetzungsgesetz)'),
+    category: z.string().optional().describe('Category (e.g. IT-Sicherheit, Datenschutz, Branchenrecht)'),
+    description: z.string().optional(),
+    reference_url: z.string().optional(),
+    applicable_since: z.string().optional().describe('ISO date (YYYY-MM-DD)'),
+    review_date: z.string().optional().describe('Next review date (YYYY-MM-DD)'),
+    owner_id: z.number().int().optional(),
+    status: z.enum(['compliant', 'partially_compliant', 'non_compliant', 'not_applicable']).default('compliant'),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { LegalRequirement } = getModels();
+    const item = await LegalRequirement.create(args);
+    await logAudit('create', 'legal_requirement', item.id, item.title, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_legal_requirement',
+  'Update a legal requirement in the legal register.',
+  {
+    id: z.number().int().describe('Legal requirement ID'),
+    title: z.string().optional(),
+    category: z.string().optional(),
+    description: z.string().optional(),
+    reference_url: z.string().optional(),
+    applicable_since: z.string().optional(),
+    review_date: z.string().optional(),
+    owner_id: z.number().int().nullable().optional(),
+    status: z.enum(['compliant', 'partially_compliant', 'non_compliant', 'not_applicable']).optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { LegalRequirement } = getModels();
+    const item = await LegalRequirement.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'Legal requirement not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'legal_requirement', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_legal_requirement',
+  'Delete a legal requirement from the legal register.',
+  { id: z.number().int().describe('Legal requirement ID') },
+  async ({ id }, { mcpUser }) => {
+    const { LegalRequirement } = getModels();
+    const item = await LegalRequirement.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Legal requirement not found' }], isError: true };
+    await logAudit('delete', 'legal_requirement', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── GDPR Data Flows & DSFA ──────────────────────────────────────────────────
+
+server.tool(
+  'isms_list_dataflows',
+  'List data flow mappings between systems and assets in compliance with GDPR Art. 30.',
+  {
+    status: z.enum(['active', 'planned', 'deprecated', 'all']).default('all'),
+    contains_personal_data: z.boolean().optional(),
+    limit: z.number().int().min(1).max(500).default(100),
+  },
+  async ({ status, contains_personal_data, limit }) => {
+    const { DataFlow, Asset } = getModels();
+    const where = {};
+    if (status && status !== 'all') where.status = status;
+    if (contains_personal_data !== undefined) where.contains_personal_data = contains_personal_data;
+    const items = await DataFlow.findAll({
+      where,
+      include: [
+        { model: Asset, as: 'source', attributes: ['id', 'name', 'type'] },
+        { model: Asset, as: 'target', attributes: ['id', 'name', 'type'] },
+      ],
+      order: [['name', 'ASC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_dataflow',
+  'Get full details of a specific data flow.',
+  { id: z.number().int().describe('Data flow ID') },
+  async ({ id }) => {
+    const { DataFlow, Asset } = getModels();
+    const item = await DataFlow.findByPk(id, {
+      include: [
+        { model: Asset, as: 'source', attributes: ['id', 'name', 'type'] },
+        { model: Asset, as: 'target', attributes: ['id', 'name', 'type'] },
+      ],
+    });
+    if (!item) return { content: [{ type: 'text', text: 'Data flow not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_dataflow',
+  'Register a new data flow between source and target assets/systems.',
+  {
+    name: z.string().min(1).describe('Data flow name'),
+    description: z.string().optional(),
+    source_id: z.number().int().optional().describe('Source asset ID'),
+    target_id: z.number().int().optional().describe('Target asset ID'),
+    data_categories: z.string().optional().describe('Categories of transferred data'),
+    transfer_mechanism: z.string().optional().describe('E.g. REST API, SFTP, Direct DB, Kafka'),
+    encryption: z.string().optional().describe('E.g. TLS 1.3, AES-256, None'),
+    frequency: z.string().optional().describe('E.g. Real-time, Hourly, Daily batch'),
+    contains_personal_data: z.boolean().default(false),
+    notes: z.string().optional(),
+    status: z.enum(['active', 'planned', 'deprecated']).default('active'),
+  },
+  async (args, { mcpUser }) => {
+    const { DataFlow } = getModels();
+    const item = await DataFlow.create(args);
+    await logAudit('create', 'dataflow', item.id, item.name, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_dataflow',
+  'Update details of an existing data flow.',
+  {
+    id: z.number().int().describe('Data flow ID'),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    source_id: z.number().int().nullable().optional(),
+    target_id: z.number().int().nullable().optional(),
+    data_categories: z.string().optional(),
+    transfer_mechanism: z.string().optional(),
+    encryption: z.string().optional(),
+    frequency: z.string().optional(),
+    contains_personal_data: z.boolean().optional(),
+    notes: z.string().optional(),
+    status: z.enum(['active', 'planned', 'deprecated']).optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { DataFlow } = getModels();
+    const item = await DataFlow.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'Data flow not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'dataflow', item.id, item.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_dataflow',
+  'Delete a data flow record.',
+  { id: z.number().int().describe('Data flow ID') },
+  async ({ id }, { mcpUser }) => {
+    const { DataFlow } = getModels();
+    const item = await DataFlow.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Data flow not found' }], isError: true };
+    await logAudit('delete', 'dataflow', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_get_vvt_entry',
+  'Get full details of a single VVT processing activity (Verarbeitungstätigkeit) including linked assets and processors.',
+  { id: z.number().int().describe('VVT entry ID') },
+  async ({ id }) => {
+    const { VvtEntry, User, Vendor, Asset } = getModels();
+    const item = await VvtEntry.findByPk(id, {
+      include: [
+        { model: User, as: 'responsible', attributes: ['id', 'name', 'email'] },
+        { model: Vendor, as: 'processor', attributes: ['id', 'name'] },
+        { model: Asset, as: 'assets', attributes: ['id', 'name'], through: { attributes: [] } },
+        { model: Vendor, as: 'vendors', attributes: ['id', 'name'], through: { attributes: [] } },
+      ],
+    });
+    if (!item) return { content: [{ type: 'text', text: 'VVT entry not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_vvt_entry',
+  'Update a GDPR Record of Processing Activities (VVT) entry.',
+  {
+    id: z.number().int().describe('VVT entry ID'),
+    name: z.string().optional(),
+    purpose: z.string().optional(),
+    legal_basis: z.string().optional(),
+    data_categories: z.string().optional(),
+    special_categories: z.string().optional(),
+    data_subjects: z.string().optional(),
+    recipients: z.string().optional(),
+    third_country_transfers: z.string().optional(),
+    transfer_safeguards: z.string().optional(),
+    retention_period: z.string().optional(),
+    retention_legal_basis: z.string().optional(),
+    deletion_procedure: z.string().optional(),
+    security_measures: z.string().optional(),
+    responsible_id: z.number().int().nullable().optional(),
+    processor_id: z.number().int().nullable().optional(),
+    status: z.enum(['draft', 'in_review', 'active', 'archived']).optional(),
+    notes: z.string().optional(),
+    dsfa_required: z.boolean().optional(),
+    last_review_date: z.string().optional(),
+    asset_ids: z.array(z.number().int()).optional(),
+    vendor_ids: z.array(z.number().int()).optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { VvtEntry } = getModels();
+    const item = await VvtEntry.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'VVT entry not found' }], isError: true };
+    const { id, asset_ids, vendor_ids, ...updates } = args;
+    await item.update(updates);
+    if (Array.isArray(asset_ids)) await item.setAssets(asset_ids);
+    if (Array.isArray(vendor_ids)) await item.setVendors(vendor_ids);
+    await logAudit('update', 'vvt', item.id, item.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_vvt_entry',
+  'Delete a VVT entry from the GDPR register.',
+  { id: z.number().int().describe('VVT entry ID') },
+  async ({ id }, { mcpUser }) => {
+    const { VvtEntry } = getModels();
+    const item = await VvtEntry.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'VVT entry not found' }], isError: true };
+    await logAudit('delete', 'vvt', item.id, item.name, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_get_vvt_dsfa',
+  'Get the DSFA (Data Protection Impact Assessment / Datenschutz-Folgenabschätzung) for a VVT entry.',
+  { vvt_id: z.number().int().describe('VVT entry ID') },
+  async ({ vvt_id }) => {
+    const { Dsfa, User } = getModels();
+    const item = await Dsfa.findOne({
+      where: { vvt_id },
+      include: [{ model: User, as: 'approver', attributes: ['id', 'name'] }],
+    });
+    if (!item) return { content: [{ type: 'text', text: 'No DSFA found for this VVT entry' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_vvt_dsfa',
+  'Create a DSFA (Data Protection Impact Assessment) according to GDPR Art. 35 for a VVT entry.',
+  {
+    vvt_id: z.number().int().describe('VVT entry ID'),
+    title: z.string().min(1).describe('DSFA assessment title'),
+    processing_description: z.string().optional(),
+    necessity_assessment: z.string().optional(),
+    risks_identified: z.string().optional(),
+    measures_taken: z.string().optional(),
+    residual_risk: z.enum(['low', 'medium', 'high', 'critical']).default('low'),
+    dpa_consultation_required: z.boolean().default(false),
+    status: z.enum(['draft', 'in_review', 'approved', 'rejected']).default('draft'),
+    approver_id: z.number().int().optional(),
+    approval_date: z.string().optional(),
+    next_review_date: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Dsfa } = getModels();
+    const existing = await Dsfa.findOne({ where: { vvt_id: args.vvt_id } });
+    if (existing) return { content: [{ type: 'text', text: 'DSFA already exists for this VVT entry' }], isError: true };
+    const item = await Dsfa.create(args);
+    await logAudit('create', 'dsfa', item.id, item.title, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_vvt_dsfa',
+  'Update an existing DSFA assessment.',
+  {
+    id: z.number().int().describe('DSFA ID'),
+    title: z.string().optional(),
+    processing_description: z.string().optional(),
+    necessity_assessment: z.string().optional(),
+    risks_identified: z.string().optional(),
+    measures_taken: z.string().optional(),
+    residual_risk: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+    dpa_consultation_required: z.boolean().optional(),
+    status: z.enum(['draft', 'in_review', 'approved', 'rejected']).optional(),
+    approver_id: z.number().int().nullable().optional(),
+    approval_date: z.string().optional(),
+    next_review_date: z.string().optional(),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Dsfa } = getModels();
+    const item = await Dsfa.findByPk(args.id);
+    if (!item) return { content: [{ type: 'text', text: 'DSFA not found' }], isError: true };
+    const { id, ...updates } = args;
+    await item.update(updates);
+    await logAudit('update', 'dsfa', item.id, item.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_vvt_dsfa',
+  'Delete a DSFA record.',
+  { id: z.number().int().describe('DSFA ID') },
+  async ({ id }, { mcpUser }) => {
+    const { Dsfa } = getModels();
+    const item = await Dsfa.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'DSFA not found' }], isError: true };
+    await logAudit('delete', 'dsfa', item.id, item.title, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_subject_request',
+  'Delete a GDPR Subject Access Request (Betroffenenanfrage).',
+  { id: z.number().int().describe('Subject request ID') },
+  async ({ id }, { mcpUser }) => {
+    const { SubjectRequest } = getModels();
+    const item = await SubjectRequest.findByPk(id);
+    if (!item) return { content: [{ type: 'text', text: 'Subject request not found' }], isError: true };
+    await logAudit('delete', 'subject_request', item.id, item.ref, {}, mcpUser);
+    await item.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+// ─── Settings, Custom Roles & Automation ─────────────────────────────────────
+
+server.tool(
+  'isms_get_settings',
+  'Get general system settings (appName, review intervals, audit retention, SSO configuration, etc.).',
+  {},
+  async () => {
+    const { getGeneral } = require('../services/settingsService');
+    const settings = await getGeneral();
+    return { content: [{ type: 'text', text: JSON.stringify(settings, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_settings',
+  'Update general system settings (admin only).',
+  {
+    appName: z.string().optional(),
+    reviewIntervalMonths: z.number().int().min(1).max(60).optional(),
+    ssoAutoProvision: z.boolean().optional(),
+    ssoDefaultRole: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).optional(),
+    ssoAllowedDomains: z.string().optional(),
+    ssoStrictRoleSync: z.boolean().optional(),
+    auditLogRetentionMonths: z.number().int().min(3).max(120).optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { getGeneral, setGeneral } = require('../services/settingsService');
+    const before = await getGeneral();
+    const saved = await setGeneral(args);
+    await logAudit('update', 'settings', null, 'Allgemeine Einstellungen', { before, after: saved }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(saved, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_permissions',
+  'Get the role permissions matrix mapping system actions to roles.',
+  {},
+  async () => {
+    const { getPermissions, DEFAULT_PERMISSIONS } = require('../services/settingsService');
+    const permissions = await getPermissions();
+    return { content: [{ type: 'text', text: JSON.stringify({ permissions, defaults: DEFAULT_PERMISSIONS }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_permissions',
+  'Update the role permissions matrix (admin only).',
+  { permissions: z.record(z.any()).describe('Permissions matrix object') },
+  async ({ permissions }, { mcpUser }) => {
+    const { getPermissions, setPermissions } = require('../services/settingsService');
+    const { invalidatePermissionCache } = require('../services/permissionService');
+    const before = await getPermissions();
+    const saved = await setPermissions(permissions);
+    invalidatePermissionCache();
+    await logAudit('update', 'settings', null, 'Rollen & Rechte', { before, after: saved }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ permissions: saved }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_custom_roles',
+  'List custom user roles and their assigned permission matrices.',
+  {},
+  async () => {
+    const { CustomRole, User } = getModels();
+    const roles = await CustomRole.findAll({ order: [['name', 'ASC']] });
+    const counts = await User.findAll({
+      attributes: ['custom_role_id', [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'cnt']],
+      where: { custom_role_id: { [Op.ne]: null } },
+      group: ['custom_role_id'],
+      raw: true,
+    });
+    const countMap = Object.fromEntries(counts.map(c => [c.custom_role_id, parseInt(c.cnt)]));
+    const result = roles.map(r => ({ ...r.toJSON(), users_count: countMap[r.id] || 0 }));
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_custom_role',
+  'Create a custom user role with specific permissions (admin only).',
+  {
+    name: z.string().min(1).describe('Custom role name'),
+    description: z.string().optional(),
+    base_role: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).default('viewer'),
+    permissions: z.record(z.any()).optional().describe('Custom permissions matrix override'),
+  },
+  async (args, { mcpUser }) => {
+    const { CustomRole } = getModels();
+    const { sanitizeMatrix, invalidatePermissionCache } = require('../services/permissionService');
+    const role = await CustomRole.create({
+      name: args.name.trim(),
+      description: args.description || null,
+      base_role: args.base_role,
+      permissions: sanitizeMatrix(args.permissions),
+    });
+    invalidatePermissionCache();
+    await logAudit('create', 'custom_role', role.id, role.name, { permissions: role.permissions }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(role, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_custom_role',
+  'Update a custom user role (admin only).',
+  {
+    id: z.number().int().describe('Custom role ID'),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    base_role: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).optional(),
+    permissions: z.record(z.any()).optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { CustomRole, User } = getModels();
+    const { sanitizeMatrix, invalidatePermissionCache } = require('../services/permissionService');
+    const role = await CustomRole.findByPk(args.id);
+    if (!role) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
+    const { id, ...updates } = args;
+    if (updates.permissions) updates.permissions = sanitizeMatrix(updates.permissions);
+    const beforeBaseRole = role.base_role;
+    await role.update(updates);
+    if (updates.base_role && updates.base_role !== beforeBaseRole) {
+      await User.update({ role: updates.base_role }, { where: { custom_role_id: role.id } });
+    }
+    invalidatePermissionCache();
+    await logAudit('update', 'custom_role', role.id, role.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(role, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_custom_role',
+  'Delete a custom role (admin only).',
+  { id: z.number().int().describe('Custom role ID') },
+  async ({ id }, { mcpUser }) => {
+    const { CustomRole, User } = getModels();
+    const { invalidatePermissionCache } = require('../services/permissionService');
+    const role = await CustomRole.findByPk(id);
+    if (!role) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
+    const name = role.name;
+    await User.update({ custom_role_id: null }, { where: { custom_role_id: role.id } });
+    await role.destroy();
+    invalidatePermissionCache();
+    await logAudit('delete', 'custom_role', id, name, {}, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+  }
+);
+
+server.tool(
+  'isms_run_automation',
+  'Trigger background automation rules manually (generating recurring tasks, review reminders, and CVE status updates).',
+  {},
+  async (args, { mcpUser }) => {
+    const { runTaskAutomation } = require('../services/taskAutomationService');
+    await runTaskAutomation();
+    await logAudit('execute', 'settings', null, 'Task-Automatisierung manuell gestartet', {}, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: 'Automation executed successfully' }) }] };
+  }
+);
+
+// ─── Comments & Documents ────────────────────────────────────────────────────
+
+server.tool(
+  'isms_list_asset_comments',
+  'List comments and meeting notes for a specific asset.',
+  { asset_id: z.number().int().describe('Asset ID') },
+  async ({ asset_id }) => {
+    const { Comment, User } = getModels();
+    const comments = await Comment.findAll({
+      where: { asset_id },
+      include: [{ model: User, as: 'author', attributes: ['id', 'name', 'role'] }],
+      order: [['created_at', 'ASC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(comments, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_add_asset_comment',
+  'Add a meeting note or comment to an asset, supporting @mentions and auto-task checkboxes ("- [ ] @mention Task").',
+  {
+    asset_id: z.number().int().describe('Asset ID'),
+    content: z.string().min(1).describe('Comment content / meeting notes'),
+    meeting_date: z.string().optional().describe('Optional ISO meeting date (YYYY-MM-DD)'),
+    parent_id: z.number().int().optional().describe('Parent comment ID if thread reply'),
+  },
+  async ({ asset_id, content, meeting_date, parent_id }, { mcpUser }) => {
+    const { Comment, Asset } = getModels();
+    const asset = await Asset.findByPk(asset_id);
+    if (!asset) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+    const userId = await getValidUserId(mcpUser);
+    const comment = await Comment.create({
+      asset_id,
+      user_id: userId,
+      parent_id: parent_id || null,
+      content: content.trim(),
+      meeting_date: meeting_date || null,
+    });
+    await logAudit('create', 'asset', asset.id, asset.name, { action: 'add_comment', comment_id: comment.id }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(comment, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_asset_comment',
+  'Delete a comment or meeting note from an asset.',
+  {
+    asset_id: z.number().int().describe('Asset ID'),
+    comment_id: z.number().int().describe('Comment ID'),
+  },
+  async ({ asset_id, comment_id }, { mcpUser }) => {
+    const { Comment, Asset } = getModels();
+    const comment = await Comment.findOne({ where: { id: comment_id, asset_id } });
+    if (!comment) return { content: [{ type: 'text', text: 'Comment not found' }], isError: true };
+    const asset = await Asset.findByPk(asset_id);
+    await comment.destroy();
+    if (asset) {
+      await logAudit('delete', 'asset', asset.id, asset.name, { action: 'delete_comment', comment_id }, mcpUser);
+    }
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedCommentId: comment_id }) }] };
+  }
+);
+
+server.tool(
+  'isms_list_documents',
+  'List attached documents and metadata for an asset, vendor, or incident.',
+  {
+    entity_type: z.enum(['asset', 'vendor', 'incident']).describe('Entity type'),
+    entity_id: z.number().int().describe('Entity ID'),
+  },
+  async ({ entity_type, entity_id }) => {
+    const { Document, User } = getModels();
+    const where = {};
+    if (entity_type === 'asset') where.asset_id = entity_id;
+    if (entity_type === 'vendor') where.vendor_id = entity_id;
+    if (entity_type === 'incident') where.incident_id = entity_id;
+    const items = await Document.findAll({
+      where,
+      include: [{ model: User, as: 'uploader', attributes: ['id', 'name'] }],
+      order: [['created_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_document',
+  'Delete an uploaded document attachment and its file from storage.',
+  { doc_id: z.number().int().describe('Document record ID') },
+  async ({ doc_id }, { mcpUser }) => {
+    const { Document } = getModels();
+    const doc = await Document.findByPk(doc_id);
+    if (!doc) return { content: [{ type: 'text', text: 'Document not found' }], isError: true };
+    const fs = require('fs');
+    const path = require('path');
+    const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+    if (doc.filename) {
+      const filePath = path.join(UPLOAD_DIR, path.basename(doc.filename));
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) { console.warn('Could not delete file:', e.message); }
+    }
+    await logAudit('delete', 'document', doc.id, doc.original_name, {}, mcpUser);
+    await doc.destroy();
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedDocId: doc_id }) }] };
+  }
+);
+
 
 // ─── HTTP Transport & Router ─────────────────────────────────────────────────
 
