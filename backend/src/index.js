@@ -321,6 +321,16 @@ if (fs.existsSync(path.join(PUBLIC_DIR, 'index.html'))) {
   // SPA-Fallback: alle GET-Routen ausserhalb von /api auf index.html (Client-Routing)
   app.use((req, res, next) => {
     if (req.method !== 'GET' || req.path.startsWith('/api')) return next();
+    // OAuth-Discovery-Pfade (RFC 8414 / RFC 9728) NICHT auf index.html umleiten:
+    // MCP-Clients (z. B. mcp-remote) rufen /.well-known/oauth-authorization-server
+    // bzw. /.well-known/oauth-protected-resource[...] auf, um zu pruefen, ob der
+    // Server OAuth unterstuetzt. Bekaeme der Client dafuer die SPA-index.html (200,
+    // HTML) statt eines echten 404 zurueck, scheitert das clientseitige JSON.parse
+    // fatal ("Unexpected token '<'"), noch bevor der statische Authorization-Header
+    // (Bearer isms_api_...) ueberhaupt zum Einsatz kommt. Ein sauberes 404 hier
+    // signalisiert stattdessen "kein OAuth", und der Client faellt korrekt auf den
+    // statischen Header zurueck.
+    if (req.path.startsWith('/.well-known/')) return next();
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
   });
