@@ -250,17 +250,46 @@ app.use('/api/mappings', require('./routes/mappings'));
 // Browser Push Notifications (Web Push API / VAPID)
 app.use('/api/push', require('./routes/push'));
 
-// OAuth-Discovery (RFC 8414 / RFC 9728) Endpunkte:
-// MCP-Clients (z. B. mcp-remote, Claude Desktop, Cursor) fragen nach /.well-known/...
-// Saubere JSON-404-Antwort zurückgeben, damit Clients zuverlässig auf statische Bearer-Token zurückfallen.
-const handleOAuthDiscoveryFallback = (req, res) => {
+// OAuth 2.0 Protected Resource Metadata (RFC 9728) & Discovery:
+// Wenn OIDC/Keycloak aktiviert ist, verweist dieser Endpunkt MCP-Clients (z.B. Claude Desktop, mcp-remote)
+// direkt auf Keycloak als Authorization Server (RFC 8414). Andernfalls sauberes JSON-404 für Bearer-Token-Fallback.
+const handleOAuthDiscovery = async (req, res) => {
+  const isProtectedResource =
+    req.path.includes('oauth-protected-resource') ||
+    String(req.originalUrl || '').includes('oauth-protected-resource');
+
+  if (isProtectedResource) {
+    try {
+      const { getOidcConfig } = require('./services/settingsService');
+      const cfg = await getOidcConfig();
+      if (cfg.enabled && cfg.issuer) {
+        const appUrl = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
+        return res.type('application/json').json({
+          resource: `${appUrl}/mcp`,
+          authorization_servers: [cfg.issuer.replace(/\/$/, '')],
+          scopes_supported: (cfg.scopes || 'openid profile email').split(' ').filter(Boolean),
+          resource_name: 'OpenISMS MCP Server',
+          resource_documentation: `${appUrl}/api/docs`,
+        });
+      }
+    } catch { /* OIDC not active */ }
+  }
+
   res.status(404).type('application/json').json({
     error: 'not_found',
     message: 'OAuth 2.0 metadata discovery is not implemented on this endpoint. Use static Bearer token authentication.'
   });
 };
-app.use('/.well-known', handleOAuthDiscoveryFallback);
-app.use('/mcp/.well-known', handleOAuthDiscoveryFallback);
+app.use('/.well-known', handleOAuthDiscovery);
+app.use('/mcp/.well-known', handleOAuthDiscovery);
+
+// Graceful handler für Client Registration Probes (RFC 7591)
+app.post('/register', (req, res) => {
+  res.status(400).type('application/json').json({
+    error: 'unsupported_grant_type',
+    error_description: 'Dynamic Client Registration must be performed on the authorization server (e.g. Keycloak), not on the resource server. Alternatively, supply an API token in the Authorization header.'
+  });
+});
 
 // MCP (Model Context Protocol) server — HTTP/SSE transport
 // Auth: Authorization: Bearer <MCP_SECRET> | Bearer isms_api_... | Bearer <JWT> | x-api-key: ... | ?token=...

@@ -42,13 +42,46 @@ const getTokenFromHeaders = (req) => {
   return null;
 };
 
+const getWwwAuthHeader = async () => {
+  try {
+    const { getOidcConfig } = require('../services/settingsService');
+    const cfg = await getOidcConfig();
+    if (cfg.enabled && cfg.issuer) {
+      const appUrl = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
+      return `Bearer resource_metadata="${appUrl}/.well-known/oauth-protected-resource"`;
+    }
+  } catch { /* fallback */ }
+  return 'Bearer realm="OpenISMS MCP"';
+};
+
 async function mcpAuth(req, res, next) {
   // Allow preflight OPTIONS requests without requiring authentication
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
-  // Allow OAuth/OIDC discovery probes to return 404 cleanly instead of 401
+  // OAuth 2.0 Protected Resource Metadata (RFC 9728) & Discovery
+  if (req.path.includes('oauth-protected-resource') || String(req.originalUrl || '').includes('oauth-protected-resource')) {
+    try {
+      const { getOidcConfig } = require('../services/settingsService');
+      const cfg = await getOidcConfig();
+      if (cfg.enabled && cfg.issuer) {
+        const appUrl = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
+        return res.type('application/json').json({
+          resource: `${appUrl}/mcp`,
+          authorization_servers: [cfg.issuer.replace(/\/$/, '')],
+          scopes_supported: (cfg.scopes || 'openid profile email').split(' ').filter(Boolean),
+          resource_name: 'OpenISMS MCP Server',
+          resource_documentation: `${appUrl}/api/docs`,
+        });
+      }
+    } catch { /* OIDC not active */ }
+    return res.status(404).type('application/json').json({
+      error: 'not_found',
+      message: 'OAuth 2.0 metadata discovery is not implemented on this endpoint. Use static Bearer token authentication.'
+    });
+  }
+
   if (req.path.includes('/.well-known') || String(req.originalUrl || '').includes('/.well-known')) {
     return res.status(404).type('application/json').json({
       error: 'not_found',
@@ -59,7 +92,8 @@ async function mcpAuth(req, res, next) {
   const token = getTokenFromHeaders(req);
 
   if (!token) {
-    res.setHeader('WWW-Authenticate', 'Bearer realm="OpenISMS MCP"');
+    const wwwAuth = await getWwwAuthHeader();
+    res.setHeader('WWW-Authenticate', wwwAuth);
     return res.status(401).json({ error: 'MCP: Authorization header or token required' });
   }
 
@@ -80,14 +114,16 @@ async function mcpAuth(req, res, next) {
   // Validate format before DB lookup: prefix + 64 lowercase hex chars
   if (token.startsWith('isms_api_')) {
     if (!/^isms_api_[0-9a-f]{64}$/.test(token)) {
-      res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Invalid token format"');
+      const wwwAuth = await getWwwAuthHeader();
+      res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Invalid token format"`);
       return res.status(401).json({ error: 'MCP: Invalid token' });
     }
     try {
       const { ApiToken, User } = getModels();
       const dbToken = await ApiToken.findOne({ where: { token_hash: hashToken(token) } });
       if (!dbToken) {
-        res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Token not found"');
+        const wwwAuth = await getWwwAuthHeader();
+        res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Token not found"`);
         return res.status(401).json({ error: 'MCP: Invalid token' });
       }
 
@@ -103,13 +139,15 @@ async function mcpAuth(req, res, next) {
           content: `Ihr API-Token "${tokenName}" für den MCP-Server ist abgelaufen und wurde gelöscht.`,
           type: 'system'
         });
-        res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Token expired"');
+        const wwwAuth = await getWwwAuthHeader();
+        res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Token expired"`);
         return res.status(401).json({ error: 'MCP: Token expired' });
       }
 
       const user = await User.findByPk(dbToken.user_id);
       if (!user || !user.active) {
-        res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="User inactive"');
+        const wwwAuth = await getWwwAuthHeader();
+        res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="User inactive"`);
         return res.status(401).json({ error: 'MCP: User not found or inactive' });
       }
 
@@ -127,7 +165,8 @@ async function mcpAuth(req, res, next) {
     const payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     // Reject pre-2FA temporary tokens — they must not grant full access.
     if (payload.totp_pending) {
-      res.setHeader('WWW-Authenticate', 'Bearer error="insufficient_scope", error_description="MFA required"');
+      const wwwAuth = await getWwwAuthHeader();
+      res.setHeader('WWW-Authenticate', `${wwwAuth}, error="insufficient_scope", error_description="MFA required"`);
       return res.status(401).json({ error: 'MCP: Two-factor authentication required' });
     }
     // Re-validate the user against the DB so deactivated/role-changed accounts
@@ -135,7 +174,8 @@ async function mcpAuth(req, res, next) {
     const { User } = getModels();
     const user = await User.findByPk(payload.id);
     if (!user || !user.active) {
-      res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="User inactive"');
+      const wwwAuth = await getWwwAuthHeader();
+      res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="User inactive"`);
       return res.status(401).json({ error: 'MCP: User not found or inactive' });
     }
     req.mcpUser = { id: user.id, name: user.name, role: user.role };
@@ -151,7 +191,21 @@ async function mcpAuth(req, res, next) {
       const email = String(info.email || info.preferred_username || '').toLowerCase();
       if (email) {
         const { User } = getModels();
-        const user = await User.findOne({ where: { email } });
+        let user = await User.findOne({ where: { email } });
+        if (!user) {
+          const { getGeneral } = require('../services/settingsService');
+          const general = await getGeneral();
+          if (general.ssoAutoProvision) {
+            user = await User.create({
+              name: info.name || email,
+              email,
+              password_hash: await User.hashPassword(require('crypto').randomBytes(24).toString('hex')),
+              role: general.ssoDefaultRole || 'viewer',
+              active: true,
+              sso_user: true,
+            });
+          }
+        }
         if (user && user.active) {
           req.mcpUser = { id: user.id, name: user.name, role: user.role };
           req.auth = req.mcpUser;
@@ -163,7 +217,8 @@ async function mcpAuth(req, res, next) {
       // OIDC validation skipped or failed
     }
 
-    res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Invalid or expired token"');
+    const wwwAuth = await getWwwAuthHeader();
+    res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Invalid or expired token"`);
     return res.status(401).json({ error: 'MCP: Invalid or expired token' });
   }
 }

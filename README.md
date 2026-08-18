@@ -458,24 +458,104 @@ DELETE <APP_URL>/mcp    ← end session
 
 Transport: **Streamable HTTP/SSE** (MCP Spec 2025-03-26), compatible with Claude Desktop, Claude Code CLI and all MCP-capable clients.
 
-### Authentication
+### Authentication & Integration Modes
 
-Three options (all via `Authorization: Bearer <token>`):
+OpenISMS supports both **interactive OAuth 2.1 / SSO** (for Claude Desktop & enterprise teams) and **static Bearer tokens** (for CI/CD, scripts, and personal use):
 
-| Option | Configuration | Use case |
-|---|---|---|
-| **API Token** ⭐ | Generate in the app profile → "API Tokens" | Recommended: long-lived, user-specific, revocable |
-| **MCP_SECRET** | `MCP_SECRET=<secret>` in `.env` | Static admin key for automations/CI |
-| **JWT Token** | Token from `POST /api/auth/login` | Short-lived (24 h) — for testing only |
+| Mode | Configuration | How it works | Use case |
+|---|---|---|---|
+| **SSO / Keycloak (OAuth 2.1)** ⭐ | Configure OIDC in Settings → Single Sign-On | **RFC 9728 Protected Resource**: Claude Desktop / `mcp-remote` discovers Keycloak automatically and opens an interactive browser login with PKCE. | Recommended for teams, SSO, and seamless Claude Desktop usage |
+| **API Token** ⭐ | Generate in user profile → "API Tokens" | Long-lived, scoped to user role, revocable anytime. Token format: `isms_api_<64-hex-chars>`. | Personal use, local AI clients, scripts |
+| **MCP_SECRET** | `MCP_SECRET=<secret>` in `.env` | Static admin key without expiry. | CI/CD pipelines, automated agents, backend scripts |
+| **JWT Token** | Token from `POST /api/auth/login` | Short-lived (24 h) session token. | Temporary development & testing |
 
-#### Create an API token (recommended)
+---
 
-1. Log into the ISMS → profile picture (top right) → **"API Tokens"**
-2. **"Create new token"** → enter a name (e.g. `Claude Desktop`) → optionally set an expiry date
-3. Copy the token once — it is only displayed in full once
-4. Token format: `isms_api_<64-hex-chars>`
+### Setup with Claude Desktop
 
-The token is tied to the logged-in user — permissions follow that user's role. Tokens can be revoked at any time in the UI.
+Claude Desktop uses `mcp-remote` as a bridge to communicate with remote Streamable HTTP / SSE MCP servers.
+
+Configuration file location:
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/claude/claude_desktop_config.json`
+
+#### Option 1: Interactive SSO Login (Keycloak / OIDC)
+
+When Single Sign-On (OIDC/Keycloak) is enabled in OpenISMS, OpenISMS implements **RFC 9728 (OAuth 2.0 Protected Resource Metadata)**. Claude Desktop connects, discovers Keycloak, and opens a browser tab for one-click login:
+
+```json
+{
+  "mcpServers": {
+    "openisms": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://isms.example.com/mcp"
+      ]
+    }
+  }
+}
+```
+
+#### Option 2: Personal API Token (`isms_api_...`)
+
+1. In OpenISMS, click your profile picture (top right) → **"API-Tokens"** → **"Neuen Token generieren"** (e.g. `Claude Desktop`).
+2. Copy the token (`isms_api_...`).
+3. Add the `--header` argument in your Claude Desktop configuration:
+
+```json
+{
+  "mcpServers": {
+    "openisms": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://isms.example.com/mcp",
+        "--header",
+        "Authorization: Bearer isms_api_YOUR_TOKEN_HERE"
+      ]
+    }
+  }
+}
+```
+
+---
+
+### Setup with Claude Code CLI
+
+`.claude/settings.json` in your repository or `~/.claude/settings.json` globally:
+
+```json
+{
+  "mcpServers": {
+    "openisms": {
+      "type": "http",
+      "url": "https://isms.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer isms_api_YOUR_TOKEN_HERE"
+      }
+    }
+  }
+}
+```
+
+---
+
+### Test the Connection
+
+```bash
+# Verify connection using curl
+curl -X POST https://isms.example.com/mcp \
+  -H "Authorization: Bearer isms_api_YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+The server returns the JSON-RPC list of all **78 available tools**.
 
 ### Available Tools (78)
 
@@ -560,78 +640,7 @@ The token is tied to the logged-in user — permissions follow that user's role.
 | | `isms_set_feature_status` | Enable or disable system modules |
 | **Search** | `isms_search` | Cross-entity search across assets, risks, incidents, and tasks |
 
-### Integration with Claude Desktop
 
-`~/.config/claude/claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`):
-
-```json
-{
-  "mcpServers": {
-    "isms": {
-      "type": "http",
-      "url": "https://isms.example.com/mcp",
-      "headers": {
-        "Authorization": "Bearer isms_api_<your-token>"
-      }
-    }
-  }
-}
-```
-
-### Integration with Claude Code CLI
-
-`.claude/settings.json` in the project directory or `~/.claude/settings.json` globally:
-
-```json
-{
-  "mcpServers": {
-    "isms": {
-      "type": "http",
-      "url": "https://isms.example.com/mcp",
-      "headers": {
-        "Authorization": "Bearer isms_api_<your-token>"
-      }
-    }
-  }
-}
-```
-
-### Test the connection
-
-```bash
-# Test API token
-curl -X POST https://isms.example.com/mcp \
-  -H "Authorization: Bearer isms_api_<your-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
-
-The response lists all 18 available tools.
-
-### MCP_SECRET (for automations / CI)
-
-Static admin key without expiry — useful for server-to-server automations:
-
-```env
-# In .env (or Docker Compose environment variables):
-MCP_SECRET=<min-32-random-chars>   # openssl rand -hex 32
-```
-
-```json
-{
-  "mcpServers": {
-    "isms": {
-      "type": "http",
-      "url": "https://isms.example.com/mcp",
-      "headers": {
-        "Authorization": "Bearer <MCP_SECRET-value>"
-      }
-    }
-  }
-}
-```
-
-If neither `MCP_SECRET` nor a valid API token or JWT is provided, the server rejects all requests with `401`.
 
 ---
 
