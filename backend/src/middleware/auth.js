@@ -5,11 +5,27 @@ const { hashToken } = require('../services/cryptoService');
 
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
-  if (authHeader.startsWith('Bearer ')) {
-    return authHeader.slice(7).trim();
+  if (authHeader) {
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (bearerMatch) return bearerMatch[1].trim();
+    if (authHeader.startsWith('isms_api_') || !authHeader.includes(' ')) {
+      return authHeader;
+    }
   }
-  const apiKeyHeader = String(req.headers['x-api-key'] || '').trim();
-  return apiKeyHeader || null;
+  const apiKeyHeader = String(
+    req.headers['x-api-key'] ||
+    req.headers['x-mcp-key'] ||
+    req.headers['api-key'] ||
+    ''
+  ).trim();
+  if (apiKeyHeader) return apiKeyHeader;
+
+  const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
+  if (typeof queryToken === 'string' && queryToken.trim()) {
+    return queryToken.trim();
+  }
+
+  return null;
 };
 
 const authenticate = async (req, res, next) => {
@@ -48,7 +64,29 @@ const authenticate = async (req, res, next) => {
 
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) return res.status(500).json({ error: 'Server misconfigured' });
-    const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+    let decoded;
+    try {
+      decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+    } catch (jwtErr) {
+      // Fallback: check if valid OIDC access token when OIDC is configured
+      try {
+        const { buildConfig, client } = require('../services/oidcService');
+        const { config } = await buildConfig();
+        const info = await client.fetchUserInfo(config, token, client.skipSubjectCheck);
+        const email = String(info.email || info.preferred_username || '').toLowerCase();
+        if (email) {
+          const oidcUser = await User.findOne({
+            where: { email },
+            attributes: { exclude: ['password_hash', 'totp_secret', 'reset_password_token', 'reset_password_expires'] },
+          });
+          if (oidcUser && oidcUser.active) {
+            req.user = oidcUser;
+            return next();
+          }
+        }
+      } catch { /* not an OIDC token or OIDC disabled */ }
+      return res.status(401).json({ error: 'Invalid token' });
+    }
     // Block temp TOTP-pending tokens from being used as full session tokens
     if (decoded.totp_pending) return res.status(401).json({ error: 'MFA erforderlich' });
     // Never expose secrets on req.user (and thus on GET /auth/me).

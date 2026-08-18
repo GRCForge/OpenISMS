@@ -2,29 +2,65 @@
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
+const { SSEServerTransport } = require('@modelcontextprotocol/sdk/server/sse.js');
 const { randomUUID, timingSafeEqual } = require('crypto');
 const { z } = require('zod');
 const { Op } = require('sequelize');
 const express = require('express');
+const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { hashToken } = require('../services/cryptoService');
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 const getTokenFromHeaders = (req) => {
+  // 1. Authorization header (Bearer <token> or raw isms_api_... token)
   const authHeader = String(req.headers['authorization'] || '').trim();
-  if (authHeader.startsWith('Bearer ')) {
-    return authHeader.slice(7).trim();
+  if (authHeader) {
+    const m = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (m) return m[1].trim();
+    if (authHeader.startsWith('isms_api_') || !authHeader.includes(' ')) {
+      return authHeader;
+    }
   }
-  const apiKeyHeader = String(req.headers['x-api-key'] || '').trim();
-  return apiKeyHeader || null;
+
+  // 2. Custom API key headers
+  const apiKeyHeader = String(
+    req.headers['x-api-key'] ||
+    req.headers['x-mcp-key'] ||
+    req.headers['api-key'] ||
+    ''
+  ).trim();
+  if (apiKeyHeader) return apiKeyHeader;
+
+  // 3. Query string parameter (essential for standard SSE / EventSource in browsers/clients)
+  const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
+  if (typeof queryToken === 'string' && queryToken.trim()) {
+    return queryToken.trim();
+  }
+
+  return null;
 };
 
 async function mcpAuth(req, res, next) {
+  // Allow preflight OPTIONS requests without requiring authentication
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  // Allow OAuth/OIDC discovery probes to return 404 cleanly instead of 401
+  if (req.path.includes('/.well-known') || String(req.originalUrl || '').includes('/.well-known')) {
+    return res.status(404).type('application/json').json({
+      error: 'not_found',
+      message: 'OAuth 2.0 metadata discovery is not implemented on this endpoint. Use static Bearer token authentication.'
+    });
+  }
+
   const token = getTokenFromHeaders(req);
 
   if (!token) {
-    return res.status(401).json({ error: 'MCP: Authorization header required' });
+    res.setHeader('WWW-Authenticate', 'Bearer realm="OpenISMS MCP"');
+    return res.status(401).json({ error: 'MCP: Authorization header or token required' });
   }
 
   // Option A: static MCP_SECRET (timing-safe comparison to prevent timing attacks)
@@ -34,6 +70,8 @@ async function mcpAuth(req, res, next) {
     const secretBuf = Buffer.from(secret, 'utf8');
     if (tokenBuf.length === secretBuf.length && timingSafeEqual(tokenBuf, secretBuf)) {
       req.mcpUser = { id: 0, name: 'MCP Client', role: 'admin' };
+      req.auth = req.mcpUser;
+      req._mcpUser = req.mcpUser;
       return next();
     }
   }
@@ -42,12 +80,14 @@ async function mcpAuth(req, res, next) {
   // Validate format before DB lookup: prefix + 64 lowercase hex chars
   if (token.startsWith('isms_api_')) {
     if (!/^isms_api_[0-9a-f]{64}$/.test(token)) {
+      res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Invalid token format"');
       return res.status(401).json({ error: 'MCP: Invalid token' });
     }
     try {
       const { ApiToken, User } = getModels();
       const dbToken = await ApiToken.findOne({ where: { token_hash: hashToken(token) } });
       if (!dbToken) {
+        res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Token not found"');
         return res.status(401).json({ error: 'MCP: Invalid token' });
       }
 
@@ -63,26 +103,31 @@ async function mcpAuth(req, res, next) {
           content: `Ihr API-Token "${tokenName}" für den MCP-Server ist abgelaufen und wurde gelöscht.`,
           type: 'system'
         });
+        res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Token expired"');
         return res.status(401).json({ error: 'MCP: Token expired' });
       }
 
       const user = await User.findByPk(dbToken.user_id);
       if (!user || !user.active) {
+        res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="User inactive"');
         return res.status(401).json({ error: 'MCP: User not found or inactive' });
       }
 
       req.mcpUser = { id: user.id, name: user.name, role: user.role };
+      req.auth = req.mcpUser;
+      req._mcpUser = req.mcpUser;
       return next();
     } catch (e) {
       return res.status(500).json({ error: `MCP: Auth error: ${e.message}` });
     }
   }
 
-  // Option C: regular JWT issued by /api/auth/login
+  // Option C: regular JWT issued by /api/auth/login or OIDC flow
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     // Reject pre-2FA temporary tokens — they must not grant full access.
     if (payload.totp_pending) {
+      res.setHeader('WWW-Authenticate', 'Bearer error="insufficient_scope", error_description="MFA required"');
       return res.status(401).json({ error: 'MCP: Two-factor authentication required' });
     }
     // Re-validate the user against the DB so deactivated/role-changed accounts
@@ -90,11 +135,35 @@ async function mcpAuth(req, res, next) {
     const { User } = getModels();
     const user = await User.findByPk(payload.id);
     if (!user || !user.active) {
+      res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="User inactive"');
       return res.status(401).json({ error: 'MCP: User not found or inactive' });
     }
     req.mcpUser = { id: user.id, name: user.name, role: user.role };
+    req.auth = req.mcpUser;
+    req._mcpUser = req.mcpUser;
     return next();
-  } catch {
+  } catch (jwtErr) {
+    // Option D: If OIDC is configured, attempt validation with upstream IdP userinfo endpoint
+    try {
+      const { buildConfig, client } = require('../services/oidcService');
+      const { config } = await buildConfig();
+      const info = await client.fetchUserInfo(config, token, client.skipSubjectCheck);
+      const email = String(info.email || info.preferred_username || '').toLowerCase();
+      if (email) {
+        const { User } = getModels();
+        const user = await User.findOne({ where: { email } });
+        if (user && user.active) {
+          req.mcpUser = { id: user.id, name: user.name, role: user.role };
+          req.auth = req.mcpUser;
+          req._mcpUser = req.mcpUser;
+          return next();
+        }
+      }
+    } catch {
+      // OIDC validation skipped or failed
+    }
+
+    res.setHeader('WWW-Authenticate', 'Bearer error="invalid_token", error_description="Invalid or expired token"');
     return res.status(401).json({ error: 'MCP: Invalid or expired token' });
   }
 }
@@ -263,7 +332,8 @@ const server = {
     }
 
     const wrappedCallback = async (args, context) => {
-      const mcpUser = context?.mcpUser || context?._mcpUser;
+      const mcpUser = context?.mcpUser || context?._mcpUser || context?.authInfo;
+      const ctx = { ...context, mcpUser };
       const gate = TOOL_GATES[name];
       if (gate) {
         const errorResult = await gateTool(
@@ -274,7 +344,7 @@ const server = {
         );
         if (errorResult) return errorResult;
       }
-      return originalCallback(args, context || {});
+      return originalCallback(args, ctx);
     };
 
     if (schema) {
@@ -2458,15 +2528,59 @@ server.tool(
 // ─── HTTP Transport & Router ─────────────────────────────────────────────────
 
 const sessions = new Map(); // sessionId → StreamableHTTPServerTransport
+const sseTransports = new Map(); // sessionId → SSEServerTransport
+
+function createServerInstance() {
+  const connectionServer = new McpServer({
+    name: 'OpenISMS',
+    version: (() => {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        return fs.readFileSync(path.join(__dirname, '../../../VERSION'), 'utf8').trim();
+      } catch { return '2.2.22'; }
+    })(),
+  });
+
+  for (const args of toolsToRegister) {
+    connectionServer.tool(...args);
+  }
+
+  return connectionServer;
+}
 
 function createMcpRouter() {
   const { apiLimiter } = require('../middleware/rateLimiter');
   const router = express.Router();
+
+  // Dedicated permissive CORS for MCP endpoints
+  router.use(cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-API-Key',
+      'x-api-key',
+      'x-mcp-key',
+      'mcp-session-id',
+      'MCP-Session-Id',
+      'last-event-id',
+      'Last-Event-ID',
+      'mcp-protocol-version',
+      'MCP-Protocol-Version',
+      'Accept',
+      'Origin',
+    ],
+    exposedHeaders: ['mcp-session-id', 'MCP-Session-Id', 'WWW-Authenticate'],
+  }));
+
   router.use(apiLimiter);
-  router.use(express.json());
+  router.use(express.json({ limit: '10mb' }));
   router.use(mcpAuth);
 
-  // POST /mcp — client → server messages (also establishes SSE upgrade)
+  // POST / (and /mcp) — Streamable HTTP client -> server messages (also initializes session)
   router.post('/', async (req, res) => {
     const existingId = req.headers['mcp-session-id'];
     let transport = existingId ? sessions.get(existingId) : null;
@@ -2480,38 +2594,61 @@ function createMcpRouter() {
         if (transport.sessionId) sessions.delete(transport.sessionId);
       };
 
-      const connectionServer = new McpServer({
-        name: 'OpenISMS',
-        version: (() => {
-          try {
-            const fs = require('fs');
-            const path = require('path');
-            return fs.readFileSync(path.join(__dirname, '../../../VERSION'), 'utf8').trim();
-          } catch { return '2.1.0'; }
-        })(),
-      });
-
-      for (const args of toolsToRegister) {
-        connectionServer.tool(...args);
-      }
-
+      const connectionServer = createServerInstance();
       await connectionServer.connect(transport);
     }
 
-    // Pass mcpUser via extra context for tools that need it
+    req.auth = req.mcpUser;
     req._mcpUser = req.mcpUser;
     await transport.handleRequest(req, res, req.body);
   });
 
-  // GET /mcp — SSE event stream (server → client)
+  // GET / (and /mcp) — SSE event stream (server -> client)
   router.get('/', async (req, res) => {
     const id = req.headers['mcp-session-id'];
     const transport = id && sessions.get(id);
-    if (!transport) return res.status(400).json({ error: 'No active MCP session. POST first.' });
-    await transport.handleRequest(req, res);
+    if (transport) {
+      req.auth = req.mcpUser;
+      req._mcpUser = req.mcpUser;
+      return await transport.handleRequest(req, res);
+    }
+
+    // Standard SSE client initialization (e.g. mcp-remote, Claude Desktop)
+    const sseTransport = new SSEServerTransport('/mcp/messages', res);
+    sseTransports.set(sseTransport.sessionId, sseTransport);
+    res.on('close', () => {
+      sseTransports.delete(sseTransport.sessionId);
+    });
+
+    const connectionServer = createServerInstance();
+    await connectionServer.connect(sseTransport);
   });
 
-  // DELETE /mcp — terminate session
+  // GET /sse (and /mcp/sse) — explicit SSE stream initialization
+  router.get('/sse', async (req, res) => {
+    const sseTransport = new SSEServerTransport('/mcp/messages', res);
+    sseTransports.set(sseTransport.sessionId, sseTransport);
+    res.on('close', () => {
+      sseTransports.delete(sseTransport.sessionId);
+    });
+
+    const connectionServer = createServerInstance();
+    await connectionServer.connect(sseTransport);
+  });
+
+  // POST /messages (and /mcp/messages) — legacy SSE message endpoint
+  router.post('/messages', async (req, res) => {
+    const sessionId = String(req.query.sessionId || req.headers['mcp-session-id'] || '').trim();
+    const transport = sessionId && sseTransports.get(sessionId);
+    if (!transport) {
+      return res.status(404).json({ error: 'MCP: SSE session not found or expired' });
+    }
+    req.auth = req.mcpUser;
+    req._mcpUser = req.mcpUser;
+    await transport.handlePostMessage(req, res, req.body);
+  });
+
+  // DELETE / (and /mcp) — terminate Streamable HTTP session
   router.delete('/', async (req, res) => {
     const id = req.headers['mcp-session-id'];
     if (id && sessions.has(id)) {

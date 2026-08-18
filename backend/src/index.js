@@ -80,15 +80,43 @@ app.use(helmet({
   },
 }));
 
-const allowedOrigins = (process.env.APP_URL || 'http://localhost:3000').split(',').map(s => s.trim());
+const allowedOrigins = (process.env.APP_URL || 'http://localhost:3000')
+  .split(',')
+  .map(s => s.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error('Not allowed by CORS'));
+    if (!origin) return cb(null, true);
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(normalizedOrigin) || allowedOrigins.includes('*')) {
+      return cb(null, true);
+    }
+    // Allow local development origins
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return cb(null, true);
+    }
+    // Decline CORS gracefully without throwing an unhandled Error
+    cb(null, false);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-API-Key',
+    'x-api-key',
+    'x-mcp-key',
+    'mcp-session-id',
+    'MCP-Session-Id',
+    'last-event-id',
+    'Last-Event-ID',
+    'mcp-protocol-version',
+    'MCP-Protocol-Version',
+    'Accept',
+    'Origin',
+  ],
+  exposedHeaders: ['mcp-session-id', 'MCP-Session-Id', 'WWW-Authenticate'],
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -222,9 +250,23 @@ app.use('/api/mappings', require('./routes/mappings'));
 // Browser Push Notifications (Web Push API / VAPID)
 app.use('/api/push', require('./routes/push'));
 
+// OAuth-Discovery (RFC 8414 / RFC 9728) Endpunkte:
+// MCP-Clients (z. B. mcp-remote, Claude Desktop, Cursor) fragen nach /.well-known/...
+// Saubere JSON-404-Antwort zurückgeben, damit Clients zuverlässig auf statische Bearer-Token zurückfallen.
+const handleOAuthDiscoveryFallback = (req, res) => {
+  res.status(404).type('application/json').json({
+    error: 'not_found',
+    message: 'OAuth 2.0 metadata discovery is not implemented on this endpoint. Use static Bearer token authentication.'
+  });
+};
+app.use('/.well-known', handleOAuthDiscoveryFallback);
+app.use('/mcp/.well-known', handleOAuthDiscoveryFallback);
+
 // MCP (Model Context Protocol) server — HTTP/SSE transport
-// Auth: Authorization: Bearer <MCP_SECRET>  or  Bearer <JWT>
-app.use('/mcp', require('./mcp/server').createMcpRouter());
+// Auth: Authorization: Bearer <MCP_SECRET> | Bearer isms_api_... | Bearer <JWT> | x-api-key: ... | ?token=...
+const mcpRouter = require('./mcp/server').createMcpRouter();
+app.use('/mcp', mcpRouter);
+app.use('/sse', mcpRouter);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
@@ -318,24 +360,30 @@ if (fs.existsSync(path.join(PUBLIC_DIR, 'index.html'))) {
       }
     }
   }));
-  // SPA-Fallback: alle GET-Routen ausserhalb von /api auf index.html (Client-Routing)
+  // SPA-Fallback: alle GET-Routen ausserhalb von /api, /mcp, /sse, /.well-known auf index.html (Client-Routing)
   app.use((req, res, next) => {
-    if (req.method !== 'GET' || req.path.startsWith('/api')) return next();
-    // OAuth-Discovery-Pfade (RFC 8414 / RFC 9728) NICHT auf index.html umleiten:
-    // MCP-Clients (z. B. mcp-remote) rufen /.well-known/oauth-authorization-server
-    // bzw. /.well-known/oauth-protected-resource[...] auf, um zu pruefen, ob der
-    // Server OAuth unterstuetzt. Bekaeme der Client dafuer die SPA-index.html (200,
-    // HTML) statt eines echten 404 zurueck, scheitert das clientseitige JSON.parse
-    // fatal ("Unexpected token '<'"), noch bevor der statische Authorization-Header
-    // (Bearer isms_api_...) ueberhaupt zum Einsatz kommt. Ein sauberes 404 hier
-    // signalisiert stattdessen "kein OAuth", und der Client faellt korrekt auf den
-    // statischen Header zurueck.
-    if (req.path.startsWith('/.well-known/')) return next();
+    if (
+      req.method !== 'GET' ||
+      req.path.startsWith('/api') ||
+      req.path.startsWith('/mcp') ||
+      req.path.startsWith('/sse') ||
+      req.path.includes('/.well-known')
+    ) {
+      return next();
+    }
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
   });
   console.log(`[Static] Serving frontend with cache-control headers from ${PUBLIC_DIR}`);
 }
+
+// JSON 404-Fallback für nicht gefundene API-, MCP-, SSE- und Discovery-Routen (statt Express-HTML)
+app.use(['/api', '/mcp', '/sse', '/.well-known'], (req, res) => {
+  res.status(404).type('application/json').json({
+    error: 'not_found',
+    message: `Endpoint ${req.method} ${req.originalUrl} not found`
+  });
+});
 
 const PORT = process.env.PORT || 3001;
 
