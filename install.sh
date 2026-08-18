@@ -366,9 +366,10 @@ if n:
     changed = True
     print(f"  [1] Replaced /assets/ location block with extension-regex.")
 
-# Fix 2: add /mcp proxy block before the closing brace if missing
+# Fix 2: add /mcp, /sse, and /.well-known proxy blocks before the closing brace if missing
+blocks_to_add = []
 if 'location /mcp' not in content:
-    mcp_block = (
+    blocks_to_add.append(
         '\n'
         '    # MCP Server (Model Context Protocol) — HTTP/SSE transport\n'
         '    location /mcp {\n'
@@ -386,10 +387,43 @@ if 'location /mcp' not in content:
         '        client_max_body_size 1M;\n'
         '    }\n'
     )
-    # Insert before the last closing brace of the server block
-    content = re.sub(r'\}\s*$', mcp_block + '}', content, count=1)
+if 'location /sse' not in content:
+    blocks_to_add.append(
+        '\n'
+        '    # SSE endpoint for legacy MCP transport\n'
+        '    location /sse {\n'
+        '        proxy_pass http://127.0.0.1:3001;\n'
+        '        proxy_http_version 1.1;\n'
+        '        proxy_set_header Host $host;\n'
+        '        proxy_set_header X-Real-IP $remote_addr;\n'
+        '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n'
+        '        proxy_set_header X-Forwarded-Proto $scheme;\n'
+        '        proxy_set_header Connection \'\';\n'
+        '        proxy_buffering off;\n'
+        '        proxy_cache off;\n'
+        '        proxy_read_timeout 24h;\n'
+        '        chunked_transfer_encoding on;\n'
+        '    }\n'
+    )
+if 'location /.well-known' not in content:
+    blocks_to_add.append(
+        '\n'
+        '    # OAuth/OIDC Discovery (RFC 8414 / RFC 9728) proxy — prevents index.html fallback\n'
+        '    location /.well-known {\n'
+        '        proxy_pass http://127.0.0.1:3001;\n'
+        '        proxy_http_version 1.1;\n'
+        '        proxy_set_header Host $host;\n'
+        '        proxy_set_header X-Real-IP $remote_addr;\n'
+        '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n'
+        '        proxy_set_header X-Forwarded-Proto $scheme;\n'
+        '    }\n'
+    )
+
+if blocks_to_add:
+    combined_blocks = ''.join(blocks_to_add)
+    content = re.sub(r'\}\s*$', combined_blocks + '}', content, count=1)
     changed = True
-    print("  [2] Added /mcp proxy location block.")
+    print("  [2] Added missing proxy location blocks (/mcp, /sse, /.well-known).")
 
 if changed:
     with open(path, 'w') as f:
@@ -657,6 +691,31 @@ server {
         proxy_read_timeout 24h;
         chunked_transfer_encoding on;
         client_max_body_size 1M;
+    }
+
+    # SSE endpoint for legacy MCP transport
+    location /sse {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection '';
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 24h;
+        chunked_transfer_encoding on;
+    }
+
+    # OAuth/OIDC Discovery (RFC 8414 / RFC 9728) proxy — prevents index.html fallback
+    location /.well-known {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 NGINXEOF
