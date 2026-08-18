@@ -6,8 +6,12 @@ const { hashToken } = require('../services/cryptoService');
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
   if (authHeader) {
-    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
-    if (bearerMatch) return bearerMatch[1].trim();
+    // Bounded prefix-match + slice instead of /^Bearer\s+(.+)$/i: the old regex had
+    // two adjacent quantifiers (\s+ and .+) that overlap on whitespace, allowing
+    // polynomial-time backtracking on a crafted Authorization header (CodeQL
+    // js/polynomial-redos, alert #255). This form is equivalent and linear-time.
+    const bearerPrefix = /^Bearer\s+/i.exec(authHeader);
+    if (bearerPrefix) return authHeader.slice(bearerPrefix[0].length).trim();
     if (authHeader.startsWith('isms_api_') || !authHeader.includes(' ')) {
       return authHeader;
     }
@@ -20,9 +24,18 @@ const getTokenFromHeaders = (req) => {
   ).trim();
   if (apiKeyHeader) return apiKeyHeader;
 
-  const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
-  if (typeof queryToken === 'string' && queryToken.trim()) {
-    return queryToken.trim();
+  // Query-string token fallback is a deliberate, scoped tradeoff (CodeQL flags
+  // reading credentials from a GET request, alerts #253/#252): browser EventSource
+  // (SSE) clients cannot set custom headers, so a short-lived session token has to
+  // travel in the URL for that one transport. Scoped to GET only -- POST-based
+  // Streamable-HTTP clients always authenticate via the Authorization header above
+  // and never need this fallback. Mitigation: helmet's default `Referrer-Policy:
+  // no-referrer` (see index.js) keeps the token out of any Referer header.
+  if (req.method === 'GET') {
+    const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
+    if (typeof queryToken === 'string' && queryToken.trim()) {
+      return queryToken.trim();
+    }
   }
 
   return null;

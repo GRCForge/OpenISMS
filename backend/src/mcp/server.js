@@ -17,8 +17,12 @@ const getTokenFromHeaders = (req) => {
   // 1. Authorization header (Bearer <token> or raw isms_api_... token)
   const authHeader = String(req.headers['authorization'] || '').trim();
   if (authHeader) {
-    const m = authHeader.match(/^Bearer\s+(.+)$/i);
-    if (m) return m[1].trim();
+    // Bounded prefix-match + slice instead of /^Bearer\s+(.+)$/i: the old regex had
+    // two adjacent quantifiers (\s+ and .+) that overlap on whitespace, allowing
+    // polynomial-time backtracking on a crafted Authorization header (CodeQL
+    // js/polynomial-redos, alert #254). This form is equivalent and linear-time.
+    const bearerPrefix = /^Bearer\s+/i.exec(authHeader);
+    if (bearerPrefix) return authHeader.slice(bearerPrefix[0].length).trim();
     if (authHeader.startsWith('isms_api_') || !authHeader.includes(' ')) {
       return authHeader;
     }
@@ -34,9 +38,17 @@ const getTokenFromHeaders = (req) => {
   if (apiKeyHeader) return apiKeyHeader;
 
   // 3. Query string parameter (essential for standard SSE / EventSource in browsers/clients)
-  const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
-  if (typeof queryToken === 'string' && queryToken.trim()) {
-    return queryToken.trim();
+  // Query-string token fallback is a deliberate, scoped tradeoff (same reasoning as
+  // middleware/auth.js): browser EventSource (SSE) clients cannot set custom headers,
+  // so a short-lived session token has to travel in the URL for that one transport.
+  // Scoped to GET only -- POST-based Streamable-HTTP clients always authenticate via
+  // the Authorization header above. Mitigation: helmet's default `Referrer-Policy:
+  // no-referrer` (see index.js) keeps the token out of any Referer header.
+  if (req.method === 'GET') {
+    const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
+    if (typeof queryToken === 'string' && queryToken.trim()) {
+      return queryToken.trim();
+    }
   }
 
   return null;
@@ -5331,10 +5343,17 @@ function createMcpRouter() {
   const { apiLimiter } = require('../middleware/rateLimiter');
   const router = express.Router();
 
-  // Dedicated permissive CORS for MCP endpoints
+  // CORS for MCP endpoints: external MCP clients (Claude Desktop, claude.ai, other
+  // third-party MCP hosts) can call this from any origin, so we deliberately don't
+  // restrict Origin the way the main frontend API does (index.js, APP_URL allowlist).
+  // `credentials: true` was previously combined with a reflect-any-origin policy,
+  // which CodeQL correctly flags as a permissive-CORS misconfiguration (alert #251):
+  // that combination lets any web page make credentialed (cookie-bearing) cross-
+  // origin requests. This router never reads cookies for auth (see getTokenFromHeaders
+  // above -- Authorization header, X-API-Key/X-MCP-Key headers, or a GET-only query
+  // token), so `credentials: true` served no purpose here and is removed.
   router.use(cors({
     origin: true,
-    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: [
       'Content-Type',
