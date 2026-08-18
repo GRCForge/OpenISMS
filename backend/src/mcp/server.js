@@ -138,14 +138,25 @@ async function getValidUserId(mcpUser) {
 // ─── Permission & Module Gating ──────────────────────────────────────────────
 
 const TOOL_GATES = {
-  // --- Assets ---
+  // --- Assets & CVEs ---
   'isms_create_asset': { needsWrite: true },
   'isms_update_asset': { needsWrite: true },
+  'isms_delete_asset': { requiredRoles: ['admin'], needsWrite: true },
   'isms_refresh_asset_cves': { needsWrite: true },
   'isms_refresh_all_asset_cves': { requiredRoles: ['admin', 'it-staff'] },
+  'isms_suggest_cpe': { moduleKey: 'discovery' },
+  'isms_resolve_cpe': { moduleKey: 'discovery', needsWrite: true },
+  'isms_create_assessment': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
   // --- Risks ---
   'isms_create_risk': { needsWrite: true },
+  'isms_update_risk': { needsWrite: true },
+  'isms_signoff_risk': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_revoke_risk_signoff': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_delete_risk': { requiredRoles: ['admin'], needsWrite: true },
+
+  // --- Management Reviews ---
+  'isms_create_review_signoff': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
   // --- Incidents ---
   'isms_create_incident': { needsWrite: true },
@@ -159,6 +170,24 @@ const TOOL_GATES = {
   // --- Controls ---
   'isms_update_control_status': { needsWrite: true },
   'isms_update_control': { needsWrite: true },
+
+  // --- EU AI Act ---
+  'isms_list_ai_systems': { moduleKey: 'ai_act' },
+  'isms_create_ai_system': { moduleKey: 'ai_act', needsWrite: true },
+  'isms_update_ai_system': { moduleKey: 'ai_act', needsWrite: true },
+  'isms_delete_ai_system': { moduleKey: 'ai_act', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+
+  // --- Policies ---
+  'isms_create_policy': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_update_policy': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_acknowledge_policy': { needsWrite: true },
+
+  // --- Audits, CAPA & KPIs ---
+  'isms_create_audit': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_audit': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_create_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_record_kpi_measurement': { needsWrite: true },
 
   // --- Settings / Admin ---
   'isms_set_feature_status': { requiredRoles: ['admin'] },
@@ -551,6 +580,206 @@ server.tool(
   }
 );
 
+server.tool(
+  'isms_suggest_cpe',
+  'Get CPE 2.3 format suggestions from NVD for an asset or search query to enable accurate vulnerability matching.',
+  {
+    id:    z.number().int().optional().describe('Asset ID to look up suggestions for'),
+    query: z.string().optional().describe('Search query string (e.g. "nginx", "apache tomcat", "postgresql")'),
+  },
+  async ({ id, query }) => {
+    const { Asset } = getModels();
+    const { suggestCPEsForAsset } = require('../services/cveService');
+    let assetObj = null;
+    if (id) {
+      assetObj = await Asset.findByPk(id);
+      if (!assetObj) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+    }
+    
+    let suggestions;
+    if (query && query.trim().length >= 3) {
+      suggestions = await suggestCPEsForAsset({ name: query.trim(), vendor: null });
+    } else if (assetObj) {
+      suggestions = await suggestCPEsForAsset(assetObj);
+    } else {
+      return { content: [{ type: 'text', text: 'Either asset id or search query (min 3 chars) is required.' }], isError: true };
+    }
+    return { content: [{ type: 'text', text: JSON.stringify({ suggestions }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_resolve_cpe',
+  'Resolve or assign a standardized CPE (Common Platform Enumeration) string to an asset for automated CVE scanning.',
+  {
+    id:    z.number().int().describe('Asset ID'),
+    cpe:   z.string().optional().describe('Standardized CPE 2.3 identifier, e.g. "cpe:2.3:a:nginx:nginx"'),
+    title: z.string().optional().describe('Human-readable product title, e.g. "Nginx"'),
+  },
+  async ({ id, cpe, title }, { mcpUser }) => {
+    const { Asset } = getModels();
+    const asset = await Asset.findByPk(id);
+    if (!asset) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+
+    if (cpe && title) {
+      const cleanCpe = String(cpe).trim();
+      const cleanTitle = String(title).trim();
+      if (!cleanCpe.startsWith('cpe:2.3:')) {
+        return { content: [{ type: 'text', text: 'Invalid CPE format. Must start with cpe:2.3:' }], isError: true };
+      }
+      await asset.update({ cpe: cleanCpe, cpe_title: cleanTitle, cpe_resolved_at: new Date() });
+      await logAudit('update', 'asset', asset.id, asset.name, { action: 'set_cpe', cpe: cleanCpe, title: cleanTitle }, mcpUser);
+      return { content: [{ type: 'text', text: JSON.stringify({ found: true, cpe: cleanCpe, title: cleanTitle }, null, 2) }] };
+    }
+
+    const { resolveCPEForAsset } = require('../services/cveService');
+    const result = await resolveCPEForAsset(asset);
+    if (!result) {
+      return { content: [{ type: 'text', text: 'No matching CPE entry found in NVD. Please verify vendor/name or provide CPE manually.' }], isError: true };
+    }
+
+    await asset.update({ cpe: result.cpe, cpe_title: result.title, cpe_resolved_at: new Date() });
+    await logAudit('update', 'asset', asset.id, asset.name, { action: 'auto_resolve_cpe', cpe: result.cpe, title: result.title }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ found: true, cpe: result.cpe, title: result.title }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_assessment',
+  'Create a CIA (Confidentiality, Integrity, Availability) protection needs and risk assessment for an asset.',
+  {
+    asset_id:                z.number().int().describe('Asset ID to assess'),
+    confidentiality:         z.enum(['low', 'medium', 'high', 'critical']).describe('Schutzbedarf Vertraulichkeit (C)'),
+    integrity:               z.enum(['low', 'medium', 'high', 'critical']).describe('Schutzbedarf Integrität (I)'),
+    availability:            z.enum(['low', 'medium', 'high', 'critical']).describe('Schutzbedarf Verfügbarkeit (A)'),
+    notes:                   z.string().optional().describe('Assessment notes / justification'),
+    mitigation:              z.string().optional().describe('Planned mitigation measures'),
+    risk_treatment:          z.enum(['mitigate', 'accept', 'transfer', 'avoid']).optional().default('mitigate'),
+    treatment_justification: z.string().optional(),
+    accepted_by:             z.string().optional().describe('Name of manager accepting residual risk (if risk_treatment is accept)'),
+    accepted_until:          z.string().optional().describe('ISO Date (YYYY-MM-DD) until acceptance is valid'),
+  },
+  async (args, { mcpUser }) => {
+    const { Assessment, Asset, Reminder, Task } = getModels();
+    const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
+    const asset = await Asset.findByPk(args.asset_id);
+    if (!asset) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+
+    const { score, level } = Assessment.calculateRisk(args.confidentiality, args.integrity, args.availability);
+    const assessed_at = new Date();
+    const oneYearOut = new Date(assessed_at);
+    oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
+
+    const acceptedUntilDate = (args.risk_treatment === 'accept' && args.accepted_until && args.accepted_until !== 'Invalid date')
+      ? new Date(args.accepted_until) : null;
+    const next_review_at = (acceptedUntilDate && acceptedUntilDate < oneYearOut)
+      ? acceptedUntilDate : oneYearOut;
+
+    await Assessment.update({ is_current: false }, { where: { asset_id: args.asset_id, is_current: true } });
+
+    const assessor_id = await getValidUserId(mcpUser);
+    const assessment = await Assessment.create({
+      asset_id: args.asset_id,
+      assessor_id,
+      confidentiality: args.confidentiality,
+      integrity: args.integrity,
+      availability: args.availability,
+      risk_score: score,
+      risk_level: level,
+      notes: args.notes,
+      mitigation: args.mitigation,
+      risk_treatment: args.risk_treatment || null,
+      treatment_justification: args.treatment_justification || null,
+      accepted_by: args.risk_treatment === 'accept' ? (args.accepted_by || null) : null,
+      accepted_until: acceptedUntilDate ? args.accepted_until : null,
+      assessed_at,
+      next_review_at,
+      is_current: true,
+    });
+
+    await Reminder.destroy({ where: { asset_id: args.asset_id, status: 'pending' } });
+
+    const isAcceptance = args.risk_treatment === 'accept' && acceptedUntilDate;
+    const taskTitle = isAcceptance
+      ? `Risikoakzeptanz läuft ab: ${asset.name}`
+      : `Review fällig: ${asset.name}`;
+    const taskDesc = isAcceptance
+      ? `Die Risikoakzeptanz für Asset „${asset.name}" läuft am ${args.accepted_until} ab und muss erneuert oder das Risiko anders behandelt werden.`
+      : `Regelmäßige Überprüfung der Schutzbedarfsfeststellung (Risikobewertung) für das Asset „${asset.name}".`;
+
+    const task = await Task.create({
+      title: taskTitle,
+      description: taskDesc,
+      priority: isAcceptance && level === 'critical' ? 'high' : 'medium',
+      assigned_to_id: asset.assessor_id || assessor_id,
+      due_date: next_review_at.toISOString().split('T')[0],
+      related_type: 'asset',
+      related_id: asset.id,
+      tags: isAcceptance ? ['Risikoakzeptanz', 'Risiko'] : ['Review', 'Risiko'],
+      created_by_id: assessor_id,
+    });
+
+    await Reminder.create({
+      asset_id: args.asset_id,
+      assessment_id: assessment.id,
+      due_date: next_review_at.toISOString().split('T')[0],
+      status: 'pending',
+      task_id: task.id,
+      notes: isAcceptance ? `Risikoakzeptanz von „${args.accepted_by || 'unbekannt'}" gültig bis ${args.accepted_until}` : null,
+    });
+
+    await logAudit('assess', 'assessment', assessment.id, asset.name, {
+      asset_id: args.asset_id, risk_score: score, risk_level: level,
+    }, mcpUser);
+
+    await checkAndManageAssetTasks(asset);
+
+    return { content: [{ type: 'text', text: JSON.stringify(assessment, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_assessments',
+  'List Schutzbedarfsfeststellungen / CIA assessments for assets.',
+  {
+    asset_id: z.number().int().optional().describe('Filter by asset ID'),
+    limit:    z.number().int().min(1).max(200).default(50),
+  },
+  async ({ asset_id, limit }) => {
+    const { Assessment, Asset, User } = getModels();
+    const where = asset_id ? { asset_id } : {};
+    const assessments = await Assessment.findAll({
+      where, limit,
+      include: [
+        { model: Asset, attributes: ['id', 'name', 'type', 'classification'] },
+        { model: User, as: 'assessorUser', attributes: ['id', 'name', 'email'] },
+      ],
+      order: [['assessed_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(assessments, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_asset',
+  'Decommission / delete an asset from the active register.',
+  {
+    id: z.number().int().describe('Asset ID to decommission'),
+  },
+  async ({ id }, { mcpUser }) => {
+    const { Asset } = getModels();
+    const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
+    const asset = await Asset.findByPk(id);
+    if (!asset) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+
+    await asset.update({ status: 'decommissioned' });
+    await checkAndManageAssetTasks(asset);
+    await logAudit('delete', 'asset', asset.id, asset.name, {}, mcpUser);
+
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: `Asset "${asset.name}" (ID: ${asset.id}) marked as decommissioned.` }, null, 2) }] };
+  }
+);
+
 // ─── Risks ───────────────────────────────────────────────────────────────────
 
 server.tool(
@@ -582,6 +811,31 @@ server.tool(
 );
 
 server.tool(
+  'isms_get_risk',
+  'Get full details of a single risk including linked controls, threats, assets, and sign-off status.',
+  {
+    id: z.number().int().describe('Risk ID'),
+  },
+  async ({ id }) => {
+    const { Risk, Asset, User, Threat, Control, Document, VvtEntry, Incident } = getModels();
+    const risk = await Risk.findByPk(id, {
+      include: [
+        { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'acceptedBy', attributes: ['id', 'name', 'email'] },
+        { model: Asset, as: 'assets', attributes: ['id', 'name', 'type'], through: { attributes: [] } },
+        { model: Threat, as: 'threats', attributes: ['id', 'code', 'title', 'source'], through: { attributes: [] } },
+        { model: Control, as: 'controls', attributes: ['id', 'code', 'title', 'framework', 'status'], through: { attributes: ['effectiveness'] } },
+        { model: Document, as: 'acceptanceDocument', attributes: ['id', 'original_name'] },
+        { model: VvtEntry, as: 'vvtEntries', through: { attributes: [] } },
+        { model: Incident, as: 'incidents', through: { attributes: [] } },
+      ],
+    });
+    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+  }
+);
+
+server.tool(
   'isms_create_risk',
   'Add a new risk to the risk register.',
   {
@@ -593,19 +847,188 @@ server.tool(
     treatment:            z.enum(['mitigate','accept','transfer','avoid']).default('mitigate'),
     owner_id:             z.number().int().optional(),
   },
-  async (args) => {
+  async (args, { mcpUser }) => {
     const { Risk } = getModels();
     const score = args.inherent_likelihood * args.inherent_impact;
     const level = score <= 4 ? 'low' : score <= 9 ? 'medium' : score <= 16 ? 'high' : 'critical';
     const risk = await Risk.create({
       ...args,
+      likelihood: args.inherent_likelihood,
+      impact: args.inherent_impact,
       inherent_level: level,
       residual_likelihood: args.inherent_likelihood,
       residual_impact: args.inherent_impact,
       residual_level: level,
       status: 'open',
     });
+    await logAudit('create', 'risk', risk.id, risk.title, args, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_risk',
+  'Update an existing risk in the risk register including likelihood, impact, treatment, and linked controls/assets.',
+  {
+    id:             z.number().int().describe('Risk ID'),
+    title:          z.string().optional(),
+    description:    z.string().optional(),
+    category:       z.string().optional(),
+    owner_id:       z.number().int().optional(),
+    likelihood:     z.number().int().min(1).max(5).optional(),
+    impact:         z.number().int().min(1).max(5).optional(),
+    treatment:      z.enum(['mitigate', 'accept', 'transfer', 'avoid']).optional(),
+    treatment_plan: z.string().optional(),
+    status:         z.enum(['open', 'in_treatment', 'accepted', 'closed']).optional(),
+    review_date:    z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    asset_ids:      z.array(z.number().int()).optional().describe('Linked Asset IDs'),
+    threat_ids:     z.array(z.number().int()).optional().describe('Linked Threat IDs'),
+    vvt_ids:        z.array(z.number().int()).optional().describe('Linked VVT entry IDs'),
+    incident_ids:   z.array(z.number().int()).optional().describe('Linked Incident IDs'),
+    controls:       z.array(z.object({ id: z.number().int(), effectiveness: z.number().int().min(1).max(5).optional() })).optional().describe('Linked Controls with effectiveness (1-5)'),
+  },
+  async ({ id, asset_ids, threat_ids, vvt_ids, incident_ids, controls, ...updates }, { mcpUser }) => {
+    const { Risk } = getModels();
+    const { computeLevel } = require('../services/riskScale');
+    const { computeResidual } = require('../services/residual');
+
+    const risk = await Risk.findByPk(id);
+    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+
+    const l = updates.likelihood !== undefined ? updates.likelihood : (risk.likelihood || risk.inherent_likelihood || 3);
+    const i = updates.impact !== undefined ? updates.impact : (risk.impact || risk.inherent_impact || 3);
+    const inherent_level = computeLevel(l, i);
+
+    const f = {
+      ...updates,
+      likelihood: l,
+      impact: i,
+      inherent_likelihood: l,
+      inherent_impact: i,
+      inherent_level,
+    };
+
+    await risk.update(f);
+
+    const ops = [];
+    if (Array.isArray(asset_ids)) ops.push(risk.setAssets(asset_ids));
+    if (Array.isArray(threat_ids)) ops.push(risk.setThreats(threat_ids));
+    if (Array.isArray(vvt_ids)) ops.push(risk.setVvtEntries(vvt_ids));
+    if (Array.isArray(incident_ids)) ops.push(risk.setIncidents(incident_ids));
+    if (Array.isArray(controls)) {
+      ops.push((async () => {
+        await risk.setControls([]);
+        await Promise.all(
+          controls.filter(c => c && c.id).map(c =>
+            risk.addControl(c.id, { through: { effectiveness: parseInt(c.effectiveness) || 3 } })
+          )
+        );
+      })());
+    }
+    await Promise.all(ops);
+
+    const riskControls = await risk.getControls({ joinTableAttributes: ['effectiveness'] });
+    const links = riskControls.map(c => ({ effectiveness: c.RiskControl?.effectiveness, status: c.status }));
+    const residual = computeResidual(l, i, links);
+    await risk.update(residual);
+
+    await logAudit('update', 'risk', risk.id, risk.title, updates, mcpUser);
+
+    const updated = await Risk.findByPk(id, {
+      include: [{ model: getModels().User, as: 'owner', attributes: ['id', 'name'] }],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_signoff_risk',
+  'Digitally sign off and accept a risk (NIS-2 management sign-off).',
+  {
+    id:          z.number().int().describe('Risk ID'),
+    valid_until: z.string().optional().describe('ISO Date (YYYY-MM-DD) until acceptance is valid'),
+  },
+  async ({ id, valid_until }, { mcpUser }) => {
+    const { Risk } = getModels();
+    const risk = await Risk.findByPk(id);
+    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+
+    const accepted_by_id = await getValidUserId(mcpUser);
+    await risk.update({
+      status: 'accepted',
+      accepted_by_id,
+      accepted_at: new Date(),
+      accepted_until: valid_until || null,
+    });
+
+    await logAudit('acknowledge', 'risk', risk.id, risk.title, { accepted_until: valid_until || null }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_revoke_risk_signoff',
+  'Revoke a previous risk sign-off / acceptance, setting it back to in_treatment.',
+  {
+    id: z.number().int().describe('Risk ID'),
+  },
+  async ({ id }, { mcpUser }) => {
+    const { Risk } = getModels();
+    const risk = await Risk.findByPk(id);
+    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+
+    await risk.update({
+      status: 'in_treatment',
+      accepted_by_id: null,
+      accepted_at: null,
+      accepted_until: null,
+    });
+
+    await logAudit('update', 'risk', risk.id, risk.title, { action: 'revoke_signoff' }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_risk',
+  'Delete a risk from the risk register and cancel related open tasks.',
+  {
+    id: z.number().int().describe('Risk ID to delete'),
+  },
+  async ({ id }, { mcpUser }) => {
+    const { Risk, Task } = getModels();
+    const risk = await Risk.findByPk(id);
+    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+
+    await Task.update(
+      { status: 'cancelled' },
+      { where: { related_type: 'risk', related_id: risk.id, status: { [Op.in]: ['open', 'in_progress'] } } }
+    );
+
+    await logAudit('delete', 'risk', risk.id, risk.title, {}, mcpUser);
+    await risk.destroy();
+
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: `Risk "${risk.title}" (ID: ${id}) deleted.` }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_threats',
+  'List cybersecurity threats from the standardized threat catalog.',
+  {
+    search: z.string().optional().describe('Filter threats by code, title, or category'),
+  },
+  async ({ search }) => {
+    const { Threat } = getModels();
+    const where = {};
+    if (search) {
+      where[Op.or] = [
+        { code: { [Op.like]: `%${search}%` } },
+        { title: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const threats = await Threat.findAll({ where, order: [['code', 'ASC']] });
+    return { content: [{ type: 'text', text: JSON.stringify(threats, null, 2) }] };
   }
 );
 
@@ -970,6 +1393,44 @@ server.tool(
       coverage: r.total > 0 ? `${Math.round((parseInt(r.implemented) || 0) / r.total * 100)}%` : '0%',
     }));
     return { content: [{ type: 'text', text: JSON.stringify(overview, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_review_signoffs',
+  'List historical Management Review sign-offs (ISO 27001 Kap. 9.3).',
+  {},
+  async () => {
+    const { ReviewSignOff, User } = getModels();
+    const signOffs = await ReviewSignOff.findAll({
+      include: [{ model: User, as: 'approvedBy', attributes: ['id', 'name', 'email'] }],
+      order: [['approved_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(signOffs, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_review_signoff',
+  'Submit a new Management Review digital sign-off and approval (ISO 27001 Kap. 9.3).',
+  {
+    report_date: z.string().optional().describe('ISO Date (YYYY-MM-DD) of report, defaults to today'),
+    notes:       z.string().optional().describe('Management review notes, executive summary, or decisions'),
+  },
+  async ({ report_date, notes }, { mcpUser }) => {
+    const { ReviewSignOff, User } = getModels();
+    const approved_by_id = await getValidUserId(mcpUser);
+    const signOff = await ReviewSignOff.create({
+      report_date: report_date || new Date().toISOString().slice(0, 10),
+      approved_by_id,
+      approved_at: new Date(),
+      notes,
+    });
+    const full = await ReviewSignOff.findByPk(signOff.id, {
+      include: [{ model: User, as: 'approvedBy', attributes: ['id', 'name', 'email'] }],
+    });
+    await logAudit('create', 'review_signoff', signOff.id, `Management Review ${signOff.report_date}`, { notes }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(full, null, 2) }] };
   }
 );
 
@@ -1573,6 +2034,424 @@ server.tool(
     invalidateModulesCache();
 
     return { content: [{ type: 'text', text: JSON.stringify({ feature, enabled, current_state: value }, null, 2) }] };
+  }
+);
+
+// ─── EU AI Act (v2.2.0) ──────────────────────────────────────────────────────
+
+server.tool(
+  'isms_list_ai_systems',
+  'List all registered AI systems from the EU AI Act compliance register.',
+  {
+    risk_category:     z.enum(['prohibited', 'high_risk', 'limited', 'minimal']).optional().describe('Filter by AI Act risk category'),
+    conformity_status: z.enum(['not_assessed', 'in_assessment', 'compliant', 'non_compliant']).optional(),
+    approval_status:   z.enum(['approved', 'not_approved']).optional(),
+  },
+  async ({ risk_category, conformity_status, approval_status }) => {
+    const { AiSystem, User, Vendor } = getModels();
+    const where = {};
+    if (risk_category) where.risk_category = risk_category;
+    if (conformity_status) where.conformity_status = conformity_status;
+    if (approval_status) where.approval_status = approval_status;
+
+    const systems = await AiSystem.findAll({
+      where,
+      include: [
+        { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
+        { model: Vendor, as: 'vendor', attributes: ['id', 'name'] },
+      ],
+      order: [['risk_category', 'ASC'], ['name', 'ASC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(systems, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_ai_system',
+  'Register a new AI system in the EU AI Act register.',
+  {
+    name:               z.string().min(1).describe('AI system name'),
+    description:        z.string().optional(),
+    risk_category:      z.enum(['prohibited', 'high_risk', 'limited', 'minimal']).default('minimal'),
+    use_case:           z.string().optional(),
+    provider:           z.string().optional().describe('Vendor or provider of the AI model'),
+    vendor_id:          z.number().int().optional(),
+    location:           z.string().optional(),
+    deployed_since:     z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    owner_id:           z.number().int().optional(),
+    conformity_status:  z.enum(['not_assessed', 'in_assessment', 'compliant', 'non_compliant']).default('not_assessed'),
+    approval_status:    z.enum(['approved', 'not_approved']).default('approved'),
+    documentation_url:  z.string().optional(),
+    last_review_date:   z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    notes:              z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { AiSystem } = getModels();
+    const owner_id = args.owner_id || await getValidUserId(mcpUser);
+    const system = await AiSystem.create({ ...args, owner_id });
+    await logAudit('create', 'ai_system', system.id, system.name, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(system, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_ai_system',
+  'Update details, conformity status, or risk category of an AI system in the EU AI Act register.',
+  {
+    id:                 z.number().int().describe('AI System ID'),
+    name:               z.string().optional(),
+    description:        z.string().optional(),
+    risk_category:      z.enum(['prohibited', 'high_risk', 'limited', 'minimal']).optional(),
+    use_case:           z.string().optional(),
+    provider:           z.string().optional(),
+    vendor_id:          z.number().int().optional(),
+    location:           z.string().optional(),
+    deployed_since:     z.string().optional(),
+    owner_id:           z.number().int().optional(),
+    conformity_status:  z.enum(['not_assessed', 'in_assessment', 'compliant', 'non_compliant']).optional(),
+    approval_status:    z.enum(['approved', 'not_approved']).optional(),
+    documentation_url:  z.string().optional(),
+    last_review_date:   z.string().optional(),
+    notes:              z.string().optional(),
+  },
+  async ({ id, ...updates }, { mcpUser }) => {
+    const { AiSystem } = getModels();
+    const system = await AiSystem.findByPk(id);
+    if (!system) return { content: [{ type: 'text', text: 'AI System not found' }], isError: true };
+
+    await system.update(updates);
+    await logAudit('update', 'ai_system', system.id, system.name, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(system, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_delete_ai_system',
+  'Delete an AI system from the EU AI Act register and cancel associated open tasks.',
+  {
+    id: z.number().int().describe('AI System ID to delete'),
+  },
+  async ({ id }, { mcpUser }) => {
+    const { AiSystem, Task } = getModels();
+    const system = await AiSystem.findByPk(id);
+    if (!system) return { content: [{ type: 'text', text: 'AI System not found' }], isError: true };
+
+    await Task.update(
+      { status: 'cancelled' },
+      { where: { related_type: 'ai_system', related_id: system.id, status: { [Op.notIn]: ['done', 'cancelled'] } } }
+    );
+
+    await logAudit('delete', 'ai_system', system.id, system.name, {}, mcpUser);
+    await system.destroy();
+
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: `AI System "${system.name}" (ID: ${id}) deleted.` }, null, 2) }] };
+  }
+);
+
+// ─── Policies (v2.2.0) ───────────────────────────────────────────────────────
+
+server.tool(
+  'isms_list_policies',
+  'List security policies, guidelines, and procedures with linked assets and controls.',
+  {
+    category: z.enum(['policy', 'guideline', 'procedure', 'contract', 'other']).optional().describe('Filter by policy category'),
+    status:   z.enum(['draft', 'active', 'retired']).optional().describe('Filter by status'),
+    search:   z.string().optional().describe('Search in title, code, or description'),
+  },
+  async ({ category, status, search }) => {
+    const { Policy, Asset, Control } = getModels();
+    const where = {};
+    if (category) where.category = category;
+    if (status) where.status = status;
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { code: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const policies = await Policy.findAll({
+      where,
+      include: [
+        { model: Asset, as: 'assets', attributes: ['id', 'name'], through: { attributes: [] } },
+        { model: Control, as: 'controls', attributes: ['id', 'code', 'title', 'framework'], through: { attributes: [] } },
+      ],
+      order: [['code', 'ASC'], ['title', 'ASC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(policies, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_policy',
+  'Get full details of a single policy including version history, mapped controls, and assets.',
+  {
+    id: z.number().int().describe('Policy ID'),
+  },
+  async ({ id }) => {
+    const { Policy, PolicyVersion, Asset, Control } = getModels();
+    const policy = await Policy.findByPk(id, {
+      include: [
+        { model: PolicyVersion, as: 'history', attributes: ['id', 'version', 'created_at', 'notes'] },
+        { model: Asset, as: 'assets', attributes: ['id', 'name', 'type'], through: { attributes: [] } },
+        { model: Control, as: 'controls', attributes: ['id', 'code', 'title', 'framework', 'status'], through: { attributes: [] } },
+      ],
+    });
+    if (!policy) return { content: [{ type: 'text', text: 'Policy not found' }], isError: true };
+    return { content: [{ type: 'text', text: JSON.stringify(policy, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_policy',
+  'Register a new policy, guideline, or procedure in the policy management system.',
+  {
+    title:       z.string().min(1).describe('Policy title'),
+    code:        z.string().optional().describe('Policy code, e.g. "POL-001"'),
+    description: z.string().optional().describe('Summary / content of the policy'),
+    category:    z.enum(['policy', 'guideline', 'procedure', 'contract', 'other']).default('policy'),
+    status:      z.enum(['draft', 'active', 'retired']).default('active'),
+    version:     z.string().default('1.0'),
+    valid_from:  z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    valid_until: z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    asset_ids:   z.array(z.number().int()).optional().describe('Linked Asset IDs'),
+    control_ids: z.array(z.number().int()).optional().describe('Linked Control IDs (TOMs)'),
+  },
+  async ({ asset_ids, control_ids, ...fields }, { mcpUser }) => {
+    const { Policy } = getModels();
+    const policy = await Policy.create(fields);
+    if (Array.isArray(asset_ids)) await policy.setAssets(asset_ids);
+    if (Array.isArray(control_ids)) await policy.setControls(control_ids);
+    await logAudit('create', 'policy', policy.id, policy.title, fields, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(policy, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_policy',
+  'Update details, status, or mapped controls of an existing policy.',
+  {
+    id:          z.number().int().describe('Policy ID'),
+    title:       z.string().optional(),
+    code:        z.string().optional(),
+    description: z.string().optional(),
+    category:    z.enum(['policy', 'guideline', 'procedure', 'contract', 'other']).optional(),
+    status:      z.enum(['draft', 'active', 'retired']).optional(),
+    version:     z.string().optional(),
+    valid_from:  z.string().optional(),
+    valid_until: z.string().optional(),
+    asset_ids:   z.array(z.number().int()).optional(),
+    control_ids: z.array(z.number().int()).optional(),
+  },
+  async ({ id, asset_ids, control_ids, ...updates }, { mcpUser }) => {
+    const { Policy } = getModels();
+    const policy = await Policy.findByPk(id);
+    if (!policy) return { content: [{ type: 'text', text: 'Policy not found' }], isError: true };
+
+    await policy.update(updates);
+    if (Array.isArray(asset_ids)) await policy.setAssets(asset_ids);
+    if (Array.isArray(control_ids)) await policy.setControls(control_ids);
+
+    await logAudit('update', 'policy', policy.id, policy.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(policy, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_acknowledge_policy',
+  'Submit user acknowledgment/acceptance of a security policy.',
+  {
+    id: z.number().int().describe('Policy ID to acknowledge'),
+  },
+  async ({ id }, { mcpUser }) => {
+    const { Policy, PolicyAcknowledgment } = getModels();
+    const policy = await Policy.findByPk(id);
+    if (!policy) return { content: [{ type: 'text', text: 'Policy not found' }], isError: true };
+
+    const user_id = await getValidUserId(mcpUser);
+    const existing = await PolicyAcknowledgment.findOne({ where: { policy_id: id, user_id } });
+    if (existing) {
+      return { content: [{ type: 'text', text: JSON.stringify({ message: 'Policy already acknowledged.', acknowledged_at: existing.acknowledged_at }, null, 2) }] };
+    }
+
+    const ack = await PolicyAcknowledgment.create({
+      policy_id: id,
+      user_id,
+      acknowledged_at: new Date(),
+    });
+
+    await logAudit('acknowledge', 'policy', policy.id, policy.title, { acknowledged_by: user_id }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(ack, null, 2) }] };
+  }
+);
+
+// ─── Compliance Audits, CAPA & KPIs (v2.2.0) ─────────────────────────────────
+
+server.tool(
+  'isms_list_audits',
+  'List internal, external, and certification audits along with findings and CAPA tasks.',
+  {
+    audit_type: z.enum(['internal', 'external', 'certification']).optional().describe('Filter by audit type'),
+    status:     z.enum(['planned', 'in_progress', 'completed']).optional().describe('Filter by status'),
+  },
+  async ({ audit_type, status }) => {
+    const { Audit, AuditFinding, User, Task } = getModels();
+    const where = {};
+    if (audit_type) where.audit_type = audit_type;
+    if (status) where.status = status;
+
+    const audits = await Audit.findAll({
+      where,
+      include: [
+        {
+          model: AuditFinding,
+          as: 'findings',
+          include: [
+            { model: User, as: 'assignee', attributes: ['id', 'name'] },
+            { model: Task, as: 'capaTask', attributes: ['id', 'title', 'status'] },
+          ],
+        },
+      ],
+      order: [['start_date', 'DESC'], ['created_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(audits, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_audit',
+  'Plan or log a new compliance audit (internal, external, or certification).',
+  {
+    title:       z.string().min(1).describe('Audit title / objective'),
+    scope:       z.string().optional().describe('Scope and audited departments / systems'),
+    audit_type:  z.enum(['internal', 'external', 'certification']).default('internal'),
+    status:      z.enum(['planned', 'in_progress', 'completed']).default('planned'),
+    auditor:     z.string().optional().describe('Auditor or auditing company name'),
+    start_date:  z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    end_date:    z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    report_link: z.string().optional().describe('Link to final audit report'),
+    notes:       z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Audit } = getModels();
+    const audit = await Audit.create(args);
+    await logAudit('create', 'audit', audit.id, audit.title, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(audit, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_audit',
+  'Update details or status of an existing compliance audit.',
+  {
+    id:          z.number().int().describe('Audit ID'),
+    title:       z.string().optional(),
+    scope:       z.string().optional(),
+    audit_type:  z.enum(['internal', 'external', 'certification']).optional(),
+    status:      z.enum(['planned', 'in_progress', 'completed']).optional(),
+    auditor:     z.string().optional(),
+    start_date:  z.string().optional(),
+    end_date:    z.string().optional(),
+    report_link: z.string().optional(),
+    notes:       z.string().optional(),
+  },
+  async ({ id, ...updates }, { mcpUser }) => {
+    const { Audit } = getModels();
+    const audit = await Audit.findByPk(id);
+    if (!audit) return { content: [{ type: 'text', text: 'Audit not found' }], isError: true };
+
+    await audit.update(updates);
+    await logAudit('update', 'audit', audit.id, audit.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(audit, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_audit_finding',
+  'Create a new finding / deviation from an audit and optionally assign it for remediation.',
+  {
+    audit_id:    z.number().int().describe('Audit ID'),
+    title:       z.string().min(1).describe('Finding title / issue description'),
+    description: z.string().optional().describe('Detailed observation and standard non-conformity'),
+    severity:    z.enum(['minor', 'major', 'observation']).default('observation'),
+    status:      z.enum(['open', 'resolved', 'wont_fix']).default('open'),
+    assignee_id: z.number().int().optional().describe('User ID responsible for resolution'),
+  },
+  async (args, { mcpUser }) => {
+    const { Audit, AuditFinding } = getModels();
+    const audit = await Audit.findByPk(args.audit_id);
+    if (!audit) return { content: [{ type: 'text', text: 'Audit not found' }], isError: true };
+
+    const finding = await AuditFinding.create(args);
+    await logAudit('create', 'audit_finding', finding.id, finding.title, args, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(finding, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_update_audit_finding',
+  'Update status, severity, or remediation details of an audit finding.',
+  {
+    id:          z.number().int().describe('Audit Finding ID'),
+    title:       z.string().optional(),
+    description: z.string().optional(),
+    severity:    z.enum(['minor', 'major', 'observation']).optional(),
+    status:      z.enum(['open', 'resolved', 'wont_fix']).optional(),
+    assignee_id: z.number().int().optional(),
+  },
+  async ({ id, ...updates }, { mcpUser }) => {
+    const { AuditFinding } = getModels();
+    const finding = await AuditFinding.findByPk(id);
+    if (!finding) return { content: [{ type: 'text', text: 'Audit finding not found' }], isError: true };
+
+    await finding.update(updates);
+    await logAudit('update', 'audit_finding', finding.id, finding.title, updates, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(finding, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_kpis',
+  'List security & compliance KPIs along with measurement history and target values.',
+  {},
+  async () => {
+    const { Kpi, KpiMeasurement, User } = getModels();
+    const kpis = await Kpi.findAll({
+      include: [
+        { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
+        { model: KpiMeasurement, as: 'measurements', order: [['measured_at', 'DESC']] },
+      ],
+      order: [['created_at', 'DESC']],
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(kpis, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_record_kpi_measurement',
+  'Record a new measured value for a security KPI.',
+  {
+    kpi_id:      z.number().int().describe('KPI ID'),
+    value:       z.number().describe('Measured numerical value'),
+    measured_at: z.string().optional().describe('ISO Date (YYYY-MM-DD), defaults to today'),
+    notes:       z.string().optional(),
+  },
+  async ({ kpi_id, value, measured_at, notes }, { mcpUser }) => {
+    const { Kpi, KpiMeasurement } = getModels();
+    const kpi = await Kpi.findByPk(kpi_id);
+    if (!kpi) return { content: [{ type: 'text', text: 'KPI not found' }], isError: true };
+
+    const measurement = await KpiMeasurement.create({
+      kpi_id,
+      value,
+      measured_at: measured_at || new Date().toISOString().split('T')[0],
+      notes,
+    });
+
+    await kpi.update({ current_value: value });
+    await logAudit('create', 'kpi_measurement', measurement.id, `KPI: ${kpi.title}`, { value }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(measurement, null, 2) }] };
   }
 );
 

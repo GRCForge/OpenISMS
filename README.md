@@ -477,29 +477,88 @@ Three options (all via `Authorization: Bearer <token>`):
 
 The token is tied to the logged-in user — permissions follow that user's role. Tokens can be revoked at any time in the UI.
 
-### Available Tools (18)
+### Available Tools (78)
 
 | Category | Tool | Description |
 |---|---|---|
-| **Assets** | `isms_list_assets` | Retrieve assets with filters (type, status, classification, free text) |
-| | `isms_get_asset` | Asset details including latest CIA assessment and linked risks |
-| | `isms_create_asset` | Create a new asset |
-| **Risks** | `isms_list_risks` | Query risk register (status, level, free text) |
-| | `isms_create_risk` | Create a risk with likelihood × impact (level calculated automatically) |
-| **Incidents** | `isms_list_incidents` | Query incidents (status, severity) |
-| | `isms_create_incident` | Report a security incident |
-| | `isms_update_incident_status` | Set status, resolution and lessons learned |
-| **Tasks** | `isms_list_tasks` | Query tasks including group tasks |
+| **Assets & CVEs** | `isms_list_assets` | Retrieve assets with filters (type, status, classification, free text) |
+| | `isms_get_asset` | Full asset details including CIA assessment, owner, and linked risks |
+| | `isms_create_asset` | Create a new asset in the inventory |
+| | `isms_update_asset` | Update asset attributes, lifecycle status, BCM objectives, etc. |
+| | `isms_delete_asset` | Decommission / delete an asset from active register |
+| | `isms_get_asset_cve_report` | CVE vulnerability report for a single asset (with optional live refresh) |
+| | `isms_get_central_cve_report` | Central aggregated CVE report across all active assets |
+| | `isms_refresh_asset_cves` | Real-time CVE vulnerability refresh for a specific asset |
+| | `isms_refresh_all_asset_cves` | Background/real-time CVE refresh for all active assets |
+| | `isms_suggest_cpe` | NVD CPE 2.3 format suggestions for automated matching |
+| | `isms_resolve_cpe` | Resolve / set standardized CPE identifier for an asset |
+| | `isms_create_assessment` | Create Schutzbedarfsfeststellung (CIA: Confidentiality, Integrity, Availability) |
+| | `isms_list_assessments` | Query Schutzbedarfsfeststellungen / CIA assessments |
+| **Risks & Threats** | `isms_list_risks` | Query risk register (status, level, free text) |
+| | `isms_get_risk` | Detailed risk information including controls, threats, and sign-offs |
+| | `isms_create_risk` | Create a risk (likelihood × impact, inherent level calculated automatically) |
+| | `isms_update_risk` | Update risk details, linked controls, effectiveness, and residual risk |
+| | `isms_signoff_risk` | Digital sign-off and risk acceptance (NIS-2 management sign-off) |
+| | `isms_revoke_risk_signoff` | Revoke a previous risk acceptance back to in_treatment |
+| | `isms_delete_risk` | Delete a risk and cancel associated open tasks |
+| | `isms_list_threats` | Query cybersecurity threats from the standardized threat catalog |
+| **Incidents** | `isms_list_incidents` | Query security incidents (status, severity, NIS-2 relevant) |
+| | `isms_create_incident` | Report a new security incident |
+| | `isms_update_incident_status` | Update incident status, corrective actions, and lessons learned |
+| | `isms_update_incident` | Update incident details, linked assets, and root cause |
+| **Tasks** | `isms_list_tasks` | Query tasks including group-assigned tasks |
 | | `isms_create_task` | Create a task — assign to user or group |
 | | `isms_complete_task` | Mark a task as completed |
-| **Controls** | `isms_list_controls` | Filter SoA controls by framework and status |
+| **Controls & SoA** | `isms_list_controls` | Filter SoA controls by framework (ISO 27001, NIS-2, BSI, etc.) and status |
 | | `isms_update_control_status` | Set implementation status of a control |
-| **Reports** | `isms_get_dashboard` | Dashboard KPIs: assets, risks, incidents, reviews, coverage |
+| | `isms_update_control` | Update control details, type, or applicability justification |
+| **EU AI Act** | `isms_list_ai_systems` | List registered AI systems with risk categories and conformity status |
+| | `isms_create_ai_system` | Register an AI system in the AI Act inventory |
+| | `isms_update_ai_system` | Update AI system details, conformity, or approval status |
+| | `isms_delete_ai_system` | Delete an AI system and cancel related open tasks |
+| **Policies & Guidelines** | `isms_list_policies` | List policies and guidelines with linked assets and controls |
+| | `isms_get_policy` | Full policy details including version history and mapped controls |
+| | `isms_create_policy` | Register a new policy or guideline |
+| | `isms_update_policy` | Update policy attributes or control mappings |
+| | `isms_acknowledge_policy` | Submit user acknowledgment / acceptance of a security policy |
+| **Audits, CAPA & KPIs** | `isms_list_audits` | List internal/external audits with findings and CAPA tasks |
+| | `isms_create_audit` | Plan or log a compliance audit |
+| | `isms_update_audit` | Update compliance audit details or status |
+| | `isms_create_audit_finding` | Log an audit deviation / finding |
+| | `isms_update_audit_finding` | Update audit finding status, severity, or remediation |
+| | `isms_list_kpis` | List security & compliance KPIs with measurement history |
+| | `isms_record_kpi_measurement` | Record a new measurement value for a KPI |
+| **Pentests** | `isms_list_pentests` | List pentest projects with findings summary |
+| | `isms_create_pentest` | Register a new pentest project |
+| | `isms_list_pentest_findings` | List vulnerabilities/findings for a pentest project |
+| | `isms_create_pentest_finding` | Add a new vulnerability finding to a pentest project |
+| | `isms_update_pentest_finding` | Update pentest finding details or status |
+| **GDPR / DSGVO** | `isms_list_vvt_entries` | List processing activities (VVT / RoPA) |
+| | `isms_create_vvt_entry` | Create a new VVT entry in the GDPR record of processing |
+| | `isms_list_subject_requests` | List GDPR Subject Access Requests (Betroffenenanfragen) |
+| | `isms_create_subject_request` | Register a new GDPR Subject Access Request |
+| | `isms_update_subject_request_status` | Update request status, decision, or handler |
+| **Vendor Management** | `isms_list_vendors` | List vendors and processors with risk levels |
+| | `isms_create_vendor` | Register a new vendor in the vendor register |
+| | `isms_assess_vendor` | Perform/update vendor security & risk assessment |
+| **BCM** | `isms_list_bcm_processes` | List critical business processes from BIA |
+| | `isms_list_bcm_exercises` | List BCM continuity tests and exercises |
+| | `isms_create_bcm_exercise` | Log a new BCM tabletop exercise or recovery drill |
+| **DORA** | `isms_list_dora_third_parties` | List ICT third-party providers under DORA |
+| | `isms_list_dora_tests` | List digital operational resilience tests |
+| **Auto-Discovery** | `isms_list_discovered_software` | List staged auto-discovered software/hosts |
+| | `isms_approve_discovered_software` | Approve staged software into active asset inventory |
+| | `isms_ignore_discovered_software` | Ignore staged discovered items |
+| **Reports & Sign-offs** | `isms_get_dashboard` | Dashboard KPIs: assets, risks, incidents, reviews, coverage |
 | | `isms_get_management_report` | Management report: health score, MTTR, KPIs |
 | | `isms_get_compliance_overview` | Coverage rate per compliance framework |
-| **Admin** | `isms_list_users` | User list with roles |
+| | `isms_get_review_signoffs` | List Management Review sign-offs (ISO 27001 Kap. 9.3) |
+| | `isms_create_review_signoff` | Submit a digital Management Review sign-off |
+| **Admin & System** | `isms_list_users` | User list with roles and status |
 | | `isms_list_groups` | Groups with members |
-| **Search** | `isms_search` | Cross-entity search across assets, risks, incidents and tasks |
+| | `isms_list_features` | List compliance modules and activation state |
+| | `isms_set_feature_status` | Enable or disable system modules |
+| **Search** | `isms_search` | Cross-entity search across assets, risks, incidents, and tasks |
 
 ### Integration with Claude Desktop
 

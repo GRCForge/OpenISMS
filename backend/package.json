@@ -1,6 +1,6 @@
 {
   "name": "openisms-backend",
-  "version": "2.2.21",
+  "version": "2.2.22",
   "engines": {
     "node": ">=26.3.0"
   },
