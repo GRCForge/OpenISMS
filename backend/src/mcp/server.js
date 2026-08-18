@@ -563,7 +563,7 @@ server.tool(
     const { Asset, Assessment, Risk, Incident, User } = getModels();
     const asset = await Asset.findByPk(id, {
       include: [
-        { model: Assessment, as: 'assessments', limit: 1, order: [['created_at', 'DESC']] },
+        { model: Assessment, as: 'Assessments', limit: 1, order: [['created_at', 'DESC']] },
         { model: User, as: 'owner', attributes: ['id','name','email'] },
         { model: User, as: 'assessor', attributes: ['id','name','email'] },
       ],
