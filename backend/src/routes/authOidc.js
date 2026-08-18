@@ -104,6 +104,24 @@ router.get('/callback', async (req, res) => {
     try {
       if (claims.sub) info = await client.fetchUserInfo(config, tokenSet.access_token, claims.sub);
     } catch { info = claims; }
+
+    // Keycloak (und viele andere IdPs) packen Client-Rollen-Claims wie
+    // "resource_access.<client>.roles" standardmaessig NUR in den Access-Token,
+    // nicht in das ID-Token und nicht in die UserInfo-Response - selbst wenn
+    // der zugehoerige Client-Scope als "Default" markiert ist. Ohne diesen
+    // Schritt sieht das Rollen-Mapping unten "resource_access" nie, egal wie
+    // die Keycloak-Scope-Konfiguration aussieht. Access-Token ist bei Keycloak
+    // ein JWT - Payload (mittleres Segment) decodieren, Signaturpruefung nicht
+    // noetig, da der Token direkt vom vertrauenswuerdigen Token-Endpoint kam.
+    let accessTokenClaims = {};
+    if (tokenSet.access_token && tokenSet.access_token.split('.').length === 3) {
+      try {
+        const payload = tokenSet.access_token.split('.')[1];
+        accessTokenClaims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+      } catch (e) {
+        console.error('[OIDC] access token claim decode failed:', e.message);
+      }
+    }
     const email = String(info.email || claims.email || info.preferred_username || '').toLowerCase();
     if (!email) throw new Error('Kein E-Mail-Claim im Token');
     // Reject explicitly unverified emails: an IdP that lets users set an arbitrary
@@ -191,12 +209,21 @@ router.get('/callback', async (req, res) => {
       });
       let mappedRole = null;
       let mappedCustomRoleId = null;
+      // Diagnose-Log (18.08.2026, Notion-Aufgabe "Keycloak-OIDC-Rollenmapping"):
+      // zeigt bei jedem SSO-Login, welche Top-Level-Claim-Keys aus welcher
+      // Quelle tatsaechlich angekommen sind - damit sich ohne manuellen
+      // Token-Dump pruefen laesst, ob z. B. "resource_access" ueberhaupt da ist.
+      console.log('[OIDC] claim sources for', email, {
+        idTokenClaims: Object.keys(claims),
+        userInfoClaims: Object.keys(info),
+        accessTokenClaims: Object.keys(accessTokenClaims),
+      });
       for (const mapping of mappings) {
-        let claimVal = info[mapping.claim_path] ?? claims[mapping.claim_path];
+        let claimVal = info[mapping.claim_path] ?? claims[mapping.claim_path] ?? accessTokenClaims[mapping.claim_path];
         // Support dot-notation for nested claims (e.g. "realm_access.roles")
         if (claimVal === undefined && mapping.claim_path.includes('.')) {
           const parts = mapping.claim_path.split('.');
-          let obj = { ...info, ...claims };
+          let obj = { ...accessTokenClaims, ...info, ...claims };
           for (const p of parts) { obj = obj?.[p]; }
           claimVal = obj;
         }
