@@ -375,7 +375,14 @@ async function fetchCVEsForAsset(asset) {
       const data = await queryCVEsByCPE(asset.cpe, asset.version || null);
       // Client-side version filter as belt-and-suspenders
       const parsed = parseNVDResponse(data, asset.cpe, 'nvd-cpe', asset.version || null);
-      if (parsed.total > 0 || parsed.cveList.length > 0) return parsed;
+      // A successful, precise CPE query is authoritative -- even a genuine zero-result
+      // ("no known CVEs for this exact product/version") must be trusted and returned
+      // as-is. Falling through to the much broader Phase-0 keyword search on empty
+      // results caused false positives in practice (NVD's keywordSearch stems "Unifi"
+      // against "Unified", pulling unrelated Cisco CallManager CVEs onto Ubiquiti
+      // hardware assets). Only an actual request failure (caught below) should trigger
+      // the Phase-0 fallback.
+      return parsed;
     } catch (e) {
       console.warn(`[CVE] NVD CPE query failed for ${asset.cpe}: ${e.message}`);
     }
