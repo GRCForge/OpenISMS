@@ -247,6 +247,9 @@ app.use('/api/nis2', requireModule('nis2'), require('./routes/nis2'));
 app.use('/api/c5', requireModule('c5'), require('./routes/c5'));
 app.use('/api/mappings', require('./routes/mappings'));
 
+// Drittsystem-Anbindungen fuer das Asset-Register (CheckMK, spaeter weitere)
+app.use('/api/integrations', require('./routes/integrations'));
+
 // Browser Push Notifications (Web Push API / VAPID)
 app.use('/api/push', require('./routes/push'));
 
@@ -539,6 +542,9 @@ const start = async () => {
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_assets_type ON assets(type)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_assets_classification ON assets(classification)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_assets_lifecycle ON assets(lifecycle_status)').catch(() => {});
+    // Korrelationsschluessel der Drittsystem-Anbindung: jeder Sync-Lauf schlaegt
+    // je Host genau einmal hierauf nach, das sind bei 30 Hosts 30 Lookups.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_assets_external ON assets(external_source, external_id)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, created_at)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_id)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)').catch(() => {});

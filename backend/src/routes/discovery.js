@@ -544,6 +544,15 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
       if (item.version && item.version !== existing.version) patch.version = item.version;
       if (item.vendor && !existing.vendor) patch.vendor = item.vendor;
 
+      // Auch beim Zusammenfuehren die Connector-Herkunft nachtragen, sonst
+      // bleibt ein per Namen gematchtes Asset beim naechsten Sync unverknuepft
+      // und wuerde erneut als neuer Staging-Eintrag vorgelegt.
+      if (item.source && !['agent', 'network-scan'].includes(item.source) && !existing.external_id) {
+        patch.external_source = item.source;
+        patch.external_id = item.hostname;
+        patch.external_last_seen_at = new Date();
+      }
+
       const existingTags = Array.isArray(existing.tags) ? existing.tags : [];
       const newTags = [...existingTags];
       if (!isNetworkScan && item.hostname) {
@@ -588,6 +597,12 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
         description = `Automatisch erkannt auf ${item.hostname}${item.ip ? ` (${item.ip})` : ''}${item.os ? ` · ${item.os}` : ''} und am ${today} freigegeben.`;
       }
 
+      // Stammt der Eintrag aus einem Drittsystem-Connector (z. B. CheckMK),
+      // wird die Herkunft am Asset festgehalten. Ohne diesen Schluessel
+      // muesste ein spaeterer Re-Sync ueber den Namen matchen und wuerde bei
+      // jeder Umbenennung ein Duplikat anlegen.
+      const isConnectorSource = item.source && !['agent', 'network-scan'].includes(item.source);
+
       await Asset.create({
         name:             item.name,
         type:             item.asset_type || 'software',
@@ -598,6 +613,9 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
         vendor:           item.vendor  || null,
         owner_id:         req.user.id,
         assessor_id:      req.user.id,
+        external_source:  isConnectorSource ? item.source : null,
+        external_id:      isConnectorSource ? item.hostname : null,
+        external_last_seen_at: isConnectorSource ? new Date() : null,
         tags,
         description,
         status:           'active',

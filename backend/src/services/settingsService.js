@@ -64,6 +64,11 @@ const DEFAULT_PERMISSIONS = {
   bcm:              { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin','assessor'] },
   pentests:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'], delete_findings: ['admin','assessor','it-staff'] },
   discovery:        { access: ['admin','it-staff'] },
+  // Drittsystem-Anbindungen (CheckMK & Folgende). Getrennt von 'discovery',
+  // weil das Konfigurieren einer Verbindung inkl. Zugangsdaten eine andere
+  // Entscheidung ist als das Sichten ihrer Ergebnisse: 'sync' darf ausloesen,
+  // 'configure' darf Endpunkt und Secret aendern.
+  integrations:     { view: ['admin','assessor','it-staff'], sync: ['admin','it-staff'], configure: ['admin'] },
   import:      { access: ['admin','assessor','it-staff'] },
   reports:     { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'] },
   admin:       { access: ['admin'] },
@@ -99,6 +104,20 @@ const DEFAULTS = {
     clientId: '',
     clientSecretEnc: null,
     scopes: 'openid profile email',
+  },
+  // CheckMK-Anbindung. Das Secret liegt wie das OIDC-Client-Secret nur
+  // verschluesselt (secretEnc) und verlaesst das Backend nie im Klartext.
+  checkmk: {
+    enabled: false,
+    url: '',            // z. B. https://checkmk.intern
+    site: '',           // CheckMK-Site, z. B. 'cmk'
+    username: '',       // Automationsbenutzer
+    secretEnc: null,
+    // Aus: eine unverifizierte TLS-Verbindung ins Monitoring muss eine
+    // bewusste, sichtbare Entscheidung sein — kein stiller Fallback.
+    allowSelfSigned: false,
+    lastSyncAt: null,
+    lastSyncSummary: null,
   },
 };
 
@@ -161,6 +180,36 @@ const setOidc = async (patch = {}) => {
   return next;
 };
 
+// ─── CheckMK-Anbindung ───────────────────────────────────────────────────────
+
+// Rohform inkl. secretEnc — nur backend-intern verwenden, nie an einen Client geben.
+const getCheckmkRaw = async () => ({ ...DEFAULTS.checkmk, ...(await getRaw('checkmk')) });
+
+// Vollstaendige Config inkl. entschluesseltem Secret — ausschliesslich fuer den
+// Connector selbst. Analog zu getOidcConfig().
+const getCheckmkConfig = async () => {
+  const c = await getCheckmkRaw();
+  return { ...c, secret: c.secretEnc ? decrypt(c.secretEnc) : null };
+};
+
+// Fuer die Anzeige: alles ausser dem Secret, plus ein Flag, ob eines hinterlegt ist.
+const getCheckmkPublic = async () => {
+  const { secretEnc, ...rest } = await getCheckmkRaw();
+  return { ...rest, secretConfigured: Boolean(secretEnc) };
+};
+
+const setCheckmk = async (patch = {}) => {
+  const current = await getCheckmkRaw();
+  const next = { ...current, ...patch };
+  // Secret nur ersetzen, wenn ein neues (nicht-leeres) uebergeben wurde —
+  // sonst wuerde ein Speichern des Formulars ohne Secret-Eingabe es loeschen.
+  if (patch.secret) next.secretEnc = encrypt(patch.secret);
+  delete next.secret;
+  await saveSetting('checkmk', next);
+  const { secretEnc, ...rest } = next;
+  return { ...rest, secretConfigured: Boolean(secretEnc) };
+};
+
 const getPermissions = async () => {
   const stored = await getRaw('permissions');
   const result = JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS));
@@ -200,4 +249,4 @@ const setSetting = async (key, value) => {
   }
 };
 
-module.exports = { getGeneral, setGeneral, getOidcRaw, getOidcConfig, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting };
+module.exports = { getGeneral, setGeneral, getOidcRaw, getOidcConfig, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting, getCheckmkRaw, getCheckmkConfig, getCheckmkPublic, setCheckmk };

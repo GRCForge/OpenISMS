@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Radar, Download, Play, CheckSquare, Square, Server, Wifi, Terminal, AlertTriangle, CheckCircle, Info, ChevronRight, Package, Inbox, Trash2, Check, X, RefreshCw } from 'lucide-react';
+import { Radar, Download, Play, CheckSquare, Square, Server, Wifi, Terminal, AlertTriangle, CheckCircle, Info, ChevronRight, Package, Inbox, Trash2, Check, X, RefreshCw, Activity, Plug } from 'lucide-react';
 import { useTranslation, Trans } from 'react-i18next';
 import api from '../lib/api';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
@@ -8,7 +8,27 @@ import { Input } from '../components/ui/Input';
 import { useToast } from '../contexts/ToastContext';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 
-type Tab = 'scan' | 'agent' | 'staged';
+type Tab = 'scan' | 'agent' | 'checkmk' | 'staged';
+
+interface CheckmkConfig {
+  enabled: boolean;
+  url: string;
+  site: string;
+  username: string;
+  allowSelfSigned: boolean;
+  secretConfigured: boolean;
+  lastSyncAt: string | null;
+  lastSyncSummary: Record<string, number> | null;
+}
+
+interface CheckmkSyncResult {
+  dry_run: boolean;
+  hosts_seen: number;
+  assets_updated: number;
+  staging_created: number;
+  staging_updated: number;
+  assets_missing: number;
+}
 
 interface DiscoveredSoftware {
   id: number;
@@ -19,7 +39,7 @@ interface DiscoveredSoftware {
   ip: string | null;
   os: string | null;
   status: 'pending' | 'approved' | 'ignored';
-  source: 'agent' | 'network-scan';
+  source: 'agent' | 'network-scan' | 'checkmk' | string;
   asset_type: 'software' | 'hardware';
   open_ports: string | null; // JSON-encoded port array
   created_at: string;
@@ -62,6 +82,14 @@ export const NetworkDiscovery: React.FC = () => {
   const [stagedFilter, setStagedFilter] = useState<'pending' | 'approved' | 'ignored' | 'all'>('pending');
   const [stagedSearch, setStagedSearch] = useState('');
   const [selectedStaged, setSelectedStaged] = useState<Set<number>>(new Set());
+
+  // CheckMK integration state. Das Secret wird bewusst getrennt gehalten und
+  // nie aus dem Backend zurueckgelesen — die Konfiguration meldet nur, ob eines
+  // hinterlegt ist.
+  const [checkmk, setCheckmk] = useState<CheckmkConfig | null>(null);
+  const [checkmkSecret, setCheckmkSecret] = useState('');
+  const [checkmkBusy, setCheckmkBusy] = useState(false);
+  const [checkmkResult, setCheckmkResult] = useState<CheckmkSyncResult | null>(null);
 
   const loadStaged = async () => {
     setLoadingStaged(true);
@@ -159,6 +187,70 @@ export const NetworkDiscovery: React.FC = () => {
     if (newTab === 'staged') {
       loadStaged();
     }
+    if (newTab === 'checkmk') {
+      loadCheckmk();
+    }
+  };
+
+  // ── CheckMK integration ────────────────────────────────────────────────────
+
+  const loadCheckmk = async () => {
+    try {
+      const { data } = await api.get('/integrations/checkmk');
+      setCheckmk(data);
+    } catch {
+      toast.error(t('messages.loadFailed'));
+    }
+  };
+
+  const saveCheckmk = async () => {
+    if (!checkmk) return;
+    setCheckmkBusy(true);
+    try {
+      const payload: Record<string, unknown> = {
+        enabled: checkmk.enabled,
+        url: checkmk.url,
+        site: checkmk.site,
+        username: checkmk.username,
+        allowSelfSigned: checkmk.allowSelfSigned,
+      };
+      // Leeres Feld heisst "Secret unveraendert lassen" — sonst wuerde jedes
+      // Speichern ohne erneute Eingabe das hinterlegte Secret loeschen.
+      if (checkmkSecret) payload.secret = checkmkSecret;
+
+      const { data } = await api.put('/integrations/checkmk', payload);
+      setCheckmk(data);
+      setCheckmkSecret('');
+      toast.success(t('checkmk.saved'));
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || t('messages.loadFailed'));
+    } finally { setCheckmkBusy(false); }
+  };
+
+  const testCheckmk = async () => {
+    setCheckmkBusy(true);
+    try {
+      const { data } = await api.post('/integrations/checkmk/test');
+      toast.success(t('checkmk.testOk', { count: data.host_count }));
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || t('messages.loadFailed'));
+    } finally { setCheckmkBusy(false); }
+  };
+
+  const syncCheckmk = async (dryRun: boolean) => {
+    setCheckmkBusy(true);
+    setCheckmkResult(null);
+    try {
+      const { data } = await api.post('/integrations/checkmk/sync', { dryRun });
+      setCheckmkResult(data);
+      if (!dryRun) {
+        await loadCheckmk();
+        // Neue Vorschlaege sind erst dann etwas wert, wenn sie jemand sieht.
+        loadStaged();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || t('messages.loadFailed'));
+    } finally { setCheckmkBusy(false); }
   };
 
   const runScan = async () => {
@@ -247,6 +339,7 @@ export const NetworkDiscovery: React.FC = () => {
         {([
           ['scan', Wifi, t('tabs.scan')],
           ['agent', Terminal, t('tabs.agent')],
+          ['checkmk', Activity, t('tabs.checkmk')],
           ['staged', Inbox, t('tabs.staged')]
         ] as const).map(([t, Icon, label]) => (
           <button key={t} onClick={() => handleTabChange(t)}
@@ -259,6 +352,140 @@ export const NetworkDiscovery: React.FC = () => {
           </button>
         ))}
       </div>
+
+      {/* ── CheckMK Tab ──────────────────────────────────────────────────────── */}
+      {tab === 'checkmk' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <h2 className="font-semibold dark:text-white flex items-center gap-2">
+                <Plug size={17} className="text-blue-500" /> {t('checkmk.heading')}
+              </h2>
+            </CardHeader>
+            <CardBody className="space-y-4">
+              <div className="flex gap-2 text-sm text-gray-500 dark:text-slate-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                <Info size={16} className="shrink-0 mt-0.5 text-blue-500" />
+                <span>{t('checkmk.intro')}</span>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Input
+                  label={t('checkmk.url')}
+                  value={checkmk?.url || ''}
+                  placeholder="https://checkmk.intern"
+                  onChange={e => checkmk && setCheckmk({ ...checkmk, url: e.target.value })}
+                />
+                <Input
+                  label={t('checkmk.site')}
+                  value={checkmk?.site || ''}
+                  placeholder="cmk"
+                  onChange={e => checkmk && setCheckmk({ ...checkmk, site: e.target.value })}
+                />
+                <Input
+                  label={t('checkmk.username')}
+                  value={checkmk?.username || ''}
+                  placeholder="automation"
+                  onChange={e => checkmk && setCheckmk({ ...checkmk, username: e.target.value })}
+                />
+                <div>
+                  <Input
+                    label={t('checkmk.secret')}
+                    type="password"
+                    autoComplete="new-password"
+                    value={checkmkSecret}
+                    placeholder={t('checkmk.secretPlaceholder')}
+                    onChange={e => setCheckmkSecret(e.target.value)}
+                  />
+                  <p className={`text-xs mt-1 ${checkmk?.secretConfigured ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {checkmk?.secretConfigured ? t('checkmk.secretConfigured') : t('checkmk.secretMissing')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={checkmk?.enabled || false}
+                    onChange={e => checkmk && setCheckmk({ ...checkmk, enabled: e.target.checked })}
+                  />
+                  {t('checkmk.enabled')}
+                </label>
+                <label className="flex items-center gap-2 text-sm dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={checkmk?.allowSelfSigned || false}
+                    onChange={e => checkmk && setCheckmk({ ...checkmk, allowSelfSigned: e.target.checked })}
+                  />
+                  {t('checkmk.allowSelfSigned')}
+                </label>
+                {checkmk?.allowSelfSigned && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5 pl-6">
+                    <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                    {t('checkmk.allowSelfSignedHint')}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2 border-t dark:border-slate-800">
+                <Button onClick={saveCheckmk} disabled={checkmkBusy || !checkmk}>
+                  {t('checkmk.save')}
+                </Button>
+                <Button variant="secondary" onClick={testCheckmk} disabled={checkmkBusy}>
+                  <RefreshCw size={15} className={checkmkBusy ? 'animate-spin' : ''} /> {t('checkmk.test')}
+                </Button>
+                <Button variant="secondary" onClick={() => syncCheckmk(true)} disabled={checkmkBusy}>
+                  {t('checkmk.dryRun')}
+                </Button>
+                <Button onClick={() => syncCheckmk(false)} disabled={checkmkBusy}>
+                  <Play size={15} /> {t('checkmk.sync')}
+                </Button>
+              </div>
+
+              <p className="text-xs text-gray-400 dark:text-slate-500">
+                {t('checkmk.lastSync')}:{' '}
+                {checkmk?.lastSyncAt ? new Date(checkmk.lastSyncAt).toLocaleString() : t('checkmk.never')}
+              </p>
+            </CardBody>
+          </Card>
+
+          {checkmkResult && (
+            <Card>
+              <CardHeader>
+                <h2 className="font-semibold dark:text-white">{t('checkmk.resultHeading')}</h2>
+              </CardHeader>
+              <CardBody className="space-y-3">
+                {checkmkResult.dry_run && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <Info size={15} /> {t('checkmk.dryRunNotice')}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+                  {([
+                    [checkmkResult.hosts_seen, t('checkmk.hostsSeen')],
+                    [checkmkResult.assets_updated, t('checkmk.assetsUpdated')],
+                    [checkmkResult.staging_created, t('checkmk.stagingCreated')],
+                    [checkmkResult.staging_updated, t('checkmk.stagingUpdated')],
+                    [checkmkResult.assets_missing, t('checkmk.assetsMissing')],
+                  ] as const).map(([value, label]) => (
+                    <div key={label} className="rounded-lg bg-gray-50 dark:bg-slate-800/60 p-3">
+                      <div className={`text-xl font-semibold ${Number(value) > 0 && label === t('checkmk.assetsMissing') ? 'text-amber-500' : 'dark:text-white'}`}>
+                        {value}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{label}</div>
+                    </div>
+                  ))}
+                </div>
+                {checkmkResult.staging_created > 0 && (
+                  <Button variant="secondary" onClick={() => handleTabChange('staged')}>
+                    <Inbox size={15} /> {t('tabs.staged')} <ChevronRight size={15} />
+                  </Button>
+                )}
+              </CardBody>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* ── Network Scan Tab ─────────────────────────────────────────────────── */}
       {tab === 'scan' && (

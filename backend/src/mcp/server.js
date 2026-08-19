@@ -284,6 +284,14 @@ const TOOL_GATES = {
   'isms_resolve_cpe': { moduleKey: 'discovery', needsWrite: true },
   'isms_create_assessment': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
 
+  // --- Drittsystem-Anbindungen ---
+  // Lesen darf, wer das Inventar bewertet; ausloesen nur Admin/IT. Die
+  // Konfiguration inkl. Secret bleibt der Weboberflaeche vorbehalten und ist
+  // bewusst NICHT ueber MCP aenderbar.
+  'isms_checkmk_status': { requiredRoles: ['admin', 'it-staff', 'assessor'] },
+  'isms_checkmk_hosts':  { requiredRoles: ['admin', 'it-staff', 'assessor'] },
+  'isms_checkmk_sync':   { requiredRoles: ['admin', 'it-staff'], needsWrite: true },
+
   // --- Risks & Threats ---
   'isms_create_risk': { needsWrite: true },
   'isms_update_risk': { needsWrite: true },
@@ -596,17 +604,128 @@ server.tool(
     hosting_type:   z.enum(['on-premise','cloud_public','cloud_private','hybrid']).optional(),
     lifecycle_status: z.enum(['evaluation','production','maintenance','archived']).default('production'),
     nis2_relevant:  z.boolean().default(false),
-    owner_id:       z.number().int().optional().describe('User ID of the asset owner'),
+    owner_id:       z.number().int().optional().describe('User ID of the asset owner. Defaults to the calling MCP user.'),
+    assessor_id:    z.number().int().optional().describe('User ID of the assessor. Defaults to the calling MCP user.'),
     rto:            z.string().optional().describe('Recovery Time Objective (Wiederanlaufzeit, e.g. 4h)'),
     rpo:            z.string().optional().describe('Recovery Point Objective (Datenverlust-Toleranz, e.g. 1h)'),
     sdo:            z.string().optional().describe('Service Delivery Objective (Mindest-Service-Level im Notbetrieb, e.g. 24h)'),
     mto:            z.string().optional().describe('Maximum Tolerable Outage (Maximal tolerierbare Ausfallzeit, e.g. 48h)'),
     ioa:            z.string().optional().describe('Impact of Activity / Disruption (Ausfallwirkung, e.g. High)'),
+    // Felder, die das Modell laengst kennt, hier aber bislang fehlten. Ohne sie
+    // konnte ein Import Standort, Version oder Hersteller nicht mitgeben und
+    // musste sie in die Beschreibung schreiben.
+    location:       z.string().optional().describe('Physical or logical location (e.g. rack, site, IP)'),
+    version:        z.string().optional(),
+    vendor:         z.string().optional().describe('Vendor/manufacturer name (free text)'),
+    tags:           z.array(z.string()).optional(),
+    patch_status:   z.enum(['up-to-date','pending','critical']).optional(),
+    eol_date:       z.string().optional().describe('End-of-life date (YYYY-MM-DD)'),
+    external_source: z.string().optional().describe("Third-party system this asset came from, e.g. 'checkmk'"),
+    external_id:    z.string().optional().describe('Identifier of this asset in the third-party system (e.g. CheckMK hostname)'),
   },
-  async (args) => {
+  async (args, { mcpUser }) => {
     const { Asset } = getModels();
-    const asset = await Asset.create({ ...args, status: 'active' });
+
+    // owner_id und assessor_id sind im Modell NOT NULL. Sie waren hier bislang
+    // optional bzw. gar nicht vorhanden, wodurch jeder Aufruf an der
+    // Datenbank-Constraint scheiterte — das Tool war nie funktionsfaehig.
+    // getValidUserId() faellt auf den aufrufenden MCP-Benutzer und sonst auf
+    // einen Admin zurueck, so wie isms_create_assessment es bereits tut.
+    const fallbackUserId = await getValidUserId(mcpUser);
+
+    const asset = await Asset.create({
+      ...args,
+      owner_id: args.owner_id || fallbackUserId,
+      assessor_id: args.assessor_id || fallbackUserId,
+      status: 'active',
+    });
+
+    // Schreibende MCP-Aufrufe gehoerten schon immer ins Audit-Log; hier fehlte
+    // der Eintrag. Ein Asset, dessen Entstehung nicht protokolliert ist, ist
+    // fuer eine Nachweisfuehrung wertlos.
+    await logAudit('create', 'Asset', asset.id, asset.name, {
+      type: asset.type,
+      classification: asset.classification,
+      via: 'mcp',
+      external_source: asset.external_source || null,
+    }, mcpUser);
+
     return { content: [{ type: 'text', text: JSON.stringify(asset, null, 2) }] };
+  }
+);
+
+// ─── Drittsystem-Anbindung: CheckMK ──────────────────────────────────────────
+
+server.tool(
+  'isms_checkmk_status',
+  'Show the CheckMK integration configuration (without the secret) and the result of the last sync run.',
+  {},
+  async () => {
+    const { getCheckmkPublic } = require('../services/settingsService');
+    return { content: [{ type: 'text', text: JSON.stringify(await getCheckmkPublic(), null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_checkmk_hosts',
+  'Fetch the live host list from CheckMK (name, IP, state, plugin output). Read-only, writes nothing to the ISMS.',
+  {},
+  async () => {
+    const { getCheckmkConfig } = require('../services/settingsService');
+    const { fetchHosts } = require('../services/checkmkService');
+    const cfg = await getCheckmkConfig();
+    if (!cfg.url || !cfg.secret) {
+      return { content: [{ type: 'text', text: 'CheckMK integration is not configured.' }], isError: true };
+    }
+    return { content: [{ type: 'text', text: JSON.stringify(await fetchHosts(cfg), null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_checkmk_sync',
+  'Reconcile the ISMS asset register against CheckMK. Linked assets get fresh live status; unknown hosts land in the discovery staging area as pending — assets are never created automatically, approval stays a human decision. Use dry_run first.',
+  {
+    dry_run: z.boolean().optional().default(true).describe('true (default) reports what would change without writing anything'),
+  },
+  async ({ dry_run }, { mcpUser }) => {
+    const { getCheckmkConfig, setCheckmk } = require('../services/settingsService');
+    const { syncFromCheckmk } = require('../services/checkmkSyncService');
+
+    const cfg = await getCheckmkConfig();
+    if (!cfg.url || !cfg.secret) {
+      return { content: [{ type: 'text', text: 'CheckMK integration is not configured.' }], isError: true };
+    }
+    if (!cfg.enabled) {
+      return { content: [{ type: 'text', text: 'CheckMK integration is disabled. Enable it before syncing.' }], isError: true };
+    }
+
+    const result = await syncFromCheckmk({ cfg, dryRun: dry_run });
+
+    // Ein Probelauf setzt keinen Sync-Stand — sonst behauptet die Anzeige eine
+    // Aktualitaet, die nie geschrieben wurde.
+    if (!dry_run) {
+      await setCheckmk({
+        lastSyncAt: result.run_at,
+        lastSyncSummary: {
+          hosts_seen: result.hosts_seen,
+          assets_updated: result.assets_updated,
+          staging_created: result.staging_created,
+          staging_updated: result.staging_updated,
+          assets_missing: result.assets_missing,
+        },
+      });
+    }
+
+    await logAudit(dry_run ? 'read' : 'update', 'Integration', null, 'CheckMK', {
+      action: dry_run ? 'sync_dry_run' : 'sync',
+      hosts_seen: result.hosts_seen,
+      assets_updated: result.assets_updated,
+      staging_created: result.staging_created,
+      assets_missing: result.assets_missing,
+      via: 'mcp',
+    }, mcpUser);
+
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }
 );
 
