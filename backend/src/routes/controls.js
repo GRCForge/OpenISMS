@@ -21,7 +21,7 @@ const includeAll = [
 ];
 
 // SoA-Zusammenfassung (Abdeckung nach Status/Framework)
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('controls','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const byStatus = await Control.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true });
     const byFramework = await Control.findAll({ attributes: ['framework', [fn('COUNT', col('id')), 'count']], group: ['framework'], raw: true });

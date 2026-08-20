@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { Template, User } = require('../models');
-const { authenticate, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
@@ -74,7 +74,7 @@ router.use(apiLimiter);
 router.use(authenticate);
 
 // List templates
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('templates','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const where = {};
     if (req.query.category) {
@@ -92,7 +92,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Upload template
-router.post('/', authenticate, requireWriteAccess(), upload.single('file'), async (req, res) => {
+router.post('/', authenticate, requirePermission('templates','upload','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Keine Datei hochgeladen' });
 
@@ -134,7 +134,7 @@ router.post('/', authenticate, requireWriteAccess(), upload.single('file'), asyn
 });
 
 // Download template (all authenticated users can download)
-router.get('/:id/download', async (req, res) => {
+router.get('/:id/download', requirePermission('templates','download','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const template = await Template.findByPk(req.params.id);
     if (!template) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -150,7 +150,7 @@ router.get('/:id/download', async (req, res) => {
 });
 
 // Delete template
-router.delete('/:id', authenticate, requireWriteAccess(), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('templates','delete','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), async (req, res) => {
   try {
     const template = await Template.findByPk(req.params.id);
     if (!template) return res.status(404).json({ error: 'Nicht gefunden' });

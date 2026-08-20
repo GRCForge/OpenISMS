@@ -14,12 +14,12 @@ const DEFAULT_PERMISSIONS = {
   // rto, rpo need assessor/dpo/admin). Only the route level moves into the matrix;
   // the other two stay in the handler, where they belong. edit_compliance names the
   // protected-field rule so it is at least visible and adjustable.
-  assets:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit_basics: ['admin','owner','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','assessor','it-staff'], delete: ['admin'], cve: ['admin','assessor','it-staff'] },
-  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'] },
+  assets:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit_basics: ['admin','owner','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin'], cve: ['admin','assessor','it-staff'] },
+  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'], sign_off: ['admin','assessor','owner'] },
   incidents:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin','assessor'] },
   assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor'] },
   controls:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },
-  policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
+  policies:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'], acknowledgments: ['admin','assessor','dpo'] },
   // reminders had no 'create' route at all; what exists is acknowledging and
   // dismissing, both behind requireWriteAccess. Renamed to match reality, and view
   // reconciled to the eight roles the route actually admits.
@@ -35,7 +35,7 @@ const DEFAULT_PERMISSIONS = {
   // admin/assessor/it-staff/dpo — wider than the create/edit lists shipped here.
   // Reconciled to what the handlers actually enforced. The two remaining inline
   // checks shape which fields come back, not who may call the route, so they stay.
-  vendors:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit: ['admin','assessor','it-staff','dpo'], delete: ['admin'], contacts: ['admin','assessor','it-staff','dpo'], assess: ['admin','assessor','it-staff','dpo'] },
+  vendors:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], view_details: ['admin','assessor','it-staff','dpo'], create: ['admin','assessor','it-staff','dpo'], edit: ['admin','assessor','it-staff','dpo'], delete: ['admin'], contacts: ['admin','assessor','it-staff','dpo'], assess: ['admin','assessor','it-staff','dpo'] },
   // Compliance content areas. compliance.js serves three unrelated things behind one
   // path — KPIs, audits with their findings, and trainings — with different guards
   // each, so they get separate entries rather than one that flattens the difference.
@@ -52,7 +52,7 @@ const DEFAULT_PERMISSIONS = {
   // guards each route already applies, so enforcement changes no access. DSGVO is
   // one toggle but three areas, and each gets its own entry.
   vvt:              { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], view_details: ['admin','assessor','dpo'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin'] },
-  dataflows:        { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
+  dataflows:        { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], view_details: ['admin','assessor','dpo'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
   subject_requests: { view: ['admin','assessor','dpo'], create: ['admin','dpo'], edit: ['admin','dpo'], delete: ['admin'] },
   iso27001:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
   bsi_grundschutz:  { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
@@ -64,6 +64,14 @@ const DEFAULT_PERMISSIONS = {
   bcm:              { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin','assessor'] },
   pentests:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'], delete_findings: ['admin','assessor','it-staff'] },
   discovery:        { access: ['admin','it-staff'] },
+  // Vendor contract triage. vendorTriage.js gated inline with
+  // isItStaff()||isDpo()||isAdmin(), which resolves to the four roles below;
+  // deleting a run was admin-only. Running an analysis costs LLM budget and
+  // writes findings, so it is a separate action from reading the results.
+  vendor_triage:    { view: ['admin','assessor','it-staff','dpo'], run: ['admin','assessor','it-staff','dpo'], delete: ['admin'] },
+  // The triage profiles decide what every future analysis looks for, so editing
+  // them is admin-only while the same four roles that see findings may read them.
+  triage_profiles:  { view: ['admin','assessor','it-staff','dpo'], edit: ['admin'] },
   // Drittsystem-Anbindungen (CheckMK & Folgende). Getrennt von 'discovery',
   // weil das Konfigurieren einer Verbindung inkl. Zugangsdaten eine andere
   // Entscheidung ist als das Sichten ihrer Ergebnisse: 'sync' darf ausloesen,
@@ -71,7 +79,31 @@ const DEFAULT_PERMISSIONS = {
   integrations:     { view: ['admin','assessor','it-staff'], sync: ['admin','it-staff'], configure: ['admin'] },
   import:      { access: ['admin','assessor','it-staff'] },
   reports:     { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'] },
-  admin:       { access: ['admin'] },
+  dashboard:   { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'] },
+  // Uploaded files. documents.js guarded reads with authenticate alone and writes
+  // with requireWriteAccess(), which excludes viewer/management/employee — that is
+  // the split below. download is its own action because handing out the file is a
+  // different decision from seeing that it exists.
+  documents:   { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], upload: ['admin','owner','assessor','it-staff','dpo'], download: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], delete: ['admin','owner','assessor','it-staff','dpo'] },
+  templates:   { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], upload: ['admin','owner','assessor','it-staff','dpo'], download: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], delete: ['admin','owner','assessor','it-staff','dpo'] },
+  mappings:    { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'] },
+  legal_requirements: { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], edit: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','assessor'] },
+  // User administration was requireRole('admin') for every write; listing users was
+  // open to any authenticated caller (the picker for owner/assessor fields needs it).
+  users:       { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin'], edit: ['admin'], delete: ['admin'] },
+  // API tokens authenticate as their owner, so a token is exactly as powerful as
+  // the account that made it. Every role could mint one; exposing the action lets
+  // an admin close that off without touching the rest of the account's access.
+  tokens:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], delete: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'] },
+  // Backup is split by blast radius: info reads counts, export carries every row
+  // in the installation out of the door, restore replaces what is in the database.
+  backup:      { info: ['admin'], export: ['admin'], restore: ['admin'] },
+  // admin.js sat behind one requireRole('admin') for all 25 endpoints, so 'access'
+  // was the only thing the matrix could say about it — and nothing read it. The
+  // areas below are the ones that differ in kind: reading the server log is not the
+  // same decision as rewriting the permission matrix or the SSO configuration.
+  // All default to admin, so nothing changes until an admin delegates one.
+  admin:       { settings: ['admin'], permissions: ['admin'], roles: ['admin'], sso: ['admin'], smtp: ['admin'], llm: ['admin'], logs: ['admin'], maintenance: ['admin'] },
 };
 
 const DEFAULTS = {

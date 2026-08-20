@@ -6,7 +6,7 @@ router.use(apiLimiter);
 const crypto = require('crypto');
 const { ApiToken } = require('../models');
 const { hashToken } = require('../services/cryptoService');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 
 // Fields safe to expose to the client — never includes the secret or its hash.
 const PUBLIC_ATTRS = ['id', 'user_id', 'name', 'token_prefix', 'expires_at', 'created_at', 'updated_at'];
@@ -14,7 +14,7 @@ const PUBLIC_ATTRS = ['id', 'user_id', 'name', 'token_prefix', 'expires_at', 'cr
 router.use(authenticate);
 
 // GET all active API tokens for the logged-in user (never returns the secret)
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('tokens','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const tokens = await ApiToken.findAll({
       where: { user_id: req.user.id },
@@ -28,7 +28,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // POST generate a new API token
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requirePermission('tokens','create','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { name, expires_at } = req.body;
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -65,7 +65,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // DELETE an API token
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('tokens','delete','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const token = await ApiToken.findOne({
       where: { id: req.params.id, user_id: req.user.id }

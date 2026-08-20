@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { Document, User } = require('../models');
-const { authenticate, requireWriteAccess } = require('../middleware/auth');
+const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 // Rate limiting for document download endpoint to mitigate DoS (CWE-770)
@@ -107,7 +107,7 @@ const router = express.Router({ mergeParams: true });
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('documents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const isRestricted = req.user.role === 'it-staff' || req.user.role === 'viewer';
     const where = {};
@@ -134,7 +134,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', authenticate, requireWriteAccess(), upload.single('file'), async (req, res) => {
+router.post('/', authenticate, requirePermission('documents','upload','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Keine Datei hochgeladen' });
 
@@ -195,7 +195,7 @@ router.post('/', authenticate, requireWriteAccess(), upload.single('file'), asyn
   }
 });
 
-router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) => {
+router.get('/:docId/download', authenticate, requirePermission('documents','download','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), downloadLimiter, async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.docId);
     if (!doc) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -248,7 +248,7 @@ router.get('/:docId/download', authenticate, downloadLimiter, async (req, res) =
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/:docId', authenticate, requireWriteAccess(), deleteLimiter, async (req, res) => {
+router.delete('/:docId', authenticate, requirePermission('documents','delete','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), deleteLimiter, async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.docId);
     if (!doc) return res.status(404).json({ error: 'Nicht gefunden' });

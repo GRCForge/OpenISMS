@@ -220,11 +220,34 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
       if (data[f] === '' || data[f] === 'Invalid date') data[f] = null;
     });
 
-    if (!isAssessor(req) && !isDpo(req) && !isAdmin(req)) {
+    // The protected-field rule is what the matrix calls assets.edit_compliance.
+    // It used to be hardcoded here, which made that matrix entry decorative: an
+    // admin could edit it and nothing changed. Now the matrix decides, and the
+    // old role list is the fallback for when it says nothing (same contract as
+    // requirePermission).
+    const { can } = require('../services/permissionService');
+    const mayEditCompliance = await can(req.user, 'assets', 'edit_compliance');
+    const compliancePermitted = typeof mayEditCompliance === 'boolean'
+      ? mayEditCompliance
+      : (isAssessor(req) || isDpo(req) || isAdmin(req));
+    if (!compliancePermitted) {
       const protectedFields = ['classification', 'nis2_relevant', 'rto', 'rpo'];
       const changed = protectedFields.filter(f => data[f] !== undefined && String(data[f]) !== String(asset[f]));
       if (changed.length > 0) {
         return res.status(403).json({ error: `Ihre Rolle darf folgende geschützte Felder nicht ändern: ${changed.join(', ')}` });
+      }
+    }
+
+    // Same treatment for the security tab. assets.edit_security shipped in the
+    // matrix but nothing ever read it, so the knob was decorative. Its default is
+    // the set that may edit these fields today (everyone who passes edit_basics),
+    // which keeps access unchanged; narrowing it is now a deliberate admin edit.
+    const mayEditSecurity = await can(req.user, 'assets', 'edit_security');
+    if (mayEditSecurity === false) {
+      const securityFields = ['patch_status', 'hardening_status', 'eol_date', 'backup_plan', 'last_restore_test'];
+      const changed = securityFields.filter(f => data[f] !== undefined && String(data[f]) !== String(asset[f]));
+      if (changed.length > 0) {
+        return res.status(403).json({ error: `Ihre Rolle darf folgende Sicherheitsfelder nicht ändern: ${changed.join(', ')}` });
       }
     }
 

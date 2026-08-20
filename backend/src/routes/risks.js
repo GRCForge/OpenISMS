@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Risk, Asset, User, Document, Threat, Control, VvtEntry, Incident, Task } = require('../models');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { computeLevel, scaleInfo } = require('../services/riskScale');
@@ -166,7 +166,7 @@ router.put('/:id', authenticate, requirePermission('risks','edit','admin','owner
 });
 
 // Risk-Owner Sign-off (NIS-2 Management-Haftung): digitale Freigabe mit Zeitstempel
-router.patch('/:id/signoff', authenticate, requireRole('admin', 'assessor', 'owner'), async (req, res) => {
+router.patch('/:id/signoff', authenticate, requirePermission('risks','sign_off','admin','assessor','owner'), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
@@ -184,7 +184,7 @@ router.patch('/:id/signoff', authenticate, requireRole('admin', 'assessor', 'own
 });
 
 // Sign-off zuruecknehmen
-router.patch('/:id/revoke', authenticate, requireRole('admin', 'assessor', 'owner'), async (req, res) => {
+router.patch('/:id/revoke', authenticate, requirePermission('risks','sign_off','admin','assessor','owner'), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });

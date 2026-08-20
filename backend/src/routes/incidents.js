@@ -43,7 +43,7 @@ const canAccessIncident = (user, incident) => {
   return true;
 };
 
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const accessWhere = getAccessWhere(req.user);
     const byStatus = await Incident.findAll({ where: accessWhere, attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true });

@@ -4,7 +4,7 @@ router.use(apiLimiter);
 const { Op } = require('sequelize');
 const client = require('openid-client');
 const rateLimit = require('express-rate-limit');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { getGeneral, setGeneral, getOidcRaw, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting } = require('../services/settingsService');
 const { sendEmail, testSmtp, getSmtpConfig } = require('../services/emailService');
 const { encrypt: encryptValue } = require('../services/cryptoService');
@@ -23,15 +23,20 @@ const logsLimiter = rateLimit({
 });
 
 // Gesamter Admin-Bereich nur fuer Administratoren
-router.use(authenticate, requireRole('admin'));
+// Every endpoint below used to sit behind one blanket requireRole('admin'). The
+// blanket guard is now per area (see the 'admin' entry in the permission matrix)
+// so an admin can delegate a single area — reading the server log, say — without
+// handing over the settings, the SSO configuration or the permission matrix
+// itself. Each guard falls back to 'admin', so nothing changes until delegated.
+router.use(authenticate);
 
 // --- Allgemeine Einstellungen ---
-router.get('/settings', async (req, res) => {
+router.get('/settings', requirePermission('admin','settings','admin'), async (req, res) => {
   try { res.json(await getGeneral()); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/settings', async (req, res) => {
+router.put('/settings', requirePermission('admin','settings','admin'), async (req, res) => {
   try {
     const { appName, reviewIntervalMonths, ssoAutoProvision, ssoDefaultRole, ssoAllowedDomains, ssoStrictRoleSync, auditLogRetentionMonths, passwordPolicy, bruteForcePolicy } = req.body || {};
     const patch = {};
@@ -52,7 +57,7 @@ router.put('/settings', async (req, res) => {
 });
 
 // Manual audit log purge (also returns count of deleted entries)
-router.post('/maintenance/purge-audit-log', async (req, res) => {
+router.post('/maintenance/purge-audit-log', requirePermission('admin','maintenance','admin'), async (req, res) => {
   try {
     const settings = await getGeneral();
     const months = settings.auditLogRetentionMonths || 15;
@@ -65,7 +70,7 @@ router.post('/maintenance/purge-audit-log', async (req, res) => {
 });
 
 // Trigger task automation manually
-router.post('/maintenance/run-automation', async (req, res) => {
+router.post('/maintenance/run-automation', requirePermission('admin','maintenance','admin'), async (req, res) => {
   try {
     const { runTaskAutomation } = require('../services/taskAutomationService');
     await runTaskAutomation();
@@ -75,12 +80,12 @@ router.post('/maintenance/run-automation', async (req, res) => {
 });
 
 // --- Rollen & Rechte ---
-router.get('/permissions', async (req, res) => {
+router.get('/permissions', requirePermission('admin','permissions','admin'), async (req, res) => {
   try { res.json({ permissions: await getPermissions(), defaults: DEFAULT_PERMISSIONS, roles: ['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee'] }); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/permissions', async (req, res) => {
+router.put('/permissions', requirePermission('admin','permissions','admin'), async (req, res) => {
   try {
     const { permissions } = req.body || {};
     if (!permissions || typeof permissions !== 'object') return res.status(400).json({ error: 'permissions object required' });
@@ -92,7 +97,7 @@ router.put('/permissions', async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.post('/permissions/reset', async (req, res) => {
+router.post('/permissions/reset', requirePermission('admin','permissions','admin'), async (req, res) => {
   try {
     const { Setting } = require('../models');
     await Setting.destroy({ where: { key: 'permissions' } });
@@ -103,7 +108,7 @@ router.post('/permissions/reset', async (req, res) => {
 });
 
 // --- Custom Roles ---
-router.get('/custom-roles', async (req, res) => {
+router.get('/custom-roles', requirePermission('admin','roles','admin'), async (req, res) => {
   try {
     const roles = await CustomRole.findAll({ order: [['name', 'ASC']] });
     // Anzahl der direkt zugewiesenen Benutzer je Rolle ergänzen (für die GUI).
@@ -118,7 +123,7 @@ router.get('/custom-roles', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/custom-roles', async (req, res) => {
+router.post('/custom-roles', requirePermission('admin','roles','admin'), async (req, res) => {
   try {
     const { name, description, base_role, permissions } = req.body || {};
     if (!name?.trim()) return res.status(400).json({ error: 'Name erforderlich' });
@@ -134,7 +139,7 @@ router.post('/custom-roles', async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.put('/custom-roles/:id', async (req, res) => {
+router.put('/custom-roles/:id', requirePermission('admin','roles','admin'), async (req, res) => {
   try {
     const role = await CustomRole.findByPk(req.params.id);
     if (!role) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -157,7 +162,7 @@ router.put('/custom-roles/:id', async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/custom-roles/:id', async (req, res) => {
+router.delete('/custom-roles/:id', requirePermission('admin','roles','admin'), async (req, res) => {
   try {
     const role = await CustomRole.findByPk(req.params.id);
     if (!role) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -172,7 +177,7 @@ router.delete('/custom-roles/:id', async (req, res) => {
 });
 
 // --- OIDC Claim Mappings ---
-router.get('/oidc-mappings', async (req, res) => {
+router.get('/oidc-mappings', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const mappings = await OidcClaimMapping.findAll({
       include: [{ model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] }],
@@ -182,7 +187,7 @@ router.get('/oidc-mappings', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/oidc-mappings', async (req, res) => {
+router.post('/oidc-mappings', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const { claim_path, claim_value, role, custom_role_id, priority } = req.body || {};
     if (!claim_path?.trim() || !claim_value?.trim()) return res.status(400).json({ error: 'claim_path und claim_value erforderlich' });
@@ -199,7 +204,7 @@ router.post('/oidc-mappings', async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/oidc-mappings/:id', async (req, res) => {
+router.delete('/oidc-mappings/:id', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const mapping = await OidcClaimMapping.findByPk(req.params.id);
     if (!mapping) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -212,7 +217,7 @@ router.delete('/oidc-mappings/:id', async (req, res) => {
 
 // --- OIDC / SSO ---
 // Secret wird NIE zurueckgegeben, nur ob es gesetzt ist.
-router.get('/oidc', async (req, res) => {
+router.get('/oidc', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const o = await getOidcRaw();
     res.json({
@@ -227,7 +232,7 @@ router.get('/oidc', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/oidc', async (req, res) => {
+router.put('/oidc', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const { enabled, displayName, issuer, clientId, clientSecret, scopes } = req.body || {};
     const patch = {};
@@ -252,7 +257,7 @@ router.put('/oidc', async (req, res) => {
 });
 
 // Verbindungstest: Discovery-Dokument des Issuers laden
-router.post('/oidc/test', async (req, res) => {
+router.post('/oidc/test', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const url = (req.body?.issuer || (await getOidcRaw()).issuer || '').trim();
     if (!url) return res.status(400).json({ ok: false, error: 'Keine Issuer-URL angegeben' });
@@ -279,7 +284,7 @@ router.post('/oidc/test', async (req, res) => {
 
 // --- SMTP / E-Mail-Konfiguration ---
 
-router.get('/smtp', async (req, res) => {
+router.get('/smtp', requirePermission('admin','smtp','admin'), async (req, res) => {
   try {
     const cfg = await getSmtpConfig();
     if (!cfg) return res.json(null);
@@ -292,7 +297,7 @@ router.get('/smtp', async (req, res) => {
   }
 });
 
-router.put('/smtp', async (req, res) => {
+router.put('/smtp', requirePermission('admin','smtp','admin'), async (req, res) => {
   try {
     const { host, port, secure, user, password, from } = req.body || {};
     // Load raw stored value (password still in enc:... form) to avoid decrypt→re-encrypt cycle
@@ -327,7 +332,7 @@ router.put('/smtp', async (req, res) => {
   }
 });
 
-router.post('/smtp/test', async (req, res) => {
+router.post('/smtp/test', requirePermission('admin','smtp','admin'), async (req, res) => {
   try {
     let cfg;
     if (req.body?.host) {
@@ -348,7 +353,7 @@ router.post('/smtp/test', async (req, res) => {
   }
 });
 
-router.post('/smtp/send-test', async (req, res) => {
+router.post('/smtp/send-test', requirePermission('admin','smtp','admin'), async (req, res) => {
   try {
     const { to } = req.body || {};
     if (!to) return res.status(400).json({ error: 'Empfänger (to) erforderlich' });
@@ -365,7 +370,7 @@ router.post('/smtp/send-test', async (req, res) => {
 });
 
 // --- Application Logs ---
-router.get('/logs', logsLimiter, async (req, res) => {
+router.get('/logs', requirePermission('admin','logs','admin'), logsLimiter, async (req, res) => {
   try {
     const fs = require('fs');
     const { logFilePath } = require('../services/logger');
@@ -393,12 +398,12 @@ router.get('/logs', logsLimiter, async (req, res) => {
 // ── LLM / KI-Einstellungen ──────────────────────────────────────────────────
 const { getLlmConfigPublic, saveLlmConfig, testConnection } = require('../services/llmService');
 
-router.get('/llm', async (req, res) => {
+router.get('/llm', requirePermission('admin','llm','admin'), async (req, res) => {
   try { res.json(await getLlmConfigPublic()); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/llm', async (req, res) => {
+router.put('/llm', requirePermission('admin','llm','admin'), async (req, res) => {
   try {
     const { provider, anthropic, openai, gemini, ollama } = req.body;
     const patch = {};
@@ -413,7 +418,7 @@ router.put('/llm', async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.post('/llm/test', async (req, res) => {
+router.post('/llm/test', requirePermission('admin','llm','admin'), async (req, res) => {
   try {
     const result = await testConnection();
     res.json({ ok: true, provider: result.provider, model: result.model, response: result.text });

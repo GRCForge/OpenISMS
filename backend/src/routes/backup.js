@@ -6,7 +6,7 @@ const fs = require('fs');
 const archiver = require('archiver');
 const AdmZip = require('adm-zip');
 const multer = require('multer');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { sequelize } = require('../models');
 const { auditFromReq } = require('../services/auditService');
 
@@ -27,10 +27,10 @@ const ISMS_VERSION = (() => {
 // Max raw size for database.json before we even attempt JSON.parse (DoS guard)
 const DB_JSON_MAX_BYTES = 512 * 1024 * 1024; // 512 MB
 
-router.use(authenticate, requireRole('admin'));
+router.use(authenticate);
 
 // GET /api/admin/backup/export  — streams a zip download
-router.get('/export', async (req, res) => {
+router.get('/export', requirePermission('backup','export','admin'), async (req, res) => {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     res.setHeader('Content-Type', 'application/zip');
@@ -71,7 +71,7 @@ router.get('/export', async (req, res) => {
 });
 
 // GET /api/admin/backup/info  — returns last export info + current DB stats
-router.get('/info', async (req, res) => {
+router.get('/info', requirePermission('backup','info','admin'), async (req, res) => {
   try {
     const [tables] = await sequelize.query('SHOW TABLES');
     const tableNames = tables.map(t => Object.values(t)[0]);
@@ -90,7 +90,7 @@ router.get('/info', async (req, res) => {
 
 // POST /api/admin/backup/preview  — returns metadata from a zip without restoring
 const uploadPreview = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024 * 1024 } });
-router.post('/preview', uploadPreview.single('backup'), async (req, res) => {
+router.post('/preview', requirePermission('backup','restore','admin'), uploadPreview.single('backup'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Keine Datei' });
   try {
     const zip = new AdmZip(req.file.buffer);
@@ -107,7 +107,7 @@ router.post('/preview', uploadPreview.single('backup'), async (req, res) => {
 });
 
 // POST /api/admin/backup/restore  — accepts zip, validates, restores
-router.post('/restore', upload.single('backup'), async (req, res) => {
+router.post('/restore', requirePermission('backup','restore','admin'), upload.single('backup'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Keine Backup-Datei übergeben.' });
 
   try {

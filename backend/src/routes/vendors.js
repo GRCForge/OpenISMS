@@ -2,8 +2,9 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Vendor, VendorContact, Asset, User, Incident, VvtEntry } = require('../models');
-const { authenticate, isItStaff, isAdmin, isDpo, requirePermission } = require('../middleware/auth');
+const { authenticate, isItStaff, isDpo, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
+const { can } = require('../services/permissionService');
 
 router.get('/', authenticate, requirePermission('vendors','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
@@ -11,7 +12,11 @@ router.get('/', authenticate, requirePermission('vendors','view','admin','owner'
     // the same roles allowed on the detail view. Other roles still need a vendor
     // list for reference/pickers (e.g. asset owners choosing a vendor), so they get
     // only non-sensitive base fields and no contact details.
-    const staff = isItStaff(req) || isDpo(req);
+    // Which fields come back is the same decision as who may open the detail
+    // view, so it reads the same matrix entry instead of a second role list that
+    // could drift away from it.
+    const detailVerdict = await can(req.user, 'vendors', 'view_details');
+    const staff = typeof detailVerdict === 'boolean' ? detailVerdict : (isItStaff(req) || isDpo(req));
     const vendors = staff
       ? await Vendor.findAll({ include: [{ model: VendorContact, as: 'contacts' }], order: [['name', 'ASC']] })
       : await Vendor.findAll({ attributes: ['id', 'name', 'type', 'criticality'], order: [['name', 'ASC']] });
@@ -20,7 +25,7 @@ router.get('/', authenticate, requirePermission('vendors','view','admin','owner'
 });
 
 // Get single vendor
-router.get('/:id', authenticate, requirePermission('vendors','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+router.get('/:id', authenticate, requirePermission('vendors','view_details','admin','assessor','it-staff','dpo'), async (req, res) => {
   try {
     const vendor = await Vendor.findByPk(req.params.id, {
       include: [
@@ -31,12 +36,6 @@ router.get('/:id', authenticate, requirePermission('vendors','view','admin','own
       ],
     });
     if (!vendor) return res.status(404).json({ error: 'Not found' });
-    
-    // Authorization: only admin, assessor, it-staff, dpo can view vendor details
-    if (!isAdmin(req) && !isItStaff(req) && !isDpo(req)) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    
     res.json(vendor);
   } catch (e) {
     res.status(500).json({ error: e.message });
