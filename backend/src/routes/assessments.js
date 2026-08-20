@@ -60,63 +60,63 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
     // same unit: a reminder pointing at an assessment that was rolled back is
     // worse than no reminder.
     const assessment = await sequelize.transaction(async (t) => {
-    // Mark previous assessments as not current
-    await Assessment.update({ is_current: false }, { where: { asset_id, is_current: true }, transaction: t });
+      // Mark previous assessments as not current
+      await Assessment.update({ is_current: false }, { where: { asset_id, is_current: true }, transaction: t });
 
-    const assessment = await Assessment.create({
-      asset_id,
-      assessor_id: req.user.id,
-      confidentiality,
-      integrity,
-      availability,
-      risk_score: score,
-      risk_level: level,
-      notes,
-      mitigation,
-      risk_treatment: risk_treatment || null,
-      treatment_justification: treatment_justification || null,
-      accepted_by: risk_treatment === 'accept' ? (accepted_by || null) : null,
-      accepted_until: acceptedUntilDate ? accepted_until : null,
-      acceptance_document_id: risk_treatment === 'accept' ? (acceptance_document_id || null) : null,
-      assessed_at,
-      next_review_at,
-      is_current: true
-    }, { transaction: t });
+      const assessment = await Assessment.create({
+        asset_id,
+        assessor_id: req.user.id,
+        confidentiality,
+        integrity,
+        availability,
+        risk_score: score,
+        risk_level: level,
+        notes,
+        mitigation,
+        risk_treatment: risk_treatment || null,
+        treatment_justification: treatment_justification || null,
+        accepted_by: risk_treatment === 'accept' ? (accepted_by || null) : null,
+        accepted_until: acceptedUntilDate ? accepted_until : null,
+        acceptance_document_id: risk_treatment === 'accept' ? (acceptance_document_id || null) : null,
+        assessed_at,
+        next_review_at,
+        is_current: true
+      }, { transaction: t });
 
-    // Remove previous pending reminders for this asset
-    await Reminder.destroy({ where: { asset_id, status: 'pending' }, transaction: t });
+      // Remove previous pending reminders for this asset
+      await Reminder.destroy({ where: { asset_id, status: 'pending' }, transaction: t });
 
-    // Task + Reminder title differs for risk acceptance vs. regular review
-    const isAcceptance = risk_treatment === 'accept' && acceptedUntilDate;
-    const taskTitle = isAcceptance
-      ? `Risikoakzeptanz läuft ab: ${asset.name}`
-      : `Review fällig: ${asset.name}`;
-    const taskDesc = isAcceptance
-      ? `Die Risikoakzeptanz für Asset „${asset.name}" läuft am ${accepted_until} ab und muss erneuert oder das Risiko anders behandelt werden.`
-      : `Regelmäßige Überprüfung der Schutzbedarfsfeststellung (Risikobewertung) für das Asset „${asset.name}".`;
-    const taskTags = isAcceptance ? ['Risikoakzeptanz', 'Risiko'] : ['Review', 'Risiko'];
+      // Task + Reminder title differs for risk acceptance vs. regular review
+      const isAcceptance = risk_treatment === 'accept' && acceptedUntilDate;
+      const taskTitle = isAcceptance
+        ? `Risikoakzeptanz läuft ab: ${asset.name}`
+        : `Review fällig: ${asset.name}`;
+      const taskDesc = isAcceptance
+        ? `Die Risikoakzeptanz für Asset „${asset.name}" läuft am ${accepted_until} ab und muss erneuert oder das Risiko anders behandelt werden.`
+        : `Regelmäßige Überprüfung der Schutzbedarfsfeststellung (Risikobewertung) für das Asset „${asset.name}".`;
+      const taskTags = isAcceptance ? ['Risikoakzeptanz', 'Risiko'] : ['Review', 'Risiko'];
 
-    const task = await Task.create({
-      title: taskTitle,
-      description: taskDesc,
-      priority: isAcceptance && level === 'critical' ? 'high' : 'medium',
-      assigned_to_id: asset.assessor_id || req.user.id,
-      due_date: next_review_at.toISOString().split('T')[0],
-      related_type: 'asset',
-      related_id: asset.id,
-      tags: taskTags,
-    }, { transaction: t });
+      const task = await Task.create({
+        title: taskTitle,
+        description: taskDesc,
+        priority: isAcceptance && level === 'critical' ? 'high' : 'medium',
+        assigned_to_id: asset.assessor_id || req.user.id,
+        due_date: next_review_at.toISOString().split('T')[0],
+        related_type: 'asset',
+        related_id: asset.id,
+        tags: taskTags,
+      }, { transaction: t });
 
-    await Reminder.create({
-      asset_id,
-      assessment_id: assessment.id,
-      due_date: next_review_at.toISOString().split('T')[0],
-      status: 'pending',
-      task_id: task.id,
-      notes: isAcceptance
-        ? `Risikoakzeptanz von „${accepted_by || 'unbekannt'}" gültig bis ${accepted_until}`
-        : null,
-    }, { transaction: t });
+      await Reminder.create({
+        asset_id,
+        assessment_id: assessment.id,
+        due_date: next_review_at.toISOString().split('T')[0],
+        status: 'pending',
+        task_id: task.id,
+        notes: isAcceptance
+          ? `Risikoakzeptanz von „${accepted_by || 'unbekannt'}" gültig bis ${accepted_until}`
+          : null,
+      }, { transaction: t });
 
       return assessment;
     });
