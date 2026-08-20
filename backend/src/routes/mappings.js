@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { Iso27001Control, Nis2Measure, BsiRequirement, C5Criterion } = require('../models');
 
 // Lazy-load to avoid startup crash if catalog isn't generated yet
@@ -68,7 +69,7 @@ router.get('/', authenticate, requirePermission('mappings','view','admin','owner
     }));
     res.json({ framework, ref, related: enriched });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'mappings');
   }
 });
 
@@ -127,7 +128,7 @@ router.get('/overview', authenticate, requirePermission('mappings','view','admin
 
     res.json({ source, items: result });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'mappings');
   }
 });
 

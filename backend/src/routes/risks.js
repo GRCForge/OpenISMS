@@ -2,6 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { Risk, Asset, User, Document, Threat, Control, VvtEntry, Incident, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { computeLevel, scaleInfo } = require('../services/riskScale');
@@ -42,7 +43,7 @@ router.get('/', authenticate, requirePermission('risks','view','admin','owner','
     if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
     const risks = await Risk.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(risks);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'risks'); }
 });
 
 router.get('/:id', authenticate, requirePermission('risks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -59,7 +60,7 @@ router.get('/:id', authenticate, requirePermission('risks','view','admin','owner
       return res.status(403).json({ error: 'Forbidden' });
     }
     res.json(risk);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'risks'); }
 });
 
 const buildFields = (body) => {
@@ -206,7 +207,7 @@ router.delete('/:id', authenticate, requirePermission('risks','delete','admin'),
     await risk.destroy();
     await auditFromReq(req, 'delete', 'risk', risk.id, risk.title, {});
     res.json({ message: 'Risk deleted' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'risks'); }
 });
 
 module.exports = router;

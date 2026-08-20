@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { ApiToken } = require('../models');
 const { hashToken } = require('../services/cryptoService');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 // Fields safe to expose to the client — never includes the secret or its hash.
 const PUBLIC_ATTRS = ['id', 'user_id', 'name', 'token_prefix', 'expires_at', 'created_at', 'updated_at'];
@@ -23,7 +24,7 @@ router.get('/', authenticate, requirePermission('tokens','view','admin','owner',
     });
     res.json(tokens);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'tokens');
   }
 });
 
@@ -60,7 +61,7 @@ router.post('/', authenticate, requirePermission('tokens','create','admin','owne
       token: tokenStr
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'tokens');
   }
 });
 
@@ -78,7 +79,7 @@ router.delete('/:id', authenticate, requirePermission('tokens','delete','admin',
     await token.destroy();
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'tokens');
   }
 });
 

@@ -2,6 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { AuditLog } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { verifyAuditRow } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -33,7 +34,7 @@ router.get('/verify', authenticate, requirePermission('auditlog','verify','admin
     }
     res.json({ total, intact, tampered, unverifiable, tamperedIds });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'auditlog');
   }
 });
 
@@ -60,7 +61,7 @@ router.get('/', authenticate, requirePermission('auditlog','view','admin','asses
 
     res.json({ logs: rows, total: count });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'auditlog');
   }
 });
 

@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { BsiRequirement, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/bsiCatalog');
 
@@ -13,7 +14,7 @@ router.get('/', authenticate, requirePermission('bsi_grundschutz','view','admin'
       order: [['layer', 'ASC'], ['baustein_id', 'ASC'], ['req_id', 'ASC']],
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'bsi-grundschutz'); }
 });
 
 router.post('/seed', authenticate, requirePermission('bsi_grundschutz','seed','admin','assessor'), async (req, res) => {
@@ -23,7 +24,7 @@ router.post('/seed', authenticate, requirePermission('bsi_grundschutz','seed','a
     await BsiRequirement.bulkCreate(catalog);
     await auditFromReq(req, 'seed', 'bsi_requirement', null, 'BSI-Katalog', { count: catalog.length });
     res.status(201).json({ ok: true, count: catalog.length });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'bsi-grundschutz'); }
 });
 
 router.put('/:id', authenticate, requirePermission('bsi_grundschutz','edit','admin','assessor','it-staff'), async (req, res) => {
@@ -34,7 +35,7 @@ router.put('/:id', authenticate, requirePermission('bsi_grundschutz','edit','adm
     await item.update({ implementation_status, responsible_id, notes, last_review_date });
     await auditFromReq(req, 'update', 'bsi_requirement', item.id, item.req_id, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'bsi-grundschutz'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('bsi_grundschutz','delete','admin','assessor'), async (req, res) => {
@@ -44,7 +45,7 @@ router.delete('/:id', authenticate, requirePermission('bsi_grundschutz','delete'
     await auditFromReq(req, 'delete', 'bsi_requirement', item.id, item.req_id, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'bsi-grundschutz'); }
 });
 
 module.exports = router;

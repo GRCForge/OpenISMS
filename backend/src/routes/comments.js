@@ -1,6 +1,7 @@
 const express = require('express');
 const { Comment, User, Notification, Asset, Group, Task } = require('../models');
 const { authenticate, canViewAsset, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 const router = express.Router({ mergeParams: true });
@@ -23,7 +24,7 @@ router.get('/', authenticate, requirePermission('comments','view','admin','owner
       order: [['created_at', 'ASC']],
     });
     res.json(comments);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'comments'); }
 });
 
 router.post('/', authenticate, requirePermission('comments','create','admin','owner','assessor','it-staff','dpo'), requireAssetAccess, async (req, res) => {
@@ -183,7 +184,7 @@ router.delete('/:commentId', authenticate, requirePermission('comments','delete'
       await auditFromReq(req, 'delete', 'asset', comment.asset_id, asset.name, { action: 'delete_comment', comment_id: comment.id });
     }
     res.json({ message: 'Comment deleted' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'comments'); }
 });
 
 module.exports = router;

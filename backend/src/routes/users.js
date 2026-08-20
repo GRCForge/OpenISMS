@@ -1,6 +1,7 @@
 const express = require('express');
 const { User, PasskeyCredential, CustomRole } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { validate: validatePassword } = require('../services/passwordPolicy');
 
@@ -37,7 +38,7 @@ router.get('/', authenticate, requirePermission('users','view','admin','owner','
         };
     const users = await User.findAll(query);
     res.json(users);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'users'); }
 });
 
 router.post('/', authenticate, requirePermission('users','create','admin'), async (req, res) => {
@@ -127,7 +128,7 @@ router.delete('/:id', authenticate, requirePermission('users','delete','admin'),
     await user.update({ active: false });
     await auditFromReq(req, 'deactivate', 'user', user.id, user.name, {});
     res.json({ message: 'Benutzer deaktiviert' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'users'); }
 });
 
 module.exports = router;

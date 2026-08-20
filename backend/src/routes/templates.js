@@ -5,6 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { Template, User } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
@@ -87,7 +88,7 @@ router.get('/', authenticate, requirePermission('templates','view','admin','owne
     });
     res.json(templates);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'templates');
   }
 });
 
@@ -145,7 +146,7 @@ router.get('/:id/download', requirePermission('templates','download','admin','ow
 
     res.download(filePath, template.original_name);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'templates');
   }
 });
 
@@ -166,7 +167,7 @@ router.delete('/:id', authenticate, requirePermission('templates','delete','admi
 
     res.json({ message: 'Vorlage gelöscht' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'templates');
   }
 });
 

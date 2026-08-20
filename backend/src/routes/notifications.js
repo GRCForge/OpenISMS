@@ -2,6 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { sequelize, Asset, Reminder, Notification, User } = require('../models');
 const { authenticate } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
@@ -79,7 +80,7 @@ router.get('/', authenticate, async (req, res) => {
       mentions: userNotes,
       total: overdue.length + upcoming.length + neverAssessed.length + userNotes.length,
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'notifications'); }
 });
 
 // Mark mention as read
@@ -87,7 +88,7 @@ router.patch('/:id/read', authenticate, async (req, res) => {
   try {
     await Notification.update({ read: true }, { where: { id: req.params.id, user_id: req.user.id } });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'notifications'); }
 });
 
 module.exports = router;

@@ -2,6 +2,7 @@ const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Asset, Assessment, Reminder, User, AuditLog } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
@@ -22,7 +23,7 @@ router.get('/badge', authenticate, requirePermission('dashboard','view','admin',
       }]
     });
     res.json({ overdueReminders });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'dashboard'); }
 });
 
 router.get('/', authenticate, requirePermission('dashboard','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -145,7 +146,7 @@ router.get('/', authenticate, requirePermission('dashboard','view','admin','owne
       recentActivity,
       frameworkCoverage: { ...fwCounts, total: activeAssets },
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'dashboard'); }
 });
 
 module.exports = router;

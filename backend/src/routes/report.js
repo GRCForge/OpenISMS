@@ -4,6 +4,7 @@ router.use(heavyLimiter);
 const { Op, fn, col, literal } = require('sequelize');
 const { sequelize, Asset, Assessment, Risk, Incident, Control, Task, Reminder, AuditLog, Kpi, KpiMeasurement } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 router.use(authenticate);
 router.use(requirePermission('reports','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'));
@@ -155,7 +156,7 @@ router.get('/trends', async (req, res) => {
         measurements: (k.measurements || []).reverse(),
       })),
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'report'); }
 });
 
 module.exports = router;

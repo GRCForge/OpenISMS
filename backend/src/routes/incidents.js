@@ -2,6 +2,7 @@ const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Incident, Asset, User, Risk, Vendor, VvtEntry, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { escapeLike } = require('../utils/sqlUtils');
@@ -50,7 +51,7 @@ router.get('/stats', authenticate, requirePermission('incidents','view','admin',
     const bySeverity = await Incident.findAll({ where: accessWhere, attributes: ['severity', [fn('COUNT', col('id')), 'count']], group: ['severity'], raw: true });
     const open = await Incident.count({ where: { ...accessWhere, status: { [Op.notIn]: ['resolved', 'closed'] } } });
     res.json({ total: await Incident.count({ where: accessWhere }), open, byStatus, bySeverity });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 router.get('/', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -62,7 +63,7 @@ router.get('/', authenticate, requirePermission('incidents','view','admin','owne
     if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
     const incidents = await Incident.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(incidents);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 router.get('/:id', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -73,7 +74,7 @@ router.get('/:id', authenticate, requirePermission('incidents','view','admin','o
     if (!canAccessIncident(req.user, incident)) return res.status(403).json({ error: 'Forbidden' });
 
     res.json(incident);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 const fields = [
@@ -169,7 +170,7 @@ router.delete('/:id', authenticate, requirePermission('incidents','delete','admi
     });
     await auditFromReq(req, 'delete', 'incident', incident.id, incident.title, { deletion_reason });
     res.json({ message: 'Incident deleted' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 module.exports = router;

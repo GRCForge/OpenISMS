@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { VvtEntry, User, Vendor, Asset, Dsfa } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -28,7 +29,7 @@ router.get('/', authenticate, requirePermission('vvt','view','admin','owner','as
     });
     res.json(entries);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'vvt');
   }
 });
 
@@ -41,7 +42,7 @@ router.get('/:id', requirePermission('vvt','view_details','admin','assessor','dp
     if (!entry) return res.status(404).json({ error: 'Not found' });
     res.json(entry);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'vvt');
   }
 });
 
@@ -104,7 +105,7 @@ router.get('/:vvtId/dsfa', requirePermission('vvt','view_details','admin','asses
       include: [{ model: User, as: 'approver', attributes: ['id', 'name'] }],
     });
     res.json(item || null);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vvt'); }
 });
 
 const pickDsfaFields = (body) => {
@@ -119,7 +120,7 @@ router.post('/:vvtId/dsfa', requirePermission('vvt','create','admin','assessor',
     const item = await Dsfa.create({ ...pickDsfaFields(req.body), vvt_id: req.params.vvtId });
     await auditFromReq(req, 'create', 'dsfa', item.id, item.title || `DSFA ${item.id}`, {});
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vvt'); }
 });
 
 router.put('/:vvtId/dsfa/:id', requirePermission('vvt','edit','admin','assessor','dpo'), async (req, res) => {
@@ -129,7 +130,7 @@ router.put('/:vvtId/dsfa/:id', requirePermission('vvt','edit','admin','assessor'
     await item.update(pickDsfaFields(req.body));
     await auditFromReq(req, 'update', 'dsfa', item.id, item.title || `DSFA ${item.id}`, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vvt'); }
 });
 
 router.delete('/:vvtId/dsfa/:id', requirePermission('vvt','delete','admin'), async (req, res) => {
@@ -139,7 +140,7 @@ router.delete('/:vvtId/dsfa/:id', requirePermission('vvt','delete','admin'), asy
     await auditFromReq(req, 'delete', 'dsfa', item.id, item.title || `DSFA ${item.id}`, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vvt'); }
 });
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -154,7 +155,7 @@ router.delete('/:id', requirePermission('vvt','delete','admin'), async (req, res
     await auditFromReq(req, 'delete', 'vvt', req.params.id, name, {});
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'vvt');
   }
 });
 

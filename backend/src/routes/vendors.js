@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Vendor, VendorContact, Asset, User, Incident, VvtEntry } = require('../models');
 const { authenticate, isItStaff, isDpo, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { can } = require('../services/permissionService');
 
@@ -21,7 +22,7 @@ router.get('/', authenticate, requirePermission('vendors','view','admin','owner'
       ? await Vendor.findAll({ include: [{ model: VendorContact, as: 'contacts' }], order: [['name', 'ASC']] })
       : await Vendor.findAll({ attributes: ['id', 'name', 'type', 'criticality'], order: [['name', 'ASC']] });
     res.json(vendors);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendors'); }
 });
 
 // Get single vendor
@@ -38,7 +39,7 @@ router.get('/:id', authenticate, requirePermission('vendors','view_details','adm
     if (!vendor) return res.status(404).json({ error: 'Not found' });
     res.json(vendor);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'vendors');
   }
 });
 

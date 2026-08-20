@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Op } = require('sequelize');
 const { authenticate } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { Asset, Assessment, Risk, VvtEntry, Vendor, Incident, Task, PasskeyCredential, User } = require('../models');
 
 router.use(authenticate);
@@ -14,7 +15,7 @@ router.get('/permissions', async (req, res) => {
   try {
     const { resolvePermissions } = require('../services/permissionService');
     res.json({ permissions: await resolvePermissions(req.user), role: req.user.role, custom_role_id: req.user.custom_role_id });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'me'); }
 });
 
 router.get('/overview', async (req, res) => {
@@ -148,7 +149,7 @@ router.get('/overview', async (req, res) => {
     res.json(result);
   } catch (e) {
     console.error('[Me overview]', e);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'me');
   }
 });
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const { Assessment, Asset, User, Reminder, Task, sequelize } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 
@@ -21,7 +22,7 @@ router.get('/', authenticate, requirePermission('assessments','view','admin','ow
       order: [['assessed_at', 'DESC']]
     });
     res.json(assessments);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assessments'); }
 });
 
 router.post('/', authenticate, requirePermission('assessments','create','admin','assessor'), async (req, res) => {

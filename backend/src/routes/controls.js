@@ -2,6 +2,7 @@ const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Control, Policy, Iso27001Control } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -26,7 +27,7 @@ router.get('/stats', authenticate, requirePermission('controls','view','admin','
     const byStatus = await Control.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true });
     const byFramework = await Control.findAll({ attributes: ['framework', [fn('COUNT', col('id')), 'count']], group: ['framework'], raw: true });
     res.json({ total: await Control.count(), byStatus, byFramework });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'controls'); }
 });
 
 router.get('/', authenticate, requirePermission('controls','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -39,7 +40,7 @@ router.get('/', authenticate, requirePermission('controls','view','admin','owner
     if (search) where[Op.or] = [{ code: { [Op.like]: `%${escapeLike(search)}%` } }, { title: { [Op.like]: `%${escapeLike(search)}%` } }];
     const controls = await Control.findAll({ where, include: includeAll, order: [['framework', 'ASC'], ['code', 'ASC']] });
     res.json(controls);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'controls'); }
 });
 
 const applyLinks = async (control, body) => {
@@ -95,7 +96,7 @@ router.delete('/:id', authenticate, requirePermission('controls','delete','admin
     await control.destroy();
     await auditFromReq(req, 'delete', 'control', control.id, control.title, {});
     res.json({ message: 'Control deleted' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'controls'); }
 });
 
 router.post('/bulk-delete', authenticate, requirePermission('controls','delete','admin'), async (req, res) => {
@@ -117,7 +118,7 @@ router.post('/bulk-delete', authenticate, requirePermission('controls','delete',
       await auditFromReq(req, 'delete', 'control', control.id, control.title, {});
     }
     res.json({ message: `${controls.length} Maßnahmen gelöscht` });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'controls'); }
 });
 
 module.exports = router;

@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { TisaxAssessment, TisaxRequirement, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const tisaxCatalog = require('../services/tisaxCatalog');
 
@@ -13,7 +14,7 @@ router.get('/requirements', authenticate, requirePermission('tisax','view','admi
   try {
     const items = await TisaxRequirement.findAll({ order: [['ref', 'ASC']] });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 // Lädt den VDA-ISA-Katalog, falls noch keine Anforderungen existieren
@@ -24,7 +25,7 @@ router.post('/requirements/seed', authenticate, requirePermission('tisax','seed'
     await TisaxRequirement.bulkCreate(tisaxCatalog);
     await auditFromReq(req, 'seed', 'tisax_requirement', null, 'VDA-ISA-Katalog', { count: tisaxCatalog.length });
     res.status(201).json({ ok: true, count: tisaxCatalog.length });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 router.post('/requirements', authenticate, requirePermission('tisax','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -33,7 +34,7 @@ router.post('/requirements', authenticate, requirePermission('tisax','create','a
     const item = await TisaxRequirement.create({ ref, chapter, title, question, maturity_level, target_level, status, notes });
     await auditFromReq(req, 'create', 'tisax_requirement', item.id, item.ref, {});
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 router.put('/requirements/:id', authenticate, requirePermission('tisax','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -44,7 +45,7 @@ router.put('/requirements/:id', authenticate, requirePermission('tisax','edit','
     await item.update({ ref, chapter, title, question, maturity_level, target_level, status, notes });
     await auditFromReq(req, 'update', 'tisax_requirement', item.id, item.ref, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 router.delete('/requirements/:id', authenticate, requirePermission('tisax','delete','admin','assessor'), async (req, res) => {
@@ -54,7 +55,7 @@ router.delete('/requirements/:id', authenticate, requirePermission('tisax','dele
     await auditFromReq(req, 'delete', 'tisax_requirement', item.id, item.ref, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 // ── Assessments (Label-Tracking) ─────────────────────────────────
@@ -66,7 +67,7 @@ router.get('/', authenticate, requirePermission('tisax','view','admin','owner','
       order: [['created_at', 'DESC']],
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 router.post('/', authenticate, requirePermission('tisax','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -75,7 +76,7 @@ router.post('/', authenticate, requirePermission('tisax','create','admin','owner
     const item = await TisaxAssessment.create({ scope_description, assessment_level, label_requested, status, auditor_company, assessment_date, label_valid_until, owner_id, notes });
     await auditFromReq(req, 'create', 'tisax_assessment', item.id, `Assessment ${item.id}`, {});
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 router.put('/:id', authenticate, requirePermission('tisax','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -86,7 +87,7 @@ router.put('/:id', authenticate, requirePermission('tisax','edit','admin','owner
     await item.update({ scope_description, assessment_level, label_requested, status, auditor_company, assessment_date, label_valid_until, owner_id, notes });
     await auditFromReq(req, 'update', 'tisax_assessment', item.id, `Assessment ${item.id}`, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('tisax','delete','admin','assessor'), async (req, res) => {
@@ -96,7 +97,7 @@ router.delete('/:id', authenticate, requirePermission('tisax','delete','admin','
     await auditFromReq(req, 'delete', 'tisax_assessment', item.id, `Assessment ${item.id}`, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tisax'); }
 });
 
 module.exports = router;

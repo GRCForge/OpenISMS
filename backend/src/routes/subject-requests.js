@@ -5,6 +5,7 @@ router.use(apiLimiter);
 const { SubjectRequest, User, Task } = require('../models');
 const { Op } = require('sequelize');
 const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -23,7 +24,7 @@ router.get('/', requirePermission('subject_requests','view','admin','dpo','asses
     });
     res.json(requests);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'subject-requests');
   }
 });
 
@@ -96,7 +97,7 @@ router.delete('/:id', authenticate, requirePermission('subject_requests','delete
     await request.destroy();
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'subject-requests');
   }
 });
 

@@ -5,6 +5,7 @@ const { Op } = require('sequelize');
 const client = require('openid-client');
 const rateLimit = require('express-rate-limit');
 const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { getGeneral, setGeneral, getOidcRaw, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting } = require('../services/settingsService');
 const { sendEmail, testSmtp, getSmtpConfig } = require('../services/emailService');
 const { encrypt: encryptValue } = require('../services/cryptoService');
@@ -33,7 +34,7 @@ router.use(authenticate);
 // --- Allgemeine Einstellungen ---
 router.get('/settings', requirePermission('admin','settings','admin'), async (req, res) => {
   try { res.json(await getGeneral()); }
-  catch (e) { res.status(500).json({ error: e.message }); }
+  catch (e) { serverError(res, e, 'admin'); }
 });
 
 router.put('/settings', requirePermission('admin','settings','admin'), async (req, res) => {
@@ -66,7 +67,7 @@ router.post('/maintenance/purge-audit-log', requirePermission('admin','maintenan
     const count = await AuditLog.destroy({ where: { created_at: { [Op.lt]: cutoff } } });
     await auditFromReq(req, 'delete', 'audit_log', null, 'Audit-Log Bereinigung', { deleted: count, cutoff: cutoff.toISOString() });
     res.json({ deleted: count, cutoff, retentionMonths: months });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 // Trigger task automation manually
@@ -76,13 +77,13 @@ router.post('/maintenance/run-automation', requirePermission('admin','maintenanc
     await runTaskAutomation();
     await auditFromReq(req, 'execute', 'settings', null, 'Task-Automatisierung manuell gestartet', {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 // --- Rollen & Rechte ---
 router.get('/permissions', requirePermission('admin','permissions','admin'), async (req, res) => {
   try { res.json({ permissions: await getPermissions(), defaults: DEFAULT_PERMISSIONS, roles: ['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee'] }); }
-  catch (e) { res.status(500).json({ error: e.message }); }
+  catch (e) { serverError(res, e, 'admin'); }
 });
 
 router.put('/permissions', requirePermission('admin','permissions','admin'), async (req, res) => {
@@ -104,7 +105,7 @@ router.post('/permissions/reset', requirePermission('admin','permissions','admin
     invalidatePermissionCache();
     await auditFromReq(req, 'update', 'settings', null, 'Rollen & Rechte zurückgesetzt', {});
     res.json({ permissions: await getPermissions() });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 // --- Custom Roles ---
@@ -120,7 +121,7 @@ router.get('/custom-roles', requirePermission('admin','roles','admin'), async (r
     });
     const countMap = Object.fromEntries(counts.map(c => [c.custom_role_id, parseInt(c.cnt)]));
     res.json(roles.map(r => ({ ...r.toJSON(), users_count: countMap[r.id] || 0 })));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 router.post('/custom-roles', requirePermission('admin','roles','admin'), async (req, res) => {
@@ -173,7 +174,7 @@ router.delete('/custom-roles/:id', requirePermission('admin','roles','admin'), a
     invalidatePermissionCache();
     await auditFromReq(req, 'delete', 'custom_role', req.params.id, name, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 // --- OIDC Claim Mappings ---
@@ -184,7 +185,7 @@ router.get('/oidc-mappings', requirePermission('admin','sso','admin'), async (re
       order: [['priority', 'DESC'], ['id', 'ASC']],
     });
     res.json(mappings);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 router.post('/oidc-mappings', requirePermission('admin','sso','admin'), async (req, res) => {
@@ -212,7 +213,7 @@ router.delete('/oidc-mappings/:id', requirePermission('admin','sso','admin'), as
     await mapping.destroy();
     await auditFromReq(req, 'delete', 'oidc_mapping', req.params.id, label, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 // --- OIDC / SSO ---
@@ -229,7 +230,7 @@ router.get('/oidc', requirePermission('admin','sso','admin'), async (req, res) =
       clientSecretSet: !!o.clientSecretEnc,
       callbackUrl: getCallbackUrl(),
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'admin'); }
 });
 
 router.put('/oidc', requirePermission('admin','sso','admin'), async (req, res) => {
@@ -293,7 +294,7 @@ router.get('/smtp', requirePermission('admin','smtp','admin'), async (req, res) 
     if (masked.password) masked.password = '*****';
     res.json(masked);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'admin');
   }
 });
 
@@ -391,7 +392,7 @@ router.get('/logs', requirePermission('admin','logs','admin'), logsLimiter, asyn
     const lastLines = lines.slice(-500).join('\n');
     res.json({ logs: lastLines });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'admin');
   }
 });
 
@@ -400,7 +401,7 @@ const { getLlmConfigPublic, saveLlmConfig, testConnection } = require('../servic
 
 router.get('/llm', requirePermission('admin','llm','admin'), async (req, res) => {
   try { res.json(await getLlmConfigPublic()); }
-  catch (e) { res.status(500).json({ error: e.message }); }
+  catch (e) { serverError(res, e, 'admin'); }
 });
 
 router.put('/llm', requirePermission('admin','llm','admin'), async (req, res) => {

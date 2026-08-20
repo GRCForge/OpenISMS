@@ -5,6 +5,7 @@ const {
   Policy, PolicyVersion, VvtEntry, Incident, Risk 
 } = require('../models');
 const { authenticate, isAssessor, isItStaff, isAdmin, canViewAllAssets, canViewAsset, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { requireModule } = require('../middleware/modules');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -65,7 +66,7 @@ router.get('/', authenticate, requirePermission('assets','view','admin','owner',
       order: [['name', 'ASC']]
     });
     res.json(assets);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assets'); }
 });
 
 // Aggregated CVEs across all assets
@@ -116,7 +117,7 @@ router.get('/cves', authenticate, requireModule('discovery'), requirePermission(
 
     res.json(cveList);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -135,7 +136,7 @@ router.get('/locations', authenticate, requirePermission('assets','view','admin'
     });
     res.json(locations.map(l => l.getDataValue('location')));
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -166,7 +167,7 @@ router.get('/:id', authenticate, requirePermission('assets','view','admin','owne
     res.json(asset);
   } catch (e) {
     console.error('ERROR IN GET ASSET:', e);
-    res.status(500).json({ error: e.message }); 
+    serverError(res, e, 'assets');
   }
 });
 
@@ -301,7 +302,7 @@ router.delete('/:id', authenticate, requirePermission('assets','delete','admin')
     await checkAndManageAssetTasks(asset);
     await auditFromReq(req, 'delete', 'asset', asset.id, asset.name, {});
     res.json({ message: 'Asset decommissioned' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assets'); }
 });
 
 router.post('/bulk-delete', authenticate, requirePermission('assets','delete','admin'), async (req, res) => {
@@ -320,7 +321,7 @@ router.post('/bulk-delete', authenticate, requirePermission('assets','delete','a
       await auditFromReq(req, 'delete', 'asset', asset.id, asset.name, {});
     }
     res.json({ message: `${assets.length} Assets außer Betrieb gesetzt` });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assets'); }
 });
 
 // Suggest CPEs: returns top-10 matches from NVD for user selection (no save)
@@ -338,7 +339,7 @@ router.post('/:id/cpe-suggestions', authenticate, requireModule('discovery'), re
     res.json({ suggestions });
   } catch (e) {
     console.error('[CVE] CPE suggestions failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -370,7 +371,7 @@ router.post('/:id/resolve-cpe', authenticate, requireModule('discovery'), requir
   } catch (e) {
     const safeAssetId = String(req.params.id).replace(/[\r\n]/g, '');
     console.error('[CVE] CPE resolve failed for asset', safeAssetId + ':', e.message);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -402,7 +403,7 @@ router.post('/:id/refresh-cves', authenticate, requireModule('discovery'), requi
     res.json({ counts: result.counts, cveList: result.cveList, total: result.total, source: result.source, query: result.query });
   } catch (e) {
     console.error('[CVE] Refresh failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 

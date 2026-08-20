@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { DataFlow, Asset } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -23,7 +24,7 @@ router.get('/', requirePermission('dataflows','view','admin','owner','assessor',
     const flows = await DataFlow.findAll({ where, include: flowInclude, order: [['name', 'ASC']] });
     res.json(flows);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'dataflows');
   }
 });
 
@@ -38,7 +39,7 @@ router.get('/:id', requirePermission('dataflows','view_details','admin','assesso
     if (!flow) return res.status(404).json({ error: 'Not found' });
     res.json(flow);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'dataflows');
   }
 });
 
@@ -96,7 +97,7 @@ router.delete('/:id', requirePermission('dataflows','delete','admin'), async (re
     await auditFromReq(req, 'delete', 'dataflow', req.params.id, name, {});
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'dataflows');
   }
 });
 

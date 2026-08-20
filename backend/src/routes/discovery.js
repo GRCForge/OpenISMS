@@ -10,6 +10,7 @@ const https   = require('https');
 const { Op }  = require('sequelize');
 const { Asset, User, DiscoveredSoftware, sequelize } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 // ── Port → service map ────────────────────────────────────────────────────────
 
@@ -473,7 +474,7 @@ router.post('/report', authenticate, requirePermission('discovery','access','adm
 
     res.json({ created, updated, errors, total: software.length });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -512,7 +513,7 @@ router.get('/staged', authenticate, requirePermission('discovery','access','admi
 
     res.json(enriched);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -636,7 +637,7 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
 
     res.status(result.status).json(result.body);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -650,7 +651,7 @@ router.post('/staged/:id/ignore', authenticate, requirePermission('discovery','a
     await item.update({ status: 'ignored' });
     res.json({ success: true, message: 'Software ignoriert.' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -664,7 +665,7 @@ router.delete('/staged/:id', authenticate, requirePermission('discovery','access
     await item.destroy();
     res.json({ success: true, message: 'Eintrag gelöscht.' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -776,7 +777,7 @@ router.post('/import', authenticate, requirePermission('discovery','access','adm
 
     res.json({ created, skipped, errors });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 

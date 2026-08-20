@@ -1,6 +1,7 @@
 const express = require('express');
 const { Reminder, Asset, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { Op } = require('sequelize');
 const { auditFromReq } = require('../services/auditService');
 
@@ -18,7 +19,7 @@ router.get('/', authenticate, requirePermission('reminders','view','admin','owne
       order: [['due_date', 'ASC']]
     });
     res.json(reminders);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'reminders'); }
 });
 
 router.patch('/:id/acknowledge', authenticate, requirePermission('reminders','acknowledge','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -37,7 +38,7 @@ router.patch('/:id/acknowledge', authenticate, requirePermission('reminders','ac
       asset_id: reminder.asset_id, due_date: reminder.due_date,
     });
     res.json(reminder);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'reminders'); }
 });
 
 router.patch('/:id/dismiss', authenticate, requirePermission('reminders','acknowledge','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -46,7 +47,7 @@ router.patch('/:id/dismiss', authenticate, requirePermission('reminders','acknow
     if (!reminder) return res.status(404).json({ error: 'Not found' });
     await reminder.update({ dismissed: true });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'reminders'); }
 });
 
 module.exports = router;

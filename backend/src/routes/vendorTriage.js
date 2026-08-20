@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { VendorTriageRun, VendorFinding, Vendor, Document, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { runTriage } = require('../services/vendorTriageService');
 
@@ -60,7 +61,7 @@ router.get('/', requirePermission('vendor_triage', 'view', ...TRIAGE_ROLES), asy
       order: [['created_at', 'DESC']],
     });
     res.json(runs);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Get a single triage run with findings
@@ -81,7 +82,7 @@ router.get('/:runId', requirePermission('vendor_triage', 'view', ...TRIAGE_ROLES
     });
     if (!run) return res.status(404).json({ error: 'Triage run not found' });
     res.json(run);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Start a triage run (async — responds immediately with the run record)
@@ -127,7 +128,7 @@ router.post('/', requirePermission('vendor_triage', 'run', ...TRIAGE_ROLES), asy
     });
 
     res.status(202).json(run);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Re-run an analysis (e.g. after an error or a config change) — creates a fresh run
@@ -152,7 +153,7 @@ router.post('/:runId/retry', requirePermission('vendor_triage', 'run', ...TRIAGE
     });
     runTriage(run.id).catch(err => console.error(`[Triage] Retry run ${run.id} failed:`, err.message));
     res.status(202).json(run);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Delete a triage run and its findings
@@ -166,7 +167,7 @@ router.delete('/:runId', requirePermission('vendor_triage', 'delete', 'admin'), 
     await VendorFinding.destroy({ where: { triage_run_id: run.id } });
     await run.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 module.exports = router;

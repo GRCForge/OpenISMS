@@ -7,6 +7,7 @@ const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { Document, User } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 // Rate limiting for document download endpoint to mitigate DoS (CWE-770)
@@ -131,7 +132,7 @@ router.get('/', authenticate, requirePermission('documents','view','admin','owne
       order: [['created_at', 'DESC']],
     });
     res.json(docs);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'documents'); }
 });
 
 router.post('/', authenticate, requirePermission('documents','upload','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), upload.single('file'), async (req, res) => {
@@ -245,7 +246,7 @@ router.get('/:docId/download', authenticate, requirePermission('documents','down
     }
 
     res.download(filePath, doc.original_name);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'documents'); }
 });
 
 router.delete('/:docId', authenticate, requirePermission('documents','delete','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), deleteLimiter, async (req, res) => {
@@ -271,7 +272,7 @@ router.delete('/:docId', authenticate, requirePermission('documents','delete','a
 
     await doc.destroy();
     res.json({ message: 'Dokument gelöscht' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'documents'); }
 });
 
 module.exports = router;
