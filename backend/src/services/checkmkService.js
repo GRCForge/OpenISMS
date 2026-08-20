@@ -56,6 +56,29 @@ function buildApiBase(rawUrl, site) {
 }
 
 /**
+ * Prueft die Zugangsdaten, bevor sie in den Authorization-Header wandern.
+ *
+ * CheckMK erwartet exakt "Bearer <benutzer> <secret>" — ein Leerzeichen im
+ * Benutzernamen verschiebt die Trennung und fuehrt zu einem 401, dessen
+ * Ursache man dem Fehler nicht ansieht. Zeilenumbrueche wiederum laesst Node
+ * gar nicht erst in einen Header (ERR_INVALID_CHAR); ohne diese Pruefung
+ * kaeme davon nur ein nacktes "Invalid character in header content" an.
+ */
+function assertCredentialsUsable(cfg) {
+  const check = (value, label) => {
+    const raw = String(value ?? '');
+    if (!raw.trim()) throw new Error(`CheckMK-${label} ist nicht konfiguriert.`);
+    if (/[\r\n]/.test(raw)) throw new Error(`CheckMK-${label} enthaelt einen Zeilenumbruch.`);
+    return raw;
+  };
+  const username = check(cfg.username, 'Benutzer');
+  check(cfg.secret, 'Secret');
+  if (/\s/.test(username.trim())) {
+    throw new Error('CheckMK-Benutzername darf keine Leerzeichen enthalten (das Bearer-Token trennt Benutzer und Secret per Leerzeichen).');
+  }
+}
+
+/**
  * Ein einzelner GET gegen die CheckMK-REST-API.
  *
  * Bewusst node:https statt fetch: fuer interne Instanzen mit eigener CA
@@ -65,6 +88,7 @@ function buildApiBase(rawUrl, site) {
  */
 function apiGet(cfg, path, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const apiBase = buildApiBase(cfg.url, cfg.site);
+  assertCredentialsUsable(cfg);
   const target = new URL(`${apiBase}${path}`);
   const lib = target.protocol === 'https:' ? https : http;
 
