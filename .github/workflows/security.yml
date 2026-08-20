@@ -145,6 +145,22 @@ jobs:
         run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
         working-directory: backend
 
+      - name: Konsistenzprüfungen (Berechtigungen, OpenAPI, Helfer)
+        # Diese Skripte brauchen keine Datenbank: sie vergleichen Quelltext gegen
+        # Quelltext (Matrix vs. Routen-Fallbacks, OpenAPI vs. Routen) bzw. testen
+        # reine Funktionen mit gemockten Models. Sie laufen vor dem Smoke-Test,
+        # damit Drift sofort auffällt und nicht erst im Review.
+        run: |
+          node scripts/check-permissions.js
+          node scripts/openapi-sync.js --check
+          node scripts/test-mcp-gate.js
+          node scripts/test-backup-export.js
+          node scripts/test-query-filters.js
+        working-directory: .
+        env:
+          JWT_SECRET: ci-dummy-secret-for-checks-only
+          ENCRYPTION_KEY: ci-dummy-encryption-key-for-ci-only
+
       - name: Module-load smoke test
         # Loads models, services and the route modules that pull in the major
         # third-party deps (passkey → @simplewebauthn/server, oidc →
