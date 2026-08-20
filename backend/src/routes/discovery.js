@@ -8,7 +8,7 @@ const dns     = require('dns').promises;
 const http    = require('http');
 const https   = require('https');
 const { Op }  = require('sequelize');
-const { Asset, User, DiscoveredSoftware, sequelize } = require('../models');
+const { Asset, DiscoveredSoftware, sequelize } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 

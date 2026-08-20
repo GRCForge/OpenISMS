@@ -6,7 +6,7 @@ const { Op } = require('sequelize');
 const { TOTP, NobleCryptoPlugin, ScureBase32Plugin } = require('otplib');
 const qrcode = require('qrcode');
 const { User, AuditLog } = require('../models');
-const { authenticate, requireWriteAccess } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { validate: validatePassword } = require('../services/passwordPolicy');
 

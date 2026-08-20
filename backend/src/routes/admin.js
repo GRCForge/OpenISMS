@@ -4,7 +4,7 @@ router.use(apiLimiter);
 const { Op } = require('sequelize');
 const client = require('openid-client');
 const rateLimit = require('express-rate-limit');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 const { getGeneral, setGeneral, getOidcRaw, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting } = require('../services/settingsService');
 const { sendEmail, testSmtp, getSmtpConfig } = require('../services/emailService');
