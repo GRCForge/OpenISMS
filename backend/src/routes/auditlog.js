@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { AuditLog } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
+const { scalar, boundedInt, validDate, setFilter } = require('../utils/queryFilters');
 const { verifyAuditRow } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -41,22 +42,29 @@ router.get('/verify', authenticate, requirePermission('auditlog','verify','admin
 router.get('/', authenticate, requirePermission('auditlog','view','admin','assessor'), async (req, res) => {
   try {
     const { entity_type, action, actor_id, from, to, search, limit = 200, offset = 0 } = req.query;
+
+    // Query parameters arrive as whatever the client sent: ?limit=abc parsed to
+    // NaN and ?limit=-1 passed the upper bound, both of which reached MySQL as an
+    // invalid LIMIT and came back as a 500. A malformed filter should narrow to a
+    // sane default, not fail the page.
     const where = {};
-    if (entity_type) where.entity_type = entity_type;
-    if (action) where.action = action;
-    if (actor_id) where.actor_id = actor_id;
-    if (search) where.entity_name = { [Op.like]: `%${escapeLike(search)}%` };
-    if (from || to) {
+    setFilter(where, 'entity_type', entity_type);
+    setFilter(where, 'action', action);
+    setFilter(where, 'actor_id', actor_id);
+    if (scalar(search)) where.entity_name = { [Op.like]: `%${escapeLike(String(search))}%` };
+    const fromDate = validDate(from);
+    const toDate = validDate(to, true);
+    if (fromDate || toDate) {
       where.created_at = {};
-      if (from) where.created_at[Op.gte] = new Date(from);
-      if (to) where.created_at[Op.lte] = new Date(to + 'T23:59:59');
+      if (fromDate) where.created_at[Op.gte] = fromDate;
+      if (toDate) where.created_at[Op.lte] = toDate;
     }
 
     const { rows, count } = await AuditLog.findAndCountAll({
       where,
       order: [['created_at', 'DESC']],
-      limit: Math.min(parseInt(limit), 500),
-      offset: parseInt(offset),
+      limit: boundedInt(limit, 200, 1, 500),
+      offset: boundedInt(offset, 0, 0, Number.MAX_SAFE_INTEGER),
     });
 
     res.json({ logs: rows, total: count });

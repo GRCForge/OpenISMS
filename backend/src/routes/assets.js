@@ -6,6 +6,7 @@ const {
 } = require('../models');
 const { authenticate, isAssessor, isItStaff, isAdmin, canViewAllAssets, canViewAsset, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
+const { setFilter } = require('../utils/queryFilters');
 const { requireModule } = require('../middleware/modules');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -38,11 +39,11 @@ router.get('/', authenticate, requirePermission('assets','view','admin','owner',
   try {
     const { type, classification, status, lifecycle_status, search } = req.query;
     const where = {};
-    if (type) where.type = type;
-    if (classification) where.classification = classification;
-    if (lifecycle_status) where.lifecycle_status = lifecycle_status;
+    setFilter(where, 'type', type);
+    setFilter(where, 'classification', classification);
+    setFilter(where, 'lifecycle_status', lifecycle_status);
     if (status) {
-      if (status !== 'all') where.status = status;
+      setFilter(where, 'status', status);
     } else {
       where.status = { [Op.ne]: 'decommissioned' };
     }

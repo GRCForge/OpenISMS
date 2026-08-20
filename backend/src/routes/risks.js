@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { Risk, Asset, User, Document, Threat, Control, VvtEntry, Incident, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
+const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { computeLevel, scaleInfo } = require('../services/riskScale');
@@ -37,9 +38,9 @@ router.get('/', authenticate, requirePermission('risks','view','admin','owner','
   try {
     const { status, treatment, level, search } = req.query;
     const where = {};
-    if (status) where.status = status;
-    if (treatment) where.treatment = treatment;
-    if (level) where.inherent_level = level;
+    setFilter(where, 'status', status);
+    setFilter(where, 'treatment', treatment);
+    setFilter(where, 'inherent_level', level);
     if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
     const risks = await Risk.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(risks);

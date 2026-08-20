@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { Threat } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
+const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -14,7 +15,7 @@ router.get('/', authenticate, requirePermission('threats','view','admin','owner'
   try {
     const { source, search } = req.query;
     const where = {};
-    if (source) where.source = source;
+    setFilter(where, 'source', source);
     if (search) where[Op.or] = [{ code: { [Op.like]: `%${escapeLike(search)}%` } }, { title: { [Op.like]: `%${escapeLike(search)}%` } }];
     const threats = await Threat.findAll({ where, order: [['source', 'ASC'], ['code', 'ASC'], ['title', 'ASC']] });
     res.json(threats);

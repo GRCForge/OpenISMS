@@ -3,6 +3,7 @@ const { Op, fn, col } = require('sequelize');
 const { Control, Policy, Iso27001Control } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
+const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 
@@ -34,9 +35,9 @@ router.get('/', authenticate, requirePermission('controls','view','admin','owner
   try {
     const { framework, status, type, search } = req.query;
     const where = {};
-    if (framework) where.framework = framework;
-    if (status) where.status = status;
-    if (type) where.type = type;
+    setFilter(where, 'framework', framework);
+    setFilter(where, 'status', status);
+    setFilter(where, 'type', type);
     if (search) where[Op.or] = [{ code: { [Op.like]: `%${escapeLike(search)}%` } }, { title: { [Op.like]: `%${escapeLike(search)}%` } }];
     const controls = await Control.findAll({ where, include: includeAll, order: [['framework', 'ASC'], ['code', 'ASC']] });
     res.json(controls);
