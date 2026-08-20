@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { UserCheck, Plus, Search, Clock, AlertTriangle, Edit2, Trash2, Shield, Filter, RotateCcw, CalendarClock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useKeyShortcut } from '../hooks/useKeyShortcut';
 import api from '../lib/api';
 import { SubjectRequest, SubjectRequestType, SubjectRequestStatus, User } from '../types';
@@ -63,6 +64,7 @@ const emptyForm = {
 export const SubjectRequests: React.FC = () => {
   const { t } = useTranslation('subjectrequests');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const [requests, setRequests] = useState<SubjectRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,8 +104,8 @@ export const SubjectRequests: React.FC = () => {
     extended: t('status.extended'),
   };
 
-  const canWrite = user?.role === 'admin' || user?.role === 'dpo';
-  const canDelete = user?.role === 'admin';
+  const canWrite = can('subject_requests', 'create', user?.role === 'admin' || user?.role === 'dpo');
+  const canDelete = can('subject_requests', 'delete', user?.role === 'admin');
 
   const load = useCallback(async () => {
     try {

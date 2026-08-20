@@ -12,6 +12,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { ControlMappings } from '../components/ControlMappings';
 import { hasWriteAccess } from '../lib/permissions';
@@ -71,9 +72,10 @@ const emptyEditForm = {
 export const BsiGrundschutz: React.FC = () => {
   const { t } = useTranslation('bsigrundschutz');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
-  const canManage = user?.role === 'admin' || user?.role === 'assessor';
+  const canWrite = can('bsi_grundschutz', 'create', hasWriteAccess(user?.role));
+  const canManage = can('bsi_grundschutz', 'edit', user?.role === 'admin' || user?.role === 'assessor');
 
   const statusLabels: Record<ImplStatus, string> = {
     not_started: t('status.not_started'),

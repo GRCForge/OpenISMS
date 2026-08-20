@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { exportToCSV, exportToExcel } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { useModules } from '../contexts/ModulesContext';
 import { hasWriteAccess } from '../lib/permissions';
@@ -84,9 +85,11 @@ export const Assets: React.FC = () => {
   ];
 
   const { user } = useAuth();
+
+  const { can } = usePermissions();
   const toast = useToast();
   const { isEnabled } = useModules();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('assets', 'create', hasWriteAccess(user?.role));
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);

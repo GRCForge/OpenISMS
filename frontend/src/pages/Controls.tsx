@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { useModules } from '../contexts/ModulesContext';
 import { hasWriteAccess } from '../lib/permissions';
@@ -26,10 +27,11 @@ const statusColor: Record<string, string> = {
 
 export const Controls: React.FC = () => {
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
   const { isEnabled } = useModules();
   const { t } = useTranslation(['controls', 'common']);
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('controls', 'create', hasWriteAccess(user?.role));
 
   const fwLabels: Record<string, string> = {
     iso27001: t('common:frameworks.iso27001'),

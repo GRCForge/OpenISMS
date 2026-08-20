@@ -15,6 +15,7 @@ import { Badge } from '../components/ui/Badge';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -63,7 +64,8 @@ const gdprDeadlineInfo = (inc: Incident, t: TFunc): { label: string; overdue: bo
 export const Incidents: React.FC = () => {
   const { t } = useTranslation(['incidents', 'common']);
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const { can } = usePermissions();
+  const canWrite = can('incidents', 'create', hasWriteAccess(user?.role));
   const toast = useToast();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);

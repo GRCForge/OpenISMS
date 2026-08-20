@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { AuthProvider } from './contexts/AuthContext';
 import { ModulesProvider } from './contexts/ModulesContext';
+import { PermissionsProvider } from './contexts/PermissionsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { CommandPaletteProvider } from './contexts/CommandPaletteContext';
@@ -52,6 +53,7 @@ const C5 = lazy(() => import('./pages/C5').then(m => ({ default: m.C5 })));
 
 const App: React.FC = () => (
   <AuthProvider>
+    <PermissionsProvider>
     <ModulesProvider>
     <ThemeProvider>
       <CommandPaletteProvider>
@@ -109,6 +111,7 @@ const App: React.FC = () => (
       </CommandPaletteProvider>
     </ThemeProvider>
     </ModulesProvider>
+    </PermissionsProvider>
   </AuthProvider>
 );
 

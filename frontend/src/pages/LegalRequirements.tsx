@@ -14,6 +14,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -37,8 +38,9 @@ export const LegalRequirements: React.FC = () => {
   const { t, i18n } = useTranslation('legalrequirements');
   const dateFnsLocale = i18n.language === 'de' ? de : enUS;
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('legal_requirements', 'create', hasWriteAccess(user?.role));
 
   const categoryLabels: Record<LegalRequirementCategory, string> = {
     data_protection: t('category.data_protection'),

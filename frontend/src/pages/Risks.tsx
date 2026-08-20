@@ -19,6 +19,7 @@ import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { exportToCSV, exportToExcel } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -84,7 +85,9 @@ export const Risks: React.FC = () => {
   };
 
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+
+  const { can } = usePermissions();
+  const canWrite = can('risks', 'create', hasWriteAccess(user?.role));
   const toast = useToast();
   const [risks, setRisks] = useState<Risk[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);

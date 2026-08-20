@@ -13,6 +13,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -64,9 +65,10 @@ const emptyForm = {
 export const PolicyLibrary: React.FC = () => {
   const { t } = useTranslation('policylibrary');
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const { can } = usePermissions();
+  const canWrite = can('policies', 'create', hasWriteAccess(user?.role));
   const toast = useToast();
-  const canEdit = user?.role === 'admin' || user?.role === 'assessor' || user?.role === 'dpo';
+  const canEdit = can('policies', 'edit', user?.role === 'admin' || user?.role === 'assessor' || user?.role === 'dpo');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'templates' ? 'templates' : 'documents';

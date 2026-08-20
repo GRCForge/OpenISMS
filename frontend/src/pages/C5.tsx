@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Shield, ChevronDown, ChevronRight, RefreshCw, CheckCircle, Clock, XCircle, MinusCircle, Pencil, X, Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { hasWriteAccess } from '../lib/permissions';
 import api from '../lib/api';
 import { ControlMappings } from '../components/ControlMappings';
@@ -68,7 +69,8 @@ const DOMAIN_COLORS: Record<string, string> = {
 export const C5: React.FC = () => {
   const { t } = useTranslation('c5');
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const { can } = usePermissions();
+  const canWrite = can('c5', 'create', hasWriteAccess(user?.role));
   const [items, setItems] = useState<C5Item[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);

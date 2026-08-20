@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useModules } from '../contexts/ModulesContext';
 import type { ModuleKey } from '../contexts/ModulesContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -31,6 +32,14 @@ interface NavItem {
   roles?: string[];
   badge?: number;
   module?: ModuleKey;
+  /**
+   * Permission that governs this entry, as [module, action] in the backend's
+   * matrix. Where the matrix defines it, it decides; where it says nothing, the
+   * roles/adminOnly rule below still applies. Without this the sidebar decided
+   * from role lists alone while the API decided from the matrix, so the two drift
+   * apart the moment an admin edits it.
+   */
+  perm?: [string, string];
 }
 
 interface NavGroup {
@@ -44,54 +53,54 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { path: '/',       icon: LayoutDashboard, labelKey: 'dashboard' },
       { path: '/my',     icon: LayoutList,      labelKey: 'my' },
-      { path: '/report', icon: BarChart3,        labelKey: 'report' },
+      { path: '/report', icon: BarChart3,        labelKey: 'report', perm: ['reports','view'] },
     ],
   },
   {
     groupKey: 'governance',
     items: [
-      { path: '/compliance',         icon: CheckCircle,  labelKey: 'compliance' },
-      { path: '/controls',           icon: ShieldCheck,  labelKey: 'controls' },
-      { path: '/policies',           icon: FileText,     labelKey: 'policies' },
-      { path: '/vvt',                icon: BookOpen,     labelKey: 'vvt',               module: 'dsgvo' },
-      { path: '/subject-requests',   icon: UserCheck,    labelKey: 'subjectRequests',   roles: ['admin', 'dpo', 'assessor'], module: 'dsgvo' },
-      { path: '/legal-requirements', icon: Scale,        labelKey: 'legalRequirements', roles: ['admin', 'assessor', 'dpo'] },
-      { path: '/iso27001',           icon: ShieldCheck,  labelKey: 'iso27001',          module: 'iso27001', roles: ['admin', 'assessor', 'it-staff'] },
-      { path: '/bsi-grundschutz',    icon: BookOpen,     labelKey: 'bsiGrundschutz',    module: 'bsi_grundschutz', roles: ['admin', 'assessor'] },
-      { path: '/nis2',               icon: AlertOctagon, labelKey: 'nis2',              module: 'nis2', roles: ['admin', 'assessor', 'dpo'] },
-      { path: '/c5',                 icon: Shield,       labelKey: 'c5',                module: 'c5', roles: ['admin', 'assessor', 'it-staff'] },
-      { path: '/tisax',              icon: Car,          labelKey: 'tisax',             module: 'tisax', roles: ['admin', 'assessor'] },
-      { path: '/ai-act',             icon: Bot,          labelKey: 'aiAct',             module: 'ai_act', roles: ['admin', 'assessor', 'dpo'] },
+      { path: '/compliance',         icon: CheckCircle,  labelKey: 'compliance', perm: ['compliance','view'] },
+      { path: '/controls',           icon: ShieldCheck,  labelKey: 'controls', perm: ['controls','view'] },
+      { path: '/policies',           icon: FileText,     labelKey: 'policies', perm: ['policies','view'] },
+      { path: '/vvt',                icon: BookOpen,     labelKey: 'vvt',               module: 'dsgvo', perm: ['vvt','view'] },
+      { path: '/subject-requests',   icon: UserCheck,    labelKey: 'subjectRequests',   roles: ['admin', 'dpo', 'assessor'], module: 'dsgvo', perm: ['subject_requests','view'] },
+      { path: '/legal-requirements', icon: Scale,        labelKey: 'legalRequirements', roles: ['admin', 'assessor', 'dpo'], perm: ['legal_requirements','view'] },
+      { path: '/iso27001',           icon: ShieldCheck,  labelKey: 'iso27001',          module: 'iso27001', roles: ['admin', 'assessor', 'it-staff'], perm: ['iso27001','view'] },
+      { path: '/bsi-grundschutz',    icon: BookOpen,     labelKey: 'bsiGrundschutz',    module: 'bsi_grundschutz', roles: ['admin', 'assessor'], perm: ['bsi_grundschutz','view'] },
+      { path: '/nis2',               icon: AlertOctagon, labelKey: 'nis2',              module: 'nis2', roles: ['admin', 'assessor', 'dpo'], perm: ['nis2','view'] },
+      { path: '/c5',                 icon: Shield,       labelKey: 'c5',                module: 'c5', roles: ['admin', 'assessor', 'it-staff'], perm: ['c5','view'] },
+      { path: '/tisax',              icon: Car,          labelKey: 'tisax',             module: 'tisax', roles: ['admin', 'assessor'], perm: ['tisax','view'] },
+      { path: '/ai-act',             icon: Bot,          labelKey: 'aiAct',             module: 'ai_act', roles: ['admin', 'assessor', 'dpo'], perm: ['ai_act','view'] },
     ],
   },
   {
     groupKey: 'operations',
     items: [
-      { path: '/assets',    icon: Server,       labelKey: 'assets' },
-      { path: '/cves',      icon: AlertTriangle, labelKey: 'cves', module: 'discovery', roles: ['admin', 'assessor', 'it-staff'] },
-      { path: '/discovery', icon: Radar,        labelKey: 'discovery',  adminOnly: true, module: 'discovery' },
-      { path: '/risks',     icon: ShieldAlert,  labelKey: 'risks' },
-      { path: '/incidents', icon: AlertOctagon, labelKey: 'incidents' },
-      { path: '/tasks',     icon: CheckSquare,  labelKey: 'tasks' },
-      { path: '/dora',      icon: Zap,          labelKey: 'dora',       module: 'dora', roles: ['admin', 'assessor', 'it-staff'] },
-      { path: '/pentests',  icon: Target,       labelKey: 'pentests',   module: 'pentest', roles: ['admin', 'assessor', 'it-staff'] },
+      { path: '/assets',    icon: Server,       labelKey: 'assets', perm: ['assets','view'] },
+      { path: '/cves',      icon: AlertTriangle, labelKey: 'cves', module: 'discovery', roles: ['admin', 'assessor', 'it-staff'], perm: ['assets','cve'] },
+      { path: '/discovery', icon: Radar,        labelKey: 'discovery',  adminOnly: true, module: 'discovery', perm: ['discovery','access'] },
+      { path: '/risks',     icon: ShieldAlert,  labelKey: 'risks', perm: ['risks','view'] },
+      { path: '/incidents', icon: AlertOctagon, labelKey: 'incidents', perm: ['incidents','view'] },
+      { path: '/tasks',     icon: CheckSquare,  labelKey: 'tasks', perm: ['tasks','view'] },
+      { path: '/dora',      icon: Zap,          labelKey: 'dora',       module: 'dora', roles: ['admin', 'assessor', 'it-staff'], perm: ['dora','view'] },
+      { path: '/pentests',  icon: Target,       labelKey: 'pentests',   module: 'pentest', roles: ['admin', 'assessor', 'it-staff'], perm: ['pentests','view'] },
     ],
   },
   {
     groupKey: 'resources',
     items: [
-      { path: '/vendors',     icon: Building2,      labelKey: 'vendors' },
+      { path: '/vendors',     icon: Building2,      labelKey: 'vendors', perm: ['vendors','view'] },
       { path: '/contacts',    icon: Users,          labelKey: 'contacts' },
-      { path: '/topology',    icon: Network,        labelKey: 'topology' },
-      { path: '/assessments', icon: ClipboardCheck, labelKey: 'assessments' },
-      { path: '/reminders',   icon: Bell,           labelKey: 'reminders' },
-      { path: '/bcm',         icon: LifeBuoy,       labelKey: 'bcm',  module: 'bcm', roles: ['admin', 'assessor'] },
+      { path: '/topology',    icon: Network,        labelKey: 'topology', perm: ['assets','view'] },
+      { path: '/assessments', icon: ClipboardCheck, labelKey: 'assessments', perm: ['assessments','view'] },
+      { path: '/reminders',   icon: Bell,           labelKey: 'reminders', perm: ['reminders','view'] },
+      { path: '/bcm',         icon: LifeBuoy,       labelKey: 'bcm',  module: 'bcm', roles: ['admin', 'assessor'], perm: ['bcm','view'] },
     ],
   },
   {
     groupKey: 'system',
     items: [
-      { path: '/import', icon: Upload,   labelKey: 'import', adminOnly: true },
+      { path: '/import', icon: Upload,   labelKey: 'import', adminOnly: true, perm: ['import','access'] },
       { path: '/admin',  icon: Settings, labelKey: 'admin',  adminOnly: true },
     ],
   },
@@ -100,6 +109,7 @@ const NAV_GROUPS: NavGroup[] = [
 export const Layout: React.FC = () => {
   const { user, logout } = useAuth();
   const { isEnabled } = useModules();
+  const { can } = usePermissions();
   const { theme, toggleTheme } = useTheme();
   const { openPalette } = useCommandPalette();
   const { t } = useTranslation(['nav', 'profile', 'common']);
@@ -341,10 +351,13 @@ export const Layout: React.FC = () => {
               if (user?.role === 'employee') {
                 return i.path === '/my';
               }
-              if (i.adminOnly && user?.role !== 'admin') return false;
-              if (i.roles && !i.roles.includes(user?.role || '')) return false;
+              // Module toggle first: an entry for a module this installation
+              // does not run is not a permission question.
               if (i.module && !isEnabled(i.module)) return false;
-              return true;
+              const roleAllows = (!i.adminOnly || user?.role === 'admin')
+                && (!i.roles || i.roles.includes(user?.role || ''));
+              if (i.perm) return can(i.perm[0], i.perm[1], roleAllows);
+              return roleAllows;
             });
             if (!visibleItems.length) return null;
             return (

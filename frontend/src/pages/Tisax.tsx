@@ -13,6 +13,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -65,9 +66,10 @@ const reqStatusColors: Record<ReqStatus, string> = {
 const RequirementsTab: React.FC = () => {
   const { t } = useTranslation('tisax');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
-  const canManage = user?.role === 'admin' || user?.role === 'assessor';
+  const canWrite = can('tisax', 'create', hasWriteAccess(user?.role));
+  const canManage = can('tisax', 'edit', user?.role === 'admin' || user?.role === 'assessor');
 
   const reqStatusLabels: Record<ReqStatus, string> = {
     open: t('reqStatus.open'),
@@ -360,8 +362,9 @@ const emptyForm = {
 export const Tisax: React.FC = () => {
   const { t } = useTranslation('tisax');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('tisax', 'create', hasWriteAccess(user?.role));
 
   const statusLabels: Record<TisaxStatus, string> = {
     preparation: t('status.preparation'),
