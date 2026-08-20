@@ -14,6 +14,7 @@ const { startReminderService } = require('./services/reminderService');
 const { runTaskAutomation } = require('./services/taskAutomationService');
 const { seedCatalog } = require('./services/catalogSeed');
 const cron = require('node-cron');
+const { withJobLock } = require('./utils/jobLock');
 const { Op } = require('sequelize');
 
 const compression = require('compression');
@@ -692,13 +693,11 @@ const start = async () => {
 
     // Run task automation on startup and then daily at 3:00 AM
     const { runTaskAutomation } = require('./services/taskAutomationService');
-    runTaskAutomation();
-    cron.schedule('0 3 * * *', async () => {
-      await runTaskAutomation();
-    });
+    withJobLock('task-automation', () => runTaskAutomation());
+    cron.schedule('0 3 * * *', () => withJobLock('task-automation', () => runTaskAutomation()));
 
     // Nightly CVE refresh: query NVD / Shodan for all active technical assets (02:30 AM)
-    cron.schedule('30 2 * * *', async () => {
+    cron.schedule('30 2 * * *', () => withJobLock('cve-refresh', async () => {
       try {
         const { Asset } = require('./models');
         const { fetchCVEsForAsset } = require('./services/cveService');
@@ -729,10 +728,10 @@ const start = async () => {
       } catch (e) {
         console.error('[CVE Cron] Fatal error:', e.message);
       }
-    });
+    }));
 
     // Daily audit log cleanup: remove entries older than configured retention period (default 15 months)
-    cron.schedule('0 2 * * *', async () => {
+    cron.schedule('0 2 * * *', () => withJobLock('auditlog-cleanup', async () => {
       try {
         const { getGeneral } = require('./services/settingsService');
         const { AuditLog } = require('./models');
@@ -745,10 +744,10 @@ const start = async () => {
       } catch (e) {
         console.error('[AuditLog] Cleanup failed:', e.message);
       }
-    });
+    }));
 
     // Daily API Token cleanup: delete expired tokens and send notifications (04:00 AM)
-    cron.schedule('0 4 * * *', async () => {
+    cron.schedule('0 4 * * *', () => withJobLock('token-cleanup', async () => {
       try {
         const { ApiToken } = require('./models');
         const { notify } = require('./services/notifyService');
@@ -777,7 +776,7 @@ const start = async () => {
       } catch (e) {
         console.error('[API Token Cron] Cleanup failed:', e.message);
       }
-    });
+    }));
 
     const server = app.listen(PORT, '0.0.0.0', () => console.log(`ISMS Backend running on port ${PORT}`));
     // Keep-alive must outlive the reverse proxy's idle timeout (nginx/Traefik

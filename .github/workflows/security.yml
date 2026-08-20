@@ -156,6 +156,7 @@ jobs:
           node scripts/test-mcp-gate.js
           node scripts/test-backup-export.js
           node scripts/test-query-filters.js
+          node scripts/test-job-lock.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

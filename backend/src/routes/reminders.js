@@ -2,7 +2,6 @@ const express = require('express');
 const { Reminder, Asset, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
-const { Op } = require('sequelize');
 const { auditFromReq } = require('../services/auditService');
 
 const router = express.Router();

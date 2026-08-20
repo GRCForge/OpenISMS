@@ -1,8 +1,8 @@
 const router = require('express').Router();
 const { heavyLimiter } = require('../middleware/rateLimiter');
 router.use(heavyLimiter);
-const { Op, fn, col, literal } = require('sequelize');
-const { sequelize, Asset, Assessment, Risk, Incident, Control, Task, Reminder, Kpi, KpiMeasurement } = require('../models');
+const { Op } = require('sequelize');
+const { Asset, Assessment, Risk, Incident, Control, Task, Reminder, Kpi, KpiMeasurement } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 
