@@ -8,7 +8,7 @@ const dns     = require('dns').promises;
 const http    = require('http');
 const https   = require('https');
 const { Op }  = require('sequelize');
-const { Asset, User, DiscoveredSoftware } = require('../models');
+const { Asset, User, DiscoveredSoftware, sequelize } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
 
 // ── Port → service map ────────────────────────────────────────────────────────
@@ -520,9 +520,15 @@ router.get('/staged', authenticate, requirePermission('discovery','access','admi
 router.post('/staged/:id/approve', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   const { id } = req.params;
   try {
-    const item = await DiscoveredSoftware.findByPk(id);
-    if (!item) return res.status(404).json({ error: 'Eintrag nicht gefunden' });
-    if (item.status === 'approved') return res.status(400).json({ error: 'Eintrag bereits freigegeben' });
+    // The whole approval is one transaction, and the staging row is locked for
+    // the duration. Two things went wrong without it: a failure between creating
+    // the asset and flipping the entry to 'approved' left an asset behind while
+    // the entry stayed pending, and two parallel approvals of the same entry both
+    // passed the status check below and created the asset twice.
+    const result = await sequelize.transaction(async (t) => {
+    const item = await DiscoveredSoftware.findByPk(id, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!item) return { status: 404, body: { error: 'Eintrag nicht gefunden' } };
+    if (item.status === 'approved') return { status: 400, body: { error: 'Eintrag bereits freigegeben' } };
 
     const isNetworkScan = item.source === 'network-scan';
     const searchWhere = isNetworkScan && item.ip
@@ -530,7 +536,8 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
       : { name: { [Op.like]: escapeLike(item.name) } };
 
     const existing = await Asset.findOne({
-      where: { ...searchWhere, status: { [Op.ne]: 'decommissioned' } }
+      where: { ...searchWhere, status: { [Op.ne]: 'decommissioned' } },
+      transaction: t,
     });
 
     // Namentlicher Abgleich: existiert bereits ein (nicht ausgemustertes)
@@ -566,18 +573,18 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
       if (newTags.length !== existingTags.length) patch.tags = newTags;
 
       if (Object.keys(patch).length) {
-        await existing.update(patch);
+        await existing.update(patch, { transaction: t });
       }
 
-      await item.update({ status: 'approved' });
-      return res.json({
+      await item.update({ status: 'approved' }, { transaction: t });
+      return { status: 200, body: {
         success: true,
         matched: true,
         asset_id: existing.id,
         message: patch.version
           ? `Bereits vorhandenes Asset "${existing.name}" auf Version ${patch.version} aktualisiert (kein Duplikat angelegt).`
           : `Entspricht bereits vorhandenem Asset "${existing.name}" — kein Duplikat angelegt.`
-      });
+      } };
     }
 
     {
@@ -619,12 +626,15 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
         tags,
         description,
         status:           'active',
-      });
+      }, { transaction: t });
     }
 
-    await item.update({ status: 'approved' });
+    await item.update({ status: 'approved' }, { transaction: t });
     const label = item.asset_type === 'hardware' ? 'Hardware-Asset' : 'Software-Asset';
-    res.json({ success: true, message: `${label} freigegeben und zu Assets hinzugefügt.` });
+    return { status: 200, body: { success: true, message: `${label} freigegeben und zu Assets hinzugefügt.` } };
+    });
+
+    res.status(result.status).json(result.body);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

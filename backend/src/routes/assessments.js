@@ -1,5 +1,5 @@
 const express = require('express');
-const { Assessment, Asset, User, Reminder, Task } = require('../models');
+const { Assessment, Asset, User, Reminder, Task, sequelize } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
@@ -52,8 +52,15 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
     const next_review_at = (acceptedUntilDate && acceptedUntilDate < oneYearOut)
       ? acceptedUntilDate : oneYearOut;
 
+    // One transaction for the whole switch-over. Without it a failure after the
+    // first statement left the asset with NO current assessment at all — its risk
+    // level vanishes from the dashboard and the compliance views until someone
+    // notices and re-assesses. The reminder and the follow-up task belong to the
+    // same unit: a reminder pointing at an assessment that was rolled back is
+    // worse than no reminder.
+    const assessment = await sequelize.transaction(async (t) => {
     // Mark previous assessments as not current
-    await Assessment.update({ is_current: false }, { where: { asset_id, is_current: true } });
+    await Assessment.update({ is_current: false }, { where: { asset_id, is_current: true }, transaction: t });
 
     const assessment = await Assessment.create({
       asset_id,
@@ -73,10 +80,10 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
       assessed_at,
       next_review_at,
       is_current: true
-    });
+    }, { transaction: t });
 
     // Remove previous pending reminders for this asset
-    await Reminder.destroy({ where: { asset_id, status: 'pending' } });
+    await Reminder.destroy({ where: { asset_id, status: 'pending' }, transaction: t });
 
     // Task + Reminder title differs for risk acceptance vs. regular review
     const isAcceptance = risk_treatment === 'accept' && acceptedUntilDate;
@@ -97,7 +104,7 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
       related_type: 'asset',
       related_id: asset.id,
       tags: taskTags,
-    });
+    }, { transaction: t });
 
     await Reminder.create({
       asset_id,
@@ -108,8 +115,14 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
       notes: isAcceptance
         ? `Risikoakzeptanz von „${accepted_by || 'unbekannt'}" gültig bis ${accepted_until}`
         : null,
+    }, { transaction: t });
+
+      return assessment;
     });
 
+    // Audit and task auto-close run after the commit: they describe something
+    // that happened, and an audit entry for a rolled-back assessment would be a
+    // lie in the very log an auditor reads.
     // Audit log — include risk-treatment details so acceptance decisions are traceable
     await auditFromReq(req, 'assess', 'assessment', assessment.id, asset.name, {
       asset_id, confidentiality, integrity, availability,
