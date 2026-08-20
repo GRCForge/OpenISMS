@@ -24,6 +24,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const ROUTES_DIR = path.join(ROOT, 'backend/src/routes');
 const SETTINGS = path.join(ROOT, 'backend/src/services/settingsService.js');
+const MCP_SERVER = path.join(ROOT, 'backend/src/mcp/server.js');
 
 // Endpoints that are deliberately not matrix-gated: authentication itself and
 // self-service on the caller's own records. Gating these on a matrix an admin can
@@ -88,9 +89,24 @@ function parseDirectChecks() {
   return out;
 }
 
+// MCP tools bind to the matrix through a `perm: ['module', 'action']` entry in
+// TOOL_GATES. A binding that names something the matrix does not define would
+// silently fall back to the tool's role list, which is exactly the drift this
+// script exists to catch.
+function parseMcpBindings() {
+  const src = fs.readFileSync(MCP_SERVER, 'utf8');
+  const gates = src.slice(0, src.indexOf('async function gateTool'));
+  const out = [];
+  const re = /'([a-z0-9_]+)':\s*\{\s*perm:\s*\['([a-z0-9_]+)',\s*'([a-z0-9_]+)'\]/g;
+  let m;
+  while ((m = re.exec(gates)) !== null) out.push({ tool: m[1], module: m[2], action: m[3] });
+  return out;
+}
+
 const matrix = parseMatrix();
 const calls = parseRoutes();
 const directChecks = parseDirectChecks();
+const mcpBindings = parseMcpBindings();
 const problems = [];
 const used = new Set();
 
@@ -110,6 +126,20 @@ for (const c of calls) {
     );
   }
 }
+
+for (const b of mcpBindings) {
+  if (!matrix[b.module]?.[b.action]) {
+    problems.push(`mcp/server.js: ${b.tool} bindet an ${b.module}.${b.action} — kein Eintrag in DEFAULT_PERMISSIONS`);
+  }
+}
+
+// Coverage between the two surfaces. Not a failure — some actions have no
+// sensible MCP equivalent (file uploads, restoring a backup) and some MCP tools
+// read across entities — but a gap that nobody chose is worth seeing.
+const restActions = new Set(calls.map(c => `${c.module}.${c.action}`));
+const mcpActions = new Set(mcpBindings.map(b => `${b.module}.${b.action}`));
+const restOnly = [...restActions].filter(a => !mcpActions.has(a)).sort();
+const mcpOnly = [...mcpActions].filter(a => !restActions.has(a)).sort();
 
 const unused = [];
 for (const [mod, actions] of Object.entries(matrix)) {
@@ -134,7 +164,9 @@ for (const file of fs.readdirSync(ROUTES_DIR).sort()) {
   }
 }
 
-console.log(`Permission-Check: ${calls.length} requirePermission-Aufrufe, ${directChecks.size} direkte can()-Prüfungen, ${Object.keys(matrix).length} Matrix-Module`);
+console.log(`Permission-Check: ${calls.length} requirePermission-Aufrufe, ${directChecks.size} direkte can()-Prüfungen, ${mcpBindings.length} MCP-Bindungen, ${Object.keys(matrix).length} Matrix-Module`);
+if (restOnly.length) console.log(`\nNur über REST, ohne MCP-Tool (${restOnly.length}): ${restOnly.join(', ')}`);
+if (mcpOnly.length) console.log(`\nNur über MCP, ohne REST-Route (${mcpOnly.length}): ${mcpOnly.join(', ')}`);
 if (unused.length) console.log(`\nMatrix-Einträge ohne Route (${unused.length}): ${unused.join(', ')}`);
 if (ungated.length) console.log(`\nEndpunkte ohne Matrix-Bezug (${ungated.length}):\n  ${ungated.join('\n  ')}`);
 if (problems.length) {

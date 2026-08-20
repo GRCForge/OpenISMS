@@ -360,13 +360,13 @@ const TOOL_GATES = {
   'isms_create_audit': { perm: ['compliance_audits', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_update_audit': { perm: ['compliance_audits', 'edit'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_delete_audit': { perm: ['compliance_audits', 'delete'], requiredRoles: ['admin'], needsWrite: true },
-  'isms_create_audit_finding': { perm: ['compliance_audits', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_audit_finding': { perm: ['compliance_audits', 'edit'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_delete_audit_finding': { perm: ['compliance_audits', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_create_audit_finding': { perm: ['compliance_audits', 'create_findings'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_audit_finding': { perm: ['compliance_audits', 'edit_findings'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_audit_finding': { perm: ['compliance_audits', 'delete_findings'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_create_kpi': { perm: ['compliance_kpis', 'create'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
   'isms_update_kpi': { perm: ['compliance_kpis', 'edit'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
   'isms_delete_kpi': { perm: ['compliance_kpis', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_record_kpi_measurement': { perm: ['compliance_kpis', 'create'], needsWrite: true },
+  'isms_record_kpi_measurement': { perm: ['compliance_kpis', 'measure'], needsWrite: true },
   // --- Settings & Admin ---
   'isms_set_feature_status': { perm: ['modules', 'edit'], requiredRoles: ['admin'] },
   'isms_get_settings': { perm: ['admin', 'settings'], requiredRoles: ['admin'] },
@@ -397,7 +397,7 @@ const TOOL_GATES = {
   'isms_list_pentest_findings': { perm: ['pentests', 'view'], moduleKey: 'pentest' },
   'isms_create_pentest_finding': { perm: ['pentests', 'create'], moduleKey: 'pentest', needsWrite: true },
   'isms_update_pentest_finding': { perm: ['pentests', 'edit'], moduleKey: 'pentest', needsWrite: true },
-  'isms_delete_pentest_finding': { perm: ['pentests', 'delete'], moduleKey: 'pentest', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_delete_pentest_finding': { perm: ['pentests', 'delete_findings'], moduleKey: 'pentest', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   // --- GDPR / DSGVO ---
   'isms_list_vvt_entries': { perm: ['vvt', 'view'], moduleKey: 'dsgvo' },
   'isms_get_vvt_entry': { perm: ['vvt', 'view_details'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
@@ -428,6 +428,7 @@ const TOOL_GATES = {
   'isms_delete_vendor_contact': { perm: ['vendors', 'contacts'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
   'isms_list_vendor_triage_runs': { perm: ['vendor_triage', 'view'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
   'isms_get_vendor_triage_run': { perm: ['vendor_triage', 'view'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_run_vendor_triage': { perm: ['vendor_triage', 'run'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
   'isms_get_triage_profiles': { perm: ['triage_profiles', 'view'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
   'isms_update_triage_profiles': { perm: ['triage_profiles', 'edit'], requiredRoles: ['admin'], needsWrite: true },
   // --- BCM ---
@@ -3641,6 +3642,55 @@ server.tool(
     });
     if (!run) return { content: [{ type: 'text', text: 'Triage run not found' }], isError: true };
     return { content: [{ type: 'text', text: JSON.stringify(run, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_run_vendor_triage',
+  'Start an AI contract analysis for a document already attached to a vendor. Runs asynchronously: '
+  + 'this returns the created run immediately with status "pending" — poll isms_get_vendor_triage_run for findings. '
+  + 'Consumes LLM budget, so it is gated on vendor_triage.run rather than on read access to the results.',
+  {
+    vendor_id: z.number().int().positive().describe('Vendor ID'),
+    document_id: z.number().int().positive().describe('ID of a document attached to THIS vendor'),
+    doc_type: z.string().optional().describe('Analysis profile key (see isms_get_triage_profiles); unknown values fall back to "other"'),
+  },
+  async ({ vendor_id, document_id, doc_type }, { mcpUser }) => {
+    const { VendorTriageRun, Vendor, Document } = getModels();
+
+    const vendor = await Vendor.findByPk(vendor_id);
+    if (!vendor) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+
+    // Scoped to the vendor on purpose: without the vendor_id in the lookup this
+    // would analyse any document in the installation by id.
+    const doc = await Document.findOne({ where: { id: document_id, vendor_id } });
+    if (!doc) return { content: [{ type: 'text', text: 'Document not found for this vendor' }], isError: true };
+
+    const { getProfiles } = require('../services/triageProfiles');
+    const profiles = await getProfiles();
+    const resolvedDocType = typeof doc_type === 'string' && Object.hasOwn(profiles, doc_type) ? doc_type : 'other';
+
+    const run = await VendorTriageRun.create({
+      vendor_id,
+      document_id: doc.id,
+      doc_type: resolvedDocType,
+      status: 'pending',
+      triggered_by_id: await getValidUserId(mcpUser),
+    });
+
+    await logAudit('create', 'vendor', vendor_id, vendor.name, {
+      action: 'triage_started', run_id: run.id, document: doc.original_name, via: 'mcp',
+    }, mcpUser);
+
+    // Same as the REST route: do not await, the analysis takes minutes.
+    const { runTriage } = require('../services/vendorTriageService');
+    runTriage(run.id).catch(err => console.error(`[Triage] MCP run ${run.id} failed:`, err.message));
+
+    return { content: [{ type: 'text', text: JSON.stringify({
+      run_id: run.id, vendor: vendor.name, document: doc.original_name,
+      doc_type: resolvedDocType, status: 'pending',
+      hint: 'Ergebnisse mit isms_get_vendor_triage_run abrufen, sobald der Status auf "done" steht.',
+    }, null, 2) }] };
   }
 );
 
