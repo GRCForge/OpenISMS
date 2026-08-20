@@ -365,6 +365,7 @@ export const Tisax: React.FC = () => {
   const { can } = usePermissions();
   const toast = useToast();
   const canWrite = can('tisax', 'create', hasWriteAccess(user?.role));
+  const canManage = can('tisax', 'delete', user?.role === 'admin' || user?.role === 'assessor');
 
   const statusLabels: Record<TisaxStatus, string> = {
     preparation: t('status.preparation'),
@@ -596,7 +597,7 @@ export const Tisax: React.FC = () => {
                           >
                             <Pencil size={14} />
                           </button>
-                          {(user?.role === 'admin' || user?.role === 'assessor') && (
+                          {canManage && (
                             <button
                               onClick={() => remove(i)}
                               className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"

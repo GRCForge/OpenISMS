@@ -32,6 +32,7 @@ export const Controls: React.FC = () => {
   const { isEnabled } = useModules();
   const { t } = useTranslation(['controls', 'common']);
   const canWrite = can('controls', 'create', hasWriteAccess(user?.role));
+  const canDelete = can('controls', 'delete', user?.role === 'admin');
 
   const fwLabels: Record<string, string> = {
     iso27001: t('common:frameworks.iso27001'),
@@ -150,13 +151,13 @@ export const Controls: React.FC = () => {
           <p className="text-gray-500 dark:text-slate-400 text-sm">{t('controls:subtitle', { count: controls.length })}</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          {user?.role === 'admin' && selectedIds.length > 0 && (
+          {canDelete && selectedIds.length > 0 && (
             <Button variant="danger" size="sm" onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-1 mr-2">
               <Trash2 size={14} />
               {t('bulkDeleteBtn', { count: selectedIds.length })}
             </Button>
           )}
-          {user?.role === 'admin' && <Button onClick={() => setCreateOpen(true)}><Plus size={16} />{t('new')}</Button>}
+          {canWrite && <Button onClick={() => setCreateOpen(true)}><Plus size={16} />{t('new')}</Button>}
         </div>
       </div>
 
@@ -209,7 +210,7 @@ export const Controls: React.FC = () => {
           <Table>
             <Thead>
               <tr>
-                {user?.role === 'admin' && (
+                {canDelete && (
                   <Th className="w-10">
                     {customControls.length > 0 && (
                       <input
@@ -243,7 +244,7 @@ export const Controls: React.FC = () => {
             <Tbody>
               {filtered.map(c => (
                 <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                  {user?.role === 'admin' && (
+                  {canDelete && (
                     <Td onClick={e => e.stopPropagation()} className="w-10">
                       {c.framework === 'custom' && (
                         <input
@@ -284,10 +285,10 @@ export const Controls: React.FC = () => {
                       {Object.entries(statusLabels).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
                   </Td>
-                  <Td>{user?.role === 'admin' && c.framework === 'custom' && <button onClick={() => removeCustom(c)} className="text-gray-300 hover:text-red-500"><Trash2 size={14} /></button>}</Td>
+                  <Td>{canDelete && c.framework === 'custom' && <button onClick={() => removeCustom(c)} className="text-gray-300 hover:text-red-500"><Trash2 size={14} /></button>}</Td>
                 </tr>
               ))}
-              {filtered.length === 0 && <tr><td colSpan={user?.role === 'admin' ? 7 : 6} className="px-4 py-10 text-center text-gray-400 dark:text-slate-500">{t('empty.noResults')}</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={canDelete ? 7 : 6} className="px-4 py-10 text-center text-gray-400 dark:text-slate-500">{t('empty.noResults')}</td></tr>}
             </Tbody>
           </Table>
         </CardBody>

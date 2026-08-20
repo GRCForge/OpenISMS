@@ -41,6 +41,7 @@ export const LegalRequirements: React.FC = () => {
   const { can } = usePermissions();
   const toast = useToast();
   const canWrite = can('legal_requirements', 'create', hasWriteAccess(user?.role));
+  const canDelete = can('legal_requirements', 'delete', user?.role === 'admin' || user?.role === 'assessor');
 
   const categoryLabels: Record<LegalRequirementCategory, string> = {
     data_protection: t('category.data_protection'),
@@ -201,7 +202,7 @@ export const LegalRequirements: React.FC = () => {
                       {canWrite && (
                         <>
                           <button onClick={() => openEdit(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14} /></button>
-                          {(user?.role === 'admin' || user?.role === 'assessor') && (
+                          {canDelete && (
                             <button onClick={() => remove(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                           )}
                         </>

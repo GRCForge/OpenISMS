@@ -59,6 +59,7 @@ export const AiAct: React.FC = () => {
   const { can } = usePermissions();
   const toast = useToast();
   const canWrite = can('ai_act', 'create', hasWriteAccess(user?.role));
+  const canDelete = can('ai_act', 'delete', user?.role === 'admin' || user?.role === 'assessor');
 
   const [items, setItems] = useState<AiActItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -375,7 +376,7 @@ export const AiAct: React.FC = () => {
                           >
                             <Pencil size={14} />
                           </button>
-                          {(user?.role === 'admin' || user?.role === 'assessor') && (
+                          {canDelete && (
                             <button
                               onClick={() => remove(i)}
                               className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
