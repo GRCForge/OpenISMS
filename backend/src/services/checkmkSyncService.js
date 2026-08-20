@@ -68,11 +68,14 @@ async function syncFromCheckmk({ cfg, dryRun = false }) {
   const runDate = new Date().toISOString().slice(0, 10);
   const now = new Date();
 
+  let serviceEnrichmentFailed = null;
   const [hosts, criticalServices] = await Promise.all([
     fetchHosts(cfg),
     // Ein fehlgeschlagener Service-Abruf darf den Host-Import nicht kippen —
-    // die Statusanreicherung ist Beiwerk, das Inventar ist der Zweck.
-    fetchServicesByState(cfg, 2).catch(() => []),
+    // die Statusanreicherung ist Beiwerk, das Inventar ist der Zweck. Der
+    // Fehler wird aber gemeldet: sonst ist "keine CRIT-Services" nicht von
+    // "Abruf kaputt" zu unterscheiden.
+    fetchServicesByState(cfg, 2).catch((e) => { serviceEnrichmentFailed = e.message; return []; }),
   ]);
 
   const criticalsByHost = new Map();
@@ -90,8 +93,25 @@ async function syncFromCheckmk({ cfg, dryRun = false }) {
     staging_updated: 0,
     skipped_ignored: 0,
     assets_missing: 0,
+    service_enrichment_failed: serviceEnrichmentFailed,
+    missing_check_skipped: false,
     details: [],
   };
+
+  // Beide Korrelationstabellen einmal laden statt zweimal pro Host zu fragen:
+  // bei einer Installation mit 500 Hosts sind das 1000 Einzelabfragen weniger.
+  const linkedAssets = await Asset.findAll({
+    where: { external_source: SOURCE, external_id: { [Op.ne]: null } },
+  });
+  const assetsByExternalId = new Map(linkedAssets.map((a) => [a.external_id, a]));
+
+  const stagedRows = await DiscoveredSoftware.findAll({
+    where: { source: SOURCE },
+    order: [['created_at', 'ASC']],
+  });
+  // ASC + Ueberschreiben laesst den juengsten Eintrag je Hostname gewinnen —
+  // dasselbe Ergebnis wie das vorherige findOne(order: created_at DESC).
+  const stagedByHostname = new Map(stagedRows.map((row) => [row.hostname, row]));
 
   const seenHostNames = new Set();
 
@@ -101,9 +121,7 @@ async function syncFromCheckmk({ cfg, dryRun = false }) {
     const criticalSummary = summariseCriticals(criticals);
 
     // Fall 1: bereits verknuepftes Asset
-    const linked = await Asset.findOne({
-      where: { external_source: SOURCE, external_id: host.name },
-    });
+    const linked = assetsByExternalId.get(host.name);
 
     if (linked) {
       const patch = {
@@ -124,10 +142,7 @@ async function syncFromCheckmk({ cfg, dryRun = false }) {
     }
 
     // Fall 2 / 3: Staging
-    const staged = await DiscoveredSoftware.findOne({
-      where: { source: SOURCE, hostname: host.name },
-      order: [['created_at', 'DESC']],
-    });
+    const staged = stagedByHostname.get(host.name);
 
     if (staged && staged.status === 'ignored') {
       // Eine bewusste Ablehnung wird nicht bei jedem Lauf neu vorgelegt.
@@ -173,11 +188,26 @@ async function syncFromCheckmk({ cfg, dryRun = false }) {
     });
   }
 
-  // Fall 4: verknuepfte Assets, die CheckMK nicht mehr meldet
-  const linkedAssets = await Asset.findAll({
-    where: { external_source: SOURCE, external_id: { [Op.ne]: null } },
-    attributes: ['id', 'name', 'external_id', 'external_status'],
-  });
+  // Fall 4: verknuepfte Assets, die CheckMK nicht mehr meldet.
+  //
+  // Nur wenn der Lauf ueberhaupt Hosts gesehen hat. Eine leere Host-Liste ist
+  // kein Beleg dafuer, dass es keine Hosts mehr gibt — sie entsteht genauso bei
+  // einem Automationsbenutzer ohne Host-Berechtigung (CheckMK liefert dann eine
+  // leere Collection statt eines 403) oder wenn ein Portal/Proxy mit HTTP 200
+  // etwas anderes als die erwartete Struktur zurueckgibt. Ohne diese Sperre
+  // wuerde ein einziger solcher Lauf das komplette verknuepfte Inventar auf
+  // MISSING setzen — ein Datenschaden, der von Hand zurueckgedreht werden muss.
+  if (!hosts.length) {
+    result.missing_check_skipped = true;
+    result.details.push({
+      action: 'missing_check_skipped',
+      note: 'CheckMK hat keinen einzigen Host geliefert. Der MISSING-Abgleich wurde uebersprungen, '
+        + 'damit ein leeres Ergebnis nicht das gesamte verknuepfte Inventar als vermisst markiert. '
+        + 'Berechtigungen des Automationsbenutzers und die Site-Angabe pruefen.',
+    });
+    return result;
+  }
+
   for (const asset of linkedAssets) {
     if (seenHostNames.has(asset.external_id)) continue;
     if (asset.external_status === 'MISSING') continue; // schon gemeldet
