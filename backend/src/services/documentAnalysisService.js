@@ -69,27 +69,31 @@ Also list concrete FINDINGS (specific gaps/violations) with a severity:
 
 For every coverage entry that is "met" or "partial", include the VERBATIM sentence/clause from the document that is your evidence for that status (so a human reviewer can immediately see what triggered it). For "missing", set quote to null (there is nothing to quote). For "na", set quote to null unless a specific clause explains why it doesn't apply.
 
+CRITICAL — "note" must be YOUR OBSERVATION about what the DOCUMENT actually says, in your own words. NEVER copy or paraphrase the requirement text itself back as the note — a note that just restates the requirement is worthless to the reader and will be rejected. Example of what NOT to do: requirement "It must be possible to find out when the document was approved" → BAD note "It must be possible to find out when the document was approved" (this is just the requirement repeated). GOOD note: "Approved 2024-03-01 by the Head of Compliance per the signature block on page 1."
+
+CRITICAL — every object in "findings" MUST have a real, specific, non-empty "title" (never the literal word "Finding" or any other placeholder) AND a real, specific, non-empty "description" naming the concrete problem. If you have nothing concrete and specific to report for a given gap, DO NOT add a finding object for it at all — an empty or placeholder finding is worse than no finding.
+
 Respond with this EXACT JSON structure:
 {
   "summary": "2-3 sentence executive summary and whether the document is sufficient",
   "coverage": [
-    { "ref": "<exact ref from the requirement list>", "status": "met|partial|missing|na", "note": "one-sentence justification", "quote": "Verbatim evidence text (max 200 chars), or null" }
+    { "ref": "<exact ref from the requirement list>", "status": "met|partial|missing|na", "note": "your own specific observation about the document, or null if status is missing", "quote": "Verbatim evidence text (max 200 chars), or null" }
   ],
   "findings": [
     {
       "finding_ref": "DOC-001",
       "severity": "critical|warning|gap",
-      "title": "Short title",
+      "title": "Specific, concrete short title — never the word 'Finding'",
       "framework": "GDPR|ISO27001|DORA|SLA|GENERAL",
       "control_ref": "e.g. GDPR Art. 28(3)(h)",
       "quote": "Verbatim problematic text (max 200 chars), or null if absence-based",
-      "description": "Why this is a problem",
+      "description": "Specific description of why this is a problem — never leave this empty",
       "remediation": "Concrete recommendation"
     }
   ]
 }
 
-Provide a coverage entry for EVERY requirement listed above, using the exact ref strings. Number finding_ref sequentially (DOC-001, DOC-002, …).`;
+Provide a coverage entry for EVERY requirement listed above, using the exact ref strings. Number finding_ref sequentially (DOC-001, DOC-002, …). Omit any finding you cannot describe concretely rather than submitting an empty one.`;
 }
 
 function buildUserPrompt(profile, text) {
@@ -145,6 +149,29 @@ function deriveRiskLevel(coverage, findings) {
   return 'low';
 }
 
+// A weak/small model's most common failure mode on this task isn't silence,
+// it's parroting the requirement text back as its own "note" (sometimes even
+// a DIFFERENT requirement's text — cross-contamination between entries). That
+// produces a coverage table that looks populated but adds zero information.
+// Word-overlap rather than exact-match, because the model may lightly reword
+// while copying (e.g. silently "fixing" a typo in the requirement text) —
+// exact string comparison would miss that.
+function normalizeForCompare(s) {
+  return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+function wordOverlapRatio(a, b) {
+  const setA = new Set(normalizeForCompare(a).split(' ').filter(Boolean));
+  const setB = new Set(normalizeForCompare(b).split(' ').filter(Boolean));
+  if (setA.size === 0 || setB.size === 0) return 0;
+  let common = 0;
+  for (const w of setA) if (setB.has(w)) common++;
+  return common / Math.min(setA.size, setB.size);
+}
+function isEchoOfAnyRequirement(note, requirements) {
+  if (!String(note || '').trim()) return false;
+  return (requirements || []).some(r => wordOverlapRatio(note, r.requirement) >= 0.8);
+}
+
 // Normalize the model's coverage array against the profile's requirement list so
 // every requirement is present exactly once with a valid status and the mandatory
 // flag comes from us, not the model.
@@ -157,18 +184,31 @@ function normalizeCoverage(requirements, modelCoverage) {
   return (requirements || []).map(req => {
     const m = byRef.get(req.ref) || {};
     const status = validStatus.has(m.status) ? m.status : 'missing';
+    const rawNote = m.note ? String(m.note).slice(0, 500) : null;
     return {
       ref: req.ref,
       requirement: req.requirement,
       mandatory: req.mandatory,
       status,
-      note: m.note ? String(m.note).slice(0, 500) : null,
+      note: rawNote && !isEchoOfAnyRequirement(rawNote, requirements) ? rawNote : null,
       // Verbatim evidence quote so a reviewer can see what triggered met/partial
       // (or, for missing/na, why the model concluded that) — highlighted in the
       // split-view text panel on click, same mechanism as finding quotes.
       quote: m.quote ? String(m.quote).slice(0, 1000) : null,
     };
   });
+}
+
+// Drops finding entries that carry no real information — a placeholder title
+// (the literal fallback "Finding" or empty) or a missing description means the
+// model emitted an empty stub rather than an actual finding. Displaying those
+// ("Gap — Finding", no description) is worse than omitting them.
+function isSubstantiveFinding(f) {
+  const title = String(f?.title || '').trim();
+  const description = String(f?.description || '').trim();
+  if (!title || title.toLowerCase() === 'finding') return false;
+  if (!description) return false;
+  return true;
 }
 
 async function runAnalysis(runId) {
@@ -208,19 +248,23 @@ async function runAnalysis(runId) {
     });
 
     const result = parseAnalysisResult(rawResult);
-    const findings = Array.isArray(result.findings) ? result.findings : [];
+    const rawFindings = Array.isArray(result.findings) ? result.findings : [];
+    const findings = rawFindings.filter(isSubstantiveFinding);
+    if (findings.length < rawFindings.length) {
+      console.warn(`[DocAnalysis] Run ${run.id}: dropped ${rawFindings.length - findings.length} empty/placeholder finding(s) from the model response`);
+    }
     const coverage = normalizeCoverage(profile.requirements, result.coverage);
 
     // A well-formed response either explains itself (summary) or backs its
-    // verdicts with notes/quotes/findings. If none of that is present, the
-    // model most likely returned a near-empty or malformed payload (e.g. it
-    // ran out of context on a long document) and normalizeCoverage() is just
-    // defaulting every requirement to "missing" — that is a failed analysis,
-    // not a real "everything is missing" finding, and must not be persisted
-    // as if it were one.
+    // verdicts with real notes/quotes/findings — evaluated AFTER stripping
+    // requirement-echo notes and empty finding stubs above, so a response that
+    // only looks populated (e.g. every note is just the requirement repeated
+    // back) is caught here too, not just a fully empty one. This is a common
+    // failure mode of small/weak models: technically valid JSON, zero actual
+    // content.
     const hasSubstance = !!result.summary || findings.length > 0 || coverage.some(c => c.note || c.quote);
     if (!hasSubstance) {
-      throw new Error('Die KI-Antwort enthielt keine verwertbare Bewertung (kein Summary, keine Findings, keine Begründung zu den Anforderungen) — vermutlich hat das Modell das Dokument nicht vollständig verarbeitet (z. B. Kontextfenster zu klein). Bitte Modell-/Kontextkonfiguration prüfen oder erneut versuchen.');
+      throw new Error('Die KI-Antwort enthielt keine verwertbare Bewertung (kein Summary, keine echten Findings, keine dokumentbezogene Begründung zu den Anforderungen — nur leere oder den Anforderungstext wiederholende Angaben) — vermutlich ist das eingesetzte Modell für diese Aufgabe/Dokumentgröße zu schwach oder das Kontextfenster zu klein. Bitte Modellkonfiguration prüfen oder erneut versuchen.');
     }
 
     const findingRows = findings.map((f, i) => ({
