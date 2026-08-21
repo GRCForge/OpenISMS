@@ -14,6 +14,7 @@ import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -45,7 +46,8 @@ export const Tasks: React.FC = () => {
   const { t } = useTranslation(['tasks', 'common']);
   const dateFnsLocale = i18n.language === 'de' ? de : enUS;
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const { can } = usePermissions();
+  const canWrite = can('tasks', 'create', hasWriteAccess(user?.role));
   const toast = useToast();
 
   const statusLabels: Record<TaskStatus, string> = {

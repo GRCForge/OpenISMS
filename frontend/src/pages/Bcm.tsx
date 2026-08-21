@@ -13,6 +13,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -111,8 +112,9 @@ const emptyForm = {
 export const Bcm: React.FC = () => {
   const { t } = useTranslation('bcm');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('bcm', 'create', hasWriteAccess(user?.role));
 
   const criticalityLabels = useMemo<Record<BcmCriticality, string>>(() => ({
     critical: t('criticality.critical'),
@@ -139,7 +141,7 @@ export const Bcm: React.FC = () => {
     passed_with_findings: t('exerciseResult.passed_with_findings'),
     failed: t('exerciseResult.failed'),
   }), [t]);
-  const canDelete = user?.role === 'admin' || user?.role === 'assessor';
+  const canDelete = can('bcm', 'delete', user?.role === 'admin' || user?.role === 'assessor');
 
   const [tab, setTab] = useState<'processes' | 'exercises'>('processes');
   const [items, setItems] = useState<BcmItem[]>([]);
@@ -443,7 +445,7 @@ export const Bcm: React.FC = () => {
                           >
                             <Pencil size={14} />
                           </button>
-                          {(user?.role === 'admin' || user?.role === 'assessor') && (
+                          {canDelete && (
                             <button
                               onClick={() => remove(i)}
                               className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"

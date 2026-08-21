@@ -14,6 +14,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -37,8 +38,10 @@ export const LegalRequirements: React.FC = () => {
   const { t, i18n } = useTranslation('legalrequirements');
   const dateFnsLocale = i18n.language === 'de' ? de : enUS;
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('legal_requirements', 'create', hasWriteAccess(user?.role));
+  const canDelete = can('legal_requirements', 'delete', user?.role === 'admin' || user?.role === 'assessor');
 
   const categoryLabels: Record<LegalRequirementCategory, string> = {
     data_protection: t('category.data_protection'),
@@ -199,7 +202,7 @@ export const LegalRequirements: React.FC = () => {
                       {canWrite && (
                         <>
                           <button onClick={() => openEdit(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14} /></button>
-                          {(user?.role === 'admin' || user?.role === 'assessor') && (
+                          {canDelete && (
                             <button onClick={() => remove(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                           )}
                         </>

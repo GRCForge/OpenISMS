@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Nis2Measure, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/nis2Catalog');
 
@@ -13,7 +14,7 @@ router.get('/', authenticate, requirePermission('nis2','view','admin','owner','a
       order: [['article_ref', 'ASC']],
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'nis2'); }
 });
 
 router.post('/seed', authenticate, requirePermission('nis2','seed','admin','assessor'), async (req, res) => {
@@ -23,7 +24,7 @@ router.post('/seed', authenticate, requirePermission('nis2','seed','admin','asse
     await Nis2Measure.bulkCreate(catalog);
     await auditFromReq(req, 'seed', 'nis2_measure', null, 'NIS-2-Katalog', { count: catalog.length });
     res.status(201).json({ ok: true, count: catalog.length });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'nis2'); }
 });
 
 router.put('/:id', authenticate, requirePermission('nis2','edit','admin','assessor','dpo'), async (req, res) => {
@@ -36,7 +37,7 @@ router.put('/:id', authenticate, requirePermission('nis2','edit','admin','assess
     await item.update({ implementation_status, responsible_id, evidence, deadline, notes, last_review_date });
     await auditFromReq(req, 'update', 'nis2_measure', item.id, item.article_ref, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'nis2'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('nis2','delete','admin','assessor'), async (req, res) => {
@@ -48,7 +49,7 @@ router.delete('/:id', authenticate, requirePermission('nis2','delete','admin','a
     await auditFromReq(req, 'delete', 'nis2_measure', item.id, item.article_ref, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'nis2'); }
 });
 
 module.exports = router;

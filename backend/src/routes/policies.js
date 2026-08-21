@@ -7,8 +7,8 @@ const path = require('path');
 const fs = require('fs');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
-const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, PolicyAcknowledgment } = require('../models');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, PolicyAcknowledgment, sequelize } = require('../models');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 
 // Rate limiting for policy downloads to mitigate DoS (CWE-770)
@@ -251,7 +251,7 @@ const verifyFileHash = async (filePath, storedHash) => {
 };
 
 // Download old version
-router.get('/:id/versions/:versionId/download', authenticate, downloadLimiter, async (req, res) => {
+router.get('/:id/versions/:versionId/download', authenticate, requirePermission('policies','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), downloadLimiter, async (req, res) => {
   try {
     const version = await PolicyVersion.findOne({ where: { id: req.params.versionId, policy_id: req.params.id } });
     if (!version) return res.status(404).json({ error: 'Version nicht gefunden' });
@@ -273,7 +273,7 @@ router.get('/:id/versions/:versionId/download', authenticate, downloadLimiter, a
 });
 
 // Download policy file
-router.get('/:id/download', authenticate, downloadLimiter, async (req, res) => {
+router.get('/:id/download', authenticate, requirePermission('policies','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), downloadLimiter, async (req, res) => {
   try {
     const policy = await Policy.findByPk(req.params.id);
     if (!policy || !policy.file_url) return res.status(404).json({ error: 'Datei nicht gefunden' });
@@ -300,18 +300,29 @@ router.delete('/:id', authenticate, requirePermission('policies','delete','admin
     const policy = await Policy.findByPk(req.params.id);
     if (!policy) return res.status(404).json({ error: 'Not found' });
     
-    const filePath = safePolicyPath(policy.file_url);
-    if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    
-    // Also delete old versions
+    // Order matters: the database rows go first, in one transaction, and the
+    // files only after it commits. The other way round — which is what this did —
+    // meant a failing DELETE left the policy in the library with its file already
+    // gone from disk, so every download from then on 404s. A file left behind
+    // after a successful delete is untidy; a policy row pointing at nothing is
+    // broken, and in an ISMS it is broken evidence.
     const versions = await PolicyVersion.findAll({ where: { policy_id: policy.id } });
-    versions.forEach(v => {
-      const vPath = safePolicyPath(v.file_url);
-      if (vPath && fs.existsSync(vPath)) fs.unlinkSync(vPath);
+
+    await sequelize.transaction(async (t) => {
+      await PolicyVersion.destroy({ where: { policy_id: policy.id }, transaction: t });
+      await policy.destroy({ transaction: t });
     });
-    await PolicyVersion.destroy({ where: { policy_id: policy.id } });
-    
-    await policy.destroy();
+
+    for (const url of [policy.file_url, ...versions.map(v => v.file_url)]) {
+      const p = safePolicyPath(url);
+      try {
+        if (p && fs.existsSync(p)) fs.unlinkSync(p);
+      } catch (err) {
+        // The record is already gone; a stuck file is a housekeeping matter, not
+        // a reason to report the deletion as failed.
+        console.error('[Policies] Datei konnte nicht entfernt werden:', p, err.message);
+      }
+    }
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
@@ -339,7 +350,7 @@ router.post('/:id/acknowledge', authenticate, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
-router.get('/:id/acknowledgments', authenticate, requireRole('admin', 'assessor', 'dpo'), async (req, res) => {
+router.get('/:id/acknowledgments', authenticate, requirePermission('policies','acknowledgments','admin','assessor','dpo'), async (req, res) => {
   try {
     const acks = await PolicyAcknowledgment.findAll({
       where: { policy_id: req.params.id },

@@ -1,7 +1,9 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Risk, Asset, User, Document, Threat, Control, VvtEntry, Incident, Task } = require('../models');
-const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
+const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { computeLevel, scaleInfo } = require('../services/riskScale');
@@ -36,13 +38,13 @@ router.get('/', authenticate, requirePermission('risks','view','admin','owner','
   try {
     const { status, treatment, level, search } = req.query;
     const where = {};
-    if (status) where.status = status;
-    if (treatment) where.treatment = treatment;
-    if (level) where.inherent_level = level;
+    setFilter(where, 'status', status);
+    setFilter(where, 'treatment', treatment);
+    setFilter(where, 'inherent_level', level);
     if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
     const risks = await Risk.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(risks);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'risks'); }
 });
 
 router.get('/:id', authenticate, requirePermission('risks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -59,7 +61,7 @@ router.get('/:id', authenticate, requirePermission('risks','view','admin','owner
       return res.status(403).json({ error: 'Forbidden' });
     }
     res.json(risk);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'risks'); }
 });
 
 const buildFields = (body) => {
@@ -166,7 +168,7 @@ router.put('/:id', authenticate, requirePermission('risks','edit','admin','owner
 });
 
 // Risk-Owner Sign-off (NIS-2 Management-Haftung): digitale Freigabe mit Zeitstempel
-router.patch('/:id/signoff', authenticate, requireRole('admin', 'assessor', 'owner'), async (req, res) => {
+router.patch('/:id/signoff', authenticate, requirePermission('risks','sign_off','admin','assessor','owner'), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
@@ -184,7 +186,7 @@ router.patch('/:id/signoff', authenticate, requireRole('admin', 'assessor', 'own
 });
 
 // Sign-off zuruecknehmen
-router.patch('/:id/revoke', authenticate, requireRole('admin', 'assessor', 'owner'), async (req, res) => {
+router.patch('/:id/revoke', authenticate, requirePermission('risks','sign_off','admin','assessor','owner'), async (req, res) => {
   try {
     const risk = await Risk.findByPk(req.params.id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
@@ -206,7 +208,7 @@ router.delete('/:id', authenticate, requirePermission('risks','delete','admin'),
     await risk.destroy();
     await auditFromReq(req, 'delete', 'risk', risk.id, risk.title, {});
     res.json({ message: 'Risk deleted' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'risks'); }
 });
 
 module.exports = router;

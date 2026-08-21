@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { Iso27001Control, Nis2Measure, BsiRequirement, C5Criterion } = require('../models');
 
 // Lazy-load to avoid startup crash if catalog isn't generated yet
@@ -39,7 +40,7 @@ const resolveTitle = (framework, ref) => {
 
 // GET /api/mappings?framework=iso27001&ref=5.1
 // Returns all related controls from other frameworks for a given control
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('mappings','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { framework, ref } = req.query;
     if (!framework || !ref) return res.status(400).json({ error: 'framework und ref erforderlich' });
@@ -68,19 +69,19 @@ router.get('/', authenticate, async (req, res) => {
     }));
     res.json({ framework, ref, related: enriched });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'mappings');
   }
 });
 
 // GET /api/mappings/stats
 // Returns mapping statistics
-router.get('/stats', authenticate, (req, res) => {
+router.get('/stats', authenticate, requirePermission('mappings','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), (req, res) => {
   res.json(getCatalog().stats());
 });
 
 // GET /api/mappings/overview?source=iso27001
 // Returns all controls of a framework with their mapping counts and implementation status
-router.get('/overview', authenticate, async (req, res) => {
+router.get('/overview', authenticate, requirePermission('mappings','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   const source = req.query.source || 'iso27001';
   const { iso27001Catalog, nis2Catalog, bsiCatalog, c5Catalog } = getTitleCatalogs();
 
@@ -127,7 +128,7 @@ router.get('/overview', authenticate, async (req, res) => {
 
     res.json({ source, items: result });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'mappings');
   }
 });
 

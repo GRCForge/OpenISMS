@@ -904,7 +904,11 @@ const BackupRestore: React.FC = () => {
     try {
       const fd = new FormData(); fd.append('backup', selectedFile);
       const r = await api.post('/admin/backup/restore', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setResult({ ok: true, text: t('backup.restore_success', { tables: r.data.tables_restored, files: r.data.files_restored }) });
+      // The backend reports tables it left untouched because the backup did not
+      // contain them — the database then holds a mix, which the operator has to
+      // see rather than discover later.
+      const restored = t('backup.restore_success', { tables: r.data.tables_restored, files: r.data.files_restored });
+      setResult({ ok: true, text: r.data.warning ? `${restored} ${r.data.warning}` : restored });
       setSelectedFile(null); setPreviewMeta(null);
       api.get('/admin/backup/info').then(r2 => setInfo(r2.data)).catch(() => {});
     } catch (e: any) {

@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -145,9 +146,10 @@ const emptyForm = {
 export const Dora: React.FC = () => {
   const { t } = useTranslation('dora');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
-  const canDelete = user?.role === 'admin' || user?.role === 'assessor';
+  const canWrite = can('dora', 'create', hasWriteAccess(user?.role));
+  const canDelete = can('dora', 'delete', user?.role === 'admin' || user?.role === 'assessor');
 
   const [tab, setTab] = useState<'register' | 'tests'>('register');
   const [items, setItems] = useState<DoraItem[]>([]);
@@ -439,7 +441,7 @@ export const Dora: React.FC = () => {
                           >
                             <Pencil size={14} />
                           </button>
-                          {(user?.role === 'admin' || user?.role === 'assessor') && (
+                          {canDelete && (
                             <button
                               onClick={() => remove(i)}
                               className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"

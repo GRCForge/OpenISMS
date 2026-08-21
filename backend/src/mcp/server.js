@@ -115,7 +115,7 @@ async function mcpAuth(req, res, next) {
     const tokenBuf  = Buffer.from(token,  'utf8');
     const secretBuf = Buffer.from(secret, 'utf8');
     if (tokenBuf.length === secretBuf.length && timingSafeEqual(tokenBuf, secretBuf)) {
-      req.mcpUser = { id: 0, name: 'MCP Client', role: 'admin' };
+      req.mcpUser = { id: 0, name: 'MCP Client', role: 'admin', custom_role_id: null };
       req.auth = req.mcpUser;
       req._mcpUser = req.mcpUser;
       return next();
@@ -163,7 +163,7 @@ async function mcpAuth(req, res, next) {
         return res.status(401).json({ error: 'MCP: User not found or inactive' });
       }
 
-      req.mcpUser = { id: user.id, name: user.name, role: user.role };
+      req.mcpUser = { id: user.id, name: user.name, role: user.role, custom_role_id: user.custom_role_id };
       req.auth = req.mcpUser;
       req._mcpUser = req.mcpUser;
       return next();
@@ -190,7 +190,7 @@ async function mcpAuth(req, res, next) {
       res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="User inactive"`);
       return res.status(401).json({ error: 'MCP: User not found or inactive' });
     }
-    req.mcpUser = { id: user.id, name: user.name, role: user.role };
+    req.mcpUser = { id: user.id, name: user.name, role: user.role, custom_role_id: user.custom_role_id };
     req.auth = req.mcpUser;
     req._mcpUser = req.mcpUser;
     return next();
@@ -219,7 +219,7 @@ async function mcpAuth(req, res, next) {
           }
         }
         if (user && user.active) {
-          req.mcpUser = { id: user.id, name: user.name, role: user.role };
+          req.mcpUser = { id: user.id, name: user.name, role: user.role, custom_role_id: user.custom_role_id };
           req.auth = req.mcpUser;
           req._mcpUser = req.mcpUser;
           return next();
@@ -275,213 +275,234 @@ async function getValidUserId(mcpUser) {
 
 const TOOL_GATES = {
   // --- Assets & CVEs ---
-  'isms_create_asset': { needsWrite: true },
-  'isms_update_asset': { needsWrite: true },
-  'isms_delete_asset': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_refresh_asset_cves': { needsWrite: true },
-  'isms_refresh_all_asset_cves': { requiredRoles: ['admin', 'it-staff'] },
-  'isms_suggest_cpe': { moduleKey: 'discovery' },
-  'isms_resolve_cpe': { moduleKey: 'discovery', needsWrite: true },
-  'isms_create_assessment': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_create_asset': { perm: ['assets', 'create'], needsWrite: true },
+  'isms_update_asset': { perm: ['assets', 'edit_basics'], needsWrite: true },
+  'isms_delete_asset': { perm: ['assets', 'delete'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_refresh_asset_cves': { perm: ['assets', 'cve'], needsWrite: true },
+  'isms_refresh_all_asset_cves': { perm: ['assets', 'cve'], requiredRoles: ['admin', 'it-staff'] },
+  'isms_suggest_cpe': { perm: ['assets', 'cve'], moduleKey: 'discovery' },
+  'isms_resolve_cpe': { perm: ['assets', 'cve'], moduleKey: 'discovery', needsWrite: true },
+  'isms_create_assessment': { perm: ['assessments', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Drittsystem-Anbindungen ---
   // Lesen darf, wer das Inventar bewertet; ausloesen nur Admin/IT. Die
   // Konfiguration inkl. Secret bleibt der Weboberflaeche vorbehalten und ist
   // bewusst NICHT ueber MCP aenderbar.
-  'isms_checkmk_status': { requiredRoles: ['admin', 'it-staff', 'assessor'] },
-  'isms_checkmk_hosts':  { requiredRoles: ['admin', 'it-staff', 'assessor'] },
-  'isms_checkmk_sync':   { requiredRoles: ['admin', 'it-staff'], needsWrite: true },
-
+  'isms_checkmk_status': { perm: ['integrations', 'view'], requiredRoles: ['admin', 'it-staff', 'assessor'] },
+  'isms_checkmk_hosts': { perm: ['integrations', 'view'], requiredRoles: ['admin', 'it-staff', 'assessor'] },
+  'isms_checkmk_sync': { perm: ['integrations', 'sync'], requiredRoles: ['admin', 'it-staff'], needsWrite: true },
   // --- Risks & Threats ---
-  'isms_create_risk': { needsWrite: true },
-  'isms_update_risk': { needsWrite: true },
-  'isms_signoff_risk': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
-  'isms_revoke_risk_signoff': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
-  'isms_delete_risk': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_create_threat': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_create_risk': { perm: ['risks', 'create'], needsWrite: true },
+  'isms_update_risk': { perm: ['risks', 'edit'], needsWrite: true },
+  'isms_signoff_risk': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_revoke_risk_signoff': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_delete_risk': { perm: ['risks', 'delete'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_create_threat': { perm: ['threats', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Management Reviews ---
-  'isms_create_review_signoff': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_create_review_signoff': { perm: ['review', 'sign_off'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Incidents ---
-  'isms_create_incident': { needsWrite: true },
-  'isms_update_incident_status': { needsWrite: true },
-  'isms_update_incident': { needsWrite: true },
-  'isms_delete_incident': { requiredRoles: ['admin'], needsWrite: true },
-
+  'isms_create_incident': { perm: ['incidents', 'create'], needsWrite: true },
+  'isms_update_incident_status': { perm: ['incidents', 'edit'], needsWrite: true },
+  'isms_update_incident': { perm: ['incidents', 'edit'], needsWrite: true },
+  'isms_delete_incident': { perm: ['incidents', 'delete'], requiredRoles: ['admin'], needsWrite: true },
   // --- Tasks & Reminders ---
-  'isms_create_task': { needsWrite: true },
-  'isms_update_task': { needsWrite: true },
-  'isms_complete_task': { needsWrite: true },
-  'isms_delete_task': { needsWrite: true },
-  'isms_acknowledge_reminder': { needsWrite: true },
-  'isms_dismiss_reminder': { needsWrite: true },
-
+  'isms_create_task': { perm: ['tasks', 'create'], needsWrite: true },
+  'isms_update_task': { perm: ['tasks', 'edit'], needsWrite: true },
+  'isms_complete_task': { perm: ['tasks', 'edit'], needsWrite: true },
+  'isms_delete_task': { perm: ['tasks', 'delete'], needsWrite: true },
+  'isms_acknowledge_reminder': { perm: ['reminders', 'acknowledge'], needsWrite: true },
+  'isms_dismiss_reminder': { perm: ['reminders', 'acknowledge'], needsWrite: true },
   // --- Controls ---
-  'isms_create_control': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_control_status': { needsWrite: true },
-  'isms_update_control': { needsWrite: true },
-  'isms_delete_control': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_create_control': { perm: ['controls', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_control_status': { perm: ['controls', 'edit'], needsWrite: true },
+  'isms_update_control': { perm: ['controls', 'edit'], needsWrite: true },
+  'isms_delete_control': { perm: ['controls', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Compliance Catalogs ---
-  'isms_list_iso27001_controls': { moduleKey: 'iso27001' },
-  'isms_update_iso27001_control': { moduleKey: 'iso27001', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
-  'isms_list_bsi_requirements': { moduleKey: 'bsi_grundschutz' },
-  'isms_update_bsi_requirement': { moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
-  'isms_list_nis2_measures': { moduleKey: 'nis2' },
-  'isms_update_nis2_measure': { moduleKey: 'nis2', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_list_c5_criteria': { moduleKey: 'c5' },
-  'isms_update_c5_criterion': { moduleKey: 'c5', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
-  'isms_list_tisax_requirements': { moduleKey: 'tisax' },
-  'isms_update_tisax_requirement': { moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_list_tisax_assessments': { moduleKey: 'tisax' },
-  'isms_create_tisax_assessment': { moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_update_tisax_assessment': { moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_delete_tisax_assessment': { moduleKey: 'tisax', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_list_iso27001_controls': { perm: ['iso27001', 'view'], moduleKey: 'iso27001' },
+  'isms_update_iso27001_control': { perm: ['iso27001', 'edit'], moduleKey: 'iso27001', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_list_bsi_requirements': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  'isms_update_bsi_requirement': { perm: ['bsi_grundschutz', 'edit'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_list_nis2_measures': { perm: ['nis2', 'view'], moduleKey: 'nis2' },
+  'isms_update_nis2_measure': { perm: ['nis2', 'edit'], moduleKey: 'nis2', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_list_c5_criteria': { perm: ['c5', 'view'], moduleKey: 'c5' },
+  'isms_update_c5_criterion': { perm: ['c5', 'edit'], moduleKey: 'c5', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_list_tisax_requirements': { perm: ['tisax', 'view'], moduleKey: 'tisax' },
+  'isms_update_tisax_requirement': { perm: ['tisax', 'edit'], moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_list_tisax_assessments': { perm: ['tisax', 'view'], moduleKey: 'tisax' },
+  'isms_create_tisax_assessment': { perm: ['tisax', 'create'], moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_tisax_assessment': { perm: ['tisax', 'edit'], moduleKey: 'tisax', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_tisax_assessment': { perm: ['tisax', 'delete'], moduleKey: 'tisax', requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Trainings ---
-  'isms_create_training_course': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_update_training_course': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_delete_training_course': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_record_user_training': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_update_user_training': { requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_delete_user_training': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_create_training_course': { perm: ['compliance_trainings', 'create'], requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_training_course': { perm: ['compliance_trainings', 'edit'], requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_training_course': { perm: ['compliance_trainings', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_record_user_training': { perm: ['compliance_trainings', 'create'], requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_user_training': { perm: ['compliance_trainings', 'edit'], requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_user_training': { perm: ['compliance_trainings', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Audit Logs ---
-  'isms_list_audit_logs': { requiredRoles: ['admin', 'assessor'] },
-  'isms_verify_audit_logs': { requiredRoles: ['admin'] },
-
+  'isms_list_audit_logs': { perm: ['auditlog', 'view'], requiredRoles: ['admin', 'assessor'] },
+  'isms_verify_audit_logs': { perm: ['auditlog', 'verify'], requiredRoles: ['admin'] },
   // --- Legal Requirements ---
-  'isms_create_legal_requirement': { needsWrite: true },
-  'isms_update_legal_requirement': { needsWrite: true },
-  'isms_delete_legal_requirement': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_create_legal_requirement': { perm: ['legal_requirements', 'create'], needsWrite: true },
+  'isms_update_legal_requirement': { perm: ['legal_requirements', 'edit'], needsWrite: true },
+  'isms_delete_legal_requirement': { perm: ['legal_requirements', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- EU AI Act ---
-  'isms_list_ai_systems': { moduleKey: 'ai_act' },
-  'isms_create_ai_system': { moduleKey: 'ai_act', needsWrite: true },
-  'isms_update_ai_system': { moduleKey: 'ai_act', needsWrite: true },
-  'isms_delete_ai_system': { moduleKey: 'ai_act', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_list_ai_systems': { perm: ['ai_act', 'view'], moduleKey: 'ai_act' },
+  'isms_create_ai_system': { perm: ['ai_act', 'create'], moduleKey: 'ai_act', needsWrite: true },
+  'isms_update_ai_system': { perm: ['ai_act', 'edit'], moduleKey: 'ai_act', needsWrite: true },
+  'isms_delete_ai_system': { perm: ['ai_act', 'delete'], moduleKey: 'ai_act', requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Policies & Templates ---
-  'isms_create_policy': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
-  'isms_update_policy': { requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
-  'isms_delete_policy': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_create_policy': { perm: ['policies', 'create'], requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_update_policy': { perm: ['policies', 'edit'], requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  'isms_delete_policy': { perm: ['policies', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   'isms_acknowledge_policy': { needsWrite: true },
-  'isms_delete_template': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_delete_template': { perm: ['templates', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Audits, CAPA & KPIs ---
-  'isms_create_audit': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_audit': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_delete_audit': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_create_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_delete_audit_finding': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_create_kpi': { requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_update_kpi': { requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_delete_kpi': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_record_kpi_measurement': { needsWrite: true },
-
+  'isms_create_audit': { perm: ['compliance_audits', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_audit': { perm: ['compliance_audits', 'edit'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_audit': { perm: ['compliance_audits', 'delete'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_create_audit_finding': { perm: ['compliance_audits', 'create_findings'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_audit_finding': { perm: ['compliance_audits', 'edit_findings'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_audit_finding': { perm: ['compliance_audits', 'delete_findings'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_create_kpi': { perm: ['compliance_kpis', 'create'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_kpi': { perm: ['compliance_kpis', 'edit'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_kpi': { perm: ['compliance_kpis', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_record_kpi_measurement': { perm: ['compliance_kpis', 'measure'], needsWrite: true },
   // --- Settings & Admin ---
-  'isms_set_feature_status': { requiredRoles: ['admin'] },
-  'isms_get_settings': { requiredRoles: ['admin'] },
-  'isms_update_settings': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_get_permissions': { requiredRoles: ['admin'] },
-  'isms_update_permissions': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_list_custom_roles': { requiredRoles: ['admin'] },
-  'isms_create_custom_role': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_update_custom_role': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_delete_custom_role': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_run_automation': { requiredRoles: ['admin'], needsWrite: true },
-
+  'isms_set_feature_status': { perm: ['modules', 'edit'], requiredRoles: ['admin'] },
+  'isms_get_settings': { perm: ['admin', 'settings'], requiredRoles: ['admin'] },
+  'isms_update_settings': { perm: ['admin', 'settings'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_get_permissions': { perm: ['admin', 'permissions'], requiredRoles: ['admin'] },
+  'isms_update_permissions': { perm: ['admin', 'permissions'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_list_custom_roles': { perm: ['admin', 'roles'], requiredRoles: ['admin'] },
+  'isms_create_custom_role': { perm: ['admin', 'roles'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_update_custom_role': { perm: ['admin', 'roles'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_delete_custom_role': { perm: ['admin', 'roles'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_run_automation': { perm: ['admin', 'maintenance'], requiredRoles: ['admin'], needsWrite: true },
   // --- Users, Groups & Tokens ---
-  'isms_create_user': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_update_user': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_delete_user': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_create_group': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_update_group': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_delete_group': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_add_group_member': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_remove_group_member': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_create_api_token': { needsWrite: true },
-  'isms_revoke_api_token': { needsWrite: true },
-
+  'isms_create_user': { perm: ['users', 'create'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_update_user': { perm: ['users', 'edit'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_delete_user': { perm: ['users', 'delete'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_create_group': { perm: ['groups', 'manage'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_update_group': { perm: ['groups', 'manage'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_delete_group': { perm: ['groups', 'manage'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_add_group_member': { perm: ['groups', 'manage'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_remove_group_member': { perm: ['groups', 'manage'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_create_api_token': { perm: ['tokens', 'create'], needsWrite: true },
+  'isms_revoke_api_token': { perm: ['tokens', 'delete'], needsWrite: true },
   // --- Pentests ---
-  'isms_list_pentests': { moduleKey: 'pentest' },
-  'isms_create_pentest': { moduleKey: 'pentest', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_pentest': { moduleKey: 'pentest', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_delete_pentest': { moduleKey: 'pentest', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_list_pentest_findings': { moduleKey: 'pentest' },
-  'isms_create_pentest_finding': { moduleKey: 'pentest', needsWrite: true },
-  'isms_update_pentest_finding': { moduleKey: 'pentest', needsWrite: true },
-  'isms_delete_pentest_finding': { moduleKey: 'pentest', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
-
+  'isms_list_pentests': { perm: ['pentests', 'view'], moduleKey: 'pentest' },
+  'isms_create_pentest': { perm: ['pentests', 'create'], moduleKey: 'pentest', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_pentest': { perm: ['pentests', 'edit'], moduleKey: 'pentest', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_pentest': { perm: ['pentests', 'delete'], moduleKey: 'pentest', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_list_pentest_findings': { perm: ['pentests', 'view'], moduleKey: 'pentest' },
+  'isms_create_pentest_finding': { perm: ['pentests', 'create'], moduleKey: 'pentest', needsWrite: true },
+  'isms_update_pentest_finding': { perm: ['pentests', 'edit'], moduleKey: 'pentest', needsWrite: true },
+  'isms_delete_pentest_finding': { perm: ['pentests', 'delete_findings'], moduleKey: 'pentest', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   // --- GDPR / DSGVO ---
-  'isms_list_vvt_entries': { moduleKey: 'dsgvo' },
-  'isms_get_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
-  'isms_create_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_update_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_delete_vvt_entry': { moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
-  'isms_get_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
-  'isms_create_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_update_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
-  'isms_delete_vvt_dsfa': { moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
-  'isms_list_dataflows': { moduleKey: 'dsgvo' },
-  'isms_get_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
-  'isms_create_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_delete_dataflow': { moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
-  'isms_list_subject_requests': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo', 'assessor'] },
-  'isms_create_subject_request': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
-  'isms_update_subject_request_status': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
-  'isms_delete_subject_request': { moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
-
+  'isms_list_vvt_entries': { perm: ['vvt', 'view'], moduleKey: 'dsgvo' },
+  'isms_get_vvt_entry': { perm: ['vvt', 'view_details'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
+  'isms_create_vvt_entry': { perm: ['vvt', 'create'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_vvt_entry': { perm: ['vvt', 'edit'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_vvt_entry': { perm: ['vvt', 'delete'], moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
+  'isms_get_vvt_dsfa': { perm: ['vvt', 'view_details'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
+  'isms_create_vvt_dsfa': { perm: ['vvt', 'create'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_update_vvt_dsfa': { perm: ['vvt', 'edit'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
+  'isms_delete_vvt_dsfa': { perm: ['vvt', 'delete'], moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
+  'isms_list_dataflows': { perm: ['dataflows', 'view'], moduleKey: 'dsgvo' },
+  'isms_get_dataflow': { perm: ['dataflows', 'view_details'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor', 'dpo'] },
+  'isms_create_dataflow': { perm: ['dataflows', 'create'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_dataflow': { perm: ['dataflows', 'edit'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_dataflow': { perm: ['dataflows', 'delete'], moduleKey: 'dsgvo', requiredRoles: ['admin'], needsWrite: true },
+  'isms_list_subject_requests': { perm: ['subject_requests', 'view'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo', 'assessor'] },
+  'isms_create_subject_request': { perm: ['subject_requests', 'create'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
+  'isms_update_subject_request_status': { perm: ['subject_requests', 'edit'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
+  'isms_delete_subject_request': { perm: ['subject_requests', 'delete'], moduleKey: 'dsgvo', requiredRoles: ['admin', 'dpo'], needsWrite: true },
   // --- Vendors ---
-  'isms_get_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
-  'isms_create_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_update_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_delete_vendor': { requiredRoles: ['admin'], needsWrite: true },
-  'isms_assess_vendor': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_add_vendor_contact': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_update_vendor_contact': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_delete_vendor_contact': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_list_vendor_triage_runs': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
-  'isms_get_vendor_triage_run': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
-  'isms_get_triage_profiles': { requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
-  'isms_update_triage_profiles': { requiredRoles: ['admin'], needsWrite: true },
-
+  'isms_get_vendor': { perm: ['vendors', 'view_details'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_create_vendor': { perm: ['vendors', 'create'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_vendor': { perm: ['vendors', 'edit'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_vendor': { perm: ['vendors', 'delete'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_assess_vendor': { perm: ['vendors', 'assess'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_add_vendor_contact': { perm: ['vendors', 'contacts'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_vendor_contact': { perm: ['vendors', 'contacts'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_vendor_contact': { perm: ['vendors', 'contacts'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_list_vendor_triage_runs': { perm: ['vendor_triage', 'view'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_get_vendor_triage_run': { perm: ['vendor_triage', 'view'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_run_vendor_triage': { perm: ['vendor_triage', 'run'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_get_triage_profiles': { perm: ['triage_profiles', 'view'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo'] },
+  'isms_update_triage_profiles': { perm: ['triage_profiles', 'edit'], requiredRoles: ['admin'], needsWrite: true },
   // --- BCM ---
-  'isms_list_bcm_processes': { moduleKey: 'bcm' },
-  'isms_create_bcm_process': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_bcm_process': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_delete_bcm_process': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_list_bcm_exercises': { moduleKey: 'bcm' },
-  'isms_create_bcm_exercise': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_update_bcm_exercise': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_delete_bcm_exercise': { moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_list_bcm_processes': { perm: ['bcm', 'view'], moduleKey: 'bcm' },
+  'isms_create_bcm_process': { perm: ['bcm', 'create'], moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_bcm_process': { perm: ['bcm', 'edit'], moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_bcm_process': { perm: ['bcm', 'delete'], moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_list_bcm_exercises': { perm: ['bcm', 'view'], moduleKey: 'bcm' },
+  'isms_create_bcm_exercise': { perm: ['bcm', 'create'], moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_update_bcm_exercise': { perm: ['bcm', 'edit'], moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_delete_bcm_exercise': { perm: ['bcm', 'delete'], moduleKey: 'bcm', requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- DORA ---
-  'isms_list_dora_third_parties': { moduleKey: 'dora' },
-  'isms_create_dora_third_party': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_update_dora_third_party': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_delete_dora_third_party': { moduleKey: 'dora', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-  'isms_list_dora_tests': { moduleKey: 'dora' },
-  'isms_create_dora_test': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_update_dora_test': { moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
-  'isms_delete_dora_test': { moduleKey: 'dora', requiredRoles: ['admin', 'assessor'], needsWrite: true },
-
+  'isms_list_dora_third_parties': { perm: ['dora', 'view'], moduleKey: 'dora' },
+  'isms_create_dora_third_party': { perm: ['dora', 'create'], moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_dora_third_party': { perm: ['dora', 'edit'], moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_dora_third_party': { perm: ['dora', 'delete'], moduleKey: 'dora', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_list_dora_tests': { perm: ['dora', 'view'], moduleKey: 'dora' },
+  'isms_create_dora_test': { perm: ['dora', 'create'], moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_dora_test': { perm: ['dora', 'edit'], moduleKey: 'dora', requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_delete_dora_test': { perm: ['dora', 'delete'], moduleKey: 'dora', requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Auto-Discovery ---
-  'isms_list_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'] },
-  'isms_approve_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
-  'isms_ignore_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
-  'isms_delete_discovered_software': { moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
-
+  'isms_list_discovered_software': { perm: ['discovery', 'access'], moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'] },
+  'isms_approve_discovered_software': { perm: ['discovery', 'access'], moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
+  'isms_ignore_discovered_software': { perm: ['discovery', 'access'], moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
+  'isms_delete_discovered_software': { perm: ['discovery', 'access'], moduleKey: 'discovery', requiredRoles: ['admin', 'it-staff'], needsWrite: true },
   // --- Comments & Documents ---
-  'isms_add_asset_comment': { needsWrite: true },
-  'isms_delete_asset_comment': { needsWrite: true },
-  'isms_delete_document': { requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_add_asset_comment': { perm: ['comments', 'create'], needsWrite: true },
+  'isms_delete_asset_comment': { perm: ['comments', 'delete'], needsWrite: true },
+  'isms_delete_document': { perm: ['documents', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+
+  // Read-only tools that had no gate at all: any authenticated MCP client could
+  // call them. They carry no role requirement here either — the matrix decides,
+  // and where it says nothing they stay open, exactly as before.
+  'isms_get_asset': { perm: ['assets', 'view'] },
+  'isms_get_asset_cve_report': { perm: ['assets', 'view'] },
+  'isms_get_central_cve_report': { perm: ['assets', 'cve'] },
+  'isms_get_compliance_overview': { perm: ['compliance', 'view'] },
+  'isms_get_dashboard': { perm: ['dashboard', 'view'] },
+  'isms_get_framework_mapping_overview': { perm: ['mappings', 'view'] },
+  'isms_get_framework_mapping_stats': { perm: ['mappings', 'view'] },
+  'isms_get_group': { perm: ['groups', 'view'] },
+  'isms_get_management_report': { perm: ['reports', 'view'] },
+  'isms_get_policy': { perm: ['policies', 'view'] },
+  'isms_get_policy_acknowledgments': { perm: ['policies', 'acknowledgments'] },
+  'isms_get_review_signoffs': { perm: ['review', 'view'] },
+  'isms_get_risk': { perm: ['risks', 'view'] },
+  'isms_get_task': { perm: ['tasks', 'view'] },
+  'isms_get_task_stats': { perm: ['tasks', 'view'] },
+  'isms_list_api_tokens': { perm: ['tokens', 'view'] },
+  'isms_list_assessments': { perm: ['assessments', 'view'] },
+  'isms_list_asset_comments': { perm: ['comments', 'view'] },
+  'isms_list_assets': { perm: ['assets', 'view'] },
+  'isms_list_audits': { perm: ['compliance_audits', 'view'] },
+  'isms_list_controls': { perm: ['controls', 'view'] },
+  'isms_list_documents': { perm: ['documents', 'view'] },
+  'isms_list_features': { perm: ['modules', 'view'] },
+  'isms_list_groups': { perm: ['groups', 'view'] },
+  'isms_list_incidents': { perm: ['incidents', 'view'] },
+  'isms_list_kpis': { perm: ['compliance_kpis', 'view'] },
+  'isms_list_legal_requirements': { perm: ['legal_requirements', 'view'] },
+  'isms_list_policies': { perm: ['policies', 'view'] },
+  'isms_list_reminders': { perm: ['reminders', 'view'] },
+  'isms_list_risks': { perm: ['risks', 'view'] },
+  'isms_list_tasks': { perm: ['tasks', 'view'] },
+  'isms_list_templates': { perm: ['templates', 'view'] },
+  'isms_list_threats': { perm: ['threats', 'view'] },
+  'isms_list_training_courses': { perm: ['compliance_trainings', 'view'] },
+  'isms_list_user_trainings': { perm: ['compliance_trainings', 'view'] },
+  'isms_list_users': { perm: ['users', 'view'] },
+  'isms_list_vendors': { perm: ['vendors', 'view'] },
+  'isms_lookup_framework_mappings': { perm: ['mappings', 'view'] },
 };
 
-async function gateTool(mcpUser, moduleKey = null, requiredRoles = null, needsWrite = false) {
+async function gateTool(mcpUser, moduleKey = null, requiredRoles = null, needsWrite = false, perm = null) {
   if (moduleKey) {
     const { getModules } = require('../middleware/modules');
     const modules = await getModules();
@@ -491,6 +512,33 @@ async function gateTool(mcpUser, moduleKey = null, requiredRoles = null, needsWr
   }
 
   const role = mcpUser?.role || 'viewer';
+
+  // The permission matrix decides where it has something to say about this
+  // tool's module+action — the same contract requirePermission applies to the
+  // REST API, so an admin who edits the matrix (or writes a custom role) sees
+  // the change here too. Until this existed, MCP answered only to the
+  // hardcoded role lists below and quietly ignored both.
+  if (perm) {
+    try {
+      const { can } = require('../services/permissionService');
+      const verdict = await can(mcpUser, perm[0], perm[1]);
+      if (verdict === false) {
+        return { content: [{ type: 'text', text: `Zugriff verweigert: Die Berechtigung '${perm[0]}.${perm[1]}' fehlt für Ihre Rolle.` }], isError: true };
+      }
+      if (verdict === true) {
+        // Matrix grants it. needsWrite still applies: it mirrors requireWriteAccess(),
+        // which sits next to requirePermission on the REST side rather than inside it.
+        if (needsWrite && ['viewer', 'management', 'employee'].includes(role)) {
+          return { content: [{ type: 'text', text: 'Zugriff verweigert: Schreibrechte erforderlich.' }], isError: true };
+        }
+        return null;
+      }
+    } catch (e) {
+      // Never fail open — a broken matrix lookup must not hand out access.
+      console.error('[MCP] Permission check failed:', e.message);
+      return { content: [{ type: 'text', text: 'Berechtigungsprüfung fehlgeschlagen.' }], isError: true };
+    }
+  }
 
   if (requiredRoles && !requiredRoles.includes(role)) {
     return { content: [{ type: 'text', text: `Zugriff verweigert: Diese Aktion erfordert eine der folgenden Rollen: ${requiredRoles.join(', ')}.` }], isError: true };
@@ -527,7 +575,8 @@ const server = {
           mcpUser,
           gate.moduleKey || null,
           gate.requiredRoles || null,
-          gate.needsWrite || false
+          gate.needsWrite || false,
+          gate.perm || null
         );
         if (errorResult) return errorResult;
       }
@@ -3593,6 +3642,55 @@ server.tool(
     });
     if (!run) return { content: [{ type: 'text', text: 'Triage run not found' }], isError: true };
     return { content: [{ type: 'text', text: JSON.stringify(run, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_run_vendor_triage',
+  'Start an AI contract analysis for a document already attached to a vendor. Runs asynchronously: '
+  + 'this returns the created run immediately with status "pending" — poll isms_get_vendor_triage_run for findings. '
+  + 'Consumes LLM budget, so it is gated on vendor_triage.run rather than on read access to the results.',
+  {
+    vendor_id: z.number().int().positive().describe('Vendor ID'),
+    document_id: z.number().int().positive().describe('ID of a document attached to THIS vendor'),
+    doc_type: z.string().optional().describe('Analysis profile key (see isms_get_triage_profiles); unknown values fall back to "other"'),
+  },
+  async ({ vendor_id, document_id, doc_type }, { mcpUser }) => {
+    const { VendorTriageRun, Vendor, Document } = getModels();
+
+    const vendor = await Vendor.findByPk(vendor_id);
+    if (!vendor) return { content: [{ type: 'text', text: 'Vendor not found' }], isError: true };
+
+    // Scoped to the vendor on purpose: without the vendor_id in the lookup this
+    // would analyse any document in the installation by id.
+    const doc = await Document.findOne({ where: { id: document_id, vendor_id } });
+    if (!doc) return { content: [{ type: 'text', text: 'Document not found for this vendor' }], isError: true };
+
+    const { getProfiles } = require('../services/triageProfiles');
+    const profiles = await getProfiles();
+    const resolvedDocType = typeof doc_type === 'string' && Object.hasOwn(profiles, doc_type) ? doc_type : 'other';
+
+    const run = await VendorTriageRun.create({
+      vendor_id,
+      document_id: doc.id,
+      doc_type: resolvedDocType,
+      status: 'pending',
+      triggered_by_id: await getValidUserId(mcpUser),
+    });
+
+    await logAudit('create', 'vendor', vendor_id, vendor.name, {
+      action: 'triage_started', run_id: run.id, document: doc.original_name, via: 'mcp',
+    }, mcpUser);
+
+    // Same as the REST route: do not await, the analysis takes minutes.
+    const { runTriage } = require('../services/vendorTriageService');
+    runTriage(run.id).catch(err => console.error(`[Triage] MCP run ${run.id} failed:`, err.message));
+
+    return { content: [{ type: 'text', text: JSON.stringify({
+      run_id: run.id, vendor: vendor.name, document: doc.original_name,
+      doc_type: resolvedDocType, status: 'pending',
+      hint: 'Ergebnisse mit isms_get_vendor_triage_run abrufen, sobald der Status auf "done" steht.',
+    }, null, 2) }] };
   }
 );
 

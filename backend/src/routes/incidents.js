@@ -2,6 +2,8 @@ const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Incident, Asset, User, Risk, Vendor, VvtEntry, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
+const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { escapeLike } = require('../utils/sqlUtils');
@@ -43,26 +45,26 @@ const canAccessIncident = (user, incident) => {
   return true;
 };
 
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const accessWhere = getAccessWhere(req.user);
     const byStatus = await Incident.findAll({ where: accessWhere, attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true });
     const bySeverity = await Incident.findAll({ where: accessWhere, attributes: ['severity', [fn('COUNT', col('id')), 'count']], group: ['severity'], raw: true });
     const open = await Incident.count({ where: { ...accessWhere, status: { [Op.notIn]: ['resolved', 'closed'] } } });
     res.json({ total: await Incident.count({ where: accessWhere }), open, byStatus, bySeverity });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 router.get('/', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const { status, severity, search } = req.query;
     const where = { ...getAccessWhere(req.user) };
-    if (status) where.status = status;
-    if (severity) where.severity = severity;
+    setFilter(where, 'status', status);
+    setFilter(where, 'severity', severity);
     if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
     const incidents = await Incident.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(incidents);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 router.get('/:id', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -73,7 +75,7 @@ router.get('/:id', authenticate, requirePermission('incidents','view','admin','o
     if (!canAccessIncident(req.user, incident)) return res.status(403).json({ error: 'Forbidden' });
 
     res.json(incident);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 const fields = [
@@ -169,7 +171,7 @@ router.delete('/:id', authenticate, requirePermission('incidents','delete','admi
     });
     await auditFromReq(req, 'delete', 'incident', incident.id, incident.title, { deletion_reason });
     res.json({ message: 'Incident deleted' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'incidents'); }
 });
 
 module.exports = router;

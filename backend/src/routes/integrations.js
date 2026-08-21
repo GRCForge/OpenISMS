@@ -43,7 +43,7 @@ function sendError(res, e) {
 
 // ── Konfiguration lesen ───────────────────────────────────────────────────────
 
-router.get('/checkmk', authenticate, requirePermission('integrations', 'view', 'admin', 'it-staff'), async (req, res) => {
+router.get('/checkmk', authenticate, requirePermission('integrations', 'view', 'admin', 'assessor', 'it-staff'), async (req, res) => {
   try {
     res.json(await settingsService.getCheckmkPublic());
   } catch (e) { sendError(res, e); }
@@ -97,7 +97,7 @@ router.post('/checkmk/test', authenticate, requirePermission('integrations', 'sy
 
 // ── Livedaten ohne Schreibwirkung ─────────────────────────────────────────────
 
-router.get('/checkmk/hosts', authenticate, requirePermission('integrations', 'view', 'admin', 'it-staff'), async (req, res) => {
+router.get('/checkmk/hosts', authenticate, requirePermission('integrations', 'view', 'admin', 'assessor', 'it-staff'), async (req, res) => {
   try {
     const cfg = await settingsService.getCheckmkConfig();
     assertConfigured(cfg);

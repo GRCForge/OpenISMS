@@ -14,6 +14,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { exportToCSV, exportToExcel } from '../lib/export';
 import { format } from 'date-fns';
 import { SearchableSelect } from '../components/ui/SearchableSelect';
@@ -30,8 +31,9 @@ const getEmptyForm = (legalBasisDefault: string) => ({
 export const Vvt: React.FC = () => {
   const { t } = useTranslation('vvt');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = user?.role === 'admin' || user?.role === 'assessor' || user?.role === 'dpo';
+  const canWrite = can('vvt', 'create', user?.role === 'admin' || user?.role === 'assessor' || user?.role === 'dpo');
 
   const statusLabels: Record<string, string> = useMemo(() => ({
     draft: t('statusLabels.draft', 'Entwurf'),

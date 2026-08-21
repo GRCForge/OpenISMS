@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { Mermaid } from '../components/ui/Mermaid';
@@ -39,10 +40,11 @@ const emptyForm = {
 export const DataFlows: React.FC = () => {
   const { t } = useTranslation('dataflows');
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const { can } = usePermissions();
+  const canWrite = can('dataflows', 'create', hasWriteAccess(user?.role));
   const toast = useToast();
-  const canEdit = ['admin', 'assessor', 'it-staff'].includes(user?.role || '');
-  const canDelete = user?.role === 'admin';
+  const canEdit = can('dataflows', 'edit', ['admin', 'assessor', 'it-staff'].includes(user?.role || ''));
+  const canDelete = can('dataflows', 'delete', user?.role === 'admin');
 
   const mechanismLabels: Record<string, string> = {
     api: t('mechanisms.api'),

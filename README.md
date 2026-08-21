@@ -417,6 +417,47 @@ Supported providers (generic OIDC): Authentik · Keycloak · Microsoft Entra · 
 
 The **permission matrix** is freely configurable per module and action under *Administration → Roles & Permissions* — without restarting the application.
 
+### How the matrix is enforced
+
+The matrix is the single answer to "who may do this", and every path through the
+application asks it the same way:
+
+| Path | Where it is enforced |
+|---|---|
+| REST API | `requirePermission(module, action, ...fallbackRoles)` on every route |
+| MCP tools | the same check inside the tool gate, per tool |
+| Field-level rules | `permissionService.can()` directly in the handler (e.g. `assets.edit_compliance` for classification, `assets.edit_security` for patch/hardening fields) |
+| UI visibility | `usePermissions().can(module, action, fallback)` — presentation only, never the gate |
+
+Each check follows one contract:
+
+1. **The matrix decides** wherever it defines `module.action` — that is what makes
+   it editable, and what makes a custom role's own matrix meaningful.
+2. **Where the matrix says nothing**, the role list the endpoint has always
+   carried decides. A module added after a custom role was written therefore
+   cannot silently lock that role out.
+3. **A failed lookup denies.** A broken matrix must never hand out access.
+
+`requireWriteAccess()` sits *next to* these checks, not inside them: `viewer`,
+`management` and `employee` stay read-only even if the matrix grants an action.
+
+Two scripts keep this honest and run in CI:
+
+```bash
+node scripts/check-permissions.js   # matrix defaults must equal the route fallbacks
+node scripts/test-mcp-gate.js       # MCP follows the same contract as REST
+```
+
+`check-permissions.js` fails the build when a route's fallback list and the matrix
+default for that action disagree — otherwise an installation that once saved its
+permissions would behave differently from one that never touched them.
+
+**Deliberately not matrix-gated**: authentication itself (`/api/auth`, OIDC,
+passkeys) and self-service on your own records (`/api/me`, own notifications,
+own push subscriptions, acknowledging a policy). Gating those on a matrix an
+admin can edit would let an installation lock every user out of their own
+account.
+
 ---
 
 ## API Documentation

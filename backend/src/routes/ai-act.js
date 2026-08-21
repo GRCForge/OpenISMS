@@ -4,6 +4,7 @@ router.use(apiLimiter);
 const { AiSystem, User, Vendor, Task } = require('../models');
 const { Op } = require('sequelize');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.get('/', authenticate, requirePermission('ai_act','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -16,7 +17,7 @@ router.get('/', authenticate, requirePermission('ai_act','view','admin','owner',
       order: [['risk_category', 'ASC'], ['name', 'ASC']],
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'ai-act'); }
 });
 
 router.post('/', authenticate, requirePermission('ai_act','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -28,7 +29,7 @@ router.post('/', authenticate, requirePermission('ai_act','create','admin','owne
     const item = await AiSystem.create(data);
     await auditFromReq(req, 'create', 'ai_system', item.id, item.name, {});
     res.status(201).json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'ai-act'); }
 });
 
 router.put('/:id', authenticate, requirePermission('ai_act','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -43,7 +44,7 @@ router.put('/:id', authenticate, requirePermission('ai_act','edit','admin','owne
     await item.update(data);
     await auditFromReq(req, 'update', 'ai_system', item.id, item.name, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'ai-act'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('ai_act','delete','admin','assessor'), async (req, res) => {
@@ -57,7 +58,7 @@ router.delete('/:id', authenticate, requirePermission('ai_act','delete','admin',
     await auditFromReq(req, 'delete', 'ai_system', item.id, item.name, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'ai-act'); }
 });
 
 module.exports = router;

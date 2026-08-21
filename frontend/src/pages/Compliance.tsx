@@ -17,6 +17,7 @@ import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
 import { useModules } from '../contexts/ModulesContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { CrossFrameworkOverview } from '../components/ControlMappings';
@@ -92,8 +93,9 @@ export const Compliance: React.FC = () => {
   const { t } = useTranslation(['compliance', 'common']);
   const { isEnabled } = useModules();
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('compliance_kpis', 'create', hasWriteAccess(user?.role));
 
   const riskLabels: Record<RiskLevel, string> = {
     low: t('riskLevels.low'),

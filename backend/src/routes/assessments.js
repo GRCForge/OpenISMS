@@ -1,6 +1,7 @@
 const express = require('express');
-const { Assessment, Asset, User, Reminder, Task } = require('../models');
+const { Assessment, Asset, User, Reminder, Task, sequelize } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 
@@ -21,7 +22,7 @@ router.get('/', authenticate, requirePermission('assessments','view','admin','ow
       order: [['assessed_at', 'DESC']]
     });
     res.json(assessments);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assessments'); }
 });
 
 router.post('/', authenticate, requirePermission('assessments','create','admin','assessor'), async (req, res) => {
@@ -52,64 +53,77 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
     const next_review_at = (acceptedUntilDate && acceptedUntilDate < oneYearOut)
       ? acceptedUntilDate : oneYearOut;
 
-    // Mark previous assessments as not current
-    await Assessment.update({ is_current: false }, { where: { asset_id, is_current: true } });
+    // One transaction for the whole switch-over. Without it a failure after the
+    // first statement left the asset with NO current assessment at all — its risk
+    // level vanishes from the dashboard and the compliance views until someone
+    // notices and re-assesses. The reminder and the follow-up task belong to the
+    // same unit: a reminder pointing at an assessment that was rolled back is
+    // worse than no reminder.
+    const assessment = await sequelize.transaction(async (t) => {
+      // Mark previous assessments as not current
+      await Assessment.update({ is_current: false }, { where: { asset_id, is_current: true }, transaction: t });
 
-    const assessment = await Assessment.create({
-      asset_id,
-      assessor_id: req.user.id,
-      confidentiality,
-      integrity,
-      availability,
-      risk_score: score,
-      risk_level: level,
-      notes,
-      mitigation,
-      risk_treatment: risk_treatment || null,
-      treatment_justification: treatment_justification || null,
-      accepted_by: risk_treatment === 'accept' ? (accepted_by || null) : null,
-      accepted_until: acceptedUntilDate ? accepted_until : null,
-      acceptance_document_id: risk_treatment === 'accept' ? (acceptance_document_id || null) : null,
-      assessed_at,
-      next_review_at,
-      is_current: true
+      const assessment = await Assessment.create({
+        asset_id,
+        assessor_id: req.user.id,
+        confidentiality,
+        integrity,
+        availability,
+        risk_score: score,
+        risk_level: level,
+        notes,
+        mitigation,
+        risk_treatment: risk_treatment || null,
+        treatment_justification: treatment_justification || null,
+        accepted_by: risk_treatment === 'accept' ? (accepted_by || null) : null,
+        accepted_until: acceptedUntilDate ? accepted_until : null,
+        acceptance_document_id: risk_treatment === 'accept' ? (acceptance_document_id || null) : null,
+        assessed_at,
+        next_review_at,
+        is_current: true
+      }, { transaction: t });
+
+      // Remove previous pending reminders for this asset
+      await Reminder.destroy({ where: { asset_id, status: 'pending' }, transaction: t });
+
+      // Task + Reminder title differs for risk acceptance vs. regular review
+      const isAcceptance = risk_treatment === 'accept' && acceptedUntilDate;
+      const taskTitle = isAcceptance
+        ? `Risikoakzeptanz läuft ab: ${asset.name}`
+        : `Review fällig: ${asset.name}`;
+      const taskDesc = isAcceptance
+        ? `Die Risikoakzeptanz für Asset „${asset.name}" läuft am ${accepted_until} ab und muss erneuert oder das Risiko anders behandelt werden.`
+        : `Regelmäßige Überprüfung der Schutzbedarfsfeststellung (Risikobewertung) für das Asset „${asset.name}".`;
+      const taskTags = isAcceptance ? ['Risikoakzeptanz', 'Risiko'] : ['Review', 'Risiko'];
+
+      const task = await Task.create({
+        title: taskTitle,
+        description: taskDesc,
+        priority: isAcceptance && level === 'critical' ? 'high' : 'medium',
+        assigned_to_id: asset.assessor_id || req.user.id,
+        due_date: next_review_at.toISOString().split('T')[0],
+        related_type: 'asset',
+        related_id: asset.id,
+        tags: taskTags,
+      }, { transaction: t });
+
+      await Reminder.create({
+        asset_id,
+        assessment_id: assessment.id,
+        due_date: next_review_at.toISOString().split('T')[0],
+        status: 'pending',
+        task_id: task.id,
+        notes: isAcceptance
+          ? `Risikoakzeptanz von „${accepted_by || 'unbekannt'}" gültig bis ${accepted_until}`
+          : null,
+      }, { transaction: t });
+
+      return assessment;
     });
 
-    // Remove previous pending reminders for this asset
-    await Reminder.destroy({ where: { asset_id, status: 'pending' } });
-
-    // Task + Reminder title differs for risk acceptance vs. regular review
-    const isAcceptance = risk_treatment === 'accept' && acceptedUntilDate;
-    const taskTitle = isAcceptance
-      ? `Risikoakzeptanz läuft ab: ${asset.name}`
-      : `Review fällig: ${asset.name}`;
-    const taskDesc = isAcceptance
-      ? `Die Risikoakzeptanz für Asset „${asset.name}" läuft am ${accepted_until} ab und muss erneuert oder das Risiko anders behandelt werden.`
-      : `Regelmäßige Überprüfung der Schutzbedarfsfeststellung (Risikobewertung) für das Asset „${asset.name}".`;
-    const taskTags = isAcceptance ? ['Risikoakzeptanz', 'Risiko'] : ['Review', 'Risiko'];
-
-    const task = await Task.create({
-      title: taskTitle,
-      description: taskDesc,
-      priority: isAcceptance && level === 'critical' ? 'high' : 'medium',
-      assigned_to_id: asset.assessor_id || req.user.id,
-      due_date: next_review_at.toISOString().split('T')[0],
-      related_type: 'asset',
-      related_id: asset.id,
-      tags: taskTags,
-    });
-
-    await Reminder.create({
-      asset_id,
-      assessment_id: assessment.id,
-      due_date: next_review_at.toISOString().split('T')[0],
-      status: 'pending',
-      task_id: task.id,
-      notes: isAcceptance
-        ? `Risikoakzeptanz von „${accepted_by || 'unbekannt'}" gültig bis ${accepted_until}`
-        : null,
-    });
-
+    // Audit and task auto-close run after the commit: they describe something
+    // that happened, and an audit entry for a rolled-back assessment would be a
+    // lie in the very log an auditor reads.
     // Audit log — include risk-treatment details so acceptance decisions are traceable
     await auditFromReq(req, 'assess', 'assessment', assessment.id, asset.name, {
       asset_id, confidentiality, integrity, availability,

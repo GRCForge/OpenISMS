@@ -15,6 +15,7 @@ import { Badge } from '../components/ui/Badge';
 import { FilterBar } from '../components/ui/FilterBar';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { hasWriteAccess } from '../lib/permissions';
 
 const emptyVendor = { name: '', type: 'software', website: '', phone: '', address: '', notes: '' };
@@ -45,7 +46,9 @@ export const Vendors: React.FC = () => {
   ];
 
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+
+  const { can } = usePermissions();
+  const canWrite = can('vendors', 'create', hasWriteAccess(user?.role));
   const toast = useToast();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);

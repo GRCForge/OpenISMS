@@ -2,7 +2,8 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { DataFlow, Asset } = require('../models');
-const { authenticate, isAdmin, isAssessor, isDpo, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -23,22 +24,22 @@ router.get('/', requirePermission('dataflows','view','admin','owner','assessor',
     const flows = await DataFlow.findAll({ where, include: flowInclude, order: [['name', 'ASC']] });
     res.json(flows);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'dataflows');
   }
 });
 
 // Get single flow (only admin, assessor, dpo can access)
-router.get('/:id', requirePermission('dataflows','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+// The list is open to everyone who may see that data flows exist; the single
+// record carries the detail (systems, categories, transfer mechanism), which is
+// why it has its own action. It was an inline role check before — invisible to
+// the matrix, so granting dataflows.view to another role changed nothing here.
+router.get('/:id', requirePermission('dataflows','view_details','admin','assessor','dpo'), async (req, res) => {
   try {
-    // Verify authorization: only admin, assessor, dpo
-    if (!isAdmin(req) && !isAssessor(req) && !isDpo(req)) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
     const flow = await DataFlow.findByPk(req.params.id, { include: flowInclude });
     if (!flow) return res.status(404).json({ error: 'Not found' });
     res.json(flow);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'dataflows');
   }
 });
 
@@ -96,7 +97,7 @@ router.delete('/:id', requirePermission('dataflows','delete','admin'), async (re
     await auditFromReq(req, 'delete', 'dataflow', req.params.id, name, {});
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'dataflows');
   }
 });
 

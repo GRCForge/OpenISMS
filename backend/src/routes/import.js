@@ -3,6 +3,7 @@ const multer = require('multer');
 const { readSheet } = require('read-excel-file/node');
 const { Asset, User, Vendor, VendorContact, Risk } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -228,7 +229,7 @@ router.post('/preview', authenticate, requirePermission('import','access','admin
       totalRows: rows.length,
       fields: config.fields.map(f => ({ key: f.key, label: f.label, required: f.required }))
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'import'); }
 });
 
 router.post('/process', authenticate, requirePermission('import','access','admin','assessor','it-staff'), upload.single('file'), async (req, res) => {
@@ -315,7 +316,7 @@ router.post('/process', authenticate, requirePermission('import','access','admin
       filename: req.file.originalname, created: results.created, errors: results.errors.length,
     });
     res.json(results);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'import'); }
 });
 
 router.get('/template', authenticate, (req, res) => {

@@ -8,8 +8,9 @@ const dns     = require('dns').promises;
 const http    = require('http');
 const https   = require('https');
 const { Op }  = require('sequelize');
-const { Asset, User, DiscoveredSoftware } = require('../models');
+const { Asset, DiscoveredSoftware, sequelize } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 // ── Port → service map ────────────────────────────────────────────────────────
 
@@ -473,7 +474,7 @@ router.post('/report', authenticate, requirePermission('discovery','access','adm
 
     res.json({ created, updated, errors, total: software.length });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -512,7 +513,7 @@ router.get('/staged', authenticate, requirePermission('discovery','access','admi
 
     res.json(enriched);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -520,113 +521,123 @@ router.get('/staged', authenticate, requirePermission('discovery','access','admi
 router.post('/staged/:id/approve', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   const { id } = req.params;
   try {
-    const item = await DiscoveredSoftware.findByPk(id);
-    if (!item) return res.status(404).json({ error: 'Eintrag nicht gefunden' });
-    if (item.status === 'approved') return res.status(400).json({ error: 'Eintrag bereits freigegeben' });
+    // The whole approval is one transaction, and the staging row is locked for
+    // the duration. Two things went wrong without it: a failure between creating
+    // the asset and flipping the entry to 'approved' left an asset behind while
+    // the entry stayed pending, and two parallel approvals of the same entry both
+    // passed the status check below and created the asset twice.
+    const result = await sequelize.transaction(async (t) => {
+      const item = await DiscoveredSoftware.findByPk(id, { transaction: t, lock: t.LOCK.UPDATE });
+      if (!item) return { status: 404, body: { error: 'Eintrag nicht gefunden' } };
+      if (item.status === 'approved') return { status: 400, body: { error: 'Eintrag bereits freigegeben' } };
 
-    const isNetworkScan = item.source === 'network-scan';
-    const searchWhere = isNetworkScan && item.ip
-      ? { name: { [Op.like]: `%${escapeLike(item.ip)}%` } }
-      : { name: { [Op.like]: escapeLike(item.name) } };
+      const isNetworkScan = item.source === 'network-scan';
+      const searchWhere = isNetworkScan && item.ip
+        ? { name: { [Op.like]: `%${escapeLike(item.ip)}%` } }
+        : { name: { [Op.like]: escapeLike(item.name) } };
 
-    const existing = await Asset.findOne({
-      where: { ...searchWhere, status: { [Op.ne]: 'decommissioned' } }
+      const existing = await Asset.findOne({
+        where: { ...searchWhere, status: { [Op.ne]: 'decommissioned' } },
+        transaction: t,
+      });
+
+      // Namentlicher Abgleich: existiert bereits ein (nicht ausgemustertes)
+      // Asset mit identischem Namen, wird dieses nur aktualisiert (Version,
+      // Hersteller falls noch leer, zusaetzliche Host-/IP-Herkunft als Tag) -
+      // es entsteht bewusst KEIN Duplikat. Genau dieses Verhalten verspricht
+      // bereits der Info-Text im Frontend ("agent.assetMatchingDesc"), bislang
+      // wurde es hier beim Freigeben aber nicht tatsaechlich umgesetzt.
+      if (existing) {
+        const patch = {};
+        if (item.version && item.version !== existing.version) patch.version = item.version;
+        if (item.vendor && !existing.vendor) patch.vendor = item.vendor;
+
+        // Auch beim Zusammenfuehren die Connector-Herkunft nachtragen, sonst
+        // bleibt ein per Namen gematchtes Asset beim naechsten Sync unverknuepft
+        // und wuerde erneut als neuer Staging-Eintrag vorgelegt.
+        if (item.source && !['agent', 'network-scan'].includes(item.source) && !existing.external_id) {
+          patch.external_source = item.source;
+          patch.external_id = item.hostname;
+          patch.external_last_seen_at = new Date();
+        }
+
+        const existingTags = Array.isArray(existing.tags) ? existing.tags : [];
+        const newTags = [...existingTags];
+        if (!isNetworkScan && item.hostname) {
+          const hostTag = `host:${item.hostname}`;
+          if (!newTags.includes(hostTag)) newTags.push(hostTag);
+        }
+        if (item.ip) {
+          const ipTag = `ip:${item.ip}`;
+          if (!newTags.includes(ipTag)) newTags.push(ipTag);
+        }
+        if (newTags.length !== existingTags.length) patch.tags = newTags;
+
+        if (Object.keys(patch).length) {
+          await existing.update(patch, { transaction: t });
+        }
+
+        await item.update({ status: 'approved' }, { transaction: t });
+        return { status: 200, body: {
+          success: true,
+          matched: true,
+          asset_id: existing.id,
+          message: patch.version
+            ? `Bereits vorhandenes Asset "${existing.name}" auf Version ${patch.version} aktualisiert (kein Duplikat angelegt).`
+            : `Entspricht bereits vorhandenem Asset "${existing.name}" — kein Duplikat angelegt.`
+        } };
+      }
+
+      {
+        let tags, description;
+        const today = new Date().toISOString().split('T')[0];
+
+        if (isNetworkScan) {
+          const openPorts = item.open_ports ? JSON.parse(item.open_ports) : [];
+          const portTags = openPorts.map(p => `port:${p.port}`);
+          tags = ['network-scan', `ip:${item.ip}`, ...portTags];
+          if (item.os) tags.push(`os:${item.os.replace(/\s+/g, '_')}`);
+          const services = openPorts.map(p => p.service).join(', ');
+          description = `Netzwerk-Scan: ${item.ip}${item.hostname !== item.ip ? ` (${item.hostname})` : ''}${item.os ? ` · System: ${item.os}${item.version ? ` ${item.version}` : ''}` : ''}${services ? ` · Dienste: ${services}` : ''} — freigegeben am ${today}`;
+        } else {
+          tags = ['auto-discovered', `host:${item.hostname}`];
+          if (item.ip) tags.push(`ip:${item.ip}`);
+          description = `Automatisch erkannt auf ${item.hostname}${item.ip ? ` (${item.ip})` : ''}${item.os ? ` · ${item.os}` : ''} und am ${today} freigegeben.`;
+        }
+
+        // Stammt der Eintrag aus einem Drittsystem-Connector (z. B. CheckMK),
+        // wird die Herkunft am Asset festgehalten. Ohne diesen Schluessel
+        // muesste ein spaeterer Re-Sync ueber den Namen matchen und wuerde bei
+        // jeder Umbenennung ein Duplikat anlegen.
+        const isConnectorSource = item.source && !['agent', 'network-scan'].includes(item.source);
+
+        await Asset.create({
+          name:             item.name,
+          type:             item.asset_type || 'software',
+          classification:   'internal',
+          lifecycle_status: 'evaluation',
+          location:         item.ip || null,
+          version:          item.version || null,
+          vendor:           item.vendor  || null,
+          owner_id:         req.user.id,
+          assessor_id:      req.user.id,
+          external_source:  isConnectorSource ? item.source : null,
+          external_id:      isConnectorSource ? item.hostname : null,
+          external_last_seen_at: isConnectorSource ? new Date() : null,
+          tags,
+          description,
+          status:           'active',
+        }, { transaction: t });
+      }
+
+      await item.update({ status: 'approved' }, { transaction: t });
+      const label = item.asset_type === 'hardware' ? 'Hardware-Asset' : 'Software-Asset';
+      return { status: 200, body: { success: true, message: `${label} freigegeben und zu Assets hinzugefügt.` } };
     });
 
-    // Namentlicher Abgleich: existiert bereits ein (nicht ausgemustertes)
-    // Asset mit identischem Namen, wird dieses nur aktualisiert (Version,
-    // Hersteller falls noch leer, zusaetzliche Host-/IP-Herkunft als Tag) -
-    // es entsteht bewusst KEIN Duplikat. Genau dieses Verhalten verspricht
-    // bereits der Info-Text im Frontend ("agent.assetMatchingDesc"), bislang
-    // wurde es hier beim Freigeben aber nicht tatsaechlich umgesetzt.
-    if (existing) {
-      const patch = {};
-      if (item.version && item.version !== existing.version) patch.version = item.version;
-      if (item.vendor && !existing.vendor) patch.vendor = item.vendor;
-
-      // Auch beim Zusammenfuehren die Connector-Herkunft nachtragen, sonst
-      // bleibt ein per Namen gematchtes Asset beim naechsten Sync unverknuepft
-      // und wuerde erneut als neuer Staging-Eintrag vorgelegt.
-      if (item.source && !['agent', 'network-scan'].includes(item.source) && !existing.external_id) {
-        patch.external_source = item.source;
-        patch.external_id = item.hostname;
-        patch.external_last_seen_at = new Date();
-      }
-
-      const existingTags = Array.isArray(existing.tags) ? existing.tags : [];
-      const newTags = [...existingTags];
-      if (!isNetworkScan && item.hostname) {
-        const hostTag = `host:${item.hostname}`;
-        if (!newTags.includes(hostTag)) newTags.push(hostTag);
-      }
-      if (item.ip) {
-        const ipTag = `ip:${item.ip}`;
-        if (!newTags.includes(ipTag)) newTags.push(ipTag);
-      }
-      if (newTags.length !== existingTags.length) patch.tags = newTags;
-
-      if (Object.keys(patch).length) {
-        await existing.update(patch);
-      }
-
-      await item.update({ status: 'approved' });
-      return res.json({
-        success: true,
-        matched: true,
-        asset_id: existing.id,
-        message: patch.version
-          ? `Bereits vorhandenes Asset "${existing.name}" auf Version ${patch.version} aktualisiert (kein Duplikat angelegt).`
-          : `Entspricht bereits vorhandenem Asset "${existing.name}" — kein Duplikat angelegt.`
-      });
-    }
-
-    {
-      let tags, description;
-      const today = new Date().toISOString().split('T')[0];
-
-      if (isNetworkScan) {
-        const openPorts = item.open_ports ? JSON.parse(item.open_ports) : [];
-        const portTags = openPorts.map(p => `port:${p.port}`);
-        tags = ['network-scan', `ip:${item.ip}`, ...portTags];
-        if (item.os) tags.push(`os:${item.os.replace(/\s+/g, '_')}`);
-        const services = openPorts.map(p => p.service).join(', ');
-        description = `Netzwerk-Scan: ${item.ip}${item.hostname !== item.ip ? ` (${item.hostname})` : ''}${item.os ? ` · System: ${item.os}${item.version ? ` ${item.version}` : ''}` : ''}${services ? ` · Dienste: ${services}` : ''} — freigegeben am ${today}`;
-      } else {
-        tags = ['auto-discovered', `host:${item.hostname}`];
-        if (item.ip) tags.push(`ip:${item.ip}`);
-        description = `Automatisch erkannt auf ${item.hostname}${item.ip ? ` (${item.ip})` : ''}${item.os ? ` · ${item.os}` : ''} und am ${today} freigegeben.`;
-      }
-
-      // Stammt der Eintrag aus einem Drittsystem-Connector (z. B. CheckMK),
-      // wird die Herkunft am Asset festgehalten. Ohne diesen Schluessel
-      // muesste ein spaeterer Re-Sync ueber den Namen matchen und wuerde bei
-      // jeder Umbenennung ein Duplikat anlegen.
-      const isConnectorSource = item.source && !['agent', 'network-scan'].includes(item.source);
-
-      await Asset.create({
-        name:             item.name,
-        type:             item.asset_type || 'software',
-        classification:   'internal',
-        lifecycle_status: 'evaluation',
-        location:         item.ip || null,
-        version:          item.version || null,
-        vendor:           item.vendor  || null,
-        owner_id:         req.user.id,
-        assessor_id:      req.user.id,
-        external_source:  isConnectorSource ? item.source : null,
-        external_id:      isConnectorSource ? item.hostname : null,
-        external_last_seen_at: isConnectorSource ? new Date() : null,
-        tags,
-        description,
-        status:           'active',
-      });
-    }
-
-    await item.update({ status: 'approved' });
-    const label = item.asset_type === 'hardware' ? 'Hardware-Asset' : 'Software-Asset';
-    res.json({ success: true, message: `${label} freigegeben und zu Assets hinzugefügt.` });
+    res.status(result.status).json(result.body);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -640,7 +651,7 @@ router.post('/staged/:id/ignore', authenticate, requirePermission('discovery','a
     await item.update({ status: 'ignored' });
     res.json({ success: true, message: 'Software ignoriert.' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -654,7 +665,7 @@ router.delete('/staged/:id', authenticate, requirePermission('discovery','access
     await item.destroy();
     res.json({ success: true, message: 'Eintrag gelöscht.' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 
@@ -766,7 +777,7 @@ router.post('/import', authenticate, requirePermission('discovery','access','adm
 
     res.json({ created, skipped, errors });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'discovery');
   }
 });
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const { User, PasskeyCredential, CustomRole } = require('../models');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { validate: validatePassword } = require('../services/passwordPolicy');
 
@@ -16,7 +17,7 @@ const stripSensitive = (userJson) => {
   return out;
 };
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('users','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     // Admins get the full directory (incl. security posture: passkeys, 2FA state,
     // custom role) for user management. Every other role still needs a directory
@@ -37,10 +38,10 @@ router.get('/', authenticate, async (req, res) => {
         };
     const users = await User.findAll(query);
     res.json(users);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'users'); }
 });
 
-router.post('/', authenticate, requireRole('admin'), async (req, res) => {
+router.post('/', authenticate, requirePermission('users','create','admin'), async (req, res) => {
   try {
     const { name, email, password, role, department, custom_role_id } = req.body;
     const check = await validatePassword(password);
@@ -62,7 +63,7 @@ router.post('/', authenticate, requireRole('admin'), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('users','edit','admin'), async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: 'Benutzer nicht gefunden' });
@@ -117,7 +118,7 @@ router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('users','delete','admin'), async (req, res) => {
   try {
     if (parseInt(req.params.id) === req.user.id) {
       return res.status(400).json({ error: 'Sie können Ihren eigenen Account nicht deaktivieren' });
@@ -127,7 +128,7 @@ router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
     await user.update({ active: false });
     await auditFromReq(req, 'deactivate', 'user', user.id, user.name, {});
     res.json({ message: 'Benutzer deaktiviert' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'users'); }
 });
 
 module.exports = router;

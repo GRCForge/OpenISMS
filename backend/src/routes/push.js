@@ -4,6 +4,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const webpush = require('web-push');
 const { authenticate } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { PushSubscription } = require('../models');
 const { getSetting, setSetting } = require('../services/settingsService');
 
@@ -27,7 +28,7 @@ router.get('/vapid-public-key', authenticate, async (req, res) => {
     const keys = await getOrCreateVapidKeys();
     res.json({ publicKey: keys.publicKey });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'push');
   }
 });
 
@@ -47,7 +48,7 @@ router.post('/subscribe', authenticate, async (req, res) => {
     }
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'push');
   }
 });
 
@@ -59,7 +60,7 @@ router.delete('/unsubscribe', authenticate, async (req, res) => {
     await PushSubscription.destroy({ where: { user_id: req.user.id, endpoint } });
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'push');
   }
 });
 

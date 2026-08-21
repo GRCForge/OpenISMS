@@ -10,6 +10,7 @@ const {
 } = require('@simplewebauthn/server');
 const { User, PasskeyCredential } = require('../models');
 const { authenticate } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 const RP_NAME = process.env.APP_NAME || 'OpenISMS';
@@ -89,7 +90,7 @@ router.get('/register-options', authenticate, async (req, res) => {
     res.json(options);
   } catch (e) {
     console.error('[Passkey register-options]', e);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'passkey');
   }
 });
 
@@ -176,7 +177,7 @@ router.post('/login-options', async (req, res) => {
     });
   } catch (e) {
     console.error('[Passkey login-options]', e);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'passkey');
   }
 });
 

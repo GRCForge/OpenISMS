@@ -12,6 +12,7 @@ import { Modal } from '../components/ui/Modal';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 
@@ -79,9 +80,10 @@ const emptyEditForm = {
 export const Nis2: React.FC = () => {
   const { t } = useTranslation('nis2');
   const { user } = useAuth();
+  const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = hasWriteAccess(user?.role);
-  const canManage = user?.role === 'admin' || user?.role === 'assessor';
+  const canWrite = can('nis2', 'create', hasWriteAccess(user?.role));
+  const canManage = can('nis2', 'edit', user?.role === 'admin' || user?.role === 'assessor');
 
   const statusLabels: Record<ImplStatus, string> = {
     not_started: t('status.not_started'),

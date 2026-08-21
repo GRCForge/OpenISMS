@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Task, User, Group, GroupMember, Notification, Asset, Risk, Incident, Training, AiSystem, SubjectRequest } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { Op } = require('sequelize');
 
@@ -74,7 +75,7 @@ router.get('/', requirePermission('tasks','view','admin','owner','assessor','vie
     }
 
     res.json(tasks);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tasks'); }
 });
 
 // My tasks — includes tasks directly assigned AND group tasks for user's groups
@@ -100,7 +101,7 @@ router.get('/my', authenticate, requirePermission('tasks','view','admin','owner'
     }
 
     res.json(tasks);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tasks'); }
 });
 
 // Stats
@@ -124,7 +125,7 @@ router.get('/stats', authenticate, requirePermission('tasks','view','admin','own
       Task.count({ where: { status: { [Op.notIn]: ['done', 'cancelled'] }, due_date: { [Op.lt]: new Date().toISOString().slice(0, 10) }, ...activeAssetFilter } }),
     ]);
     res.json({ open, in_progress, done, overdue });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tasks'); }
 });
 
 // Count orphaned tasks (admin only) — safe preview before purge
@@ -144,7 +145,7 @@ router.get('/orphaned-count', authenticate, requirePermission('tasks','maintenan
       total += activeTasks.filter(t => !existingSet.has(t.related_id)).length;
     }
     res.json({ count: total });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tasks'); }
 });
 
 // Purge orphaned tasks (admin only) — deletes tasks whose related object no longer exists
@@ -169,7 +170,7 @@ router.delete('/orphaned', authenticate, requirePermission('tasks','maintenance'
     }
     await auditFromReq(req, 'delete', 'task', null, 'Purge orphaned tasks', { purged });
     res.json({ purged });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tasks'); }
 });
 
 // Get single task (verify user has access)
@@ -188,7 +189,7 @@ router.get('/:id', authenticate, requirePermission('tasks','view','admin','owner
       return res.status(403).json({ error: 'Forbidden' });
     }
     res.json(task);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tasks'); }
 });
 
 // Create task
@@ -294,7 +295,7 @@ router.delete('/:id', authenticate, requirePermission('tasks','delete','admin','
     await task.destroy();
     await auditFromReq(req, 'delete', 'task', req.params.id, title, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'tasks'); }
 });
 
 module.exports = router;

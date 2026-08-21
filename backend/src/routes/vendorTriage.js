@@ -2,17 +2,18 @@ const router = require('express').Router({ mergeParams: true });
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { VendorTriageRun, VendorFinding, Vendor, Document, User } = require('../models');
-const { authenticate, isItStaff, isDpo, isAdmin } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { runTriage } = require('../services/vendorTriageService');
 
-// Contract findings/coverage are sensitive — restrict all triage endpoints to the
-// same roles allowed to run an analysis.
-const requireTriageAccess = (req, res, next) => {
-  if (!isItStaff(req) && !isDpo(req) && !isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
-  next();
-};
-router.use(authenticate, requireTriageAccess);
+// Contract findings/coverage are sensitive — every endpoint below is gated on the
+// permission matrix ('vendor_triage'), whose defaults are the four roles the
+// inline isItStaff()/isDpo()/isAdmin() checks here used to resolve to. Running an
+// analysis is its own action: it costs LLM budget and writes findings, which is a
+// different decision from reading results that already exist.
+const TRIAGE_ROLES = ['admin', 'assessor', 'it-staff', 'dpo'];
+router.use(authenticate);
 
 // Every identifier that ends up in a Sequelize `where` clause is coerced to a
 // positive integer first. Values taken straight from req.params/req.body may be
@@ -43,7 +44,7 @@ const parseIds = (req, res) => {
 };
 
 // List triage runs for a vendor
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('vendor_triage', 'view', ...TRIAGE_ROLES), async (req, res) => {
   try {
     const ids = parseIds(req, res);
     if (!ids) return;
@@ -60,11 +61,11 @@ router.get('/', async (req, res) => {
       order: [['created_at', 'DESC']],
     });
     res.json(runs);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Get a single triage run with findings
-router.get('/:runId', async (req, res) => {
+router.get('/:runId', requirePermission('vendor_triage', 'view', ...TRIAGE_ROLES), async (req, res) => {
   try {
     const ids = parseIds(req, res);
     if (!ids) return;
@@ -81,13 +82,11 @@ router.get('/:runId', async (req, res) => {
     });
     if (!run) return res.status(404).json({ error: 'Triage run not found' });
     res.json(run);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Start a triage run (async — responds immediately with the run record)
-router.post('/', authenticate, async (req, res) => {
-  if (!isItStaff(req) && !isDpo(req) && !isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
-
+router.post('/', requirePermission('vendor_triage', 'run', ...TRIAGE_ROLES), async (req, res) => {
   try {
     const ids = parseIds(req, res);
     if (!ids) return;
@@ -129,12 +128,12 @@ router.post('/', authenticate, async (req, res) => {
     });
 
     res.status(202).json(run);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Re-run an analysis (e.g. after an error or a config change) — creates a fresh run
 // from the same document and doc type.
-router.post('/:runId/retry', async (req, res) => {
+router.post('/:runId/retry', requirePermission('vendor_triage', 'run', ...TRIAGE_ROLES), async (req, res) => {
   try {
     const ids = parseIds(req, res);
     if (!ids) return;
@@ -154,12 +153,11 @@ router.post('/:runId/retry', async (req, res) => {
     });
     runTriage(run.id).catch(err => console.error(`[Triage] Retry run ${run.id} failed:`, err.message));
     res.status(202).json(run);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 // Delete a triage run and its findings
-router.delete('/:runId', authenticate, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+router.delete('/:runId', requirePermission('vendor_triage', 'delete', 'admin'), async (req, res) => {
   try {
     const ids = parseIds(req, res);
     if (!ids) return;
@@ -169,7 +167,7 @@ router.delete('/:runId', authenticate, async (req, res) => {
     await VendorFinding.destroy({ where: { triage_run_id: run.id } });
     await run.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'vendorTriage'); }
 });
 
 module.exports = router;

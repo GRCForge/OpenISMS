@@ -2,6 +2,7 @@ const express = require('express');
 const { fn, col, Op } = require('sequelize');
 const { Asset, Risk, Control, Incident, Reminder, ReviewSignOff, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
@@ -44,7 +45,7 @@ router.get('/kpis', authenticate, requirePermission('review','view','admin','own
       incidents: { total: totalIncidents, open: openIncidents, nis2: nis2Incidents, bySeverity: toMap(incidentsBySeverity, 'severity') },
       reviews: { overdue: overdueReviews },
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'review'); }
 });
 
 router.get('/sign-offs', authenticate, requirePermission('review','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
@@ -54,7 +55,7 @@ router.get('/sign-offs', authenticate, requirePermission('review','view','admin'
       order: [['approved_at', 'DESC']],
     });
     res.json(signOffs);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'review'); }
 });
 
 router.post('/sign-off', authenticate, requirePermission('review','sign_off','admin','assessor'), async (req, res) => {
@@ -70,7 +71,7 @@ router.post('/sign-off', authenticate, requirePermission('review','sign_off','ad
       include: [{ model: User, as: 'approvedBy', attributes: ['id', 'name', 'email'] }],
     });
     res.status(201).json(full);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'review'); }
 });
 
 module.exports = router;

@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { invalidateModulesCache, MODULE_DEFAULTS } = require('../middleware/modules');
 const { setSetting, getSetting } = require('../services/settingsService');
 const { auditFromReq } = require('../services/auditService');
@@ -13,7 +14,7 @@ router.get('/', authenticate, requirePermission('modules','view','admin','owner'
     const raw = await getSetting('modules');
     const stored = raw ? JSON.parse(raw) : {};
     res.json({ ...MODULE_DEFAULTS, ...stored });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'modules'); }
 });
 
 router.put('/', authenticate, requirePermission('modules','edit','admin'), async (req, res) => {
@@ -24,7 +25,7 @@ router.put('/', authenticate, requirePermission('modules','edit','admin'), async
     invalidateModulesCache();
     await auditFromReq(req, 'update', 'settings', null, 'modules', { modules: value });
     res.json(value);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'modules'); }
 });
 
 module.exports = router;

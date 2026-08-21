@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Group, GroupMember, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -16,7 +17,7 @@ router.get('/', requirePermission('groups','view','admin','owner','assessor','vi
   try {
     const groups = await Group.findAll({ include: groupInclude, order: [['name', 'ASC']] });
     res.json(groups);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'groups'); }
 });
 
 // Get single group (all authenticated users can view)
@@ -26,7 +27,7 @@ router.get('/:id', authenticate, requirePermission('groups','view','admin','owne
     if (!group) return res.status(404).json({ error: 'Nicht gefunden' });
     // All authenticated users can view groups (already protected by router.use(authenticate))
     res.json(group);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'groups'); }
 });
 
 // Create group (admin only)
@@ -63,7 +64,7 @@ router.delete('/:id', authenticate, requirePermission('groups','manage','admin')
     await group.destroy();
     await auditFromReq(req, 'delete', 'group', req.params.id, name, {});
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'groups'); }
 });
 
 // Add member to group (admin only)
@@ -88,7 +89,7 @@ router.delete('/:id/members/:userId', requirePermission('groups','manage','admin
     if (!deleted) return res.status(404).json({ error: 'Mitglied nicht gefunden' });
     const full = await Group.findByPk(req.params.id, { include: groupInclude });
     res.json(full);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'groups'); }
 });
 
 module.exports = router;

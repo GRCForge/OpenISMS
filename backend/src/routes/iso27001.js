@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Iso27001Control, User, Control } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/iso27001Catalog');
 
@@ -21,7 +22,7 @@ router.get('/', authenticate, requirePermission('iso27001','view','admin','owner
       order: [['ref', 'ASC']],
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'iso27001'); }
 });
 
 router.post('/seed', authenticate, requirePermission('iso27001','seed','admin','assessor'), async (req, res) => {
@@ -31,7 +32,7 @@ router.post('/seed', authenticate, requirePermission('iso27001','seed','admin','
     await Iso27001Control.bulkCreate(catalog);
     await auditFromReq(req, 'seed', 'iso27001_control', null, 'Annex-A-Katalog', { count: catalog.length });
     res.status(201).json({ ok: true, count: catalog.length });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'iso27001'); }
 });
 
 router.put('/:id', authenticate, requirePermission('iso27001','edit','admin','assessor','it-staff'), async (req, res) => {
@@ -49,7 +50,7 @@ router.put('/:id', authenticate, requirePermission('iso27001','edit','admin','as
     }
     await auditFromReq(req, 'update', 'iso27001_control', item.id, item.ref, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'iso27001'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('iso27001','delete','admin','assessor'), async (req, res) => {
@@ -59,7 +60,7 @@ router.delete('/:id', authenticate, requirePermission('iso27001','delete','admin
     await auditFromReq(req, 'delete', 'iso27001_control', item.id, item.ref, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'iso27001'); }
 });
 
 module.exports = router;

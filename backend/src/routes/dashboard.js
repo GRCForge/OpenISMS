@@ -1,7 +1,8 @@
 const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Asset, Assessment, Reminder, User, AuditLog } = require('../models');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
@@ -12,7 +13,7 @@ router.use(apiLimiter);
 
 // Lightweight badge count for the sidebar/header: a single COUNT query instead
 // of the ~10 queries of the full dashboard. Polled by the UI, so it must stay cheap.
-router.get('/badge', authenticate, async (req, res) => {
+router.get('/badge', authenticate, requirePermission('dashboard','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const overdueReminders = await Reminder.count({
       where: { status: 'overdue' },
@@ -22,10 +23,10 @@ router.get('/badge', authenticate, async (req, res) => {
       }]
     });
     res.json({ overdueReminders });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'dashboard'); }
 });
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('dashboard','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
@@ -145,7 +146,7 @@ router.get('/', authenticate, async (req, res) => {
       recentActivity,
       frameworkCoverage: { ...fwCounts, total: activeAssets },
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'dashboard'); }
 });
 
 module.exports = router;

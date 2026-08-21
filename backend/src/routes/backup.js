@@ -4,9 +4,10 @@ router.use(heavyLimiter);
 const path = require('path');
 const fs = require('fs');
 const archiver = require('archiver');
+const { PassThrough } = require('stream');
 const AdmZip = require('adm-zip');
 const multer = require('multer');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { sequelize } = require('../models');
 const { auditFromReq } = require('../services/auditService');
 
@@ -27,10 +28,73 @@ const ISMS_VERSION = (() => {
 // Max raw size for database.json before we even attempt JSON.parse (DoS guard)
 const DB_JSON_MAX_BYTES = 512 * 1024 * 1024; // 512 MB
 
-router.use(authenticate, requireRole('admin'));
+router.use(authenticate);
+
+
+// Writes { "table": [ …rows… ], … } to a stream without ever holding more than one
+// batch in memory. Rows are paged by primary key where there is a single-column
+// one; tables without it (junction tables, and they are small) are read in one go,
+// because LIMIT/OFFSET without a stable sort can skip or repeat rows.
+const EXPORT_BATCH_SIZE = 500;
+
+async function streamDatabaseJson(stream, tableNames, counts) {
+  const write = (chunk) => new Promise((resolve, reject) => {
+    if (stream.write(chunk)) return resolve();
+    stream.once('drain', resolve);
+    stream.once('error', reject);
+  });
+
+  try {
+    await write('{');
+    let firstTable = true;
+    for (const tbl of tableNames) {
+      await write(`${firstTable ? '' : ','}\n${JSON.stringify(tbl)}:[`);
+      firstTable = false;
+
+      const [pkRows] = await sequelize.query(
+        `SHOW KEYS FROM \`${tbl}\` WHERE Key_name = 'PRIMARY'` // NOSONAR(javascript:S3649) - tbl from SHOW TABLES
+      );
+      const pk = pkRows.length === 1 ? pkRows[0].Column_name : null;
+
+      let firstRow = true;
+      const emit = async (rows) => {
+        for (const row of rows) {
+          await write((firstRow ? '' : ',') + JSON.stringify(row));
+          firstRow = false;
+        }
+      };
+
+      if (!pk || counts[tbl] <= EXPORT_BATCH_SIZE) {
+        const [rows] = await sequelize.query(`SELECT * FROM \`${tbl}\``); // NOSONAR(javascript:S3649) - tbl from SHOW TABLES
+        await emit(rows);
+      } else {
+        let after = null;
+        for (;;) {
+          const [rows] = await sequelize.query(
+            after === null
+              ? `SELECT * FROM \`${tbl}\` ORDER BY \`${pk}\` LIMIT ${EXPORT_BATCH_SIZE}` // NOSONAR(javascript:S3649) - identifiers from SHOW TABLES/SHOW KEYS
+              : `SELECT * FROM \`${tbl}\` WHERE \`${pk}\` > ? ORDER BY \`${pk}\` LIMIT ${EXPORT_BATCH_SIZE}`, // NOSONAR(javascript:S3649)
+            after === null ? {} : { replacements: [after] }
+          );
+          if (!rows.length) break;
+          await emit(rows);
+          after = rows[rows.length - 1][pk];
+          if (rows.length < EXPORT_BATCH_SIZE) break;
+        }
+      }
+      await write(']');
+    }
+    await write('\n}');
+    stream.end();
+  } catch (e) {
+    // Destroy rather than end: a truncated database.json must not look complete.
+    stream.destroy(e);
+    throw e;
+  }
+}
 
 // GET /api/admin/backup/export  — streams a zip download
-router.get('/export', async (req, res) => {
+router.get('/export', requirePermission('backup','export','admin'), async (req, res) => {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     res.setHeader('Content-Type', 'application/zip');
@@ -43,35 +107,58 @@ router.get('/export', async (req, res) => {
     // Dump all tables via raw SQL — captures junction tables too
     const [tables] = await sequelize.query('SHOW TABLES');
     const tableNames = tables.map(t => Object.values(t)[0]);
-    const dbDump = {};
+
+    // Row counts up front: they belong in the metadata, and they let the export
+    // below decide per table whether it needs to page at all.
+    const counts = {};
     for (const tbl of tableNames) {
-      const [rows] = await sequelize.query(`SELECT * FROM \`${tbl}\``); // NOSONAR(javascript:S3649) - tbl from SHOW TABLES, not user input
-      dbDump[tbl] = rows;
+      const [[{ cnt }]] = await sequelize.query(`SELECT COUNT(*) AS cnt FROM \`${tbl}\``); // NOSONAR(javascript:S3649) - tbl from SHOW TABLES
+      counts[tbl] = Number(cnt);
     }
 
     const meta = {
       isms_version: ISMS_VERSION,
       exported_at: new Date().toISOString(),
-      tables: Object.fromEntries(tableNames.map(t => [t, dbDump[t].length])),
+      tables: counts,
     };
 
     archive.append(JSON.stringify(meta, null, 2), { name: 'backup-meta.json' });
-    archive.append(JSON.stringify(dbDump, null, 2), { name: 'database.json' });
+
+    // database.json is streamed rather than built in memory. The previous version
+    // held every row of every table in a single object and then ran
+    // JSON.stringify over it, so peak memory was roughly twice the database —
+    // enough to take the container down on an installation of any size, at the
+    // exact moment an operator is trying to get their data out.
+    const dbStream = new PassThrough();
+    archive.append(dbStream, { name: 'database.json' });
 
     if (fs.existsSync(UPLOAD_DIR)) {
       archive.directory(UPLOAD_DIR, 'uploads');
     }
 
-    await archive.finalize();
-    await auditFromReq(req, 'create', 'settings', null, 'Backup-Export', { tables: Object.keys(dbDump).length });
+    await Promise.all([
+      streamDatabaseJson(dbStream, tableNames, counts),
+      archive.finalize(),
+    ]);
+    await auditFromReq(req, 'create', 'settings', null, 'Backup-Export', {
+      tables: tableNames.length,
+      rows: Object.values(counts).reduce((a, b) => a + b, 0),
+    });
   } catch (e) {
     console.error('[Backup export]', e);
-    if (!res.headersSent) res.status(500).json({ error: 'Export fehlgeschlagen. Details im Server-Log.' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Export fehlgeschlagen. Details im Server-Log.' });
+    } else {
+      // The zip is already on the wire, so there is no status code left to send.
+      // Tearing the connection down makes the download fail visibly instead of
+      // handing the operator a truncated archive that looks complete.
+      res.destroy(e);
+    }
   }
 });
 
 // GET /api/admin/backup/info  — returns last export info + current DB stats
-router.get('/info', async (req, res) => {
+router.get('/info', requirePermission('backup','info','admin'), async (req, res) => {
   try {
     const [tables] = await sequelize.query('SHOW TABLES');
     const tableNames = tables.map(t => Object.values(t)[0]);
@@ -90,7 +177,7 @@ router.get('/info', async (req, res) => {
 
 // POST /api/admin/backup/preview  — returns metadata from a zip without restoring
 const uploadPreview = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024 * 1024 } });
-router.post('/preview', uploadPreview.single('backup'), async (req, res) => {
+router.post('/preview', requirePermission('backup','restore','admin'), uploadPreview.single('backup'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Keine Datei' });
   try {
     const zip = new AdmZip(req.file.buffer);
@@ -107,7 +194,7 @@ router.post('/preview', uploadPreview.single('backup'), async (req, res) => {
 });
 
 // POST /api/admin/backup/restore  — accepts zip, validates, restores
-router.post('/restore', upload.single('backup'), async (req, res) => {
+router.post('/restore', requirePermission('backup','restore','admin'), upload.single('backup'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Keine Backup-Datei übergeben.' });
 
   try {
@@ -151,6 +238,19 @@ router.post('/restore', upload.single('backup'), async (req, res) => {
     const unknownTables = backupTables.filter(t => !allowedTables.has(t));
     if (unknownTables.length) {
       return res.status(400).json({ error: `Unbekannte Tabellen im Backup: ${unknownTables.join(', ')}` });
+    }
+
+    // Tables this database has but the backup does not (an older backup restored
+    // into a newer schema, typically). Restore only truncates what it is about to
+    // refill, so those keep their current rows — which is the safe behaviour, but
+    // it leaves the installation in a mixed state. Silence about it was the
+    // problem: the operator had no way to tell. Their row counts go into the
+    // response and the audit entry.
+    const untouchedTables = {};
+    for (const tbl of allowedTables) {
+      if (backupTables.includes(tbl)) continue;
+      const [[{ cnt }]] = await sequelize.query(`SELECT COUNT(*) AS cnt FROM \`${tbl}\``); // NOSONAR(javascript:S3649) - tbl from SHOW TABLES
+      if (Number(cnt) > 0) untouchedTables[tbl] = Number(cnt);
     }
 
     // Restore DB in a transaction — FK checks disabled for the duration
@@ -235,12 +335,22 @@ router.post('/restore', upload.single('backup'), async (req, res) => {
       exported_at: meta.exported_at,
       tables_restored: Object.keys(dbDump).length,
       files_restored: fileEntries.length,
+      tables_untouched: Object.keys(untouchedTables),
     });
 
     res.json({
       success: true,
       tables_restored: Object.keys(dbDump).length,
       files_restored: fileEntries.length,
+      // Non-empty means the database now holds a mix: everything from the backup,
+      // plus whatever these tables had before. Usually a backup from a version
+      // that did not have them yet.
+      tables_untouched: untouchedTables,
+      warning: Object.keys(untouchedTables).length
+        ? `Das Backup enthält ${Object.keys(untouchedTables).length} Tabelle(n) nicht, die in dieser Datenbank Daten haben: `
+          + `${Object.entries(untouchedTables).map(([t, c]) => `${t} (${c})`).join(', ')}. `
+          + 'Deren Inhalt blieb unverändert — vermutlich stammt das Backup aus einer älteren Version.'
+        : undefined,
       meta,
     });
   } catch (e) {

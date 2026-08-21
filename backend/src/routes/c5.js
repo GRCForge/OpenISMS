@@ -3,6 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { C5Criterion, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const catalog = require('../services/c5Catalog');
 
@@ -13,7 +14,7 @@ router.get('/', authenticate, requirePermission('c5','view','admin','owner','ass
       order: [['domain', 'ASC'], ['criterion_id', 'ASC']],
     });
     res.json(items);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'c5'); }
 });
 
 router.post('/seed', authenticate, requirePermission('c5','seed','admin','assessor'), async (req, res) => {
@@ -35,7 +36,7 @@ router.post('/seed', authenticate, requirePermission('c5','seed','admin','assess
     await C5Criterion.bulkCreate(catalog);
     await auditFromReq(req, 'seed', 'c5_criterion', null, 'C5-Katalog', { count: catalog.length });
     res.status(201).json({ ok: true, count: catalog.length });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'c5'); }
 });
 
 router.put('/:id', authenticate, requirePermission('c5','edit','admin','assessor','it-staff'), async (req, res) => {
@@ -46,7 +47,7 @@ router.put('/:id', authenticate, requirePermission('c5','edit','admin','assessor
     await item.update({ implementation_status, responsible_id, evidence, notes, last_review_date });
     await auditFromReq(req, 'update', 'c5_criterion', item.id, item.criterion_id, {});
     res.json(item);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'c5'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('c5','delete','admin','assessor'), async (req, res) => {
@@ -56,7 +57,7 @@ router.delete('/:id', authenticate, requirePermission('c5','delete','admin','ass
     await auditFromReq(req, 'delete', 'c5_criterion', item.id, item.criterion_id, {});
     await item.destroy();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'c5'); }
 });
 
 module.exports = router;

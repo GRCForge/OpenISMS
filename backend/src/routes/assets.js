@@ -5,6 +5,8 @@ const {
   Policy, PolicyVersion, VvtEntry, Incident, Risk 
 } = require('../models');
 const { authenticate, isAssessor, isItStaff, isAdmin, canViewAllAssets, canViewAsset, requirePermission } = require('../middleware/auth');
+const { serverError } = require('../utils/httpError');
+const { setFilter } = require('../utils/queryFilters');
 const { requireModule } = require('../middleware/modules');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -37,11 +39,11 @@ router.get('/', authenticate, requirePermission('assets','view','admin','owner',
   try {
     const { type, classification, status, lifecycle_status, search } = req.query;
     const where = {};
-    if (type) where.type = type;
-    if (classification) where.classification = classification;
-    if (lifecycle_status) where.lifecycle_status = lifecycle_status;
+    setFilter(where, 'type', type);
+    setFilter(where, 'classification', classification);
+    setFilter(where, 'lifecycle_status', lifecycle_status);
     if (status) {
-      if (status !== 'all') where.status = status;
+      setFilter(where, 'status', status);
     } else {
       where.status = { [Op.ne]: 'decommissioned' };
     }
@@ -65,7 +67,7 @@ router.get('/', authenticate, requirePermission('assets','view','admin','owner',
       order: [['name', 'ASC']]
     });
     res.json(assets);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assets'); }
 });
 
 // Aggregated CVEs across all assets
@@ -116,7 +118,7 @@ router.get('/cves', authenticate, requireModule('discovery'), requirePermission(
 
     res.json(cveList);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -135,7 +137,7 @@ router.get('/locations', authenticate, requirePermission('assets','view','admin'
     });
     res.json(locations.map(l => l.getDataValue('location')));
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -166,7 +168,7 @@ router.get('/:id', authenticate, requirePermission('assets','view','admin','owne
     res.json(asset);
   } catch (e) {
     console.error('ERROR IN GET ASSET:', e);
-    res.status(500).json({ error: e.message }); 
+    serverError(res, e, 'assets');
   }
 });
 
@@ -220,11 +222,34 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
       if (data[f] === '' || data[f] === 'Invalid date') data[f] = null;
     });
 
-    if (!isAssessor(req) && !isDpo(req) && !isAdmin(req)) {
+    // The protected-field rule is what the matrix calls assets.edit_compliance.
+    // It used to be hardcoded here, which made that matrix entry decorative: an
+    // admin could edit it and nothing changed. Now the matrix decides, and the
+    // old role list is the fallback for when it says nothing (same contract as
+    // requirePermission).
+    const { can } = require('../services/permissionService');
+    const mayEditCompliance = await can(req.user, 'assets', 'edit_compliance');
+    const compliancePermitted = typeof mayEditCompliance === 'boolean'
+      ? mayEditCompliance
+      : (isAssessor(req) || isDpo(req) || isAdmin(req));
+    if (!compliancePermitted) {
       const protectedFields = ['classification', 'nis2_relevant', 'rto', 'rpo'];
       const changed = protectedFields.filter(f => data[f] !== undefined && String(data[f]) !== String(asset[f]));
       if (changed.length > 0) {
         return res.status(403).json({ error: `Ihre Rolle darf folgende geschützte Felder nicht ändern: ${changed.join(', ')}` });
+      }
+    }
+
+    // Same treatment for the security tab. assets.edit_security shipped in the
+    // matrix but nothing ever read it, so the knob was decorative. Its default is
+    // the set that may edit these fields today (everyone who passes edit_basics),
+    // which keeps access unchanged; narrowing it is now a deliberate admin edit.
+    const mayEditSecurity = await can(req.user, 'assets', 'edit_security');
+    if (mayEditSecurity === false) {
+      const securityFields = ['patch_status', 'hardening_status', 'eol_date', 'backup_plan', 'last_restore_test'];
+      const changed = securityFields.filter(f => data[f] !== undefined && String(data[f]) !== String(asset[f]));
+      if (changed.length > 0) {
+        return res.status(403).json({ error: `Ihre Rolle darf folgende Sicherheitsfelder nicht ändern: ${changed.join(', ')}` });
       }
     }
 
@@ -278,7 +303,7 @@ router.delete('/:id', authenticate, requirePermission('assets','delete','admin')
     await checkAndManageAssetTasks(asset);
     await auditFromReq(req, 'delete', 'asset', asset.id, asset.name, {});
     res.json({ message: 'Asset decommissioned' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assets'); }
 });
 
 router.post('/bulk-delete', authenticate, requirePermission('assets','delete','admin'), async (req, res) => {
@@ -297,7 +322,7 @@ router.post('/bulk-delete', authenticate, requirePermission('assets','delete','a
       await auditFromReq(req, 'delete', 'asset', asset.id, asset.name, {});
     }
     res.json({ message: `${assets.length} Assets außer Betrieb gesetzt` });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { serverError(res, e, 'assets'); }
 });
 
 // Suggest CPEs: returns top-10 matches from NVD for user selection (no save)
@@ -315,7 +340,7 @@ router.post('/:id/cpe-suggestions', authenticate, requireModule('discovery'), re
     res.json({ suggestions });
   } catch (e) {
     console.error('[CVE] CPE suggestions failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -347,7 +372,7 @@ router.post('/:id/resolve-cpe', authenticate, requireModule('discovery'), requir
   } catch (e) {
     const safeAssetId = String(req.params.id).replace(/[\r\n]/g, '');
     console.error('[CVE] CPE resolve failed for asset', safeAssetId + ':', e.message);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 
@@ -379,7 +404,7 @@ router.post('/:id/refresh-cves', authenticate, requireModule('discovery'), requi
     res.json({ counts: result.counts, cveList: result.cveList, total: result.total, source: result.source, query: result.query });
   } catch (e) {
     console.error('[CVE] Refresh failed for asset', sanitizeForLog(req.params.id) + ':', e.message);
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'assets');
   }
 });
 

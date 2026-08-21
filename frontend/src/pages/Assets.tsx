@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { exportToCSV, exportToExcel } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { useModules } from '../contexts/ModulesContext';
 import { hasWriteAccess } from '../lib/permissions';
@@ -84,9 +85,12 @@ export const Assets: React.FC = () => {
   ];
 
   const { user } = useAuth();
+
+  const { can } = usePermissions();
   const toast = useToast();
   const { isEnabled } = useModules();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = can('assets', 'create', hasWriteAccess(user?.role));
+  const canDelete = can('assets', 'delete', user?.role === 'admin');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -293,7 +297,7 @@ export const Assets: React.FC = () => {
           <p className="text-gray-500 dark:text-slate-400 text-sm">{t('assets:countLabel', { count: assets.length })}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {user?.role === 'admin' && selectedIds.length > 0 && (
+          {canDelete && selectedIds.length > 0 && (
             <Button variant="danger" size="sm" onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-1">
               <Trash2 size={14} />
               {t('assets:bulkDelete', { count: selectedIds.length })}
@@ -384,7 +388,7 @@ export const Assets: React.FC = () => {
             <Table>
               <Thead>
                 <tr>
-                  {user?.role === 'admin' && (
+                  {canDelete && (
                     <Th className="w-10">
                       <button
                         type="button"
@@ -415,9 +419,9 @@ export const Assets: React.FC = () => {
               </Thead>
               <Tbody>
                 {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => <SkeletonTableRow key={i} cols={user?.role === 'admin' ? 7 : 6} />)
+                  Array.from({ length: 6 }).map((_, i) => <SkeletonTableRow key={i} cols={canDelete ? 7 : 6} />)
                 ) : assets.length === 0 ? (
-                  <tr><td colSpan={user?.role === 'admin' ? 7 : 6} className="py-20 text-center">
+                  <tr><td colSpan={canDelete ? 7 : 6} className="py-20 text-center">
                     <Server size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
                     {(search || typeFilter || classFilter || statusFilter) ? (
                       <>
@@ -440,7 +444,7 @@ export const Assets: React.FC = () => {
                 ) : (
                   assets.map(a => (
                     <tr key={a.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => openEdit(a)}>
-                      {user?.role === 'admin' && (
+                      {canDelete && (
                         <Td onClick={e => e.stopPropagation()} className="w-10">
                           <button
                             type="button"
