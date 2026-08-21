@@ -28,6 +28,7 @@
   },
   "toast": {
     "pdfLoadError": "PDF could not be loaded",
+    "previewUnavailable": "Preview not available for this file type – downloading instead",
     "downloadFailed": "Download failed",
     "templateDeleted": "Template deleted",
     "deleteError": "Error deleting",

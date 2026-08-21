@@ -65,7 +65,11 @@ app.use(helmet({
       connectSrc: ["'self'"],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
-      frameSrc: ["'none'"],
+      // 'self' + blob: so the authenticated document/policy preview (an <iframe
+      // src={URL.createObjectURL(blob)}> built from our own fetched bytes) can
+      // render — blob: URLs are same-origin and only creatable by our own JS, so
+      // this doesn't allow framing third-party/attacker content.
+      frameSrc: ["'self'", "blob:"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
       frameAncestors: ["'self'"],
@@ -221,6 +225,9 @@ app.use('/api/import', require('./routes/import'));
 app.use('/api/vendors', require('./routes/vendors'));
 app.use('/api/vendors/:vendorId/triage', require('./routes/vendorTriage'));
 app.use('/api/triage-profiles', require('./routes/triageProfiles'));
+const documentAnalysis = require('./routes/documentAnalysis');
+app.use('/api/documents/:subjectId/analyze', documentAnalysis.forDocument);
+app.use('/api/policies/:subjectId/analyze', documentAnalysis.forPolicy);
 app.use('/api/policies', require('./routes/policies'));
 app.use('/api/admin/backup', require('./routes/backup'));
 const { requireModule } = require('./middleware/modules');
@@ -571,6 +578,9 @@ const start = async () => {
     // Vendor triage: runs are listed per vendor newest-first; findings are joined by run.
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_triage_runs_vendor ON vendor_triage_runs(vendor_id, created_at)').catch(() => {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_findings_run ON vendor_findings(triage_run_id)').catch(() => {});
+    // Document/policy analysis: runs are listed per subject newest-first; findings are joined by run.
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_doc_analysis_runs_subject ON document_analysis_runs(subject_type, subject_id, created_at)').catch(() => {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_doc_analysis_findings_run ON document_analysis_findings(run_id)').catch(() => {});
     // AI systems: the compliance scan and list filter by risk category.
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_ai_systems_risk ON ai_systems(risk_category)').catch(() => {});
 
@@ -689,6 +699,14 @@ const start = async () => {
       await markStaleRunsAsError();
     } catch (e) {
       console.warn('[Triage] Could not reconcile stale runs:', e.message);
+    }
+
+    // Same reconciliation for the document/policy analysis engine.
+    try {
+      const { markStaleAnalysisRunsAsError } = require('./services/documentAnalysisService');
+      await markStaleAnalysisRunsAsError();
+    } catch (e) {
+      console.warn('[DocAnalysis] Could not reconcile stale runs:', e.message);
     }
 
     // Run task automation on startup and then daily at 3:00 AM

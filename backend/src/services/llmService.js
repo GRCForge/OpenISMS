@@ -167,6 +167,15 @@ async function callLlm({ systemPrompt, userPrompt, json = false, timeoutMs = 120
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
+      // Ollama defaults to a small context window (historically 2048-4096
+      // tokens) regardless of what the model itself supports, unless told
+      // otherwise — a long system+user prompt (e.g. a ~40k-char document being
+      // analyzed) silently gets truncated to fit, and the model then responds
+      // from a near-empty view of the input instead of erroring. The
+      // OpenAI-compatible endpoint still accepts Ollama's native `options`
+      // passthrough, so we size num_ctx generously rather than assume the
+      // server-side default is adequate. Overridable via OLLAMA_NUM_CTX.
+      options: { num_ctx: Number(process.env.OLLAMA_NUM_CTX) || 32768 },
     };
     if (json) body.response_format = { type: 'json_object' };
     const completion = await withTimeout(client.chat.completions.create(body, { signal }), timeoutMs, 'Ollama');

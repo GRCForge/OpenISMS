@@ -108,6 +108,7 @@
     "cpeSaved": "CPE gespeichert: {{title}}",
     "createFailed": "Fehler beim Erstellen",
     "pdfLoadError": "PDF konnte nicht geladen werden",
+    "previewUnavailable": "Vorschau für diesen Dateityp nicht verfügbar – Datei wird heruntergeladen",
     "riskAcceptanceDocRequired": "Die Annahme von Risiken erfordert ein signiertes Akzeptanzdokument. Bitte laden Sie es hoch.",
     "genericError": "Ein Fehler ist aufgetreten"
   },

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { FileText, Plus, Trash2, Download, Pencil, Building, ShieldCheck, FileCheck, FileCode, Eye, Link2, Shield, Server, Search, FolderOpen, CheckCircle, Users } from 'lucide-react';
+import { FileText, Plus, Trash2, Download, Pencil, Building, ShieldCheck, FileCheck, FileCode, Eye, Link2, Shield, Server, Search, FolderOpen, CheckCircle, Users, Bot } from 'lucide-react';
 import { FilterBar } from '../components/ui/FilterBar';
 import api from '../lib/api';
 import type { Policy, Asset, Control, Template } from '../types';
@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { DocumentAnalysisModal } from '../components/DocumentAnalysisModal';
 
 const categoryLabels = {
   policy: 'categoryLabels.policy',
@@ -63,12 +64,14 @@ const emptyForm = {
 };
 
 export const PolicyLibrary: React.FC = () => {
-  const { t } = useTranslation('policylibrary');
+  const { t } = useTranslation(['policylibrary', 'documentanalysis']);
   const { user } = useAuth();
   const { can } = usePermissions();
   const canWrite = can('policies', 'create', hasWriteAccess(user?.role));
   const toast = useToast();
   const canEdit = can('policies', 'edit', user?.role === 'admin' || user?.role === 'assessor' || user?.role === 'dpo');
+  const ANALYSIS_ROLES = ['admin', 'assessor', 'it-staff', 'dpo'];
+  const canViewAnalysis = can('document_analysis', 'view', ANALYSIS_ROLES.includes(user?.role || ''));
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'templates' ? 'templates' : 'documents';
@@ -97,6 +100,7 @@ export const PolicyLibrary: React.FC = () => {
     category: 'general' as Template['category'],
   });
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [analysisPolicy, setAnalysisPolicy] = useState<Policy | null>(null);
   const [controlSearch, setControlSearch] = useState('');
   const [myAcks, setMyAcks] = useState<{ policy_id: number; acknowledged_at: string }[]>([]);
   const [ackModalOpen, setAckModalOpen] = useState(false);
@@ -113,8 +117,26 @@ export const PolicyLibrary: React.FC = () => {
   const handleViewPdf = async (url: string) => {
     try {
       const response = await api.get(url, { responseType: 'blob' });
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      setPdfUrl(blobUrl);
+      const contentType = String(response.headers['content-type'] || 'application/octet-stream');
+      const blob = new Blob([response.data], { type: contentType });
+      if (contentType === 'application/pdf' || contentType.startsWith('image/')) {
+        setPdfUrl(window.URL.createObjectURL(blob));
+        return;
+      }
+      // Server didn't grant inline rendering for this file type (e.g. Word/Excel) —
+      // fall back to a download instead of showing an empty/broken viewer.
+      const disposition = response.headers['content-disposition'] || '';
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const filename = match ? decodeURIComponent(match[1]) : 'document';
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      toast.info(t('toast.previewUnavailable'));
     } catch (err: any) {
       const status = err?.response?.status;
       let detail = '';
@@ -439,6 +461,9 @@ export const PolicyLibrary: React.FC = () => {
                             <a href={`/api/policies/${policy.id}/download`} target="_blank" rel="noreferrer">
                               <Button size="sm" variant="secondary" title={t('downloadTooltip')}><Download size={14} /></Button>
                             </a>
+                            {canViewAnalysis && (
+                              <Button size="sm" variant="secondary" onClick={() => setAnalysisPolicy(policy)} title={t('documentanalysis:start_button')}><Bot size={14} /></Button>
+                            )}
                           </div>
                         )}
                         {canEdit && (
@@ -679,6 +704,16 @@ export const PolicyLibrary: React.FC = () => {
             )}
          </div>
       </Modal>
+
+      {analysisPolicy && (
+        <DocumentAnalysisModal
+          open={!!analysisPolicy}
+          onClose={() => setAnalysisPolicy(null)}
+          subjectType="policy"
+          subjectId={analysisPolicy.id}
+          subjectTitle={analysisPolicy.title}
+        />
+      )}
 
       <Modal open={ackModalOpen} onClose={() => setAckModalOpen(false)} title={t('acknowledgmentsTitle', { title: ackPolicy?.title || '' })} size="md">
         <div className="space-y-3">

@@ -276,3 +276,7 @@ router.delete('/:docId', authenticate, requirePermission('documents','delete','a
 });
 
 module.exports = router;
+// Additive export of the path-confinement helper so other modules (the document
+// analysis engine) can resolve a Document's on-disk path without a second,
+// potentially drifting copy of this security-sensitive confinement logic.
+module.exports.getSafePath = getSafePath;

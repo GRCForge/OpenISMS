@@ -20,7 +20,7 @@
          laufen -> weisse Seite. Der Backend-CSP-Header (siehe helmet-Konfiguration in
          backend/src/index.js) setzt die Direktive bedingt, sobald SECURE_COOKIES=true
          signalisiert, dass TLS terminiert wird. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-src 'self' blob:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'" />
     <title>OpenISMS</title>
   </head>
   <body>

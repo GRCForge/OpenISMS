@@ -6,7 +6,7 @@ import {
   Network, AlertTriangle, CheckCircle, Info, Database, Layers,
   Server, HardDrive, User, Activity, Globe, ListChecks, History, ChevronRight,
   Share2, ArrowRight, Bold, Italic, Link as LinkIcon, AtSign, Paperclip, X, Eye,
-  BookOpen, AlertOctagon, ExternalLink, Palette, ImageIcon, Loader2, List, SquareCheck, Users, Check
+  BookOpen, AlertOctagon, ExternalLink, Palette, ImageIcon, Loader2, List, SquareCheck, Users, Check, Bot
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
@@ -32,7 +32,9 @@ import { mermaidLabel } from '../lib/mermaid';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { DocumentAnalysisModal } from '../components/DocumentAnalysisModal';
 import { Skeleton, SkeletonDetailHeader } from '../components/ui/Skeleton';
 
 const catColors: Record<string, string> = { contract: 'bg-blue-100 text-blue-800', dpa: 'bg-purple-100 text-purple-800', policy: 'bg-green-100 text-green-800', guideline: 'bg-teal-100 text-teal-800', procedure: 'bg-indigo-100 text-indigo-800', certificate: 'bg-yellow-100 text-yellow-800', risk_report: 'bg-orange-100 text-orange-800', risk_acceptance: 'bg-red-100 text-red-800', other: 'bg-gray-100 text-gray-700' };
@@ -95,7 +97,7 @@ const isOnline = (lastSeen?: string) => {
 };
 
 export const AssetDetail: React.FC = () => {
-  const { t } = useTranslation(['assets', 'common']);
+  const { t } = useTranslation(['assets', 'common', 'documentanalysis']);
   const dateFnsLocale = i18n.language === 'de' ? de : enUS;
 
   const ratingLabels = t('detail.ratingLabels', { returnObjects: true }) as string[] || ['', 'Sehr Gering (1)', 'Gering (2)', 'Mittel (3)', 'Hoch (4)', 'Sehr Hoch (5)'];
@@ -114,6 +116,9 @@ export const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const canWrite = hasWriteAccess(user?.role);
+  const { can } = usePermissions();
+  const ANALYSIS_ROLES = ['admin', 'assessor', 'it-staff', 'dpo'];
+  const canViewAnalysis = can('document_analysis', 'view', ANALYSIS_ROLES.includes(user?.role || ''));
   const { isEnabled } = useModules();
   const toast = useToast();
   const [asset, setAsset] = useState<Asset | any>(null);
@@ -156,6 +161,7 @@ export const AssetDetail: React.FC = () => {
   const [replyingTo, setReplyingTo] = useState<AssetComment | null>(null);
   const [saving, setSaving] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [analysisDoc, setAnalysisDoc] = useState<{ id: number; original_name: string } | null>(null);
   const [assetRisks, setAssetRisks] = useState<any[]>([]);
   const [mentionSearch, setMentionSearch] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState<number>(-1);
@@ -259,8 +265,26 @@ export const AssetDetail: React.FC = () => {
   const handleViewPdf = async (url: string) => {
     try {
       const response = await api.get(url, { responseType: 'blob' });
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      setPdfUrl(blobUrl);
+      const contentType = String(response.headers['content-type'] || 'application/octet-stream');
+      const blob = new Blob([response.data], { type: contentType });
+      if (contentType === 'application/pdf' || contentType.startsWith('image/')) {
+        setPdfUrl(window.URL.createObjectURL(blob));
+        return;
+      }
+      // Server didn't grant inline rendering for this file type (e.g. Word/Excel) —
+      // fall back to a download instead of showing an empty/broken viewer.
+      const disposition = response.headers['content-disposition'] || '';
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const filename = match ? decodeURIComponent(match[1]) : 'document';
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      toast.info(t('toast.previewUnavailable'));
     } catch (err: any) {
       const status = err?.response?.status;
       let detail = '';
@@ -1403,6 +1427,9 @@ export const AssetDetail: React.FC = () => {
                                <Button size="sm" variant="secondary" onClick={() => handleViewPdf(`/assets/${id}/documents/${doc.id}/download?inline=true`)} title={t('detail.view')}><Eye size={14} /></Button>
                             )}
                             <a href={`/api/assets/${id}/documents/${doc.id}/download`} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary" title={t('detail.download')}><Download size={14} /></Button></a>
+                            {canViewAnalysis && (
+                              <Button size="sm" variant="secondary" onClick={() => setAnalysisDoc(doc)} title={t('documentanalysis:start_button')}><Bot size={14} /></Button>
+                            )}
                             {!isViewer && (user?.role === 'admin' || user?.id === doc.uploader?.id) && (
                               <Button size="sm" variant="danger" title={t('detail.deleteLabel')} onClick={async () => { if (confirm(t('detail.deleteFileConfirm'))) { await api.delete(`/assets/${id}/documents/${doc.id}`); loadDocs(); } }}><Trash2 size={14}/></Button>
                             )}
@@ -2061,6 +2088,16 @@ export const AssetDetail: React.FC = () => {
       <Modal open={!!pdfUrl} onClose={() => { if (pdfUrl) window.URL.revokeObjectURL(pdfUrl); setPdfUrl(null); }} title="Dokumentvorschau" size="lg">
         {pdfUrl && <iframe src={pdfUrl} title="PDF-Vorschau" className="w-full h-[75vh] rounded-lg border dark:border-slate-800 bg-white" />}
       </Modal>
+
+      {analysisDoc && (
+        <DocumentAnalysisModal
+          open={!!analysisDoc}
+          onClose={() => setAnalysisDoc(null)}
+          subjectType="document"
+          subjectId={analysisDoc.id}
+          subjectTitle={analysisDoc.original_name}
+        />
+      )}
 
       {/* VVT Add / Create Modal */}
       <Modal open={vvtAddModalOpen} onClose={() => setVvtAddModalOpen(false)} title={vvtCreateMode ? t('detail.vvtCreateTitle') : t('detail.vvtLinkTitle')} size="xl">

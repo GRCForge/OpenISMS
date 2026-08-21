@@ -108,6 +108,7 @@
     "cpeSaved": "CPE saved: {{title}}",
     "createFailed": "Error creating",
     "pdfLoadError": "PDF could not be loaded",
+    "previewUnavailable": "Preview not available for this file type – downloading instead",
     "riskAcceptanceDocRequired": "Risk acceptance requires a signed acceptance document. Please upload it.",
     "genericError": "An error occurred"
   },

@@ -25,6 +25,15 @@ const ALLOWED_MIME_TYPES = ['application/pdf', 'application/msword', 'applicatio
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
 const MAX_UPLOAD_SIZE = 20 * 1024 * 1024; // 20 MB
 
+// Server-side extension -> MIME map for inline rendering, mirrors documents.js.
+// Only these types may be served with `Content-Disposition: inline`; everything
+// else (e.g. Word/Excel) falls back to a forced download, since browsers can't
+// render Office formats in an <iframe> anyway. MIME is derived from the
+// (validated) extension, never trusted from client input.
+const INLINE_MIME = {
+  '.pdf': 'application/pdf',
+};
+
 const MAGIC_BYTES = {
   '.pdf':  [0x25, 0x50, 0x44, 0x46],
   '.docx': [0x50, 0x4B, 0x03, 0x04],
@@ -263,8 +272,9 @@ router.get('/:id/versions/:versionId/download', authenticate, requirePermission(
     }
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Content-SHA256', version.file_hash || '');
-    if (req.query.inline === 'true') {
-      res.setHeader('Content-Type', 'application/pdf');
+    const versionInlineMime = INLINE_MIME[path.extname(version.original_filename || '').toLowerCase()];
+    if (req.query.inline === 'true' && versionInlineMime) {
+      res.setHeader('Content-Type', versionInlineMime);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(version.original_filename)}"`);
       return res.sendFile(filePath);
     }
@@ -285,8 +295,9 @@ router.get('/:id/download', authenticate, requirePermission('policies','view','a
     }
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Content-SHA256', policy.file_hash || '');
-    if (req.query.inline === 'true') {
-      res.setHeader('Content-Type', 'application/pdf');
+    const policyInlineMime = INLINE_MIME[path.extname(policy.original_filename || '').toLowerCase()];
+    if (req.query.inline === 'true' && policyInlineMime) {
+      res.setHeader('Content-Type', policyInlineMime);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(policy.original_filename)}"`);
       return res.sendFile(filePath);
     }
@@ -362,3 +373,7 @@ router.get('/:id/acknowledgments', authenticate, requirePermission('policies','a
 });
 
 module.exports = router;
+// Additive export of the path-confinement helper so other modules (the document
+// analysis engine) can resolve a Policy's on-disk path without a second,
+// potentially drifting copy of this security-sensitive confinement logic.
+module.exports.safePolicyPath = safePolicyPath;

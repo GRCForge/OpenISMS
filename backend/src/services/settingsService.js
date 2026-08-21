@@ -72,6 +72,11 @@ const DEFAULT_PERMISSIONS = {
   // The triage profiles decide what every future analysis looks for, so editing
   // them is admin-only while the same four roles that see findings may read them.
   triage_profiles:  { view: ['admin','assessor','it-staff','dpo'], edit: ['admin'] },
+  // Document/Policy AI analysis. Separate engine from vendor_triage (own tables,
+  // own routes — see decision log), same class of action and same four roles:
+  // running costs LLM budget and writes findings, so it's a distinct action from
+  // viewing results that already exist.
+  document_analysis: { view: ['admin','assessor','it-staff','dpo'], run: ['admin','assessor','it-staff','dpo'], delete: ['admin'] },
   // Drittsystem-Anbindungen (CheckMK & Folgende). Getrennt von 'discovery',
   // weil das Konfigurieren einer Verbindung inkl. Zugangsdaten eine andere
   // Entscheidung ist als das Sichten ihrer Ergebnisse: 'sync' darf ausloesen,

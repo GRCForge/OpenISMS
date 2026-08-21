@@ -55,6 +55,8 @@ const GroupMember = require('./GroupMember');
 const PushSubscription = require('./PushSubscription');
 const VendorTriageRun = require('./VendorTriageRun');
 const VendorFinding = require('./VendorFinding');
+const DocumentAnalysisRun = require('./DocumentAnalysisRun');
+const DocumentAnalysisFinding = require('./DocumentAnalysisFinding');
 
 // Associations
 Training.hasMany(UserTraining, { as: 'assignments', foreignKey: 'training_id', onDelete: 'CASCADE' });
@@ -110,6 +112,13 @@ VendorTriageRun.belongsTo(User, { as: 'triggeredBy', foreignKey: 'triggered_by_i
 VendorTriageRun.hasMany(VendorFinding, { as: 'findings', foreignKey: 'triage_run_id' });
 VendorFinding.belongsTo(VendorTriageRun, { foreignKey: 'triage_run_id' });
 VendorFinding.belongsTo(Vendor, { foreignKey: 'vendor_id' });
+
+// Document/Policy Analysis associations (separate engine from vendor triage —
+// subject_type/subject_id is a polymorphic reference across Document/Policy, so
+// there is deliberately no belongsTo to either of those two models here).
+DocumentAnalysisRun.belongsTo(User, { as: 'triggeredBy', foreignKey: 'triggered_by_id' });
+DocumentAnalysisRun.hasMany(DocumentAnalysisFinding, { as: 'findings', foreignKey: 'run_id' });
+DocumentAnalysisFinding.belongsTo(DocumentAnalysisRun, { foreignKey: 'run_id' });
 
 // Policy - Asset Mapping (Many-to-Many)
 Policy.belongsToMany(Asset, { through: 'policy_assets', as: 'assets', foreignKey: 'policy_id' });
@@ -274,4 +283,5 @@ module.exports = {
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,
   VendorTriageRun, VendorFinding,
+  DocumentAnalysisRun, DocumentAnalysisFinding,
 };
