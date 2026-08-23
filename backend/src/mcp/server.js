@@ -937,6 +937,38 @@ server.tool(
       updates.external_last_seen_at = new Date();
     }
 
+    // Feldebene, spiegelt routes/assets.js. Das Tool-Gate prueft nur
+    // assets.edit_basics — die Matrix trennt davon aber assets.edit_compliance
+    // fuer classification, nis2_relevant, rto und rpo. Ohne diese Pruefung
+    // liesse sich ueber MCP aendern, was ueber REST und die Weboberflaeche mit
+    // 403 abgelehnt wird: dieselbe Kontrolle, auf einem Pfad wirksam, auf dem
+    // anderen umgehbar. Die Routenebene wurde angeglichen, die Feldebene nicht.
+    const COMPLIANCE_FIELDS = ['classification', 'nis2_relevant', 'rto', 'rpo'];
+    const touchedCompliance = COMPLIANCE_FIELDS.filter(
+      f => updates[f] !== undefined && String(updates[f]) !== String(asset[f])
+    );
+    if (touchedCompliance.length > 0) {
+      let compliancePermitted;
+      try {
+        const { can } = require('../services/permissionService');
+        const verdict = await can(mcpUser, 'assets', 'edit_compliance');
+        // Sagt die Matrix nichts, gilt dieselbe Rollenliste wie im REST-Handler.
+        compliancePermitted = typeof verdict === 'boolean'
+          ? verdict
+          : ['admin', 'assessor', 'dpo'].includes(mcpUser?.role);
+      } catch (e) {
+        // Nie fail-open: eine kaputte Matrix-Abfrage darf keinen Zugriff gewaehren.
+        console.error('[MCP] edit_compliance check failed:', e.message);
+        compliancePermitted = false;
+      }
+      if (!compliancePermitted) {
+        return {
+          content: [{ type: 'text', text: `Zugriff verweigert: Ihre Rolle darf folgende geschuetzte Felder nicht aendern: ${touchedCompliance.join(', ')}` }],
+          isError: true,
+        };
+      }
+    }
+
     if (updates.lifecycle_status === 'archived') {
       updates.status = 'inactive';
     } else if (updates.lifecycle_status && ['production', 'maintenance', 'evaluation'].includes(updates.lifecycle_status)) {
