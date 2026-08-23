@@ -969,6 +969,37 @@ server.tool(
       }
     }
 
+    // Dasselbe fuer den Security-Bereich (assets.edit_security). Von dessen
+    // Feldern bietet dieses Tool derzeit nur patch_status an; die Pruefung
+    // steht trotzdem ueber der ganzen Liste, damit sie mitwaechst, falls
+    // weitere Felder aufgenommen werden.
+    const SECURITY_FIELDS = ['patch_status', 'hardening_status', 'eol_date', 'backup_plan', 'last_restore_test'];
+    const touchedSecurity = SECURITY_FIELDS.filter(
+      f => updates[f] !== undefined && String(updates[f]) !== String(asset[f])
+    );
+    if (touchedSecurity.length > 0) {
+      try {
+        const { can } = require('../services/permissionService');
+        const verdict = await can(mcpUser, 'assets', 'edit_security');
+        // Im REST-Handler blockiert nur ein ausdrueckliches false — sagt die
+        // Matrix nichts, darf jeder ran, der edit_basics passiert hat. Diese
+        // Auslegung wird hier bewusst uebernommen, damit beide Pfade dieselbe
+        // Entscheidung treffen.
+        if (verdict === false) {
+          return {
+            content: [{ type: 'text', text: `Zugriff verweigert: Ihre Rolle darf folgende Sicherheitsfelder nicht aendern: ${touchedSecurity.join(', ')}` }],
+            isError: true,
+          };
+        }
+      } catch (e) {
+        console.error('[MCP] edit_security check failed:', e.message);
+        return {
+          content: [{ type: 'text', text: 'Zugriff verweigert: Berechtigungspruefung fehlgeschlagen.' }],
+          isError: true,
+        };
+      }
+    }
+
     if (updates.lifecycle_status === 'archived') {
       updates.status = 'inactive';
     } else if (updates.lifecycle_status && ['production', 'maintenance', 'evaluation'].includes(updates.lifecycle_status)) {
@@ -2199,15 +2230,34 @@ server.tool(
   {
     risk_level: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Filter by risk level'),
   },
-  async ({ risk_level }) => {
+  async ({ risk_level }, { mcpUser }) => {
     const { Vendor, VendorContact } = getModels();
     const where = {};
     if (risk_level) where.risk_level = risk_level;
-    const vendors = await Vendor.findAll({
-      where,
-      include: [{ model: VendorContact, as: 'contacts' }],
-      order: [['name', 'ASC']],
-    });
+
+    // Spiegelt routes/vendors.js: das Tool-Gate prueft vendors.view, die
+    // Kontaktdaten haengen aber an vendors.view_details. Ohne diese Trennung
+    // liefert MCP Lieferanten-Kontaktdaten an Rollen aus, denen die REST-API
+    // und die Weboberflaeche sie vorenthalten (viewer, employee, management,
+    // owner). Es geht dabei um personenbezogene Daten, nicht nur um eine
+    // Berechtigungsfeinheit.
+    let staff;
+    try {
+      const { can } = require('../services/permissionService');
+      const verdict = await can(mcpUser, 'vendors', 'view_details');
+      staff = typeof verdict === 'boolean'
+        ? verdict
+        : ['admin', 'assessor', 'it-staff', 'dpo'].includes(mcpUser?.role);
+    } catch (e) {
+      // Nie fail-open: im Zweifel die eingeschraenkte Sicht ausliefern.
+      console.error('[MCP] vendors.view_details check failed:', e.message);
+      staff = false;
+    }
+
+    const vendors = staff
+      ? await Vendor.findAll({ where, include: [{ model: VendorContact, as: 'contacts' }], order: [['name', 'ASC']] })
+      : await Vendor.findAll({ where, attributes: ['id', 'name', 'type', 'criticality'], order: [['name', 'ASC']] });
+
     return { content: [{ type: 'text', text: JSON.stringify(vendors, null, 2) }] };
   }
 );
