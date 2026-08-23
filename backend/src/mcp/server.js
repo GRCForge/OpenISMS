@@ -913,11 +913,29 @@ server.tool(
     sdo:            z.string().optional().describe('Service Delivery Objective (Mindest-Service-Level im Notbetrieb, e.g. 24h)'),
     mto:            z.string().optional().describe('Maximum Tolerable Outage (Maximal tolerierbare Ausfallzeit, e.g. 48h)'),
     ioa:            z.string().optional().describe('Impact of Activity / Disruption (Ausfallwirkung, e.g. High)'),
+    location:       z.string().optional().describe('Physical or logical location (e.g. rack, site, IP)'),
+    version:        z.string().optional(),
+    vendor:         z.string().optional().describe('Vendor/manufacturer name (free text)'),
+    // Verknuepfung zu einem Drittsystem. isms_create_asset kennt diese Felder
+    // bereits, das Update-Tool nicht — dadurch liess sich ein BESTEHENDES
+    // Asset nicht nachtraeglich an eine Quelle binden. Folge: der CheckMK-Sync
+    // schlug es bei jedem Lauf erneut als unbekannt vor und haette beim
+    // Freigeben eine Dublette erzeugt. Betroffen waren vier Geraete, die
+    // laengst im Register standen.
+    external_source: z.string().optional().describe("Third-party system this asset is linked to, e.g. 'checkmk'"),
+    external_id:    z.string().optional().describe('Identifier in the third-party system (e.g. CheckMK hostname)'),
   },
-  async ({ id, ...updates }) => {
+  async ({ id, ...updates }, { mcpUser }) => {
     const { Asset } = getModels();
     const asset = await Asset.findByPk(id);
     if (!asset) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+
+    // Eine frisch gesetzte Verknuepfung gilt ab jetzt als bestaetigt. Ohne
+    // diesen Zeitstempel behandelt der naechste Sync-Lauf das Asset als
+    // "seit jeher nicht gemeldet" und markiert es faelschlich als MISSING.
+    if (updates.external_id && !asset.external_last_seen_at) {
+      updates.external_last_seen_at = new Date();
+    }
 
     if (updates.lifecycle_status === 'archived') {
       updates.status = 'inactive';
@@ -926,6 +944,15 @@ server.tool(
     }
 
     await asset.update(updates);
+
+    // Wie zuvor bei isms_create_asset fehlte hier der Audit-Eintrag. Eine
+    // nachtraegliche Aenderung an einem bestehenden Asset muss nachvollziehbar
+    // sein — wer wann welches Feld angefasst hat.
+    await logAudit('update', 'Asset', asset.id, asset.name, {
+      fields: Object.keys(updates),
+      via: 'mcp',
+    }, mcpUser);
+
     return { content: [{ type: 'text', text: JSON.stringify(asset, null, 2) }] };
   }
 );
