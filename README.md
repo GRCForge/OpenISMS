@@ -36,11 +36,12 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 7. [Roles & Permissions](#roles--permissions)
 8. [API Documentation](#api-documentation)
 9. [MCP Server (AI Integration)](#mcp-server-ai-integration)
-10. [Database Schema](#database-schema)
-11. [Directory Structure](#directory-structure)
-12. [Compliance Modules](#compliance-modules)
-13. [Compliance Coverage](#compliance-coverage)
-14. [Security Notes](#security-notes)
+10. [Third-Party Integrations (CheckMK)](#third-party-integrations-checkmk)
+11. [Database Schema](#database-schema)
+12. [Directory Structure](#directory-structure)
+13. [Compliance Modules](#compliance-modules)
+14. [Compliance Coverage](#compliance-coverage)
+15. [Security Notes](#security-notes)
 
 ---
 
@@ -682,6 +683,55 @@ The server returns the JSON-RPC list of all **78 available tools**.
 | **Search** | `isms_search` | Cross-entity search across assets, risks, incidents, and tasks |
 
 
+
+---
+
+## Third-Party Integrations (CheckMK)
+
+A monitoring system knows which hosts actually exist and whether they are running. That statement is exactly what a hand-maintained asset register cannot make. The CheckMK integration closes that gap.
+
+**It never creates assets.** Discovered hosts land in the existing discovery staging area (`source='checkmk'`); turning one into an asset stays a human decision, recorded as such. This mirrors the agent import, which follows the same rule.
+
+### Setup
+
+Configure under **Network Discovery → CheckMK**, or via the REST API at `/api/integrations/checkmk`:
+
+| Field | Notes |
+|---|---|
+| URL | Point at the CheckMK host **directly** (e.g. `http://10.10.10.112`). Going through a reverse proxy with SSO/forward-auth in front will not work for API clients. |
+| Site | CheckMK site name, e.g. `monitoring` |
+| Username | A **dedicated automation user** with read access — not the built-in admin. It only ever reads. |
+| Secret | The user's **automation secret**, not their GUI password. CheckMK's REST API accepts nothing else. |
+| Accept self-signed TLS | Off by default. An unverified connection into the monitoring system should be a visible decision, never a silent fallback. |
+
+The secret is stored encrypted (same mechanism as the OIDC client secret) and never leaves the backend in clear text. Configuring the connection is deliberately **not** possible over MCP.
+
+### What a sync run does
+
+Always dry-run first — it reports what would change and writes nothing.
+
+| Case | Action |
+|---|---|
+| Asset already linked | Refresh `external_status` and `external_last_seen_at`; fill `location` only if empty |
+| Open staging entry exists | Update it in place |
+| Host unknown | Create a staging entry as `pending` |
+| Linked asset **no longer reported** | Mark as `MISSING` |
+
+The last case is the one such integrations usually omit. An asset your monitoring no longer knows about is a finding — decommissioned, forgotten, or monitoring broken — and must not silently keep counting as maintained.
+
+### Correlation key
+
+`external_source` + `external_id` (the CheckMK host name) link an asset to its source. Without that key a re-sync would have to match on the asset name, producing a duplicate on every rename and leaving the register's currency unprovable (ISO 27001 A.5.9, BSI ISMS.1.A6). Approving a staged entry writes the link automatically; `isms_update_asset` can set it on assets that already existed.
+
+### MCP tools
+
+| Tool | Purpose |
+|---|---|
+| `isms_checkmk_status` | Show configuration (without the secret) and the last sync result |
+| `isms_checkmk_hosts` | Fetch the live host list — read-only, writes nothing |
+| `isms_checkmk_sync` | Reconcile. `dry_run` defaults to `true` |
+
+The layout is deliberately generic (`/api/integrations/<system>/…`) so further sources can sit alongside CheckMK without restructuring.
 
 ---
 

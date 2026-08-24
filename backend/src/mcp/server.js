@@ -913,11 +913,92 @@ server.tool(
     sdo:            z.string().optional().describe('Service Delivery Objective (Mindest-Service-Level im Notbetrieb, e.g. 24h)'),
     mto:            z.string().optional().describe('Maximum Tolerable Outage (Maximal tolerierbare Ausfallzeit, e.g. 48h)'),
     ioa:            z.string().optional().describe('Impact of Activity / Disruption (Ausfallwirkung, e.g. High)'),
+    location:       z.string().optional().describe('Physical or logical location (e.g. rack, site, IP)'),
+    version:        z.string().optional(),
+    vendor:         z.string().optional().describe('Vendor/manufacturer name (free text)'),
+    // Verknuepfung zu einem Drittsystem. isms_create_asset kennt diese Felder
+    // bereits, das Update-Tool nicht — dadurch liess sich ein BESTEHENDES
+    // Asset nicht nachtraeglich an eine Quelle binden. Folge: der CheckMK-Sync
+    // schlug es bei jedem Lauf erneut als unbekannt vor und haette beim
+    // Freigeben eine Dublette erzeugt. Betroffen waren vier Geraete, die
+    // laengst im Register standen.
+    external_source: z.string().optional().describe("Third-party system this asset is linked to, e.g. 'checkmk'"),
+    external_id:    z.string().optional().describe('Identifier in the third-party system (e.g. CheckMK hostname)'),
   },
-  async ({ id, ...updates }) => {
+  async ({ id, ...updates }, { mcpUser }) => {
     const { Asset } = getModels();
     const asset = await Asset.findByPk(id);
     if (!asset) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+
+    // Eine frisch gesetzte Verknuepfung gilt ab jetzt als bestaetigt. Ohne
+    // diesen Zeitstempel behandelt der naechste Sync-Lauf das Asset als
+    // "seit jeher nicht gemeldet" und markiert es faelschlich als MISSING.
+    if (updates.external_id && !asset.external_last_seen_at) {
+      updates.external_last_seen_at = new Date();
+    }
+
+    // Feldebene, spiegelt routes/assets.js. Das Tool-Gate prueft nur
+    // assets.edit_basics — die Matrix trennt davon aber assets.edit_compliance
+    // fuer classification, nis2_relevant, rto und rpo. Ohne diese Pruefung
+    // liesse sich ueber MCP aendern, was ueber REST und die Weboberflaeche mit
+    // 403 abgelehnt wird: dieselbe Kontrolle, auf einem Pfad wirksam, auf dem
+    // anderen umgehbar. Die Routenebene wurde angeglichen, die Feldebene nicht.
+    const COMPLIANCE_FIELDS = ['classification', 'nis2_relevant', 'rto', 'rpo'];
+    const touchedCompliance = COMPLIANCE_FIELDS.filter(
+      f => updates[f] !== undefined && String(updates[f]) !== String(asset[f])
+    );
+    if (touchedCompliance.length > 0) {
+      let compliancePermitted;
+      try {
+        const { can } = require('../services/permissionService');
+        const verdict = await can(mcpUser, 'assets', 'edit_compliance');
+        // Sagt die Matrix nichts, gilt dieselbe Rollenliste wie im REST-Handler.
+        compliancePermitted = typeof verdict === 'boolean'
+          ? verdict
+          : ['admin', 'assessor', 'dpo'].includes(mcpUser?.role);
+      } catch (e) {
+        // Nie fail-open: eine kaputte Matrix-Abfrage darf keinen Zugriff gewaehren.
+        console.error('[MCP] edit_compliance check failed:', e.message);
+        compliancePermitted = false;
+      }
+      if (!compliancePermitted) {
+        return {
+          content: [{ type: 'text', text: `Zugriff verweigert: Ihre Rolle darf folgende geschuetzte Felder nicht aendern: ${touchedCompliance.join(', ')}` }],
+          isError: true,
+        };
+      }
+    }
+
+    // Dasselbe fuer den Security-Bereich (assets.edit_security). Von dessen
+    // Feldern bietet dieses Tool derzeit nur patch_status an; die Pruefung
+    // steht trotzdem ueber der ganzen Liste, damit sie mitwaechst, falls
+    // weitere Felder aufgenommen werden.
+    const SECURITY_FIELDS = ['patch_status', 'hardening_status', 'eol_date', 'backup_plan', 'last_restore_test'];
+    const touchedSecurity = SECURITY_FIELDS.filter(
+      f => updates[f] !== undefined && String(updates[f]) !== String(asset[f])
+    );
+    if (touchedSecurity.length > 0) {
+      try {
+        const { can } = require('../services/permissionService');
+        const verdict = await can(mcpUser, 'assets', 'edit_security');
+        // Im REST-Handler blockiert nur ein ausdrueckliches false — sagt die
+        // Matrix nichts, darf jeder ran, der edit_basics passiert hat. Diese
+        // Auslegung wird hier bewusst uebernommen, damit beide Pfade dieselbe
+        // Entscheidung treffen.
+        if (verdict === false) {
+          return {
+            content: [{ type: 'text', text: `Zugriff verweigert: Ihre Rolle darf folgende Sicherheitsfelder nicht aendern: ${touchedSecurity.join(', ')}` }],
+            isError: true,
+          };
+        }
+      } catch (e) {
+        console.error('[MCP] edit_security check failed:', e.message);
+        return {
+          content: [{ type: 'text', text: 'Zugriff verweigert: Berechtigungspruefung fehlgeschlagen.' }],
+          isError: true,
+        };
+      }
+    }
 
     if (updates.lifecycle_status === 'archived') {
       updates.status = 'inactive';
@@ -926,6 +1007,15 @@ server.tool(
     }
 
     await asset.update(updates);
+
+    // Wie zuvor bei isms_create_asset fehlte hier der Audit-Eintrag. Eine
+    // nachtraegliche Aenderung an einem bestehenden Asset muss nachvollziehbar
+    // sein — wer wann welches Feld angefasst hat.
+    await logAudit('update', 'Asset', asset.id, asset.name, {
+      fields: Object.keys(updates),
+      via: 'mcp',
+    }, mcpUser);
+
     return { content: [{ type: 'text', text: JSON.stringify(asset, null, 2) }] };
   }
 );
@@ -2140,15 +2230,34 @@ server.tool(
   {
     risk_level: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Filter by risk level'),
   },
-  async ({ risk_level }) => {
+  async ({ risk_level }, { mcpUser }) => {
     const { Vendor, VendorContact } = getModels();
     const where = {};
     if (risk_level) where.risk_level = risk_level;
-    const vendors = await Vendor.findAll({
-      where,
-      include: [{ model: VendorContact, as: 'contacts' }],
-      order: [['name', 'ASC']],
-    });
+
+    // Spiegelt routes/vendors.js: das Tool-Gate prueft vendors.view, die
+    // Kontaktdaten haengen aber an vendors.view_details. Ohne diese Trennung
+    // liefert MCP Lieferanten-Kontaktdaten an Rollen aus, denen die REST-API
+    // und die Weboberflaeche sie vorenthalten (viewer, employee, management,
+    // owner). Es geht dabei um personenbezogene Daten, nicht nur um eine
+    // Berechtigungsfeinheit.
+    let staff;
+    try {
+      const { can } = require('../services/permissionService');
+      const verdict = await can(mcpUser, 'vendors', 'view_details');
+      staff = typeof verdict === 'boolean'
+        ? verdict
+        : ['admin', 'assessor', 'it-staff', 'dpo'].includes(mcpUser?.role);
+    } catch (e) {
+      // Nie fail-open: im Zweifel die eingeschraenkte Sicht ausliefern.
+      console.error('[MCP] vendors.view_details check failed:', e.message);
+      staff = false;
+    }
+
+    const vendors = staff
+      ? await Vendor.findAll({ where, include: [{ model: VendorContact, as: 'contacts' }], order: [['name', 'ASC']] })
+      : await Vendor.findAll({ where, attributes: ['id', 'name', 'type', 'criticality'], order: [['name', 'ASC']] });
+
     return { content: [{ type: 'text', text: JSON.stringify(vendors, null, 2) }] };
   }
 );
