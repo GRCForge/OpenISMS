@@ -20,18 +20,22 @@ const parseLabel = (label?: string, required?: boolean) => {
 
 export const Select: React.FC<React.PropsWithChildren<SelectProps>> = ({ label, options, children, className = '', ...props }) => {
   const { cleanLabel, isRequired } = parseLabel(label, props.required);
-  
+  // See Input.tsx — the label needs an id to point at, or the field is
+  // announced as unlabelled and the label is not clickable.
+  const generatedId = React.useId();
+  const selectId = props.id ?? generatedId;
+
   const el = (
-    <select className={`${selectClass} ${className}`} {...props}>
+    <select className={`${selectClass} ${className}`} {...props} id={selectId} aria-required={isRequired || undefined}>
       {options ? options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>) : children}
     </select>
   );
   if (!cleanLabel) return el;
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+      <label htmlFor={selectId} className="text-sm font-semibold text-gray-700 dark:text-slate-300">
         {cleanLabel}
-        {isRequired && <span className="text-red-500 ml-1 font-bold">*</span>}
+        {isRequired && <span aria-hidden="true" className="text-red-500 ml-1 font-bold">*</span>}
       </label>
       {el}
     </div>

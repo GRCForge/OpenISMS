@@ -167,6 +167,7 @@
     "noOptions": "No options available",
     "noEntries": "No entries found",
     "pleaseSelect": "– please select –",
-    "search": "Search..."
+    "search": "Search...",
+    "toggleOptions": "Toggle options"
   }
 }

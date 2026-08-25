@@ -1,8 +1,14 @@
 import React from 'react';
 
-/** Single pulsing block. Compose into page-specific skeletons. */
+/**
+ * Single pulsing block. Compose into page-specific skeletons.
+ *
+ * aria-hidden: the blocks carry no information of their own. Every page's
+ * loading view already wraps them in role="status" with a label, so hiding the
+ * placeholders keeps a screen reader from walking 30 empty divs on top of it.
+ */
 export const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <div className={`animate-pulse rounded bg-gray-200 dark:bg-slate-700/60 ${className}`} />
+  <div aria-hidden="true" className={`animate-pulse rounded bg-gray-200 dark:bg-slate-700/60 ${className}`} />
 );
 
 /** Stat card matching the compact overview cards used across the app. */
@@ -28,7 +34,7 @@ export const SkeletonCard: React.FC<{ lines?: number; className?: string }> = ({
 
 /** Table row placeholder — use inside a <tbody>. */
 export const SkeletonTableRow: React.FC<{ cols?: number }> = ({ cols = 5 }) => (
-  <tr>
+  <tr aria-hidden="true">
     {Array.from({ length: cols }).map((_, i) => (
       <td key={i} className="px-4 py-3">
         <Skeleton className="h-4" />

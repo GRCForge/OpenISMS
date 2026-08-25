@@ -173,7 +173,9 @@ export const InputSelect: React.FC<InputSelectProps> = ({
         <button
           type="button"
           onClick={() => { updatePos(); setIsOpen(o => !o); }}
-          className="absolute right-2 p-1 text-gray-400 hover:text-gray-600 focus:outline-hidden cursor-pointer"
+          aria-label={t('ui.toggleOptions')}
+          aria-expanded={isOpen}
+          className="absolute right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"
         >
           <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>

@@ -154,6 +154,7 @@
     "noOptions": "Sin opciones disponibles",
     "noEntries": "No se encontraron entradas",
     "pleaseSelect": "– por favor seleccione –",
-    "search": "Buscar..."
+    "search": "Buscar...",
+    "toggleOptions": "Mostrar u ocultar opciones"
   }
 }
