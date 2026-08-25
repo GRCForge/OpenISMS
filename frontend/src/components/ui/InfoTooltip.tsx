@@ -16,7 +16,7 @@ export const InfoTooltip: React.FC<{ text: string; className?: string }> = ({ te
         // The tooltip text IS the button's purpose, so it doubles as the label —
         // otherwise the control announces as an unnamed "?" button.
         aria-label={text}
-        className="w-3.5 h-3.5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400 text-[9px] font-bold flex items-center justify-center select-none cursor-help focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400 focus-visible:ring-offset-1"
+        className="w-3.5 h-3.5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-[9px] font-bold flex items-center justify-center select-none cursor-help focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400 focus-visible:ring-offset-1"
       >
         <span aria-hidden="true">?</span>
       </button>
