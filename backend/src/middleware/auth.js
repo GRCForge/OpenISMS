@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { User, ApiToken } = require('../models');
 const { notify } = require('../services/notifyService');
 const { hashToken } = require('../services/cryptoService');
+const { tokenAudienceMatches } = require('../utils/oidcAudience');
 
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
@@ -84,17 +85,19 @@ const authenticate = async (req, res, next) => {
       // Fallback: check if valid OIDC access token when OIDC is configured
       try {
         const { buildConfig, client } = require('../services/oidcService');
-        const { config } = await buildConfig();
-        const info = await client.fetchUserInfo(config, token, client.skipSubjectCheck);
-        const email = String(info.email || info.preferred_username || '').toLowerCase();
-        if (email) {
-          const oidcUser = await User.findOne({
-            where: { email },
-            attributes: { exclude: ['password_hash', 'totp_secret', 'reset_password_token', 'reset_password_expires'] },
-          });
-          if (oidcUser && oidcUser.active) {
-            req.user = oidcUser;
-            return next();
+        const { config, cfg } = await buildConfig();
+        if (tokenAudienceMatches(token, cfg.clientId)) {
+          const info = await client.fetchUserInfo(config, token, client.skipSubjectCheck);
+          const email = String(info.email || info.preferred_username || '').toLowerCase();
+          if (email) {
+            const oidcUser = await User.findOne({
+              where: { email },
+              attributes: { exclude: ['password_hash', 'totp_secret', 'reset_password_token', 'reset_password_expires'] },
+            });
+            if (oidcUser && oidcUser.active) {
+              req.user = oidcUser;
+              return next();
+            }
           }
         }
       } catch { /* not an OIDC token or OIDC disabled */ }

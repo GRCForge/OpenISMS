@@ -12,7 +12,7 @@
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.117.1",
+    "@anthropic-ai/sdk": "^0.120.0",
     "@google/generative-ai": "^0.24.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@simplewebauthn/server": "^13.3.2",
@@ -29,24 +29,24 @@
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.12.1",
     "multer": "^2.2.0",
-    "mysql2": "^3.23.3",
+    "mysql2": "^3.24.2",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.5",
-    "openai": "^7.4.0",
-    "openid-client": "^6.8.4",
-    "otplib": "^13.4.1",
+    "openai": "^7.5.0",
+    "openid-client": "^6.8.7",
+    "otplib": "^13.5.0",
     "passport": "^0.7.0",
     "pdf-parse": "^2.4.5",
     "qrcode": "^1.5.4",
     "read-excel-file": "^9.3.10",
-    "rotating-file-stream": "^3.2.9",
+    "rotating-file-stream": "^3.2.10",
     "sequelize": "^6.37.8",
-    "swagger-ui-dist": "^5.32.12",
+    "swagger-ui-dist": "^5.32.14",
     "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.14"
   },
   "overrides": {
     "uuid": "^11.1.1"

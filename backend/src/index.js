@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { apiLimiter, heavyLimiter: sharedHeavyLimiter } = require('./middleware/rateLimiter');
 const { authenticate } = require('./middleware/auth');
+const { permissionsPolicy } = require('./middleware/securityHeaders');
 const session = require('express-session');
 const passport = require('passport');
 const { sequelize } = require('./models');
@@ -85,6 +86,11 @@ app.use(helmet({
   },
 }));
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Permissions-Policy (Helmet setzt diesen Header nicht) — siehe middleware/securityHeaders.js
+app.use(permissionsPolicy);
+
 const allowedOrigins = (process.env.APP_URL || 'http://localhost:3000')
   .split(',')
   .map(s => s.trim().replace(/\/$/, ''))
@@ -97,8 +103,15 @@ app.use(cors({
     if (allowedOrigins.includes(normalizedOrigin) || allowedOrigins.includes('*')) {
       return cb(null, true);
     }
-    // Allow local development origins
-    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+    // Allow local development origins — but ONLY outside production. In a
+    // production deployment any process on the operator's machine (or any
+    // malware able to bind a local port) can serve a page from
+    // http://localhost:<port>; allowing that origin with `credentials: true`
+    // hands it a credentialed read channel into the ISMS API. Dev servers
+    // (vite on :5173) still work because NODE_ENV is unset there, and an
+    // operator who genuinely needs a localhost origin in production lists it
+    // in APP_URL like any other.
+    if (!isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       return cb(null, true);
     }
     // Decline CORS gracefully without throwing an unhandled Error

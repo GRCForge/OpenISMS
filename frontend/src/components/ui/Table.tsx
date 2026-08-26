@@ -20,8 +20,11 @@ export const Tbody: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   </tbody>
 );
 
-export const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <th className={`px-3 sm:px-5 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ${className}`}>
+// scope="col" is what makes a screen reader repeat the column heading with each
+// cell. Without it a 12-column asset table is read as a flat run of values.
+// Overridable for the rare row header (scope="row").
+export const Th: React.FC<{ children: React.ReactNode; className?: string; scope?: 'col' | 'row'; colSpan?: number }> = ({ children, className = '', scope = 'col', colSpan }) => (
+  <th scope={scope} colSpan={colSpan} className={`px-3 sm:px-5 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ${className}`}>
     {children}
   </th>
 );
