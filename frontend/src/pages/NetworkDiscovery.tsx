@@ -139,46 +139,56 @@ export const NetworkDiscovery: React.FC = () => {
     const ids = Array.from(selectedStaged);
     let successCount = 0;
     let failCount = 0;
+    // Still one request per entry: approving creates an Asset, so there is no
+    // single-statement server-side equivalent. Bail out on the first rate-limit
+    // rejection rather than hammering through the rest of the selection.
+    let blocked: string | null = null;
     for (const id of ids) {
       try {
         await api.post(`/discovery/staged/${id}/approve`);
         successCount++;
-      } catch {
+      } catch (err: any) {
         failCount++;
+        if (err.response?.status === 429) {
+          blocked = err.response?.data?.error || t('messages.approveFailed');
+          break;
+        }
       }
     }
+    if (blocked) toast.error(blocked);
     toast.success(t('messages.bulkApproveSuccess', { successCount, failedText: failCount > 0 ? ` ${t('messages.bulkApproveFailedCount', { failCount })}` : '' }));
     setSelectedStaged(new Set());
     loadStaged();
   };
 
+  // One request for the whole selection, not one per row. The old loop fired a
+  // request per entry: on a real queue (291 staged items) that ran into the
+  // heavy-path rate limit part-way through, and since every error was swallowed
+  // the user saw "0 entries deleted" followed by a failed reload, with nothing
+  // saying why.
   const bulkIgnore = async () => {
     if (selectedStaged.size === 0) return;
     const ids = Array.from(selectedStaged);
-    let successCount = 0;
-    for (const id of ids) {
-      try {
-        await api.post(`/discovery/staged/${id}/ignore`);
-        successCount++;
-      } catch {}
+    try {
+      const { data } = await api.post('/discovery/staged/bulk-ignore', { ids });
+      toast.success(t('messages.bulkIgnoreSuccess', { count: data.ignored }));
+      setSelectedStaged(new Set());
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || t('messages.actionFailed'));
     }
-    toast.success(t('messages.bulkIgnoreSuccess', { count: successCount }));
-    setSelectedStaged(new Set());
     loadStaged();
   };
 
   const bulkDelete = async () => {
     if (selectedStaged.size === 0 || !confirm(t('messages.bulkDeleteConfirm', { count: selectedStaged.size }))) return;
     const ids = Array.from(selectedStaged);
-    let successCount = 0;
-    for (const id of ids) {
-      try {
-        await api.delete(`/discovery/staged/${id}`);
-        successCount++;
-      } catch {}
+    try {
+      const { data } = await api.post('/discovery/staged/bulk-delete', { ids });
+      toast.success(t('messages.bulkDeleteSuccess', { count: data.deleted }));
+      setSelectedStaged(new Set());
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || t('messages.deleteFailedSingle'));
     }
-    toast.success(t('messages.bulkDeleteSuccess', { count: successCount }));
-    setSelectedStaged(new Set());
     loadStaged();
   };
 
