@@ -1,4 +1,57 @@
 const router = require('express').Router();
+
+// Profile pictures are inlined as data: URIs rather than stored as remote URLs.
+// The app's CSP is `img-src 'self' data: blob:` — a remote avatar host is blocked,
+// so a stored URL renders as a broken image no matter how valid it is. Bounded on
+// purpose: http(s) only, short timeout, image content types only, and a size cap,
+// because this fetches a URL an identity provider handed us.
+const { lookup: dnsLookup } = require('dns').promises;
+const MAX_AVATAR_BYTES = 512 * 1024;
+
+/**
+ * The picture claim is attacker-influenced input in the general case: at many
+ * IdPs a user can edit their own profile, so fetching the URL server-side is an
+ * SSRF primitive unless the target is checked. Resolve the host first and refuse
+ * anything that is not a public unicast address, and refuse redirects outright
+ * so a public URL cannot bounce the request onto an internal one.
+ */
+const isBlockedAddress = (ip) => {
+  if (ip.includes(':')) { // IPv6
+    const v6 = ip.toLowerCase();
+    if (v6 === '::1' || v6 === '::') return true;
+    if (v6.startsWith('fe80') || v6.startsWith('fc') || v6.startsWith('fd')) return true;
+    const mapped = v6.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    return mapped ? isBlockedAddress(mapped[1]) : false;
+  }
+  const [a, b] = ip.split('.').map(Number);
+  if (a === 10 || a === 127 || a === 0) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 169 && b === 254) return true;   // link-local, incl. cloud metadata
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+  return false;
+};
+
+const inlineRemoteAvatar = async (url) => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    const { address } = await dnsLookup(parsed.hostname);
+    if (isBlockedAddress(address)) return null;
+    // redirect: 'error' — a followed redirect would sidestep the check above.
+    const res = await fetch(parsed.toString(), { signal: AbortSignal.timeout(4000), redirect: 'error' });
+    if (!res.ok) return null;
+    const ct = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    if (!ct.startsWith('image/')) return null;
+    const declared = Number(res.headers.get('content-length'));
+    if (Number.isFinite(declared) && declared > MAX_AVATAR_BYTES) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > MAX_AVATAR_BYTES) return null;
+    return `data:${ct};base64,${buf.toString('base64')}`;
+  } catch {
+    return null; // provider unreachable, bad URL, timeout, oversized — keep the login working
+  }
+};
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const crypto = require('crypto');
@@ -138,6 +191,12 @@ router.get('/callback', async (req, res) => {
     if (avatar_url && typeof avatar_url === 'string') {
       // Request higher resolution for Google/other profile pictures (e.g. s512-c instead of s96-c)
       avatar_url = avatar_url.replace(/([=|\/]s)\d+(-\w+)?$/, '$1512$2');
+      // Inline it, exactly as the MS Graph branch below already does. Storing the
+      // bare remote URL looked fine in the profile but never rendered: the CSP in
+      // index.js allows `img-src 'self' data: blob:`, so the browser blocked the
+      // external host. Fetching it here keeps the CSP tight and makes the picture
+      // claim work for every IdP, not just Entra.
+      avatar_url = (await inlineRemoteAvatar(avatar_url)) || null;
     }
     if (!avatar_url && tokenSet.access_token) {
       try {
