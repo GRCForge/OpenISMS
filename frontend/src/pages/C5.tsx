@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { IconButton } from '../components/ui/IconButton';
 
 interface C5Item {
   id: number;
@@ -35,7 +36,7 @@ const STATUS_COLORS: Record<string, string> = {
   not_started: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
   in_progress: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
   implemented: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-  not_applicable: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500',
+  not_applicable: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -244,7 +245,7 @@ export const C5: React.FC = () => {
             <p className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wide">{t('kpi.pqc')}</p>
             <p className="text-sm text-gray-600 dark:text-slate-400">
               <span className="font-bold text-purple-600 dark:text-purple-400">{stats.pqcDone}/{stats.pqcItems.length}</span> {t('kpi.implemented')}
-              <span className="ml-1 text-xs text-gray-400">({stats.pqcItems.map(i => i.criterion_id).join(', ')})</span>
+              <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">({stats.pqcItems.map(i => i.criterion_id).join(', ')})</span>
             </p>
           </div>
         </div>
@@ -256,7 +257,7 @@ export const C5: React.FC = () => {
             <p className="text-xs font-bold text-cyan-700 dark:text-cyan-300 uppercase tracking-wide">{t('kpi.cc')}</p>
             <p className="text-sm text-gray-600 dark:text-slate-400">
               <span className="font-bold text-cyan-600 dark:text-cyan-400">{stats.ccDone}/{stats.ccItems.length}</span> {t('kpi.implemented')}
-              <span className="ml-1 text-xs text-gray-400">({stats.ccItems.map(i => i.criterion_id).join(', ')})</span>
+              <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">({stats.ccItems.map(i => i.criterion_id).join(', ')})</span>
             </p>
           </div>
         </div>
@@ -309,13 +310,13 @@ export const C5: React.FC = () => {
                   </div>
                   <span className="text-xs font-bold text-gray-600 dark:text-slate-400">{domainPct}%</span>
                 </div>
-                {expanded ? <ChevronDown size={16} className="text-gray-400 shrink-0" /> : <ChevronRight size={16} className="text-gray-400 shrink-0" />}
+                {expanded ? <ChevronDown size={16} className="text-gray-500 shrink-0 dark:text-gray-400" /> : <ChevronRight size={16} className="text-gray-500 shrink-0 dark:text-gray-400" />}
               </button>
               {expanded && (
                 <div className="border-t dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800">
                   {domainItems.map(item => (
                     <div key={item.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/30 dark:hover:bg-slate-800/20">
-                      <span className="text-xs font-mono text-gray-500 dark:text-slate-500 w-16 shrink-0">{item.criterion_id}</span>
+                      <span className="text-xs font-mono text-gray-500 dark:text-slate-400 w-16 shrink-0">{item.criterion_id}</span>
                       <span className="flex-1 text-sm dark:text-slate-200 min-w-0">{item.title}</span>
                       <div className="flex items-center gap-1 shrink-0">
                         {item.pqc_relevant && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" title="Post-Quantum Cryptography relevant">PQC</span>}
@@ -326,11 +327,9 @@ export const C5: React.FC = () => {
                         {STATUS_ICON[item.implementation_status]}
                         {statusLabels[item.implementation_status]}
                       </span>
-                      {item.responsible && <span className="text-xs text-gray-400 dark:text-slate-500 shrink-0 hidden md:block">{item.responsible.name}</span>}
+                      {item.responsible && <span className="text-xs text-gray-500 dark:text-slate-400 shrink-0 hidden md:block">{item.responsible.name}</span>}
                       {canWrite && (
-                        <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors shrink-0" title={t('modal.edit')}>
-                          <Pencil size={13} />
-                        </button>
+                        <IconButton label={t('modal.edit')} onClick={() => openEdit(item)}><Pencil size={13} /></IconButton>
                       )}
                     </div>
                   ))}

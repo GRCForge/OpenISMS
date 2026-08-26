@@ -99,7 +99,7 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, si
             type="button"
             onClick={onClose}
             aria-label={t('actions.close')}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 dark:text-slate-500 transition-colors flex-shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors flex-shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"
           >
             <X size={20} />
           </button>

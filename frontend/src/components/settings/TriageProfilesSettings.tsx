@@ -5,6 +5,7 @@ import api from '../../lib/api';
 import { Card, CardHeader, CardBody } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { IconButton } from '../ui/IconButton';
 
 interface Requirement { ref: string; requirement: string; mandatory: boolean; }
 interface Profile { label: string; requirements: Requirement[]; reference: string; }
@@ -50,7 +51,7 @@ export const TriageProfilesSettings: React.FC = () => {
     } finally { setSaving(false); }
   };
 
-  if (loading) return <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader2 size={14} className="animate-spin" />{t('triageProfiles.loading')}</div>;
+  if (loading) return <div className="flex items-center gap-2 text-gray-500 text-sm dark:text-gray-400"><Loader2 size={14} className="animate-spin" />{t('triageProfiles.loading')}</div>;
 
   return (
     <Card>
@@ -78,14 +79,14 @@ export const TriageProfilesSettings: React.FC = () => {
                   className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-slate-800/40 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <span className="text-sm font-semibold dark:text-slate-200">{p.label}</span>
-                  <span className="text-xs text-gray-400">{t('triageProfiles.criteriaCount', { count: p.requirements.length })}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t('triageProfiles.criteriaCount', { count: p.requirements.length })}</span>
                 </button>
 
                 {isOpen && (
                   <div className="p-4 space-y-4">
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-gray-600 dark:text-slate-300">{t('triageProfiles.criteria')}</label>
-                      {p.requirements.length === 0 && <p className="text-xs text-gray-400 italic">{t('triageProfiles.noCriteria')}</p>}
+                      {p.requirements.length === 0 && <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('triageProfiles.noCriteria')}</p>}
                       {p.requirements.map((r, idx) => (
                         <div key={idx} className="flex items-center gap-2">
                           <div className="w-40 shrink-0">
@@ -98,7 +99,7 @@ export const TriageProfilesSettings: React.FC = () => {
                             <input type="checkbox" checked={r.mandatory} onChange={e => updateReq(key, idx, { mandatory: e.target.checked })} className="w-3.5 h-3.5 rounded accent-blue-600" />
                             {t('triageProfiles.mandatory')}
                           </label>
-                          <button type="button" onClick={() => removeReq(key, idx)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
+                          <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => removeReq(key, idx)}><Trash2 size={14} /></IconButton>
                         </div>
                       ))}
                       <Button type="button" variant="secondary" size="sm" onClick={() => addReq(key)}><Plus size={13} className="mr-1" />{t('triageProfiles.addCriterion')}</Button>
@@ -106,7 +107,7 @@ export const TriageProfilesSettings: React.FC = () => {
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-600 dark:text-slate-300">{t('triageProfiles.reference')}</label>
-                      <p className="text-[11px] text-gray-400">{t('triageProfiles.referenceHint')}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">{t('triageProfiles.referenceHint')}</p>
                       <textarea
                         value={p.reference}
                         onChange={e => update(key, { reference: e.target.value })}

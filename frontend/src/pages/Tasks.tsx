@@ -17,16 +17,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const statusMeta: Record<TaskStatus, { color: string; icon: React.FC<any> }> = {
   open: { color: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300', icon: Circle },
   in_progress: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', icon: Clock },
   done: { color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', icon: CheckCircle2 },
-  cancelled: { color: 'bg-gray-100 text-gray-400 dark:bg-slate-900 dark:text-slate-600', icon: Circle },
+  cancelled: { color: 'bg-gray-100 text-gray-500 dark:bg-slate-900 dark:text-slate-600', icon: Circle },
 };
 
 const priorityMeta: Record<TaskPriority, { color: string }> = {
-  low: { color: 'text-gray-400 dark:text-slate-600' },
+  low: { color: 'text-gray-500 dark:text-slate-600' },
   medium: { color: 'text-blue-500 dark:text-blue-400' },
   high: { color: 'text-orange-500 dark:text-orange-400' },
   critical: { color: 'text-red-600 dark:text-red-400' },
@@ -329,7 +330,7 @@ export const Tasks: React.FC = () => {
         ].map(s => (
           <Card key={s.label} className="p-3 text-center">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-gray-500 dark:text-slate-500 mt-0.5">{s.label}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{s.label}</p>
           </Card>
         ))}
       </div>
@@ -417,7 +418,7 @@ export const Tasks: React.FC = () => {
         <div className="text-center py-16 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
           <CheckSquare size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3" />
           <p className="text-gray-500 dark:text-slate-400 font-medium">{t('tasks:empty.title')}</p>
-          <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('tasks:empty.subtitle')}</p>
+          <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('tasks:empty.subtitle')}</p>
           {canWrite && <Button onClick={openCreate} className="mt-4"><Plus size={16} />{t('tasks:empty.createFirst')}</Button>}
         </div>
       ) : (
@@ -426,14 +427,14 @@ export const Tasks: React.FC = () => {
           <div className="flex items-center gap-3 px-1 pb-1">
             <button
               onClick={toggleSelectAll}
-              className="shrink-0 text-gray-400 hover:text-blue-600 transition-colors"
+              className="shrink-0 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
               title={allFilteredSelected ? t('tasks:deselectAll') : t('tasks:selectAll', { count: filtered.length })}
             >
               {allFilteredSelected
                 ? <CheckSquare size={16} className="text-blue-600" />
                 : <Square size={16} />}
             </button>
-            <span className="text-xs text-gray-400 dark:text-slate-500">
+            <span className="text-xs text-gray-500 dark:text-slate-400">
               {allFilteredSelected ? t('tasks:deselectAll') : t('tasks:selectAll', { count: filtered.length })}
             </span>
           </div>
@@ -483,7 +484,7 @@ export const Tasks: React.FC = () => {
                       )}
                     </div>
                     {t2.description && <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">{t2.description}</p>}
-                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-400 dark:text-slate-500">
+                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-500 dark:text-slate-400">
                       {t2.assignee && <span>→ {t2.assignee.name}</span>}
                       {t2.assignedGroup && (
                         <span
@@ -511,9 +512,9 @@ export const Tasks: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    {canWrite && <button onClick={() => openEdit(t2)} className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"><Pencil size={14} /></button>}
+                    {canWrite && <IconButton label={t('common:actions.edit')} onClick={() => openEdit(t2)}><Pencil size={14} /></IconButton>}
                     {canWrite && (user?.role === 'admin' || t2.created_by_id === user?.id) && (
-                      <button onClick={() => handleDelete(t2.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={14} /></button>
+                      <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(t2.id)}><Trash2 size={14} /></IconButton>
                     )}
                   </div>
                 </div>

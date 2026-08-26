@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
+import { IconButton } from '../components/ui/IconButton';
 
 const STATUS_COLORS: Record<SubjectRequestStatus, string> = {
   received: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -236,19 +237,19 @@ export const SubjectRequests: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.received')}</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('stats.received')}</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.open}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.inProgress')}</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('stats.inProgress')}</p>
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{stats.inProgress}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.overdue')}</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('stats.overdue')}</p>
           <p className={`text-2xl font-bold mt-1 ${stats.overdue > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{stats.overdue}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-          <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('stats.completedMonth')}</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('stats.completedMonth')}</p>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.completedMonth}</p>
         </div>
       </div>
@@ -256,7 +257,7 @@ export const SubjectRequests: React.FC = () => {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
           <input
             ref={searchRef}
             type="text"
@@ -300,7 +301,7 @@ export const SubjectRequests: React.FC = () => {
             <>
               <UserCheck size={40} className="mx-auto text-gray-300 dark:text-slate-600 mb-3" />
               <p className="text-lg font-semibold text-gray-700 dark:text-slate-300">{t('empty.title')}</p>
-              <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 mb-4">{t('empty.description')}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 mb-4">{t('empty.description')}</p>
               {canWrite && (
                 <Button onClick={() => { setEditId(null); setForm({ ...emptyForm }); setModalOpen(true); }} className="gap-2">
                   <Plus size={16} />{t('empty.createButton')}
@@ -319,7 +320,7 @@ export const SubjectRequests: React.FC = () => {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-mono text-gray-400 dark:text-slate-500">{r.ref}</span>
+                    <span className="text-xs font-mono text-gray-500 dark:text-slate-400">{r.ref}</span>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[r.status]}`}>{statusLabels[r.status]}</span>
                   </div>
                   <p className="font-semibold text-gray-900 dark:text-white mt-1 truncate">{r.requester_name}</p>
@@ -328,19 +329,15 @@ export const SubjectRequests: React.FC = () => {
                 <div className="flex items-center gap-1 shrink-0">
                   <DeadlineBadge request={r} />
                   {canWrite && (
-                    <button onClick={() => openEdit(r)} className="p-1.5 text-gray-400 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                      <Edit2 size={14} />
-                    </button>
+                    <IconButton label={t('common:actions.edit')} onClick={() => openEdit(r)}><Edit2 size={14} /></IconButton>
                   )}
                   {canDelete && (
-                    <button onClick={() => handleDelete(r.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                      <Trash2 size={14} />
-                    </button>
+                    <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(r.id)}><Trash2 size={14} /></IconButton>
                   )}
                 </div>
               </div>
               {r.due_date && (
-                <div className="mt-2 text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                <div className="mt-2 text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1">
                   <CalendarClock size={11} />{t('table.deadline')}: {new Date(r.extended_until || r.due_date).toLocaleDateString()}
                   {r.extended_until && <span className="text-purple-500">{t('deadline.extended')}</span>}
                 </div>
@@ -356,22 +353,22 @@ export const SubjectRequests: React.FC = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50">
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.ref')}</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.requester')}</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.type')}</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.status')}</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.deadline')}</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('table.handler')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('table.ref')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('table.requester')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('table.type')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('table.status')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('table.deadline')}</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('table.handler')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
               {filtered.map(r => (
                 <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap">{r.ref || `#${r.id}`}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">{r.ref || `#${r.id}`}</td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900 dark:text-white">{r.requester_name}</p>
-                    {r.requester_email && <p className="text-xs text-gray-400 dark:text-slate-500">{r.requester_email}</p>}
+                    {r.requester_email && <p className="text-xs text-gray-500 dark:text-slate-400">{r.requester_email}</p>}
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs text-gray-600 dark:text-slate-300">{typeShortLabels[r.type]}</span>
@@ -395,14 +392,10 @@ export const SubjectRequests: React.FC = () => {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       {canWrite && (
-                        <button onClick={() => openEdit(r)} className="p-1.5 text-gray-400 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                          <Edit2 size={14} />
-                        </button>
+                        <IconButton label={t('common:actions.edit')} onClick={() => openEdit(r)}><Edit2 size={14} /></IconButton>
                       )}
                       {canDelete && (
-                        <button onClick={() => handleDelete(r.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
+                        <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(r.id)}><Trash2 size={14} /></IconButton>
                       )}
                     </div>
                   </td>
@@ -436,7 +429,7 @@ export const SubjectRequests: React.FC = () => {
 
           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800/40 rounded-lg border dark:border-slate-700">
             <input type="checkbox" id="id_verified" checked={form.requester_id_verified} onChange={e => setForm(f => ({ ...f, requester_id_verified: e.target.checked }))}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              className="w-4 h-4 rounded border-gray-500 dark:border-slate-500 text-blue-600 focus:ring-blue-500" />
             <label htmlFor="id_verified" className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
               <Shield size={13} className="text-blue-500" />{t('modal.idVerified')}
             </label>

@@ -21,6 +21,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { CrossFrameworkOverview } from '../components/ControlMappings';
+import { IconButton } from '../components/ui/IconButton';
 
 
 
@@ -725,13 +726,13 @@ export const Compliance: React.FC = () => {
                               <Td className="font-semibold text-gray-900 dark:text-slate-100">{asset.name}</Td>
                               <Td><span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-2 py-0.5 rounded uppercase font-medium">{asset.type}</span></Td>
                               <Td><span className="text-xs text-gray-500 dark:text-slate-400">{asset.classification ? (classLabels[asset.classification as keyof typeof classLabels] || asset.classification) : '—'}</span></Td>
-                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-400">{t('riskLevels.unrated')}</span>}</Td>
+                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-500 dark:text-gray-400">{t('riskLevels.unrated')}</span>}</Td>
                               <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">{t('actions.details')} <ChevronRight size={12} /></Link></Td>
                             </tr>
                           ))}
                         </Tbody>
                       </Table>
-                    ) : <div className="p-8 text-center text-gray-400 italic">{t('iso27001.noAssets')}</div>}
+                    ) : <div className="p-8 text-center text-gray-500 italic dark:text-gray-400">{t('iso27001.noAssets')}</div>}
                   </CardBody>
                 </Card>
               </div>
@@ -740,7 +741,7 @@ export const Compliance: React.FC = () => {
                   <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">{t('frameworkInfo.title')}</h2></CardHeader>
                   <CardBody className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{t('iso27001.infoText1')}</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">{t('iso27001.infoText2')}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">{t('iso27001.infoText2')}</p>
                     <div className="pt-4 border-t dark:border-slate-800 space-y-2">
                       <Link to="/risks" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.openRisks')}</Link>
                       <Link to="/controls" className="w-full justify-center gap-2 flex items-center px-4 py-2 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.securityControls')}</Link>
@@ -766,13 +767,13 @@ export const Compliance: React.FC = () => {
                               <Td className="font-semibold text-gray-900 dark:text-slate-100">{asset.name}</Td>
                               <Td><span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-2 py-0.5 rounded uppercase font-medium">{asset.type}</span></Td>
                               <Td><span className="text-xs text-gray-500 dark:text-slate-400">{asset.classification ? (classLabels[asset.classification as keyof typeof classLabels] || asset.classification) : '—'}</span></Td>
-                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-400">{t('riskLevels.unrated')}</span>}</Td>
+                              <Td>{asset.risk_level ? <Badge value={asset.risk_level} label={riskLabels[asset.risk_level as keyof typeof riskLabels]} /> : <span className="text-xs italic text-gray-500 dark:text-gray-400">{t('riskLevels.unrated')}</span>}</Td>
                               <Td className="text-right"><Link to={`/assets/${asset.id}`} className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 text-xs font-semibold">{t('actions.details')} <ChevronRight size={12} /></Link></Td>
                             </tr>
                           ))}
                         </Tbody>
                       </Table>
-                    ) : <div className="p-8 text-center text-gray-400 italic">{t('nis2.noAssets')}</div>}
+                    ) : <div className="p-8 text-center text-gray-500 italic dark:text-gray-400">{t('nis2.noAssets')}</div>}
                   </CardBody>
                 </Card>
               </div>
@@ -781,7 +782,7 @@ export const Compliance: React.FC = () => {
                   <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">{t('frameworkInfo.title')}</h2></CardHeader>
                   <CardBody className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{t('nis2.infoText1')}</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">{t('nis2.infoText2')}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">{t('nis2.infoText2')}</p>
                     <div className="pt-4 border-t dark:border-slate-800 space-y-2">
                       <Link to="/incidents" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.manageIncidents')}</Link>
                     </div>
@@ -831,7 +832,7 @@ export const Compliance: React.FC = () => {
                             })}
                           </Tbody>
                         </Table>
-                      ) : <div className="p-8 text-center text-gray-400 italic">{t('gdpr.noAssets')}</div>}
+                      ) : <div className="p-8 text-center text-gray-500 italic dark:text-gray-400">{t('gdpr.noAssets')}</div>}
                     </CardBody>
                   </Card>
                 </div>
@@ -840,7 +841,7 @@ export const Compliance: React.FC = () => {
                     <CardHeader><h2 className="font-bold text-gray-950 dark:text-white">{t('frameworkInfo.title')}</h2></CardHeader>
                     <CardBody className="space-y-4">
                       <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{t('gdpr.infoText1')}</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-500 leading-relaxed">{t('gdpr.infoText2')}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">{t('gdpr.infoText2')}</p>
                       <div className="pt-4 border-t dark:border-slate-800 space-y-2">
                         <Link to="/vvt" className="w-full justify-center gap-2 flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs">{t('frameworkInfo.manageVvt')}</Link>
                       </div>
@@ -888,7 +889,7 @@ export const Compliance: React.FC = () => {
                       <tr key={kpi.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
                         <Td>
                           <p className="font-semibold text-gray-950 dark:text-white">{kpi.title}</p>
-                          <p className="text-xs text-gray-400 line-clamp-1">{kpi.description}</p>
+                          <p className="text-xs text-gray-500 line-clamp-1 dark:text-gray-400">{kpi.description}</p>
                         </Td>
                         <Td className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">{kpi.target}</Td>
                         <Td className="font-mono text-xs font-bold">{kpi.current_value || '–'}</Td>
@@ -919,7 +920,7 @@ export const Compliance: React.FC = () => {
                     );
                   })}
                   {kpis.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-8 text-gray-400 italic">{t('kpiSection.noKpis')}</td></tr>
+                    <tr><td colSpan={7} className="text-center py-8 text-gray-500 italic dark:text-gray-400">{t('kpiSection.noKpis')}</td></tr>
                   )}
                 </Tbody>
               </Table>
@@ -997,7 +998,7 @@ export const Compliance: React.FC = () => {
                       <tr key={finding.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
                         <Td>
                           <p className="font-semibold text-xs text-gray-900 dark:text-white">{finding.title}</p>
-                          <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{finding.description}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1 dark:text-gray-400">{finding.description}</p>
                         </Td>
                         <Td>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
@@ -1009,7 +1010,7 @@ export const Compliance: React.FC = () => {
                         <Td>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                             finding.status === 'resolved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            finding.status === 'wont_fix' ? 'bg-slate-100 text-slate-500' :
+                            finding.status === 'wont_fix' ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
                             'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                           }`}>{finding.status === 'resolved' ? t('auditSection.findingStatus.resolved') : finding.status === 'wont_fix' ? t('auditSection.findingStatus.wont_fix') : t('auditSection.findingStatus.open')}</span>
                         </Td>
@@ -1019,7 +1020,7 @@ export const Compliance: React.FC = () => {
                             <Link to="/tasks" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                               <ExternalLink size={11} /> {finding.capaTask.title} ({finding.capaTask.status})
                             </Link>
-                          ) : <span className="text-xs text-gray-400 italic">{t('auditSection.noTaskLinked')}</span>}
+                          ) : <span className="text-xs text-gray-500 italic dark:text-gray-400">{t('auditSection.noTaskLinked')}</span>}
                         </Td>
                         <Td className="text-right">
                           {canWrite && finding.status === 'open' && (
@@ -1032,7 +1033,7 @@ export const Compliance: React.FC = () => {
                       </tr>
                     ))}
                     {(audit.findings || []).length === 0 && (
-                      <tr><td colSpan={6} className="text-center py-6 text-xs text-gray-400 italic">{t('auditSection.noFindings')}</td></tr>
+                      <tr><td colSpan={6} className="text-center py-6 text-xs text-gray-500 italic dark:text-gray-400">{t('auditSection.noFindings')}</td></tr>
                     )}
                   </Tbody>
                 </Table>
@@ -1041,7 +1042,7 @@ export const Compliance: React.FC = () => {
           ))}
 
           {audits.length === 0 && (
-            <Card><CardBody className="py-12 text-center text-gray-400 italic">{t('auditSection.noAudits')}</CardBody></Card>
+            <Card><CardBody className="py-12 text-center text-gray-500 italic dark:text-gray-400">{t('auditSection.noAudits')}</CardBody></Card>
           )}
         </div>
       )}
@@ -1137,7 +1138,7 @@ export const Compliance: React.FC = () => {
                             {t('date')}: {new Date(course.date).toLocaleDateString('de')}
                           </p>
                           {course.description && (
-                            <p className="text-xs text-gray-400 dark:text-slate-500 line-clamp-1">
+                            <p className="text-xs text-gray-500 dark:text-slate-400 line-clamp-1">
                               {course.description}
                             </p>
                           )}
@@ -1160,33 +1161,21 @@ export const Compliance: React.FC = () => {
                       
                       {canWrite && (
                         <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-slate-700/50">
-                          <button
-                            onClick={(e) => {
+                          <IconButton label={t('trainingSection.editCourseTitle')} onClick={(e) => {
                               e.stopPropagation();
                               openEditMasterTraining(course);
-                            }}
-                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                            title={t('trainingSection.editCourseTitle')}
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            onClick={(e) => {
+                            }}><Pencil size={13} /></IconButton>
+                          <IconButton label={t('trainingSection.deleteCourseTitle')} variant="danger" onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteMasterTraining(course.id);
-                            }}
-                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                            title={t('trainingSection.deleteCourseTitle')}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                            }}><Trash2 size={13} /></IconButton>
                         </div>
                       )}
                     </div>
                   );
                 })}
                 {trainingsList.length === 0 && (
-                  <div className="p-8 text-center text-gray-400 italic bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl animate-pulse">
+                  <div className="p-8 text-center text-gray-500 italic bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl animate-pulse dark:text-gray-400">
                     {t('trainingSection.noCourses')}
                   </div>
                 )}
@@ -1253,7 +1242,7 @@ export const Compliance: React.FC = () => {
                                 {a.user?.department || (a.user_id ? '—' : (a.employee_email ? t('trainingSection.externalWithEmail', { email: a.employee_email }) : t('trainingSection.external')))}
                               </Td>
                               <Td className="text-xs font-mono text-gray-500">
-                                {a.completed_at ? new Date(a.completed_at).toLocaleDateString('de') : <span className="text-gray-400 italic">{t('trainingSection.attendeeStatus.pending')}</span>}
+                                {a.completed_at ? new Date(a.completed_at).toLocaleDateString('de') : <span className="text-gray-500 italic dark:text-gray-400">{t('trainingSection.attendeeStatus.pending')}</span>}
                               </Td>
                               <Td className="text-xs font-mono text-gray-500">
                                 {a.expires_at ? new Date(a.expires_at).toLocaleDateString('de') : <span className="text-gray-300 italic">—</span>}
@@ -1293,7 +1282,7 @@ export const Compliance: React.FC = () => {
                           ))}
                           {courseAssignments.length === 0 && (
                             <tr>
-                              <td colSpan={canWrite ? 7 : 6} className="text-center py-12 text-gray-400 italic">
+                              <td colSpan={canWrite ? 7 : 6} className="text-center py-12 text-gray-500 italic dark:text-gray-400">
                                 {t('trainingSection.noAttendees')}
                               </td>
                             </tr>
@@ -1304,7 +1293,7 @@ export const Compliance: React.FC = () => {
                   </Card>
                 );
               })() : (
-                <div className="h-64 flex flex-col justify-center items-center text-gray-400 italic bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl">
+                <div className="h-64 flex flex-col justify-center items-center text-gray-500 italic bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl dark:text-gray-400">
                   {t('trainingSection.selectCoursePlaceholder')}
                 </div>
               )}
@@ -1416,7 +1405,7 @@ export const Compliance: React.FC = () => {
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('description')}</label>
             <textarea
-              className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-white dark:bg-slate-800 border border-gray-500 dark:border-slate-500 rounded-xl p-3 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
               value={masterTrainingForm.description}
               onChange={e => setMasterTrainingForm({ ...masterTrainingForm, description: e.target.value })}
@@ -1554,13 +1543,13 @@ export const Compliance: React.FC = () => {
                         />
                         <div>
                           <p className="text-xs font-semibold dark:text-slate-200">{u.name}</p>
-                          <p className="text-[10px] text-gray-400 truncate max-w-[180px]">{u.email} {u.department ? `· ${u.department}` : ''}</p>
+                          <p className="text-[10px] text-gray-500 truncate max-w-[180px] dark:text-gray-400">{u.email} {u.department ? `· ${u.department}` : ''}</p>
                         </div>
                       </label>
                     );
                   })}
                   {users.filter(u => u.active && u.name.toLowerCase().includes(userSearch.toLowerCase())).length === 0 && (
-                    <p className="text-xs text-gray-400 italic col-span-2 p-2">{t('assignModal.noMatchingUsers')}</p>
+                    <p className="text-xs text-gray-500 italic col-span-2 p-2 dark:text-gray-400">{t('assignModal.noMatchingUsers')}</p>
                   )}
                 </div>
               </div>

@@ -82,7 +82,7 @@ export const Mermaid: React.FC<MermaidProps> = ({ chart, className = '' }) => {
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center py-10 text-sm text-gray-400 dark:text-slate-500 ${className}`}>
+      <div className={`flex items-center justify-center py-10 text-sm text-gray-500 dark:text-slate-400 ${className}`}>
         Diagramm konnte nicht dargestellt werden.
       </div>
     );

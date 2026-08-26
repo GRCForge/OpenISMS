@@ -16,6 +16,7 @@ import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { Mermaid } from '../components/ui/Mermaid';
 import { mermaidLabel } from '../lib/mermaid';
+import { IconButton } from '../components/ui/IconButton';
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
@@ -195,16 +196,16 @@ export const DataFlows: React.FC = () => {
         <Card className="p-2 min-h-[400px]">
           {mermaidChart ? (
             <>
-              <div className="flex items-center gap-4 px-4 py-2 border-b dark:border-slate-700 text-xs text-gray-500 dark:text-slate-500">
+              <div className="flex items-center gap-4 px-4 py-2 border-b dark:border-slate-700 text-xs text-gray-500 dark:text-slate-400">
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-100 border border-amber-400 inline-block" /> {t('diagram.personalData')}</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-green-100 border border-green-400 inline-block" /> {t('diagram.encrypted')}</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-sky-100 border border-sky-400 inline-block" /> {t('diagram.standard')}</span>
-                <span className="text-gray-400">{t('diagram.encryptedIcon')}</span>
+                <span className="text-gray-500 dark:text-gray-400">{t('diagram.encryptedIcon')}</span>
               </div>
               <Mermaid chart={mermaidChart} />
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
               <GitFork size={40} className="mb-3 text-gray-300 dark:text-slate-700" />
               <p>{t('diagram.noFlows')}</p>
             </div>
@@ -225,7 +226,7 @@ export const DataFlows: React.FC = () => {
             <div className="text-center py-16 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
               <GitFork size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3" />
               <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
-              <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('empty.description')}</p>
+              <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('empty.description')}</p>
               {canEdit && <Button onClick={openCreate} className="mt-4"><Plus size={16} />{t('empty.firstFlow')}</Button>}
             </div>
           ) : (
@@ -246,7 +247,7 @@ export const DataFlows: React.FC = () => {
                         </div>
                         <div className="flex flex-wrap items-center gap-2 mt-1.5 text-sm">
                           <span className="font-medium text-gray-700 dark:text-slate-200">{f.source?.name || '?'}</span>
-                          <span className="text-gray-400">→</span>
+                          <span className="text-gray-500 dark:text-gray-400">→</span>
                           <span className="font-medium text-gray-700 dark:text-slate-200">{f.target?.name || '?'}</span>
                         </div>
                         <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-gray-500 dark:text-slate-400">
@@ -262,8 +263,8 @@ export const DataFlows: React.FC = () => {
                     </div>
                     {canEdit && (
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => openEdit(f)} className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"><Pencil size={14} /></button>
-                        {canDelete && <button onClick={() => handleDelete(f.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={14} /></button>}
+                        <IconButton label={t('common:actions.edit')} onClick={() => openEdit(f)}><Pencil size={14} /></IconButton>
+                        {canDelete && <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(f.id)}><Trash2 size={14} /></IconButton>}
                       </div>
                     )}
                   </div>

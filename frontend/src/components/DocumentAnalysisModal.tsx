@@ -10,6 +10,7 @@ import { Modal } from './ui/Modal';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import { IconButton } from './ui/IconButton';
 
 interface DocumentAnalysisModalProps {
   open: boolean;
@@ -262,11 +263,11 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-xs font-semibold dark:text-slate-200">{c.ref}</span>
-                                {c.mandatory && <span className="text-[9px] uppercase text-gray-400">{t('documentanalysis:mandatory')}</span>}
-                                {c.quote && <Quote size={10} className={isActive ? 'text-blue-500' : 'text-gray-400 dark:text-slate-500'} />}
+                                {c.mandatory && <span className="text-[9px] uppercase text-gray-500 dark:text-gray-400">{t('documentanalysis:mandatory')}</span>}
+                                {c.quote && <Quote size={10} className={isActive ? 'text-blue-500' : 'text-gray-500 dark:text-slate-400'} />}
                               </div>
                               <p className="text-[11px] text-gray-500 dark:text-slate-400">{c.requirement}</p>
-                              {c.note && <p className="text-[11px] text-gray-400 dark:text-slate-500 italic mt-0.5">{c.note}</p>}
+                              {c.note && <p className="text-[11px] text-gray-500 dark:text-slate-400 italic mt-0.5">{c.note}</p>}
                             </div>
                           </Wrapper>
                         );
@@ -298,7 +299,7 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-sm font-semibold dark:text-white">{f.finding_ref} — {f.title}</span>
                                   {f.control_ref && <span className="text-[10px] text-gray-500 dark:text-slate-400">{f.control_ref}</span>}
-                                  {f.quote && <Quote size={10} className={isActive ? 'text-blue-500' : 'text-gray-400 dark:text-slate-500'} />}
+                                  {f.quote && <Quote size={10} className={isActive ? 'text-blue-500' : 'text-gray-500 dark:text-slate-400'} />}
                                 </div>
                                 {f.description && <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">{f.description}</p>}
                                 {f.remediation && (
@@ -322,7 +323,7 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
         <div className="space-y-3">
           <h3 className="text-sm font-bold dark:text-white">{t('documentanalysis:past_runs')}</h3>
           {runs.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 border border-dashed dark:border-slate-800 rounded-xl">{t('documentanalysis:no_runs')}</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-6 border border-dashed dark:border-slate-800 rounded-xl">{t('documentanalysis:no_runs')}</p>
           ) : (
             <div className="space-y-2">
               {runs.map(run => (
@@ -339,7 +340,7 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
                         </span>
                         {run.risk_level && <span className={`text-xs font-semibold ${riskColors[run.risk_level] || ''}`}>{t(`documentanalysis:riskLevels.${run.risk_level}`)}</span>}
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
+                      <p className="text-[10px] text-gray-500 mt-0.5 dark:text-gray-400">
                         {format(new Date(run.created_at), 'Pp', { locale: dateFnsLocale })}
                         {run.llm_provider && ` · ${run.llm_provider} / ${run.llm_model}`}
                         {run.triggeredBy && ` · ${t('documentanalysis:triggered_by', { name: run.triggeredBy.name })}`}
@@ -355,14 +356,10 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
                         </button>
                       )}
                       {run.status === 'error' && canRun && (
-                        <button onClick={() => retryRun(run.id)} title={t('documentanalysis:retry')} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors">
-                          <RefreshCw size={14} />
-                        </button>
+                        <IconButton label={t('documentanalysis:retry')} onClick={() => retryRun(run.id)}><RefreshCw size={14} /></IconButton>
                       )}
                       {user?.role === 'admin' && (
-                        <button onClick={() => deleteRun(run.id)} title={t('documentanalysis:delete_run')} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-red-600 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
+                        <IconButton label={t('documentanalysis:delete_run')} variant="danger" onClick={() => deleteRun(run.id)}><Trash2 size={14} /></IconButton>
                       )}
                     </div>
                   </div>

@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const emptyRisk = {
   title: '', description: '', category: 'it_security', owner_id: '',
@@ -303,7 +304,7 @@ export const Risks: React.FC = () => {
                   {filtered.length === 0 && risks.length === 0 ? (
                     <div className="py-12 text-center px-6">
                       <p className="text-gray-500 dark:text-slate-400 font-medium">{t('risks:empty.title')}</p>
-                      <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 mb-4">{t('risks:empty.subtitle')}</p>
+                      <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 mb-4">{t('risks:empty.subtitle')}</p>
                       {canWrite && (
                         <button onClick={openNew}
                           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
@@ -313,7 +314,7 @@ export const Risks: React.FC = () => {
                     </div>
                   ) : filtered.length === 0 ? (
                     <div className="py-12 text-center px-6">
-                      <p className="text-gray-400 dark:text-slate-500">{t('risks:noFilter')}</p>
+                      <p className="text-gray-500 dark:text-slate-400">{t('risks:noFilter')}</p>
                       <button onClick={() => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); }}
                         className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
                         {t('common:actions.reset')}
@@ -327,14 +328,12 @@ export const Risks: React.FC = () => {
                           onClick={() => openEdit(r)}>
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <p className="font-mono text-[10px] text-gray-400 dark:text-slate-500">{r.ref}</p>
+                              <p className="font-mono text-[10px] text-gray-500 dark:text-slate-400">{r.ref}</p>
                               <p className="text-sm font-medium dark:text-slate-200 mt-0.5 leading-snug">{r.title}</p>
-                              <p className="text-[11px] text-gray-400 mt-0.5">{categoryLabels[r.category!] || r.category}</p>
+                              <p className="text-[11px] text-gray-500 mt-0.5 dark:text-gray-400">{categoryLabels[r.category!] || r.category}</p>
                             </div>
                             {canWrite && (
-                              <button onClick={e => { e.stopPropagation(); remove(r); }} className="text-gray-300 hover:text-red-500 transition-colors p-1 shrink-0">
-                                <Trash2 size={14} />
-                              </button>
+                              <IconButton label={t('common:actions.delete')} variant="danger" onClick={e => { e.stopPropagation(); remove(r); }}><Trash2 size={14} /></IconButton>
                             )}
                           </div>
                           <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -345,7 +344,7 @@ export const Risks: React.FC = () => {
                                 <Badge value={r.residual_level} label={levelLabels[r.residual_level]} />
                               </>
                             )}
-                            <span className="text-[10px] text-gray-400 dark:text-slate-500 ml-auto">{statusLabels[r.status]}</span>
+                            <span className="text-[10px] text-gray-500 dark:text-slate-400 ml-auto">{statusLabels[r.status]}</span>
                           </div>
                         </div>
                       ))}
@@ -363,7 +362,7 @@ export const Risks: React.FC = () => {
                           <Td className="font-mono text-xs text-gray-500">{r.ref}</Td>
                           <Td>
                             <p className="text-sm font-medium dark:text-slate-200">{r.title}</p>
-                            <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                            <p className="text-[11px] text-gray-500 flex items-center gap-1.5 dark:text-gray-400">
                                <span>{categoryLabels[r.category!] || r.category}</span>
                                {(r.assets?.length || 0) > 0 && <span className="flex items-center gap-0.5"><Shield size={10} />{r.assets!.length}</span>}
                             </p>
@@ -396,7 +395,7 @@ export const Risks: React.FC = () => {
                         <tr>
                           <td colSpan={6} className="px-4 py-12 text-center">
                             <p className="text-gray-500 dark:text-slate-400 font-medium">{t('risks:empty.title')}</p>
-                            <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 mb-4">{t('risks:empty.subtitle')}</p>
+                            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 mb-4">{t('risks:empty.subtitle')}</p>
                             {canWrite && (
                               <button onClick={openNew}
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
@@ -409,7 +408,7 @@ export const Risks: React.FC = () => {
                       {filtered.length === 0 && risks.length > 0 && (
                         <tr>
                           <td colSpan={6} className="px-4 py-12 text-center">
-                            <p className="text-gray-400 dark:text-slate-500">{t('risks:noFilter')}</p>
+                            <p className="text-gray-500 dark:text-slate-400">{t('risks:noFilter')}</p>
                             <button onClick={() => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); }}
                               className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
                               {t('common:actions.reset')}
@@ -438,7 +437,7 @@ export const Risks: React.FC = () => {
             </CardHeader>
             <CardBody className="pt-4 space-y-3">
               {templates.length === 0 ? (
-                <p className="text-xs text-gray-400 dark:text-slate-500 italic">{t('risks:templates.empty')}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 italic">{t('risks:templates.empty')}</p>
               ) : (
                 <div className="space-y-2">
                   {templates.map(t => (
@@ -449,18 +448,11 @@ export const Risks: React.FC = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold dark:text-white truncate" title={t.title}>{t.title}</p>
-                          <p className="text-[10px] text-gray-400 dark:text-slate-500 truncate" title={t.original_name}>{t.original_name}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-slate-400 truncate" title={t.original_name}>{t.original_name}</p>
                           {t.description && <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{t.description}</p>}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(t.id, t.original_name)}
-                        className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white shrink-0 cursor-pointer"
-                        title="Download"
-                      >
-                        <Download size={14} />
-                      </button>
+                      <IconButton label="Download" onClick={() => handleDownload(t.id, t.original_name)}><Download size={14} /></IconButton>
                     </div>
                   ))}
                 </div>
@@ -496,12 +488,12 @@ export const Risks: React.FC = () => {
             <div className="md:col-span-2 space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:form.affectedAssets', { count: form.asset_ids.length })}</label>
               <div className="relative flex items-center mb-1">
-                <Search className="absolute left-3 text-gray-400" size={14} />
+                <Search className="absolute left-3 text-gray-500 dark:text-gray-400" size={14} />
                 <input type="text" placeholder={t('risks:form.assetFilter')} value={assetSearch} onChange={e => setAssetSearch(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden dark:text-white" />
               </div>
               <div className="max-h-32 overflow-y-auto border dark:border-slate-700 rounded-xl p-2 bg-white dark:bg-slate-900/50 custom-scrollbar">
                 {filteredAssets.length === 0 ? (
-                   <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('risks:form.noAssets')}</p>
+                   <p className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">{t('risks:form.noAssets')}</p>
                 ) : (
                   filteredAssets.map(a => (
                     <label key={a.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer">
@@ -516,17 +508,17 @@ export const Risks: React.FC = () => {
             <div className="md:col-span-2 space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:form.relevantThreats', { count: form.threat_ids.length })}</label>
               <div className="relative flex items-center mb-1">
-                <Search className="absolute left-3 text-gray-400" size={14} />
+                <Search className="absolute left-3 text-gray-500 dark:text-gray-400" size={14} />
                 <input type="text" placeholder={t('risks:form.threatFilter')} value={threatSearch} onChange={e => setThreatSearch(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden dark:text-white" />
               </div>
               <div className="max-h-32 overflow-y-auto border dark:border-slate-700 rounded-xl p-2 bg-white dark:bg-slate-900/50 custom-scrollbar">
                 {filteredThreats.length === 0 ? (
-                   <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('risks:form.noThreats')}</p>
+                   <p className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">{t('risks:form.noThreats')}</p>
                 ) : (
                   filteredThreats.map(t => (
                     <label key={t.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer">
                       <input type="checkbox" checked={form.threat_ids.includes(t.id)} onChange={() => toggleThreat(t.id)} className="w-4 h-4 rounded text-blue-600" />
-                      <span className="text-sm dark:text-slate-300 truncate"><span className="font-mono text-xs text-gray-400 mr-2">{t.code}</span>{t.title}</span>
+                      <span className="text-sm dark:text-slate-300 truncate"><span className="font-mono text-xs text-gray-500 mr-2 dark:text-gray-400">{t.code}</span>{t.title}</span>
                     </label>
                   ))
                 )}
@@ -551,9 +543,9 @@ export const Risks: React.FC = () => {
                     <div key={c.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
                       <input type="checkbox" checked={!!sel} onChange={() => toggleControl(c.id)} className="w-4 h-4 rounded text-blue-600" />
                       <span className="text-sm dark:text-slate-300 flex-1 truncate">
-                        <span className="text-[10px] font-bold uppercase text-gray-400 mr-1">{fwLabels[c.framework]}</span>
-                        {c.code ? <span className="font-mono text-xs text-gray-400 mr-1">{c.code}</span> : null}{c.title}
-                        <span className={`ml-1 text-[10px] ${c.status === 'implemented' ? 'text-green-600' : 'text-gray-400'}`}>({c.status === 'implemented' ? t('risks:controlStatus.implemented') : c.status === 'planned' ? t('risks:controlStatus.planned') : t('risks:controlStatus.na')})</span>
+                        <span className="text-[10px] font-bold uppercase text-gray-500 mr-1 dark:text-gray-400">{fwLabels[c.framework]}</span>
+                        {c.code ? <span className="font-mono text-xs text-gray-500 mr-1 dark:text-gray-400">{c.code}</span> : null}{c.title}
+                        <span className={`ml-1 text-[10px] ${c.status === 'implemented' ? 'text-green-600' : 'text-gray-500 dark:text-gray-400'}`}>({c.status === 'implemented' ? t('risks:controlStatus.implemented') : c.status === 'planned' ? t('risks:controlStatus.planned') : t('risks:controlStatus.na')})</span>
                       </span>
                       {sel && (
                         <select value={sel.effectiveness} onChange={e => setControlEff(c.id, parseInt(e.target.value))} title={t('risks:form.controlEffectiveness')} className="text-xs border dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 dark:text-slate-200 px-1 py-0.5">
@@ -564,7 +556,7 @@ export const Risks: React.FC = () => {
                   );
                 })}
               </div>
-              <p className="text-[11px] text-gray-400" dangerouslySetInnerHTML={{ __html: t('risks:form.controlHint') }} />
+              <p className="text-[11px] text-gray-500 dark:text-gray-400" dangerouslySetInnerHTML={{ __html: t('risks:form.controlHint') }} />
             </div>
 
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
@@ -575,7 +567,7 @@ export const Risks: React.FC = () => {
                     <Badge value={editingRisk.residual_level} label={levelLabels[editingRisk.residual_level]} />
                     <span className="text-xs text-gray-500">W{editingRisk.residual_likelihood} × A{editingRisk.residual_impact}</span>
                   </div>
-                ) : <p className="text-xs text-gray-400 italic">{t('risks:form.residualPending')}</p>}
+                ) : <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('risks:form.residualPending')}</p>}
               </section>
               <Input label={t('risks:form.nextReview')} type="date" value={form.review_date} onChange={e => setForm({ ...form, review_date: e.target.value })} />
             </div>

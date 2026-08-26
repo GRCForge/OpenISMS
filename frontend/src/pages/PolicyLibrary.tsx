@@ -17,6 +17,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { DocumentAnalysisModal } from '../components/DocumentAnalysisModal';
+import { IconButton } from '../components/ui/IconButton';
 
 const categoryLabels = {
   policy: 'categoryLabels.policy',
@@ -401,7 +402,7 @@ export const PolicyLibrary: React.FC = () => {
                       <Icon size={20} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{policy.code || t('noAbbreviation')}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{policy.code || t('noAbbreviation')}</p>
                       <h3 className="font-bold dark:text-white leading-tight group-hover:text-blue-600 transition-colors">{policy.title}</h3>
                     </div>
                   </div>
@@ -413,13 +414,13 @@ export const PolicyLibrary: React.FC = () => {
                   <div className="mt-auto space-y-4">
                     <div className="grid grid-cols-2 gap-2">
                        <div className="space-y-1">
-                          <p className="text-[9px] font-bold text-gray-400 uppercase">{t('assetsLabel')}</p>
+                          <p className="text-[9px] font-bold text-gray-500 uppercase dark:text-gray-400">{t('assetsLabel')}</p>
                           <div className="flex items-center gap-1.5 text-xs text-gray-500">
                              <Server size={12}/> {policy.assets?.length || 0}
                           </div>
                        </div>
                        <div className="space-y-1 text-right">
-                          <p className="text-[9px] font-bold text-gray-400 uppercase text-right">{t('tomReference')}</p>
+                          <p className="text-[9px] font-bold text-gray-500 uppercase text-right dark:text-gray-400">{t('tomReference')}</p>
                           <div className="flex items-center justify-end gap-1.5 text-xs text-gray-500">
                              <Shield size={12}/> {(policy as any).controls?.length || 0}
                           </div>
@@ -490,7 +491,7 @@ export const PolicyLibrary: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-bold dark:text-white leading-tight group-hover:text-purple-600 transition-colors truncate" title={template.title}>{template.title}</h3>
-                      <p className="text-[10px] text-gray-400 dark:text-slate-500 truncate" title={template.original_name}>{template.original_name}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-slate-400 truncate" title={template.original_name}>{template.original_name}</p>
                     </div>
                   </div>
                   <div className="shrink-0">
@@ -500,7 +501,7 @@ export const PolicyLibrary: React.FC = () => {
                 <CardBody className="flex-1 flex flex-col pt-0">
                   <p className="text-sm text-gray-600 dark:text-slate-400 line-clamp-3 mb-2 h-15">{template.description || t('noDescription')}</p>
                   
-                  <p className="text-[10px] text-gray-400 dark:text-slate-500 mb-4">
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400 mb-4">
                     {t('uploadedBy', { uploader: template.uploader?.name || t('unknown'), date: format(new Date(template.created_at), 'dd.MM.yyyy') })}
                   </p>
 
@@ -515,28 +516,14 @@ export const PolicyLibrary: React.FC = () => {
                             {t('area', { category: templateCategoryLabels[template.category] ? t(templateCategoryLabels[template.category]) : template.category })} <Link2 size={10} />
                           </Link>
                         ) : (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{t('area', { category: t(templateCategoryLabels.general) })}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('area', { category: t(templateCategoryLabels.general) })}</span>
                         )}
                       </div>
                       
                       <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadTemplate(template.id, template.original_name)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
-                          title={t('downloadTooltip')}
-                        >
-                          <Download size={14} />
-                        </button>
+                        <IconButton label={t('downloadTooltip')} onClick={() => handleDownloadTemplate(template.id, template.original_name)}><Download size={14} /></IconButton>
                         {user?.role === 'admin' && (
-                          <button
-                            type="button"
-                            onClick={() => deleteTemplate(template.id, template.title)}
-                            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                            title={t('deleteTooltip')}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <IconButton label={t('deleteTooltip')} variant="danger" onClick={() => deleteTemplate(template.id, template.title)}><Trash2 size={14} /></IconButton>
                         )}
                       </div>
                     </div>
@@ -669,7 +656,7 @@ export const PolicyLibrary: React.FC = () => {
                 <div className="space-y-3">
                   <label className="text-sm font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-2"><Shield size={14}/> {t('coveredControlsLabel', { count: form.control_ids.length })}</label>
                   <div className="relative">
-                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={12} />
+                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" size={12} />
                      <input type="text" placeholder={t('searchControlPlaceholder')} value={controlSearch} onChange={e => setControlSearch(e.target.value)} className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-hidden" />
                   </div>
                   <div className="max-h-40 overflow-y-auto p-2 border dark:border-slate-700 rounded-xl bg-gray-50/30 dark:bg-slate-800/20 space-y-1">
@@ -679,7 +666,7 @@ export const PolicyLibrary: React.FC = () => {
                           onChange={e => setForm(f => ({ ...f, control_ids: e.target.checked ? [...f.control_ids, c.id] : f.control_ids.filter(id => id !== c.id) }))} 
                           className="w-4 h-4 rounded text-blue-600" />
                         <div className="min-w-0 flex-1">
-                           <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">{t(fwLabels[c.framework]) || c.framework} {c.code}</p>
+                           <p className="text-[10px] font-bold text-gray-500 uppercase leading-none dark:text-gray-400">{t(fwLabels[c.framework]) || c.framework} {c.code}</p>
                            <p className="text-xs dark:text-slate-300 truncate">{c.title}</p>
                         </div>
                       </label>
@@ -720,14 +707,14 @@ export const PolicyLibrary: React.FC = () => {
           {ackLoading ? (
             <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" /></div>
           ) : ackList.length === 0 ? (
-            <p className="text-center text-gray-400 dark:text-slate-500 py-8">{t('noAcknowledgments')}</p>
+            <p className="text-center text-gray-500 dark:text-slate-400 py-8">{t('noAcknowledgments')}</p>
           ) : (
             <div className="divide-y dark:divide-slate-800">
               {ackList.map((a, i) => (
                 <div key={i} className="flex items-center justify-between py-3">
                   <div>
                     <p className="text-sm font-medium dark:text-slate-200">{a.user?.name || '–'}</p>
-                    <p className="text-xs text-gray-400">{a.user?.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{a.user?.email}</p>
                   </div>
                   <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1">
                     <CheckCircle size={12} className="text-green-500" />
@@ -737,7 +724,7 @@ export const PolicyLibrary: React.FC = () => {
               ))}
             </div>
           )}
-          <p className="text-xs text-gray-400 dark:text-slate-500 text-center pt-2">{t('acknowledgmentsCount', { count: ackList.length })}</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400 text-center pt-2">{t('acknowledgmentsCount', { count: ackList.length })}</p>
         </div>
       </Modal>
     </div>

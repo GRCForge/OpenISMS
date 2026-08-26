@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 type TisaxStatus = 'preparation' | 'requested' | 'scheduled' | 'audit_done' | 'label_received';
 type AssessmentLevel = 'AL2' | 'AL3';
@@ -60,7 +61,7 @@ const reqStatusColors: Record<ReqStatus, string> = {
   open: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300',
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   implemented: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  not_applicable: 'bg-slate-100 text-slate-400 dark:bg-slate-800/60 dark:text-slate-500',
+  not_applicable: 'bg-slate-100 text-slate-400 dark:bg-slate-800/60 dark:text-slate-400',
 };
 
 const RequirementsTab: React.FC = () => {
@@ -178,7 +179,7 @@ const RequirementsTab: React.FC = () => {
         <div className="py-16 text-center">
           <ListChecks size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
           <p className="text-gray-500 dark:text-slate-400 font-medium">{t('requirementsTab.empty.title')}</p>
-          <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             {t('requirementsTab.empty.subtitle')}
           </p>
           {canManage && (
@@ -243,7 +244,7 @@ const RequirementsTab: React.FC = () => {
                           </span>
                         </div>
                         {r.question && (
-                          <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{r.question}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{r.question}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
@@ -270,22 +271,12 @@ const RequirementsTab: React.FC = () => {
                             );
                           })}
                         </div>
-                        <span className="text-[11px] text-gray-400 dark:text-slate-500 w-11">{t('requirementsTab.maturity.target', { target: r.target_level })}</span>
+                        <span className="text-[11px] text-gray-500 dark:text-slate-400 w-11">{t('requirementsTab.maturity.target', { target: r.target_level })}</span>
                         {canWrite && (
                           <div className="flex gap-1">
-                            <button
-                              onClick={() => openEdit(r)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
-                            >
-                              <Pencil size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.edit')} onClick={() => openEdit(r)}><Pencil size={14} /></IconButton>
                             {canManage && (
-                              <button
-                                onClick={() => removeReq(r)}
-                                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => removeReq(r)}><Trash2 size={14} /></IconButton>
                             )}
                           </div>
                         )}
@@ -561,7 +552,7 @@ export const Tisax: React.FC = () => {
                   <Td>
                     <p className="font-medium dark:text-slate-200 line-clamp-2">{i.scope_description}</p>
                     {i.auditor_company && (
-                      <p className="text-[11px] text-gray-400">{i.auditor_company}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">{i.auditor_company}</p>
                     )}
                   </Td>
                   <Td>
@@ -591,19 +582,9 @@ export const Tisax: React.FC = () => {
                     <div className="flex gap-2 justify-end" onClick={e => e.stopPropagation()}>
                       {canWrite && (
                         <>
-                          <button
-                            onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEdit(i)}><Pencil size={14} /></IconButton>
                           {canManage && (
-                            <button
-                              onClick={() => remove(i)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => remove(i)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}

@@ -103,7 +103,7 @@ export const Import: React.FC = () => {
           { step: 3, label: t('steps.result'), icon: CheckCircle },
         ].map((s, i) => (
           <React.Fragment key={s.step}>
-            <div className={`flex items-center gap-2 ${step >= s.step ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+            <div className={`flex items-center gap-2 ${step >= s.step ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step >= s.step ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-slate-800'}`}>
                 <s.icon size={16} />
               </div>
@@ -144,7 +144,7 @@ export const Import: React.FC = () => {
                   const f = e.dataTransfer.files[0];
                   if (f) handleFileSelection(f);
                 }}>
-                <Upload size={40} className={`mx-auto mb-4 ${file ? 'text-blue-500' : 'text-gray-400'}`} />
+                <Upload size={40} className={`mx-auto mb-4 ${file ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`} />
                 {file ? (
                   <div className="space-y-1">
                     <p className="font-bold text-gray-800 dark:text-slate-200">{file.name}</p>
@@ -153,7 +153,7 @@ export const Import: React.FC = () => {
                 ) : (
                   <div className="space-y-1">
                     <p className="font-bold text-gray-700 dark:text-slate-300">{t('step1.chooseFile')}</p>
-                    <p className="text-xs text-gray-400">{t('step1.dropHint')}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('step1.dropHint')}</p>
                   </div>
                 )}
                 <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={e => e.target.files?.[0] && handleFileSelection(e.target.files[0])} />

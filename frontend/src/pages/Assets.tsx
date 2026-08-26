@@ -346,7 +346,7 @@ export const Assets: React.FC = () => {
                 ) : (
                   <>
                     <p className="text-gray-500 dark:text-slate-400 font-medium">{t('assets:empty.title')}</p>
-                    <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('assets:empty.subtitle')}</p>
+                    <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('assets:empty.subtitle')}</p>
                     {canWrite && (
                       <button onClick={() => { setEditId(null); setForm(emptyForm); setModalOpen(true); }}
                         className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
@@ -374,7 +374,7 @@ export const Assets: React.FC = () => {
                         <Badge size="xs" value={a.classification} label={classLabels[a.classification] || a.classification} />
                         <Badge size="xs" value={a.status} label={a.status === 'active' ? t('assets:status.active') : t('assets:status.inactive')} />
                       </div>
-                      {a.owner && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{a.owner.name}</p>}
+                      {a.owner && <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{a.owner.name}</p>}
                     </div>
                     <ChevronRight size={16} className="text-gray-300 dark:text-slate-600 shrink-0" />
                   </div>
@@ -399,7 +399,7 @@ export const Assets: React.FC = () => {
                             setSelectedIds(assets.map(a => a.id));
                           }
                         }}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-white mt-1 cursor-pointer"
+                        className="text-gray-500 hover:text-gray-600 dark:hover:text-white mt-1 cursor-pointer dark:text-gray-400"
                       >
                         {assets.length > 0 && selectedIds.length === assets.length ? (
                           <CheckSquare size={16} className="text-blue-500" />
@@ -431,7 +431,7 @@ export const Assets: React.FC = () => {
                     ) : (
                       <>
                         <p className="text-gray-500 dark:text-slate-400 font-medium">{t('assets:empty.title')}</p>
-                        <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('assets:empty.subtitle')}</p>
+                        <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('assets:empty.subtitle')}</p>
                         {canWrite && (
                           <button onClick={() => { setEditId(null); setForm(emptyForm); setModalOpen(true); }}
                             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
@@ -456,7 +456,7 @@ export const Assets: React.FC = () => {
                                 setSelectedIds(prev => [...prev, a.id]);
                               }
                             }}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-white mt-1 cursor-pointer"
+                            className="text-gray-500 hover:text-gray-600 dark:hover:text-white mt-1 cursor-pointer dark:text-gray-400"
                           >
                             {selectedIds.includes(a.id) ? (
                               <CheckSquare size={16} className="text-blue-500" />
@@ -486,7 +486,7 @@ export const Assets: React.FC = () => {
                       </Td>
                       <Td><Badge value={a.status} label={a.status === 'active' ? t('assets:status.active') : t('assets:status.inactive')} /></Td>
                       <Td className="text-right">
-                        <Link to={`/assets/${a.id}`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" onClick={e => e.stopPropagation()}><Server size={14}/></Link>
+                        <Link to={`/assets/${a.id}`} className="p-2 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400" onClick={e => e.stopPropagation()}><Server size={14}/></Link>
                       </Td>
                     </tr>
                   ))

@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 type TFunc = (key: string, opts?: Record<string, unknown>) => string;
 
@@ -334,7 +335,7 @@ export const Incidents: React.FC = () => {
                     <Td className="font-mono text-xs text-gray-500">{i.ref || `#${i.id}`}</Td>
                     <Td>
                       <p className="font-medium dark:text-slate-200">{i.title}</p>
-                      <p className="text-[11px] text-gray-400 flex items-center gap-2">
+                      <p className="text-[11px] text-gray-500 flex items-center gap-2 dark:text-gray-400">
                         <span>{catLabels[i.category]}</span>
                         {(i.assets?.length || 0) > 0 && <span className="flex items-center gap-0.5"><Link2 size={10} />{i.assets!.length}</span>}
                       </p>
@@ -357,13 +358,9 @@ export const Incidents: React.FC = () => {
                     </Td>
                     <Td>
                       <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => openDocs(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors" title={t('incidents:docs.manageTitle')}>
-                          <Paperclip size={14} />
-                        </button>
+                        <IconButton label={t('incidents:docs.manageTitle')} onClick={() => openDocs(i)}><Paperclip size={14} /></IconButton>
                         {canWrite && (
-                          <button onClick={() => openDelete(i)} className="text-gray-300 hover:text-red-500 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title={t('incidents:delete.confirmButton')}>
-                            <Trash2 size={14} />
-                          </button>
+                          <IconButton label={t('incidents:delete.confirmButton')} variant="danger" onClick={() => openDelete(i)}><Trash2 size={14} /></IconButton>
                         )}
                       </div>
                     </Td>
@@ -392,12 +389,12 @@ export const Incidents: React.FC = () => {
             <div className="md:col-span-2 grid grid-cols-2 gap-4">
               <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer ${form.is_security_incident ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-slate-800 hover:border-orange-200'}`}>
                 <input type="checkbox" checked={form.is_security_incident} onChange={e => setForm({ ...form, is_security_incident: e.target.checked })} className="hidden" />
-                <Flame size={24} className={form.is_security_incident ? 'text-orange-600' : 'text-gray-400'} />
+                <Flame size={24} className={form.is_security_incident ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400'} />
                 <span className={`text-sm font-bold mt-2 ${form.is_security_incident ? 'text-orange-700 dark:text-orange-400' : 'text-gray-500'}`}>{t('incidents:form.securityIncident')}</span>
               </label>
               <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer ${form.is_gdpr_incident ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-slate-800 hover:border-blue-200'}`}>
                 <input type="checkbox" checked={form.is_gdpr_incident} onChange={e => setForm({ ...form, is_gdpr_incident: e.target.checked })} className="hidden" />
-                <ShieldCheck size={24} className={form.is_gdpr_incident ? 'text-blue-600' : 'text-gray-400'} />
+                <ShieldCheck size={24} className={form.is_gdpr_incident ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400'} />
                 <span className={`text-sm font-bold mt-2 ${form.is_gdpr_incident ? 'text-blue-700 dark:text-blue-400' : 'text-gray-500'}`}>{t('incidents:form.gdprIncident')}</span>
               </label>
             </div>
@@ -485,13 +482,13 @@ export const Incidents: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('incidents:form.affectedAssets')}</label>
               <div className="relative flex items-center mb-1">
-                <Search className="absolute left-3 text-gray-400" size={14} />
+                <Search className="absolute left-3 text-gray-500 dark:text-gray-400" size={14} />
                 <input type="text" placeholder={t('incidents:form.assetFilter')} value={assetSearch} onChange={e => setAssetSearch(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden dark:text-white" />
               </div>
               <div className="max-h-40 overflow-y-auto border dark:border-slate-700 rounded-xl p-2 space-y-1 bg-gray-50/30 dark:bg-slate-800/20 custom-scrollbar">
-                {assets.length === 0 && <p className="text-xs text-gray-400 p-2">{t('incidents:form.noAssetsLoaded')}</p>}
+                {assets.length === 0 && <p className="text-xs text-gray-500 p-2 dark:text-gray-400">{t('incidents:form.noAssetsLoaded')}</p>}
                 {assets.length > 0 && filteredAssets.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('incidents:form.noAssetsFound')}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">{t('incidents:form.noAssetsFound')}</p>
                 ) : (
                   filteredAssets.map(a => (
                     <label key={a.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 cursor-pointer transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
@@ -505,18 +502,18 @@ export const Incidents: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('incidents:form.linkedRisks')}</label>
               <div className="relative flex items-center mb-1">
-                <Search className="absolute left-3 text-gray-400" size={14} />
+                <Search className="absolute left-3 text-gray-500 dark:text-gray-400" size={14} />
                 <input type="text" placeholder={t('incidents:form.riskFilter')} value={riskSearch} onChange={e => setRiskSearch(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden dark:text-white" />
               </div>
               <div className="max-h-40 overflow-y-auto border dark:border-slate-700 rounded-xl p-2 space-y-1 bg-gray-50/30 dark:bg-slate-800/20 custom-scrollbar">
-                {risks.length === 0 && <p className="text-xs text-gray-400 p-2">{t('incidents:form.noRisksLoaded')}</p>}
+                {risks.length === 0 && <p className="text-xs text-gray-500 p-2 dark:text-gray-400">{t('incidents:form.noRisksLoaded')}</p>}
                 {risks.length > 0 && filteredRisks.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('incidents:form.noRisksFound')}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">{t('incidents:form.noRisksFound')}</p>
                 ) : (
                   filteredRisks.map(r => (
                     <label key={r.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 cursor-pointer transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
                       <input type="checkbox" checked={form.risk_ids.includes(r.id)} onChange={() => toggle('risk_ids', r.id)} className="w-4 h-4 rounded text-blue-600" />
-                      <span className="text-sm dark:text-slate-300 truncate"><span className="font-mono text-xs text-gray-400 mr-1">{r.ref}</span>{r.title}</span>
+                      <span className="text-sm dark:text-slate-300 truncate"><span className="font-mono text-xs text-gray-500 mr-1 dark:text-gray-400">{r.ref}</span>{r.title}</span>
                     </label>
                   ))
                 )}
@@ -604,7 +601,7 @@ export const Incidents: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{doc.description || t('incidents:docs.noDescription')}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
+                      <p className="text-[10px] text-gray-500 mt-0.5 dark:text-gray-400">
                         {t('incidents:docs.uploadedAt', {
                           date: format(new Date(doc.created_at || Date.now()), 'dd.MM.yyyy HH:mm'),
                           uploader: doc.uploader?.name || t('incidents:docs.unknownUploader'),

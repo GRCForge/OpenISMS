@@ -22,7 +22,7 @@ const FW_TO_MODULE: Record<string, string> = { iso27001: 'iso27001', nis2: 'nis2
 const statusColor: Record<string, string> = {
   implemented: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   planned: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  not_applicable: 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-500',
+  not_applicable: 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400',
 };
 
 export const Controls: React.FC = () => {
@@ -228,7 +228,7 @@ export const Controls: React.FC = () => {
                             setSelectedIds([]);
                           }
                         }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 rounded border-gray-500 dark:border-slate-500 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     )}
                   </Th>
@@ -257,7 +257,7 @@ export const Controls: React.FC = () => {
                               setSelectedIds(prev => prev.filter(id => id !== c.id));
                             }
                           }}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-gray-500 dark:border-slate-500 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                       )}
                     </Td>
@@ -265,9 +265,9 @@ export const Controls: React.FC = () => {
                   <Td className="font-mono text-xs text-gray-500 whitespace-nowrap">{c.code || '–'}</Td>
                   <Td className="cursor-pointer" onClick={() => setEditing({ ...c, policy_ids: (c as any).policies?.map((p: any) => p.id) || [] })}>
                     <p className="text-sm dark:text-slate-200">{c.title}</p>
-                    {c.applicability_justification && <p className="text-[11px] text-gray-400 truncate max-w-md">{c.applicability_justification}</p>}
+                    {c.applicability_justification && <p className="text-[11px] text-gray-500 truncate max-w-md dark:text-gray-400">{c.applicability_justification}</p>}
                   </Td>
-                  <Td><span className="text-[10px] font-bold uppercase text-gray-400">{fwLabels[c.framework]}</span></Td>
+                  <Td><span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">{fwLabels[c.framework]}</span></Td>
                   <Td>
                     <div className="flex flex-wrap gap-1">
                       {(c as any).policies?.map((p: any) => (
@@ -288,7 +288,7 @@ export const Controls: React.FC = () => {
                   <Td>{canDelete && c.framework === 'custom' && <button onClick={() => removeCustom(c)} className="text-gray-300 hover:text-red-500"><Trash2 size={14} /></button>}</Td>
                 </tr>
               ))}
-              {filtered.length === 0 && <tr><td colSpan={canDelete ? 7 : 6} className="px-4 py-10 text-center text-gray-400 dark:text-slate-500">{t('empty.noResults')}</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={canDelete ? 7 : 6} className="px-4 py-10 text-center text-gray-500 dark:text-slate-400">{t('empty.noResults')}</td></tr>}
             </Tbody>
           </Table>
         </CardBody>
@@ -299,7 +299,7 @@ export const Controls: React.FC = () => {
         {editing && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider">{t('form.basicInfo')}</h3>
+              <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider dark:text-gray-400">{t('form.basicInfo')}</h3>
               {editing.framework === 'custom' ? (
                 <>
                   <Input label={t('form.title')} value={editing.title} onChange={e => setEditing({ ...editing, title: e.target.value })} />
@@ -319,10 +319,10 @@ export const Controls: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-2"><Link2 size={13} />{t('form.linkedPolicies')}</h3>
+              <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider flex items-center gap-2 dark:text-gray-400"><Link2 size={13} />{t('form.linkedPolicies')}</h3>
               <p className="text-xs text-gray-500 dark:text-slate-400">{t('form.linkedPoliciesHint')}</p>
               <div className="border dark:border-slate-700 rounded-xl p-3 space-y-1 max-h-[400px] overflow-y-auto bg-gray-50/30 dark:bg-slate-800/20">
-                {policies.length === 0 && <p className="text-xs text-gray-400 italic">{t('form.noPolicies')}</p>}
+                {policies.length === 0 && <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('form.noPolicies')}</p>}
                 {policies.map(p => (
                   <label key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-slate-700 transition-all">
                     <input type="checkbox" checked={editing.policy_ids.includes(p.id)}
@@ -333,7 +333,7 @@ export const Controls: React.FC = () => {
                       className="w-4 h-4 rounded text-blue-600" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium dark:text-slate-200 truncate">{p.title}</p>
-                      <p className="text-[10px] text-gray-400 uppercase font-mono">{p.code || t('form.noCode')}</p>
+                      <p className="text-[10px] text-gray-500 uppercase font-mono dark:text-gray-400">{p.code || t('form.noCode')}</p>
                     </div>
                   </label>
                 ))}
@@ -352,7 +352,7 @@ export const Controls: React.FC = () => {
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('createModal.title')} size="xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider">{t('form.basicInfo')}</h3>
+            <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider dark:text-gray-400">{t('form.basicInfo')}</h3>
             <Input label={t('createModal.code')} value={newCtrl.code} onChange={e => setNewCtrl({ ...newCtrl, code: e.target.value })} placeholder={t('createModal.codePlaceholder')} />
             <Input label={`${t('form.title')} *`} value={newCtrl.title} onChange={e => setNewCtrl({ ...newCtrl, title: e.target.value })} />
             <Select label={t('form.type')} value={newCtrl.type} onChange={e => setNewCtrl({ ...newCtrl, type: e.target.value })} options={Object.entries(typeLabels).map(([v, l]) => ({ value: v, label: l }))} />
@@ -361,9 +361,9 @@ export const Controls: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-2"><Link2 size={13} />{t('form.linkedPolicies')}</h3>
+            <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider flex items-center gap-2 dark:text-gray-400"><Link2 size={13} />{t('form.linkedPolicies')}</h3>
             <div className="border dark:border-slate-700 rounded-xl p-3 space-y-1 max-h-[400px] overflow-y-auto bg-gray-50/30 dark:bg-slate-800/20">
-              {policies.length === 0 && <p className="text-xs text-gray-400 italic">{t('form.noPolicies')}</p>}
+              {policies.length === 0 && <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('form.noPolicies')}</p>}
               {policies.map(p => (
                 <label key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-slate-700 transition-all">
                   <input type="checkbox" checked={newCtrl.policy_ids.includes(p.id)}
@@ -374,7 +374,7 @@ export const Controls: React.FC = () => {
                     className="w-4 h-4 rounded text-blue-600" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium dark:text-slate-200 truncate">{p.title}</p>
-                    <p className="text-[10px] text-gray-400 uppercase font-mono">{p.code || t('form.noCode')}</p>
+                    <p className="text-[10px] text-gray-500 uppercase font-mono dark:text-gray-400">{p.code || t('form.noCode')}</p>
                   </div>
                 </label>
               ))}

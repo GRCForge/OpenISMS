@@ -138,9 +138,9 @@ export const Reminders: React.FC = () => {
                 <Td>
                   <div className="flex flex-col">
                     <Link to={`/assets/${r.asset_id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">{r.Asset?.name || t('unknown')}</Link>
-                    <p className="text-xs text-gray-400 dark:text-slate-500">{r.Asset?.type}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">{r.Asset?.type}</p>
                     <div className="flex sm:hidden gap-1 mt-1">
-                       <span className={r.status === 'overdue' ? 'text-red-600 dark:text-red-400 font-bold text-[10px]' : 'text-gray-400 text-[10px]'}>
+                       <span className={r.status === 'overdue' ? 'text-red-600 dark:text-red-400 font-bold text-[10px]' : 'text-gray-500 text-[10px] dark:text-gray-400'}>
                           {r.due_date ? format(new Date(r.due_date), 'P', { locale: dateFnsLocale }) : '-'}
                        </span>
                     </div>
@@ -166,7 +166,7 @@ export const Reminders: React.FC = () => {
                 </Td>
               </tr>
             ))}
-            {reminders.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500">{t('empty.noResults')}</td></tr>}
+            {reminders.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-slate-400">{t('empty.noResults')}</td></tr>}
           </Tbody>
         </Table>
       </Card>

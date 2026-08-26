@@ -23,6 +23,7 @@ import { Input } from './ui/Input';
 import { IsmsLogo } from './IsmsLogo';
 import api from '../lib/api';
 import { startRegistration, PasskeyCancelledError } from '../lib/webauthn';
+import { IconButton } from './ui/IconButton';
 
 interface NavItem {
   path: string;
@@ -363,7 +364,7 @@ export const Layout: React.FC = () => {
             return (
               <div key={group.groupKey}>
                 {!sidebarCollapsed && (
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1">
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest px-2 mb-1">
                     {t(`nav:groups.${group.groupKey}`)}
                   </p>
                 )}
@@ -456,7 +457,7 @@ export const Layout: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold leading-none truncate text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{user?.name}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
                       {t(`common:roles.${user?.role ?? 'viewer'}`)}
                     </p>
                   </div>
@@ -470,7 +471,7 @@ export const Layout: React.FC = () => {
                 </button>
                 <LanguageSwitcher />
               </div>
-              {version && <p className="text-center text-[10px] text-slate-500 dark:text-slate-650 mt-2 font-mono">OpenISMS v{version} · © 2026 Maximilian Herz</p>}
+              {version && <p className="text-center text-[10px] text-slate-500 dark:text-slate-400 mt-2 font-mono">OpenISMS v{version} · © 2026 Maximilian Herz</p>}
             </>
           )}
         </div>
@@ -497,11 +498,11 @@ export const Layout: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 rounded-xl border dark:border-slate-800 bg-white dark:bg-slate-900/50">
-                <p className="text-[10px] font-bold uppercase text-gray-400 mb-1">{t('profile:department')}</p>
+                <p className="text-[10px] font-bold uppercase text-gray-500 mb-1 dark:text-gray-400">{t('profile:department')}</p>
                 <p className="text-sm font-medium dark:text-slate-200">{user?.department || t('profile:noDepartment')}</p>
               </div>
               <div className="p-4 rounded-xl border dark:border-slate-800 bg-white dark:bg-slate-900/50">
-                <p className="text-[10px] font-bold uppercase text-gray-400 mb-1">{t('profile:loginMethod')}</p>
+                <p className="text-[10px] font-bold uppercase text-gray-500 mb-1 dark:text-gray-400">{t('profile:loginMethod')}</p>
                 <p className="text-sm font-medium dark:text-slate-200 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                   {user?.email.includes('.local') || user?.id.toString().startsWith('local-') || !user?.email.includes('@')
@@ -551,7 +552,7 @@ export const Layout: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold dark:text-slate-200">{t('profile:totp.title')}</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">{t('profile:totp.subtitle')}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">{t('profile:totp.subtitle')}</p>
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${totpEnabled ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                   {totpEnabled ? t('profile:totp.active') : t('profile:totp.inactive')}
@@ -605,7 +606,7 @@ export const Layout: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold dark:text-slate-200 flex items-center gap-2"><Fingerprint size={14} className="text-green-500" />{t('profile:passkeys.title')}</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">{t('profile:passkeys.subtitle')}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">{t('profile:passkeys.subtitle')}</p>
                 </div>
                 {passkeySupported && (
                   <Button size="sm" variant="secondary" onClick={registerPasskey} disabled={passkeyLoading}>
@@ -613,7 +614,7 @@ export const Layout: React.FC = () => {
                   </Button>
                 )}
               </div>
-              {!passkeySupported && <p className="text-xs text-gray-400 dark:text-slate-500">{t('profile:passkeys.noSupport')}</p>}
+              {!passkeySupported && <p className="text-xs text-gray-500 dark:text-slate-400">{t('profile:passkeys.noSupport')}</p>}
               {passkeyMsg && (
                 <div className={`text-xs px-3 py-2 rounded-lg ${passkeyMsg.ok ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`}>
                   {passkeyMsg.text}
@@ -627,16 +628,14 @@ export const Layout: React.FC = () => {
                         <Fingerprint size={16} className="text-green-500 shrink-0" />
                         <div>
                           <p className="text-sm font-medium dark:text-slate-200">{pk.name}</p>
-                          <p className="text-[10px] text-gray-400 dark:text-slate-500">
+                          <p className="text-[10px] text-gray-500 dark:text-slate-400">
                             {pk.device_type === 'singleDevice' ? t('profile:passkeys.deviceBound') : t('profile:passkeys.synced')}
                             {pk.backed_up ? ` · ${t('profile:passkeys.cloudBackup')}` : ''}
                             {' · '}{t('profile:passkeys.registered')} {new Date(pk.created_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => deletePasskey(pk.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
-                        <Trash2 size={13} />
-                      </button>
+                      <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deletePasskey(pk.id)}><Trash2 size={13} /></IconButton>
                     </div>
                   ))}
                 </div>
@@ -651,7 +650,7 @@ export const Layout: React.FC = () => {
                 <KeyRound size={15} className="text-blue-500" />
                 <p className="text-sm font-semibold dark:text-slate-200">{t('profile:apiTokens.title')}</p>
               </div>
-              <p className="text-xs text-gray-400 dark:text-slate-500 leading-relaxed">
+              <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                 {t('profile:apiTokens.description')}
               </p>
 
@@ -667,7 +666,7 @@ export const Layout: React.FC = () => {
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-xs font-bold dark:text-slate-200 truncate">{token.name}</p>
-                            <p className="text-[10px] text-gray-400 dark:text-slate-500">
+                            <p className="text-[10px] text-gray-500 dark:text-slate-400">
                               {t('profile:apiTokens.created')} {new Date(token.created_at).toLocaleDateString()}
                               {token.expires_at ? (
                                 <span className={isExpired ? ' text-red-500 ml-1.5' : ' ml-1.5'}>
@@ -678,14 +677,7 @@ export const Layout: React.FC = () => {
                               )}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteToken(token.id)}
-                            className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded flex-shrink-0"
-                            title={t('common:actions.delete')}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDeleteToken(token.id)}><Trash2 size={14} /></IconButton>
                         </div>
                         {createdToken?.id === token.id ? (
                           <div className="space-y-1">
@@ -705,7 +697,7 @@ export const Layout: React.FC = () => {
                             <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{t('profile:apiTokens.copyNow')}</p>
                           </div>
                         ) : (
-                          <div className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border dark:border-slate-850 font-mono text-[10px] text-gray-400 dark:text-slate-500 select-all">
+                          <div className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border dark:border-slate-850 font-mono text-[10px] text-gray-500 dark:text-slate-400 select-all">
                             {token.token_prefix ? `${token.token_prefix}…` : '••••••••'}
                           </div>
                         )}
@@ -766,7 +758,7 @@ export const Layout: React.FC = () => {
           <span className="lg:hidden font-semibold text-sm dark:text-white">OpenISMS</span>
           <button
             onClick={openPalette}
-            className="hidden sm:flex items-center gap-2 text-sm text-gray-400 dark:text-slate-500 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-1.5 hover:text-gray-600 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600 transition-all bg-gray-50 dark:bg-slate-800/50"
+            className="hidden sm:flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-1.5 hover:text-gray-600 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600 transition-all bg-gray-50 dark:bg-slate-800/50"
           >
             <Search size={14} />
             <span className="text-xs">{t('common:filters.searchPlaceholder')}</span>

@@ -169,7 +169,7 @@ export const Topology: React.FC = () => {
             <option value="">{t('allTypes')}</option>
             {usedTypes.map(type => <option key={String(type)} value={String(type)}>{typeLabels[String(type)] || String(type)}</option>)}
           </Select>
-          <div className="flex rounded-lg border border-gray-300 dark:border-slate-700 overflow-hidden" role="group" aria-label={t('directionGroup')}>
+          <div className="flex rounded-lg border border-gray-500 dark:border-slate-500 overflow-hidden" role="group" aria-label={t('directionGroup')}>
             <button onClick={() => setDirection('LR')} aria-pressed={direction === 'LR'} aria-label={t('horizontal')} className={`px-3 py-1.5 text-sm transition-colors ${direction === 'LR' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300'}`}>↔</button>
             <button onClick={() => setDirection('TD')} aria-pressed={direction === 'TD'} aria-label={t('vertical')} className={`px-3 py-1.5 text-sm transition-colors ${direction === 'TD' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300'}`}>↕</button>
           </div>
@@ -211,14 +211,14 @@ export const Topology: React.FC = () => {
         </CardHeader>
         <CardBody>
           {!chart ? (
-            <div className="text-center py-16 text-gray-400 dark:text-slate-500">
+            <div className="text-center py-16 text-gray-500 dark:text-slate-400">
               <Network size={40} className="mx-auto mb-3 opacity-40" />
               <p className="italic">{filtered.length === 0 ? t('graph.noAssets') : t('graph.noDependencies')}</p>
             </div>
           ) : (
             <>
               <Mermaid chart={chart} className="min-h-[400px]" />
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-3 text-center">{t('graph.tip')}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-3 text-center">{t('graph.tip')}</p>
             </>
           )}
         </CardBody>

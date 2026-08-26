@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const statusColors: Record<LegalRequirementStatus, string> = {
   identified: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300',
@@ -177,7 +178,7 @@ export const LegalRequirements: React.FC = () => {
                 <tr key={i.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => openEdit(i)}>
                   <Td>
                     <p className="font-medium dark:text-slate-200">{i.title}</p>
-                    {i.description && <p className="text-[11px] text-gray-400 line-clamp-1">{i.description}</p>}
+                    {i.description && <p className="text-[11px] text-gray-500 line-clamp-1 dark:text-gray-400">{i.description}</p>}
                   </Td>
                   <Td><span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400">{categoryLabels[i.category]}</span></Td>
                   <Td><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[i.status]}`}>{statusLabels[i.status]}</span></Td>
@@ -195,15 +196,15 @@ export const LegalRequirements: React.FC = () => {
                   <Td>
                     <div className="flex gap-2 justify-end" onClick={e => e.stopPropagation()}>
                       {i.reference_url && /^https?:\/\//i.test(i.reference_url) && (
-                        <a href={i.reference_url} target="_blank" rel="noreferrer" className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors" title={t('openSource')}>
+                        <a href={i.reference_url} target="_blank" rel="noreferrer" className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400" title={t('openSource')}>
                           <ExternalLink size={14} />
                         </a>
                       )}
                       {canWrite && (
                         <>
-                          <button onClick={() => openEdit(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14} /></button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEdit(i)}><Pencil size={14} /></IconButton>
                           {canDelete && (
-                            <button onClick={() => remove(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => remove(i)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}

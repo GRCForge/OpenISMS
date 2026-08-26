@@ -15,6 +15,7 @@ import { FilterBar } from '../components/ui/FilterBar';
 import { exportToCSV, exportToExcel } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { IconButton } from '../components/ui/IconButton';
 
 const riskOrder: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 
@@ -24,7 +25,7 @@ const TrendBadge: React.FC<{ trend: Trend }> = ({ trend }) => {
   const { t } = useTranslation('assessments');
   if (trend === 'up') return <span title={t('trend.up')}><TrendingUp size={13} className="text-red-500" /></span>;
   if (trend === 'down') return <span title={t('trend.down')}><TrendingDown size={13} className="text-green-500" /></span>;
-  if (trend === 'same') return <span title={t('trend.same')}><Minus size={13} className="text-gray-400 dark:text-slate-500" /></span>;
+  if (trend === 'same') return <span title={t('trend.same')}><Minus size={13} className="text-gray-500 dark:text-slate-400" /></span>;
   return null;
 };
 
@@ -160,7 +161,7 @@ export const Assessments: React.FC = () => {
             type="checkbox"
             checked={currentOnly}
             onChange={e => setCurrentOnly(e.target.checked)}
-            className="rounded border-gray-300 text-blue-600"
+            className="rounded border-gray-500 dark:border-slate-500 text-blue-600"
           />
           {t('filters.currentOnly')}
         </label>
@@ -195,7 +196,7 @@ export const Assessments: React.FC = () => {
                       <Link to={`/assets/${a.asset_id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">{a.Asset?.name || t('unknown')}</Link>
                       <div className="flex sm:hidden gap-1 mt-1">
                         <Badge size="xs" value={a.risk_level} label={riskLabels[a.risk_level] || a.risk_level} />
-                        <span className={`text-[10px] font-bold ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>
+                        <span className={`text-[10px] font-bold ${isOverdue ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
                           {a.next_review_at ? format(new Date(a.next_review_at), 'P', { locale: dateFnsLocale }) : '-'}
                         </span>
                       </div>
@@ -215,7 +216,7 @@ export const Assessments: React.FC = () => {
                   <Td className="hidden sm:table-cell"><Badge value={a.risk_level} label={riskLabels[a.risk_level as RiskLevel] || a.risk_level} /></Td>
                   <Td className="hidden lg:table-cell"><div className="flex justify-center"><TrendBadge trend={trend} /></div></Td>
                   <Td className="dark:text-slate-400 hidden md:table-cell">{a.assessorUser?.name || '-'}</Td>
-                  <Td className="text-xs text-gray-500 dark:text-slate-500 hidden md:table-cell">{a.assessed_at ? format(new Date(a.assessed_at), 'P', { locale: dateFnsLocale }) : '-'}</Td>
+                  <Td className="text-xs text-gray-500 dark:text-slate-400 hidden md:table-cell">{a.assessed_at ? format(new Date(a.assessed_at), 'P', { locale: dateFnsLocale }) : '-'}</Td>
                   <Td className="hidden sm:table-cell">
                     <span className={isOverdue ? 'text-red-600 dark:text-red-400 font-medium text-xs' : 'text-xs dark:text-slate-400'}>
                       {a.next_review_at ? format(new Date(a.next_review_at), 'P', { locale: dateFnsLocale }) : '-'}
@@ -225,12 +226,12 @@ export const Assessments: React.FC = () => {
                   <Td className="hidden sm:table-cell">
                     {a.is_current
                       ? <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">{t('statusCurrent')}</span>
-                      : <span className="text-xs text-gray-400 dark:text-slate-500">{t('statusOutdated')}</span>}
+                      : <span className="text-xs text-gray-500 dark:text-slate-400">{t('statusOutdated')}</span>}
                   </Td>
                 </tr>
               );
             })}
-            {filtered.length === 0 && <tr><td colSpan={12} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500">{t('empty.noResults')}</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={12} className="px-4 py-8 text-center text-gray-500 dark:text-slate-400">{t('empty.noResults')}</td></tr>}
           </Tbody>
         </Table>
       </Card>
@@ -256,18 +257,11 @@ export const Assessments: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold dark:text-white truncate" title={tmpl.title}>{tmpl.title}</p>
-                      <p className="text-[10px] text-gray-400 dark:text-slate-500 truncate" title={tmpl.original_name}>{tmpl.original_name}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-slate-400 truncate" title={tmpl.original_name}>{tmpl.original_name}</p>
                       {tmpl.description && <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-1 line-clamp-2">{tmpl.description}</p>}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(tmpl.id, tmpl.original_name)}
-                    className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white shrink-0 cursor-pointer transition-colors"
-                    title={t('templates.download')}
-                  >
-                    <Download size={15} />
-                  </button>
+                  <IconButton label={t('templates.download')} onClick={() => handleDownload(tmpl.id, tmpl.original_name)}><Download size={15} /></IconButton>
                 </div>
               ))}
             </div>

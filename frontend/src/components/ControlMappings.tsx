@@ -38,7 +38,7 @@ const FW_ROUTES: Record<Framework, string> = {
 const TYPE_COLORS = {
   direct: 'text-green-600 dark:text-green-400',
   partial: 'text-amber-600 dark:text-amber-400',
-  related: 'text-gray-400 dark:text-slate-500',
+  related: 'text-gray-500 dark:text-slate-400',
 };
 
 interface Props {
@@ -61,10 +61,10 @@ export const ControlMappings: React.FC<Props> = ({ framework, ref: controlRef, e
       .finally(() => setLoading(false));
   }, [framework, controlRef]);
 
-  if (loading) return <div className="flex items-center gap-2 py-2 text-xs text-gray-400"><Loader2 size={12} className="animate-spin" />{t('mapping.loading')}</div>;
+  if (loading) return <div className="flex items-center gap-2 py-2 text-xs text-gray-500 dark:text-gray-400"><Loader2 size={12} className="animate-spin" />{t('mapping.loading')}</div>;
 
   const visible = (data || []).filter(m => !exclude.includes(m.framework));
-  if (visible.length === 0) return compact ? null : <p className="text-xs text-gray-400 italic">{t('mapping.empty')}</p>;
+  if (visible.length === 0) return compact ? null : <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('mapping.empty')}</p>;
 
   const statusLabel = (status?: string) =>
     status === 'implemented' ? t('status.implemented')
@@ -109,7 +109,7 @@ export const ControlMappings: React.FC<Props> = ({ framework, ref: controlRef, e
           <div className="space-y-1">
             {items.map((m, i) => (
               <div key={i} className="flex items-start gap-2">
-                <ArrowRight size={12} className="text-gray-400 mt-0.5 shrink-0" />
+                <ArrowRight size={12} className="text-gray-500 mt-0.5 shrink-0 dark:text-gray-400" />
                 <div className="min-w-0">
                   <span className={`text-[10px] font-semibold mr-1 ${TYPE_COLORS[m.type]}`}>{t(`mapping.typeLabels.${m.type}`)}</span>
                   <span className="text-xs font-mono text-gray-600 dark:text-slate-400 mr-1">{m.ref}</span>
@@ -178,7 +178,7 @@ const getTargetStatusClass = (status: string, isSourceImplemented: boolean) => {
   }
 
   if (status === 'not_applicable') {
-    return 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700';
+    return 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
   }
 
   return 'bg-red-50/50 dark:bg-red-950/10 text-red-500 dark:text-red-400 border border-red-200/50 dark:border-red-900/30';
@@ -269,7 +269,7 @@ export const CrossFrameworkOverview: React.FC<OverviewProps> = ({ source }) => {
           <option value="pending">{t('mapping.pendingFilter')}</option>
         </select>
 
-        <span className="text-xs text-gray-400 dark:text-slate-500">
+        <span className="text-xs text-gray-500 dark:text-slate-400">
           {withMappings.length} / {filtered.length} {t('mapping.withMappings')}
         </span>
         {Object.entries(stats).filter(([k]) => k.includes(source) || source === 'iso27001').map(([key, count]) => {

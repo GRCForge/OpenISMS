@@ -27,7 +27,7 @@ const StatCard: React.FC<{
       <div className="min-w-0">
         <p className={`text-2xl font-bold ${warn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{value}</p>
         <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{label}</p>
-        {sub && <p className="text-xs text-gray-400 dark:text-slate-500">{sub}</p>}
+        {sub && <p className="text-xs text-gray-500 dark:text-slate-400">{sub}</p>}
       </div>
     </CardBody>
   </Card>
@@ -52,7 +52,7 @@ const FwBar: React.FC<{ label: string; count: number; total: number; color: stri
     <div>
       <div className="flex justify-between text-sm mb-1">
         <span className="font-medium dark:text-slate-200">{label}</span>
-        <span className="text-gray-500 dark:text-slate-400">{count}/{total} <span className="text-xs text-gray-400">({pct}%)</span></span>
+        <span className="text-gray-500 dark:text-slate-400">{count}/{total} <span className="text-xs text-gray-500 dark:text-gray-400">({pct}%)</span></span>
       </div>
       <div className="bg-gray-100 dark:bg-slate-800 rounded-full h-2.5">
         <div className={`h-2.5 rounded-full transition-all duration-500 ${color}`} style={{ width: `${pct}%` }} />
@@ -147,7 +147,7 @@ export const Dashboard: React.FC = () => {
                       <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{s.step}</span>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center gap-1">{s.label}<ArrowRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" /></p>
-                        <p className="text-xs text-gray-400 dark:text-slate-500 leading-snug">{s.desc}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 leading-snug">{s.desc}</p>
                       </div>
                     </Link>
                   ))}
@@ -174,7 +174,7 @@ export const Dashboard: React.FC = () => {
             {totalRisk === 0 ? (
               <div className="text-center py-6">
                 <ShieldAlert size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noRiskAssessments')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{t('dashboard:sections.noRiskAssessments')}</p>
                 <Link to="/assessments" className="text-xs text-blue-500 hover:underline mt-1 inline-block">{t('dashboard:sections.startAssessment')}</Link>
               </div>
             ) :
@@ -191,7 +191,7 @@ export const Dashboard: React.FC = () => {
             {data.stats.activeAssets === 0 ? (
               <div className="text-center py-6">
                 <Server size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noActiveAssets')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{t('dashboard:sections.noActiveAssets')}</p>
                 <Link to="/assets" className="text-xs text-blue-500 hover:underline mt-1 inline-block">{t('dashboard:sections.createAsset')}</Link>
               </div>
             ) :
@@ -215,7 +215,7 @@ export const Dashboard: React.FC = () => {
           {data.upcomingReminders.length === 0 ? (
             <div className="text-center py-8">
               <Clock size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-              <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noReviews')}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">{t('dashboard:sections.noReviews')}</p>
               <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">{t('dashboard:sections.reviewsScheduled')}</p>
             </div>
           ) :
@@ -226,7 +226,7 @@ export const Dashboard: React.FC = () => {
                     <div className="w-2 h-2 rounded-full bg-orange-400 shrink-0" />
                     <div>
                       <p className="font-medium text-sm dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{r.Asset?.name}</p>
-                      <p className="text-xs text-gray-400 dark:text-slate-500">{typeLabels[r.Asset?.type || ''] || r.Asset?.type}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">{typeLabels[r.Asset?.type || ''] || r.Asset?.type}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -252,14 +252,14 @@ export const Dashboard: React.FC = () => {
             {data.frameworkCoverage.total === 0 ? (
               <div className="text-center py-6">
                 <CheckCircle size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noFrameworkAssets')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{t('dashboard:sections.noFrameworkAssets')}</p>
                 <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">{t('dashboard:sections.assignFrameworks')}</p>
               </div>
             ) : <>
               <FwBar label="ISO 27001" count={data.frameworkCoverage.iso27001} total={data.frameworkCoverage.total} color="bg-blue-500" />
               <FwBar label="NIS-2" count={data.frameworkCoverage.nis2} total={data.frameworkCoverage.total} color="bg-purple-500" />
               <FwBar label="DSGVO / GDPR" count={data.frameworkCoverage.gdpr} total={data.frameworkCoverage.total} color="bg-green-500" />
-              <p className="text-xs text-gray-400 dark:text-slate-500 pt-1 border-t border-gray-100 dark:border-slate-800 transition-colors">{`${t('dashboard:sections.minOneFramework')} ${data.stats.compliancePct}%`}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 pt-1 border-t border-gray-100 dark:border-slate-800 transition-colors">{`${t('dashboard:sections.minOneFramework')} ${data.stats.compliancePct}%`}</p>
             </>}
           </CardBody>
         </Card>
@@ -270,7 +270,7 @@ export const Dashboard: React.FC = () => {
             {data.recentActivity.length === 0 ? (
               <div className="text-center py-8">
                 <Activity size={28} className="mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm text-gray-400 dark:text-slate-500">{t('dashboard:sections.noActivity')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{t('dashboard:sections.noActivity')}</p>
                 <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">{t('dashboard:sections.allChangesLogged')}</p>
               </div>
             ) :
@@ -287,7 +287,7 @@ export const Dashboard: React.FC = () => {
                           type: log.entity_type ? t(`dashboard:entityLabels.${log.entity_type}`, log.entity_type) : '',
                         })}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: dateFnsLocale })}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: dateFnsLocale })}</p>
                     </div>
                   </div>
                 ))}

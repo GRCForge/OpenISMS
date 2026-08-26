@@ -9,6 +9,7 @@ import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { IconButton } from '../components/ui/IconButton';
 
 const COLORS = [
   '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
@@ -139,7 +140,7 @@ export const Groups: React.FC = () => {
         <div className="text-center py-16 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
           <Tag size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3" />
           <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
-          <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('empty.subtitle')}</p>
+          <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('empty.subtitle')}</p>
           <Button onClick={openCreate} className="mt-4"><Plus size={16} />{t('empty.createFirst')}</Button>
         </div>
       ) : (
@@ -152,25 +153,9 @@ export const Groups: React.FC = () => {
                   <span className="font-semibold text-gray-900 dark:text-white">{g.name}</span>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => setMemberModal(g)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                    title={t('manageMembers')}
-                  >
-                    <Users size={14} />
-                  </button>
-                  <button
-                    onClick={() => openEdit(g)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(g)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <IconButton label={t('manageMembers')} onClick={() => setMemberModal(g)}><Users size={14} /></IconButton>
+                  <IconButton label={t('common:actions.edit')} onClick={() => openEdit(g)}><Pencil size={14} /></IconButton>
+                  <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(g)}><Trash2 size={14} /></IconButton>
                 </div>
               </div>
 
@@ -180,7 +165,7 @@ export const Groups: React.FC = () => {
 
               <div className="flex items-center gap-2 flex-wrap">
                 {g.members.length === 0 ? (
-                  <span className="text-xs text-gray-400 dark:text-slate-600">{t('noMembers')}</span>
+                  <span className="text-xs text-gray-500 dark:text-slate-600">{t('noMembers')}</span>
                 ) : (
                   <>
                     <div className="flex -space-x-2">
@@ -200,13 +185,13 @@ export const Groups: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">{t('memberCount', { count: g.members.length })}</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400">{t('memberCount', { count: g.members.length })}</span>
                   </>
                 )}
               </div>
 
               <div className="pt-2 border-t dark:border-slate-700">
-                <p className="text-[11px] text-gray-400 dark:text-slate-600">
+                <p className="text-[11px] text-gray-500 dark:text-slate-600">
                   <Trans
                     i18nKey="groups:mentionHint"
                     values={{ name: g.name }}
@@ -272,21 +257,15 @@ export const Groups: React.FC = () => {
           <div className="space-y-4">
             <div className="space-y-1 max-h-56 overflow-y-auto">
               {memberModal.members.length === 0 ? (
-                <p className="text-sm text-gray-400 dark:text-slate-600 py-2 text-center">{t('members.empty')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-600 py-2 text-center">{t('members.empty')}</p>
               ) : (
                 memberModal.members.map(m => (
                   <div key={m.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 dark:bg-slate-800/50">
                     <div>
                       <span className="text-sm font-medium text-gray-800 dark:text-slate-200">{m.name}</span>
-                      <span className="ml-2 text-xs text-gray-400 dark:text-slate-500">{m.email}</span>
+                      <span className="ml-2 text-xs text-gray-500 dark:text-slate-400">{m.email}</span>
                     </div>
-                    <button
-                      onClick={() => handleRemoveMember(memberModal.id, m.id)}
-                      className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
-                      title={t('members.remove')}
-                    >
-                      <UserMinus size={14} />
-                    </button>
+                    <IconButton label={t('members.remove')} variant="danger" onClick={() => handleRemoveMember(memberModal.id, m.id)}><UserMinus size={14} /></IconButton>
                   </div>
                 ))
               )}

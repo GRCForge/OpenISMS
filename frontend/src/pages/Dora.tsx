@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 type DoraStatus = 'active' | 'under_review' | 'terminated';
 type DoraCriticality = 'critical' | 'important' | 'standard';
@@ -408,7 +409,7 @@ export const Dora: React.FC = () => {
                 >
                   <Td>
                     <p className="font-medium dark:text-slate-200">{i.name}</p>
-                    {i.contact_name && <p className="text-[11px] text-gray-400">{i.contact_name}</p>}
+                    {i.contact_name && <p className="text-[11px] text-gray-500 dark:text-gray-400">{i.contact_name}</p>}
                   </Td>
                   <Td className="text-gray-600 dark:text-slate-300">{i.ict_service}</Td>
                   <Td>
@@ -435,19 +436,9 @@ export const Dora: React.FC = () => {
                     <div className="flex gap-2 justify-end" onClick={e => e.stopPropagation()}>
                       {canWrite && (
                         <>
-                          <button
-                            onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEdit(i)}><Pencil size={14} /></IconButton>
                           {canDelete && (
-                            <button
-                              onClick={() => remove(i)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => remove(i)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}
@@ -554,19 +545,9 @@ export const Dora: React.FC = () => {
                     <div className="flex gap-2 justify-end" onClick={e => e.stopPropagation()}>
                       {canWrite && (
                         <>
-                          <button
-                            onClick={() => openEditTest(testItem)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEditTest(testItem)}><Pencil size={14} /></IconButton>
                           {canDelete && (
-                            <button
-                              onClick={() => removeTest(testItem)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => removeTest(testItem)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}

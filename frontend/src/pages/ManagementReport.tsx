@@ -62,7 +62,7 @@ const Sparkline: React.FC<{ data: number[]; color?: string }> = ({ data, color =
   const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(' ');
   const last = data[data.length - 1]; const prev = data[data.length - 2];
   const trend = last > prev ? '↑' : last < prev ? '↓' : '→';
-  const tc = last > prev ? 'text-green-500' : last < prev ? 'text-red-500' : 'text-gray-400';
+  const tc = last > prev ? 'text-green-500' : last < prev ? 'text-red-500' : 'text-gray-500 dark:text-gray-400';
   return (
     <div className="flex items-center gap-1">
       <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
@@ -336,7 +336,7 @@ export const ManagementReport: React.FC = () => {
         <div className="flex-1 min-w-0">
           <p className="text-2xl font-bold dark:text-white leading-tight">{value}</p>
           <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">{label}</p>
-          {sub && <p className="text-[10px] text-gray-400 dark:text-slate-500">{sub}</p>}
+          {sub && <p className="text-[10px] text-gray-500 dark:text-slate-400">{sub}</p>}
           {sparkline && sparkline.some(v => v > 0) && <div className="mt-1.5"><Sparkline data={sparkline} /></div>}
         </div>
       </CardBody>
@@ -480,7 +480,7 @@ export const ManagementReport: React.FC = () => {
                         ))}
                       </div>
                     </>
-                  ) : <p className="text-center text-gray-400 dark:text-slate-600 text-sm py-10">{chart.empty}</p>}
+                  ) : <p className="text-center text-gray-500 dark:text-slate-600 text-sm py-10">{chart.empty}</p>}
                 </CardBody>
               </Card>
             ))}
@@ -505,7 +505,7 @@ export const ManagementReport: React.FC = () => {
                         <div key={a.id} className="flex items-center justify-between px-4 py-2.5 border-b dark:border-slate-800 last:border-0">
                           <div>
                             <p className="font-medium text-sm dark:text-slate-200">{a.Asset?.name || '–'}</p>
-                            <p className="text-xs text-gray-400">{t('alerts.until', { date: format(new Date(a.accepted_until), 'dd.MM.yyyy', { locale: dateFnsLocale }), defaultValue: 'bis {{date}}' })}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{t('alerts.until', { date: format(new Date(a.accepted_until), 'dd.MM.yyyy', { locale: dateFnsLocale }), defaultValue: 'bis {{date}}' })}</p>
                           </div>
                           <span className={`text-xs font-bold px-2 py-1 rounded-lg ${daysLeft <= 14 ? 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'}`}>
                             {daysLeft === 0 ? t('alerts.today', 'Heute!') : `${daysLeft}d`}
@@ -533,7 +533,7 @@ export const ManagementReport: React.FC = () => {
                       >
                         <div>
                           <p className="font-medium text-sm dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{a.Asset?.name || '–'}</p>
-                          <p className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1.5 mt-0.5">
+                          <p className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
                             <span className="capitalize">{a.Asset?.type || t('alerts.assetFallback', 'Asset')}</span>
                             <span>·</span>
                             <span>Score {a.risk_score?.toFixed(1) ?? '–'}</span>
@@ -579,7 +579,7 @@ export const ManagementReport: React.FC = () => {
                         <div className="flex items-end justify-between gap-2">
                           <div>
                             <p className="text-xl font-bold dark:text-white">{k.current_value ?? '–'}</p>
-                            <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('kpis.target', { target: k.target, defaultValue: 'Ziel: {{target}}' })}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-slate-400">{t('kpis.target', { target: k.target, defaultValue: 'Ziel: {{target}}' })}</p>
                           </div>
                           {sd.length >= 2 && <Sparkline data={sd} />}
                         </div>
@@ -600,7 +600,7 @@ export const ManagementReport: React.FC = () => {
             <div className="text-center py-16 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
               <BarChart2 size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3" />
               <p className="text-gray-500 dark:text-slate-400 font-medium">{t('trends.noData', 'Keine Trend-Daten verfügbar')}</p>
-              <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('trends.noDataSub', 'Daten werden mit zunehmenden Einträgen automatisch befüllt.')}</p>
+              <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('trends.noDataSub', 'Daten werden mit zunehmenden Einträgen automatisch befüllt.')}</p>
             </div>
           ) : (
             <>
@@ -675,7 +675,7 @@ export const ManagementReport: React.FC = () => {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${k.status === 'on_target' ? 'bg-green-100 text-green-700' : k.status === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                           {t('trendCharts.current', { value: k.current_value ?? '–', defaultValue: 'Aktuell: {{value}}' })}
                         </span>
-                        <span className="text-xs text-gray-400 dark:text-slate-500 ml-auto">{t('trendCharts.targetLabel', { target: k.target, defaultValue: 'Ziel: {{target}}' })}</span>
+                        <span className="text-xs text-gray-500 dark:text-slate-400 ml-auto">{t('trendCharts.targetLabel', { target: k.target, defaultValue: 'Ziel: {{target}}' })}</span>
                       </div>
                     </CardHeader>
                     <CardBody>
@@ -713,8 +713,8 @@ export const ManagementReport: React.FC = () => {
                     const cur = currentAssessments.find(x => x.asset_id === a.id);
                     return (
                       <div key={a.id} className="flex items-center justify-between px-5 py-3">
-                        <div><p className="font-medium text-sm dark:text-slate-200">{a.name}</p><p className="text-xs text-gray-400">{a.type} · {classLabels[a.classification] || a.classification}</p></div>
-                        {cur ? <Badge value={cur.risk_level} label={riskLabels[cur.risk_level] || cur.risk_level} /> : <span className="text-xs text-gray-400 italic">{t('details.notAssessed', 'Nicht bewertet')}</span>}
+                        <div><p className="font-medium text-sm dark:text-slate-200">{a.name}</p><p className="text-xs text-gray-500 dark:text-gray-400">{a.type} · {classLabels[a.classification] || a.classification}</p></div>
+                        {cur ? <Badge value={cur.risk_level} label={riskLabels[cur.risk_level] || cur.risk_level} /> : <span className="text-xs text-gray-500 italic dark:text-gray-400">{t('details.notAssessed', 'Nicht bewertet')}</span>}
                       </div>
                     );
                   })}
@@ -736,7 +736,7 @@ export const ManagementReport: React.FC = () => {
                   ].map(item => (
                     <div key={item.label} className="flex items-start gap-2 p-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl">
                       <item.icon size={15} className={`${item.color} mt-0.5 shrink-0`} />
-                      <div><p className="text-xl font-bold dark:text-white">{item.value}</p><p className="text-xs font-medium text-gray-500 dark:text-slate-400">{item.label}</p><p className="text-[10px] text-gray-400">{item.sub}</p></div>
+                      <div><p className="text-xl font-bold dark:text-white">{item.value}</p><p className="text-xs font-medium text-gray-500 dark:text-slate-400">{item.label}</p><p className="text-[10px] text-gray-500 dark:text-gray-400">{item.sub}</p></div>
                     </div>
                   ))}
                 </div>
@@ -757,7 +757,7 @@ export const ManagementReport: React.FC = () => {
                 <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
                   {assessments.filter((a: any) => a.risk_treatment === 'accept').map((a: any) => (
                     <div key={a.id} className="flex items-center justify-between px-5 py-3">
-                      <div><p className="font-medium text-sm dark:text-slate-200">{a.Asset?.name || '–'}</p><p className="text-xs text-gray-400">{a.accepted_by || '–'}{a.accepted_until && ` · ${t('details.untilLabel', { date: format(new Date(a.accepted_until), 'dd.MM.yyyy', { locale: dateFnsLocale }), defaultValue: 'bis {{date}}' })}`}</p></div>
+                      <div><p className="font-medium text-sm dark:text-slate-200">{a.Asset?.name || '–'}</p><p className="text-xs text-gray-500 dark:text-gray-400">{a.accepted_by || '–'}{a.accepted_until && ` · ${t('details.untilLabel', { date: format(new Date(a.accepted_until), 'dd.MM.yyyy', { locale: dateFnsLocale }), defaultValue: 'bis {{date}}' })}`}</p></div>
                       <Badge value={a.risk_level} label={riskLabels[a.risk_level] || a.risk_level} />
                     </div>
                   ))}
