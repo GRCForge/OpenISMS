@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const emptyRisk = {
   title: '', description: '', category: 'it_security', owner_id: '',
@@ -332,9 +333,7 @@ export const Risks: React.FC = () => {
                               <p className="text-[11px] text-gray-500 mt-0.5 dark:text-gray-400">{categoryLabels[r.category!] || r.category}</p>
                             </div>
                             {canWrite && (
-                              <button onClick={e => { e.stopPropagation(); remove(r); }} className="text-gray-300 hover:text-red-500 transition-colors p-1 shrink-0">
-                                <Trash2 size={14} />
-                              </button>
+                              <IconButton label={t('common:actions.delete')} variant="danger" onClick={e => { e.stopPropagation(); remove(r); }}><Trash2 size={14} /></IconButton>
                             )}
                           </div>
                           <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -453,14 +452,7 @@ export const Risks: React.FC = () => {
                           {t.description && <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{t.description}</p>}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(t.id, t.original_name)}
-                        className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white shrink-0 cursor-pointer"
-                        title="Download"
-                      >
-                        <Download size={14} />
-                      </button>
+                      <IconButton label="Download" onClick={() => handleDownload(t.id, t.original_name)}><Download size={14} /></IconButton>
                     </div>
                   ))}
                 </div>

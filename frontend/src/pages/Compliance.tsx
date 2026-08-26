@@ -21,6 +21,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { CrossFrameworkOverview } from '../components/ControlMappings';
+import { IconButton } from '../components/ui/IconButton';
 
 
 
@@ -1160,26 +1161,14 @@ export const Compliance: React.FC = () => {
                       
                       {canWrite && (
                         <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-slate-700/50">
-                          <button
-                            onClick={(e) => {
+                          <IconButton label={t('trainingSection.editCourseTitle')} onClick={(e) => {
                               e.stopPropagation();
                               openEditMasterTraining(course);
-                            }}
-                            className="p-1 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
-                            title={t('trainingSection.editCourseTitle')}
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            onClick={(e) => {
+                            }}><Pencil size={13} /></IconButton>
+                          <IconButton label={t('trainingSection.deleteCourseTitle')} variant="danger" onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteMasterTraining(course.id);
-                            }}
-                            className="p-1 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400"
-                            title={t('trainingSection.deleteCourseTitle')}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                            }}><Trash2 size={13} /></IconButton>
                         </div>
                       )}
                     </div>

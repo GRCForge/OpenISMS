@@ -17,6 +17,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const emptyVendor = { name: '', type: 'software', website: '', phone: '', address: '', notes: '' };
 
@@ -676,14 +677,10 @@ export const Vendors: React.FC = () => {
                             </button>
                           )}
                           {run.status === 'error' && (
-                            <button onClick={() => retryTriage(run.id)} title={t('vendors:triage.retry')} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors">
-                              <RefreshCw size={14} />
-                            </button>
+                            <IconButton label={t('vendors:triage.retry')} onClick={() => retryTriage(run.id)}><RefreshCw size={14} /></IconButton>
                           )}
                           {user?.role === 'admin' && (
-                            <button onClick={() => deleteTriage(run.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400">
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deleteTriage(run.id)}><Trash2 size={14} /></IconButton>
                           )}
                         </div>
                       </div>

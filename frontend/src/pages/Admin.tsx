@@ -12,6 +12,7 @@ import { Groups } from './Groups';
 import { TriageProfilesSettings } from '../components/settings/TriageProfilesSettings';
 import { useModules } from '../contexts/ModulesContext';
 import type { ModuleKey } from '../contexts/ModulesContext';
+import { IconButton } from '../components/ui/IconButton';
 
 type AdminTab = 'users' | 'groups' | 'audit' | 'settings' | 'security' | 'rbac' | 'api' | 'backup' | 'smtp' | 'modules' | 'llm';
 
@@ -498,8 +499,8 @@ const CustomRolesEditor: React.FC = () => {
                         <td className="px-4 py-2 text-gray-500 dark:text-slate-400 text-xs hidden sm:table-cell">{r.description || '—'}</td>
                         <td className="px-4 py-2">
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => startEdit(r)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500"><Wrench size={13} /></button>
-                            <button onClick={() => del(r.id)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"><Trash2 size={13} /></button>
+                            <IconButton label={t('common:actions.edit')} onClick={() => startEdit(r)}><Wrench size={13} /></IconButton>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => del(r.id)}><Trash2 size={13} /></IconButton>
                           </div>
                         </td>
                       </>
@@ -629,7 +630,7 @@ const OidcMappingsEditor: React.FC = () => {
                       }
                     </td>
                     <td className="px-4 py-2 text-center text-xs text-gray-500">{m.priority}</td>
-                    <td className="px-4 py-2"><button onClick={() => del(m.id)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"><Trash2 size={13} /></button></td>
+                    <td className="px-4 py-2"><IconButton label={t('common:actions.delete')} variant="danger" onClick={() => del(m.id)}><Trash2 size={13} /></IconButton></td>
                   </tr>
                 ))}
               </tbody>

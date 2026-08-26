@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { format } from 'date-fns';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { IconButton } from './ui/IconButton';
 
 interface Notification {
   id?: number;
@@ -135,9 +136,7 @@ export const NotificationBell: React.FC = () => {
                       <div className="flex justify-between items-start gap-2">
                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{n.asset_name}</p>
                         {n.id && (
-                          <button onClick={(e) => dismiss(e, n.id!)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500 hover:text-red-500 transition-all dark:text-gray-400">
-                            <Trash2 size={12} />
-                          </button>
+                          <IconButton label={t('common:actions.delete')} variant="danger" onClick={(e) => dismiss(e, n.id!)}><Trash2 size={12} /></IconButton>
                         )}
                       </div>
                       <p className="text-xs text-red-600 dark:text-red-400 font-medium">{t('overdueSince', { date: n.due_date ? format(new Date(n.due_date), 'dd.MM.yyyy') : '?' })}</p>
@@ -153,9 +152,7 @@ export const NotificationBell: React.FC = () => {
                       <div className="flex justify-between items-start gap-2">
                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{n.asset_name}</p>
                         {n.id && (
-                          <button onClick={(e) => dismiss(e, n.id!)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500 hover:text-red-500 transition-all dark:text-gray-400">
-                            <Trash2 size={12} />
-                          </button>
+                          <IconButton label={t('common:actions.delete')} variant="danger" onClick={(e) => dismiss(e, n.id!)}><Trash2 size={12} /></IconButton>
                         )}
                       </div>
                       <p className="text-xs text-gray-500 dark:text-slate-400">{t('nextReview', { date: n.due_date ? format(new Date(n.due_date), 'dd.MM.yyyy') : '?' })}</p>

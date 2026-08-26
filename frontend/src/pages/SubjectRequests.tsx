@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
+import { IconButton } from '../components/ui/IconButton';
 
 const STATUS_COLORS: Record<SubjectRequestStatus, string> = {
   received: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -328,14 +329,10 @@ export const SubjectRequests: React.FC = () => {
                 <div className="flex items-center gap-1 shrink-0">
                   <DeadlineBadge request={r} />
                   {canWrite && (
-                    <button onClick={() => openEdit(r)} className="p-1.5 text-gray-500 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors dark:text-gray-400">
-                      <Edit2 size={14} />
-                    </button>
+                    <IconButton label={t('common:actions.edit')} onClick={() => openEdit(r)}><Edit2 size={14} /></IconButton>
                   )}
                   {canDelete && (
-                    <button onClick={() => handleDelete(r.id)} className="p-1.5 text-gray-500 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors dark:text-gray-400">
-                      <Trash2 size={14} />
-                    </button>
+                    <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(r.id)}><Trash2 size={14} /></IconButton>
                   )}
                 </div>
               </div>
@@ -395,14 +392,10 @@ export const SubjectRequests: React.FC = () => {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       {canWrite && (
-                        <button onClick={() => openEdit(r)} className="p-1.5 text-gray-500 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors dark:text-gray-400">
-                          <Edit2 size={14} />
-                        </button>
+                        <IconButton label={t('common:actions.edit')} onClick={() => openEdit(r)}><Edit2 size={14} /></IconButton>
                       )}
                       {canDelete && (
-                        <button onClick={() => handleDelete(r.id)} className="p-1.5 text-gray-500 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors dark:text-gray-400">
-                          <Trash2 size={14} />
-                        </button>
+                        <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(r.id)}><Trash2 size={14} /></IconButton>
                       )}
                     </div>
                   </td>

@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { IconButton } from '../components/ui/IconButton';
 
 interface C5Item {
   id: number;
@@ -328,9 +329,7 @@ export const C5: React.FC = () => {
                       </span>
                       {item.responsible && <span className="text-xs text-gray-500 dark:text-slate-400 shrink-0 hidden md:block">{item.responsible.name}</span>}
                       {canWrite && (
-                        <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 hover:text-gray-700 dark:hover:text-slate-200 transition-colors shrink-0 dark:text-gray-400" title={t('modal.edit')}>
-                          <Pencil size={13} />
-                        </button>
+                        <IconButton label={t('modal.edit')} onClick={() => openEdit(item)}><Pencil size={13} /></IconButton>
                       )}
                     </div>
                   ))}

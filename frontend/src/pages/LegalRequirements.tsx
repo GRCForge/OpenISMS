@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const statusColors: Record<LegalRequirementStatus, string> = {
   identified: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300',
@@ -201,9 +202,9 @@ export const LegalRequirements: React.FC = () => {
                       )}
                       {canWrite && (
                         <>
-                          <button onClick={() => openEdit(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"><Pencil size={14} /></button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEdit(i)}><Pencil size={14} /></IconButton>
                           {canDelete && (
-                            <button onClick={() => remove(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => remove(i)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}

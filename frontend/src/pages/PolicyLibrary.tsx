@@ -17,6 +17,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { DocumentAnalysisModal } from '../components/DocumentAnalysisModal';
+import { IconButton } from '../components/ui/IconButton';
 
 const categoryLabels = {
   policy: 'categoryLabels.policy',
@@ -520,23 +521,9 @@ export const PolicyLibrary: React.FC = () => {
                       </div>
                       
                       <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadTemplate(template.id, template.original_name)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
-                          title={t('downloadTooltip')}
-                        >
-                          <Download size={14} />
-                        </button>
+                        <IconButton label={t('downloadTooltip')} onClick={() => handleDownloadTemplate(template.id, template.original_name)}><Download size={14} /></IconButton>
                         {user?.role === 'admin' && (
-                          <button
-                            type="button"
-                            onClick={() => deleteTemplate(template.id, template.title)}
-                            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                            title={t('deleteTooltip')}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <IconButton label={t('deleteTooltip')} variant="danger" onClick={() => deleteTemplate(template.id, template.title)}><Trash2 size={14} /></IconButton>
                         )}
                       </div>
                     </div>

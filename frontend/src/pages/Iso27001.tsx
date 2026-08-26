@@ -16,6 +16,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { ControlMappings } from '../components/ControlMappings';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable';
 type Theme = 'Organizational' | 'People' | 'Physical' | 'Technological';
@@ -270,7 +271,7 @@ export const Iso27001: React.FC = () => {
                         <Td><input type="checkbox" checked={ctrl.applicable} disabled={!canWrite} onChange={() => toggleApplicable(ctrl)} className="w-4 h-4 rounded accent-blue-600 cursor-pointer disabled:cursor-not-allowed" /></Td>
                         <Td><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[ctrl.implementation_status]}`}>{statusLabels[ctrl.implementation_status]}</span></Td>
                         <Td className="text-gray-500 dark:text-slate-400 text-xs">{ctrl.last_review_date ? format(new Date(ctrl.last_review_date), 'dd.MM.yyyy') : '–'}</Td>
-                        <Td>{canWrite && <button onClick={() => openEdit(ctrl)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"><Pencil size={14} /></button>}</Td>
+                        <Td>{canWrite && <IconButton label={t('common:actions.edit')} onClick={() => openEdit(ctrl)}><Pencil size={14} /></IconButton>}</Td>
                       </tr>
                     ))}
                   </Tbody>

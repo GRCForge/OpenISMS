@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const riskCategoryColors: Record<AiRiskCategory, string> = {
   prohibited: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
@@ -363,26 +364,10 @@ export const AiAct: React.FC = () => {
                       )}
                       {canWrite && (
                         <>
-                          <button
-                            onClick={() => openDocs(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
-                            title={t('manageDocsTitle')}
-                          >
-                            <Paperclip size={14} />
-                          </button>
-                          <button
-                            onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <IconButton label={t('manageDocsTitle')} onClick={() => openDocs(i)}><Paperclip size={14} /></IconButton>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEdit(i)}><Pencil size={14} /></IconButton>
                           {canDelete && (
-                            <button
-                              onClick={() => remove(i)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => remove(i)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}

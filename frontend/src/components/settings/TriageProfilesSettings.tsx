@@ -5,6 +5,7 @@ import api from '../../lib/api';
 import { Card, CardHeader, CardBody } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { IconButton } from '../ui/IconButton';
 
 interface Requirement { ref: string; requirement: string; mandatory: boolean; }
 interface Profile { label: string; requirements: Requirement[]; reference: string; }
@@ -98,7 +99,7 @@ export const TriageProfilesSettings: React.FC = () => {
                             <input type="checkbox" checked={r.mandatory} onChange={e => updateReq(key, idx, { mandatory: e.target.checked })} className="w-3.5 h-3.5 rounded accent-blue-600" />
                             {t('triageProfiles.mandatory')}
                           </label>
-                          <button type="button" onClick={() => removeReq(key, idx)} className="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400"><Trash2 size={14} /></button>
+                          <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => removeReq(key, idx)}><Trash2 size={14} /></IconButton>
                         </div>
                       ))}
                       <Button type="button" variant="secondary" size="sm" onClick={() => addReq(key)}><Plus size={13} className="mr-1" />{t('triageProfiles.addCriterion')}</Button>

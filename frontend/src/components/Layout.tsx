@@ -23,6 +23,7 @@ import { Input } from './ui/Input';
 import { IsmsLogo } from './IsmsLogo';
 import api from '../lib/api';
 import { startRegistration, PasskeyCancelledError } from '../lib/webauthn';
+import { IconButton } from './ui/IconButton';
 
 interface NavItem {
   path: string;
@@ -634,9 +635,7 @@ export const Layout: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => deletePasskey(pk.id)} className="p-1.5 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 dark:text-gray-400">
-                        <Trash2 size={13} />
-                      </button>
+                      <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deletePasskey(pk.id)}><Trash2 size={13} /></IconButton>
                     </div>
                   ))}
                 </div>
@@ -678,14 +677,7 @@ export const Layout: React.FC = () => {
                               )}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteToken(token.id)}
-                            className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded flex-shrink-0"
-                            title={t('common:actions.delete')}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDeleteToken(token.id)}><Trash2 size={14} /></IconButton>
                         </div>
                         {createdToken?.id === token.id ? (
                           <div className="space-y-1">

@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 type TFunc = (key: string, opts?: Record<string, unknown>) => string;
 
@@ -357,13 +358,9 @@ export const Incidents: React.FC = () => {
                     </Td>
                     <Td>
                       <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => openDocs(i)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400" title={t('incidents:docs.manageTitle')}>
-                          <Paperclip size={14} />
-                        </button>
+                        <IconButton label={t('incidents:docs.manageTitle')} onClick={() => openDocs(i)}><Paperclip size={14} /></IconButton>
                         {canWrite && (
-                          <button onClick={() => openDelete(i)} className="text-gray-300 hover:text-red-500 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title={t('incidents:delete.confirmButton')}>
-                            <Trash2 size={14} />
-                          </button>
+                          <IconButton label={t('incidents:delete.confirmButton')} variant="danger" onClick={() => openDelete(i)}><Trash2 size={14} /></IconButton>
                         )}
                       </div>
                     </Td>

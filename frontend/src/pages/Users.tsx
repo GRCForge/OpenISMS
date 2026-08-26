@@ -13,6 +13,7 @@ import { Select } from '../components/ui/Select';
 import { FilterBar } from '../components/ui/FilterBar';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { IconButton } from '../components/ui/IconButton';
 
 const emptyForm = { name: '', email: '', password: '', role: 'viewer' as UserRole, department: '', active: true, custom_role_id: null as number | null };
 
@@ -209,9 +210,9 @@ export const Users: React.FC = () => {
                   <Td><Badge value={u.active ? 'active' : 'archived'} label={u.active ? t('users:statusLabels.active') : t('users:statusLabels.deactivated')} /></Td>
                   <Td>
                     <div className="flex justify-end gap-2">
-                       <button onClick={() => { setEditUser(u); setForm({ ...u, department: u.department || '', password: '', custom_role_id: u.custom_role_id ?? null }); setModalOpen(true); }} className="p-1 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"><Pencil size={14}/></button>
-                       <button onClick={() => setResetPwModal(u)} className="p-1 text-gray-500 hover:text-yellow-600 transition-colors dark:text-gray-400" title={t('users:resetPw.tooltip')}><KeyRound size={14}/></button>
-                       <button onClick={() => deleteUser(u.id)} className="p-1 text-gray-500 hover:text-red-500 transition-colors dark:text-gray-400"><Trash2 size={14}/></button>
+                       <IconButton label={t('common:actions.edit')} onClick={() => { setEditUser(u); setForm({ ...u, department: u.department || '', password: '', custom_role_id: u.custom_role_id ?? null }); setModalOpen(true); }}><Pencil size={14}/></IconButton>
+                       <IconButton label={t('users:resetPw.tooltip')} onClick={() => setResetPwModal(u)}><KeyRound size={14}/></IconButton>
+                       <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deleteUser(u.id)}><Trash2 size={14}/></IconButton>
                     </div>
                   </Td>
                 </tr>

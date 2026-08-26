@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
 
 interface OverviewItem {
   id: number;
@@ -381,23 +382,9 @@ export const MyArea: React.FC = () => {
                         {t(`priority.${task.priority}`)}
                       </span>
                       {task.status === 'open' && (
-                        <button
-                          onClick={() => quickTaskStatus(task.id, 'in_progress')}
-                          disabled={busy}
-                          title={t('tasks.setInProgress')}
-                          className="ml-1 p-1 text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 rounded transition-colors disabled:opacity-40"
-                        >
-                          <PlayCircle size={15} />
-                        </button>
+                        <IconButton label={t('tasks.setInProgress')} onClick={() => quickTaskStatus(task.id, 'in_progress')} disabled={busy}><PlayCircle size={15} /></IconButton>
                       )}
-                      <button
-                        onClick={() => quickTaskStatus(task.id, 'done')}
-                        disabled={busy}
-                        title={t('tasks.done')}
-                        className="p-1 text-gray-300 hover:text-green-500 dark:hover:text-green-400 rounded transition-colors disabled:opacity-40"
-                      >
-                        <Check size={15} />
-                      </button>
+                      <IconButton label={t('tasks.done')} onClick={() => quickTaskStatus(task.id, 'done')} disabled={busy}><Check size={15} /></IconButton>
                     </div>
                   </div>
                 </Card>

@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 const statusMeta: Record<TaskStatus, { color: string; icon: React.FC<any> }> = {
   open: { color: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300', icon: Circle },
@@ -511,9 +512,9 @@ export const Tasks: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    {canWrite && <button onClick={() => openEdit(t2)} className="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 dark:text-gray-400"><Pencil size={14} /></button>}
+                    {canWrite && <IconButton label={t('common:actions.edit')} onClick={() => openEdit(t2)}><Pencil size={14} /></IconButton>}
                     {canWrite && (user?.role === 'admin' || t2.created_by_id === user?.id) && (
-                      <button onClick={() => handleDelete(t2.id)} className="p-1.5 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 dark:text-gray-400"><Trash2 size={14} /></button>
+                      <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(t2.id)}><Trash2 size={14} /></IconButton>
                     )}
                   </div>
                 </div>

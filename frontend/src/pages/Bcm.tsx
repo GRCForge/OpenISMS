@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 
 type BcmCriticality = 'critical' | 'important' | 'normal';
@@ -439,19 +440,9 @@ export const Bcm: React.FC = () => {
                     <div className="flex gap-2 justify-end" onClick={e => e.stopPropagation()}>
                       {canWrite && (
                         <>
-                          <button
-                            onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEdit(i)}><Pencil size={14} /></IconButton>
                           {canDelete && (
-                            <button
-                              onClick={() => remove(i)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => remove(i)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}
@@ -543,19 +534,9 @@ export const Bcm: React.FC = () => {
                     <div className="flex gap-2 justify-end" onClick={e => e.stopPropagation()}>
                       {canWrite && (
                         <>
-                          <button
-                            onClick={() => openEditExercise(ex)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEditExercise(ex)}><Pencil size={14} /></IconButton>
                           {canDelete && (
-                            <button
-                              onClick={() => removeExercise(ex)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => removeExercise(ex)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}

@@ -16,6 +16,7 @@ import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { Mermaid } from '../components/ui/Mermaid';
 import { mermaidLabel } from '../lib/mermaid';
+import { IconButton } from '../components/ui/IconButton';
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
@@ -262,8 +263,8 @@ export const DataFlows: React.FC = () => {
                     </div>
                     {canEdit && (
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => openEdit(f)} className="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 dark:text-gray-400"><Pencil size={14} /></button>
-                        {canDelete && <button onClick={() => handleDelete(f.id)} className="p-1.5 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 dark:text-gray-400"><Trash2 size={14} /></button>}
+                        <IconButton label={t('common:actions.edit')} onClick={() => openEdit(f)}><Pencil size={14} /></IconButton>
+                        {canDelete && <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(f.id)}><Trash2 size={14} /></IconButton>}
                       </div>
                     )}
                   </div>

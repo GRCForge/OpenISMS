@@ -15,6 +15,7 @@ import { FilterBar } from '../components/ui/FilterBar';
 import { exportToCSV, exportToExcel } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { IconButton } from '../components/ui/IconButton';
 
 const riskOrder: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 
@@ -260,14 +261,7 @@ export const Assessments: React.FC = () => {
                       {tmpl.description && <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-1 line-clamp-2">{tmpl.description}</p>}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(tmpl.id, tmpl.original_name)}
-                    className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white shrink-0 cursor-pointer transition-colors"
-                    title={t('templates.download')}
-                  >
-                    <Download size={15} />
-                  </button>
+                  <IconButton label={t('templates.download')} onClick={() => handleDownload(tmpl.id, tmpl.original_name)}><Download size={15} /></IconButton>
                 </div>
               ))}
             </div>

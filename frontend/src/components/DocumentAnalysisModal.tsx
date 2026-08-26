@@ -10,6 +10,7 @@ import { Modal } from './ui/Modal';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import { IconButton } from './ui/IconButton';
 
 interface DocumentAnalysisModalProps {
   open: boolean;
@@ -355,14 +356,10 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
                         </button>
                       )}
                       {run.status === 'error' && canRun && (
-                        <button onClick={() => retryRun(run.id)} title={t('documentanalysis:retry')} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors">
-                          <RefreshCw size={14} />
-                        </button>
+                        <IconButton label={t('documentanalysis:retry')} onClick={() => retryRun(run.id)}><RefreshCw size={14} /></IconButton>
                       )}
                       {user?.role === 'admin' && (
-                        <button onClick={() => deleteRun(run.id)} title={t('documentanalysis:delete_run')} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400">
-                          <Trash2 size={14} />
-                        </button>
+                        <IconButton label={t('documentanalysis:delete_run')} variant="danger" onClick={() => deleteRun(run.id)}><Trash2 size={14} /></IconButton>
                       )}
                     </div>
                   </div>

@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable';
 
@@ -301,7 +302,7 @@ export const Nis2: React.FC = () => {
                             <Td><span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusColors[m.implementation_status]}`}>{statusLabels[m.implementation_status]}</span></Td>
                             <Td>{m.deadline ? <span className={`text-xs font-medium ${overdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'}`}>{format(new Date(m.deadline), 'dd.MM.yyyy')}{overdue && ' ⚠'}</span> : <span className="text-gray-300 dark:text-slate-600">–</span>}</Td>
                             <Td className="text-gray-500 dark:text-slate-400 text-xs">{m.last_review_date ? format(new Date(m.last_review_date), 'dd.MM.yyyy') : '–'}</Td>
-                            <Td>{canWrite && <button onClick={() => openEdit(m)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400" title={t('modal.edit')}><Pencil size={14} /></button>}</Td>
+                            <Td>{canWrite && <IconButton label={t('modal.edit')} onClick={() => openEdit(m)}><Pencil size={14} /></IconButton>}</Td>
                           </tr>
                           {expanded && m.description && (
                             <tr className="bg-gray-50 dark:bg-slate-800/30">

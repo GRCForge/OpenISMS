@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
+import { IconButton } from '../components/ui/IconButton';
 
 type TisaxStatus = 'preparation' | 'requested' | 'scheduled' | 'audit_done' | 'label_received';
 type AssessmentLevel = 'AL2' | 'AL3';
@@ -273,19 +274,9 @@ const RequirementsTab: React.FC = () => {
                         <span className="text-[11px] text-gray-500 dark:text-slate-400 w-11">{t('requirementsTab.maturity.target', { target: r.target_level })}</span>
                         {canWrite && (
                           <div className="flex gap-1">
-                            <button
-                              onClick={() => openEdit(r)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
-                            >
-                              <Pencil size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.edit')} onClick={() => openEdit(r)}><Pencil size={14} /></IconButton>
                             {canManage && (
-                              <button
-                                onClick={() => removeReq(r)}
-                                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => removeReq(r)}><Trash2 size={14} /></IconButton>
                             )}
                           </div>
                         )}
@@ -591,19 +582,9 @@ export const Tisax: React.FC = () => {
                     <div className="flex gap-2 justify-end" onClick={e => e.stopPropagation()}>
                       {canWrite && (
                         <>
-                          <button
-                            onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <IconButton label={t('common:actions.edit')} onClick={() => openEdit(i)}><Pencil size={14} /></IconButton>
                           {canManage && (
-                            <button
-                              onClick={() => remove(i)}
-                              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-300 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => remove(i)}><Trash2 size={14} /></IconButton>
                           )}
                         </>
                       )}
