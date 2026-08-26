@@ -29,7 +29,13 @@ self.addEventListener('fetch', (e) => {
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).then(res => {
-        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        // Clone BEFORE returning: caches.open() is async, so by the time its
+        // callback ran the page had already consumed the body and clone() threw
+        // "Response body is already used" — which meant nothing was ever cached.
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+        }
         return res;
       }).catch(() => caches.match(e.request).then(cached => cached || caches.match('/index.html')))
     );
@@ -39,7 +45,10 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then(cached => {
       const fresh = fetch(e.request).then(res => {
-        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        if (res.ok) {
+          const copy = res.clone(); // see above — clone synchronously
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+        }
         return res;
       }).catch(() => cached);
       return cached || fresh;

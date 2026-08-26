@@ -7,6 +7,27 @@ const rateLimit = require('express-rate-limit');
 // otherwise per IP. Keying by user matters behind corporate NAT / a reverse
 // proxy where many users share one egress IP — IP-only keying would make them
 // share a single budget and trip the limit during normal concurrent use.
+// Both limiters below are mounted TWICE on most paths: once app-wide in
+// index.js and once inside each router (the per-router mount is what CodeQL
+// wants to see on the handler, CWE-770). express-rate-limit counts every pass
+// through the middleware, so that duplication silently HALVED every budget —
+// /api/discovery allowed 150 requests per window, not 300. Deleting 291 staged
+// software entries could therefore never finish: it ran out mid-way and every
+// later request, including the reload, came back 429.
+//
+// Marking the request on the first pass and skipping subsequent ones keeps both
+// mounts in place (CodeQL still sees a limiter on the route) while counting each
+// request exactly once. The marker is a Symbol so it cannot collide with
+// anything else hung off `req`.
+const countOncePerRequest = (marker) => (req) => {
+  if (req[marker]) return true; // already counted and enforced earlier in the chain
+  req[marker] = true;
+  return false;
+};
+
+const API_COUNTED = Symbol('rateLimit:api');
+const HEAVY_COUNTED = Symbol('rateLimit:heavy');
+
 const userOrIpKey = (req) => {
   const auth = req.headers.authorization;
   if (auth && auth.startsWith('Bearer ')) {
@@ -25,6 +46,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: userOrIpKey,
+  skip: countOncePerRequest(API_COUNTED),
   message: { error: 'Zu viele Anfragen. Bitte warte 15 Minuten.' },
 });
 
@@ -36,6 +58,7 @@ const heavyLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: userOrIpKey,
+  skip: countOncePerRequest(HEAVY_COUNTED),
   message: { error: 'Zu viele Anfragen für diese Operation. Bitte warte 15 Minuten.' },
 });
 

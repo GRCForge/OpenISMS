@@ -53,6 +53,13 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
     const next_review_at = (acceptedUntilDate && acceptedUntilDate < oneYearOut)
       ? acceptedUntilDate : oneYearOut;
 
+    // Declared out here, not inside the transaction callback below: the audit
+    // entry after the commit reads it too, and a `const` scoped to the callback
+    // threw "isAcceptance is not defined" there — after the assessment had
+    // already been committed, so the write succeeded while the audit entry and
+    // the task auto-close were skipped and the client still got a 400.
+    const isAcceptance = risk_treatment === 'accept' && acceptedUntilDate;
+
     // One transaction for the whole switch-over. Without it a failure after the
     // first statement left the asset with NO current assessment at all — its risk
     // level vanishes from the dashboard and the compliance views until someone
@@ -87,7 +94,6 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
       await Reminder.destroy({ where: { asset_id, status: 'pending' }, transaction: t });
 
       // Task + Reminder title differs for risk acceptance vs. regular review
-      const isAcceptance = risk_treatment === 'accept' && acceptedUntilDate;
       const taskTitle = isAcceptance
         ? `Risikoakzeptanz läuft ab: ${asset.name}`
         : `Review fällig: ${asset.name}`;

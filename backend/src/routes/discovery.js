@@ -641,6 +641,64 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
   }
 });
 
+// ── Bulk actions on staged software ──────────────────────────────────────────
+// The UI used to loop over the selection and fire one request per row. With a
+// realistic queue (291 entries) that blew through the heavy-path rate limit
+// mid-way: the run stopped part-done, every later call — including the reload —
+// came back 429, and because the client swallowed the errors it reported
+// "0 entries deleted" with no reason. One request per bulk action instead.
+
+/** Parse and bound an `ids` array from the body. */
+const parseBulkIds = (raw) => {
+  if (!Array.isArray(raw)) return { error: 'ids muss ein Array von IDs sein.' };
+  if (raw.length === 0) return { error: 'Keine Einträge ausgewählt.' };
+  // A generous ceiling: enough for "select all" on any realistic queue, low
+  // enough that a single request cannot be used to tie up the database.
+  if (raw.length > 2000) return { error: 'Zu viele Einträge auf einmal (max. 2000).' };
+  const ids = [...new Set(raw.map(Number).filter((n) => Number.isInteger(n) && n > 0))];
+  if (ids.length === 0) return { error: 'Keine gültigen IDs übergeben.' };
+  return { ids };
+};
+
+// Delete many staged software records
+router.post('/staged/bulk-delete', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
+  const { ids, error } = parseBulkIds(req.body?.ids);
+  if (error) return res.status(400).json({ error });
+  try {
+    const deleted = await DiscoveredSoftware.destroy({ where: { id: { [Op.in]: ids } } });
+    res.json({
+      success: true,
+      deleted,
+      // Rows the caller asked for that were already gone — the UI shows this so
+      // a partial result is never silently rounded up to "all done".
+      missing: ids.length - deleted,
+      message: `${deleted} Eintrag/Einträge gelöscht.`,
+    });
+  } catch (e) {
+    serverError(res, e, 'discovery');
+  }
+});
+
+// Ignore many staged software records
+router.post('/staged/bulk-ignore', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
+  const { ids, error } = parseBulkIds(req.body?.ids);
+  if (error) return res.status(400).json({ error });
+  try {
+    const [updated] = await DiscoveredSoftware.update(
+      { status: 'ignored' },
+      { where: { id: { [Op.in]: ids } } },
+    );
+    res.json({
+      success: true,
+      ignored: updated,
+      missing: ids.length - updated,
+      message: `${updated} Eintrag/Einträge ignoriert.`,
+    });
+  } catch (e) {
+    serverError(res, e, 'discovery');
+  }
+});
+
 // Ignore a staged software
 router.post('/staged/:id/ignore', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   const { id } = req.params;
