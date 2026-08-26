@@ -97,13 +97,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         }`}
       >
         <span className="truncate">{displayLabel}</span>
-        <ChevronDown size={16} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && !disabled && (
         <div className="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg z-50 overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-slate-700 flex items-center gap-2 relative bg-gray-50/50 dark:bg-slate-800/50">
-            <Search className="absolute left-4 text-gray-400" size={14} />
+            <Search className="absolute left-4 text-gray-500 dark:text-gray-400" size={14} />
             <input
               ref={inputRef}
               type="text"
@@ -115,7 +115,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </div>
           <div className="max-h-48 overflow-y-auto p-1 space-y-0.5 custom-scrollbar">
             {filteredOptions.length === 0 ? (
-              <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('ui.noEntries')}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">{t('ui.noEntries')}</p>
             ) : (
               filteredOptions.map((opt) => (
                 <button

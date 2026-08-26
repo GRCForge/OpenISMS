@@ -442,7 +442,7 @@ export const NetworkDiscovery: React.FC = () => {
                 </Button>
               </div>
 
-              <p className="text-xs text-gray-400 dark:text-slate-500">
+              <p className="text-xs text-gray-500 dark:text-slate-400">
                 {t('checkmk.lastSync')}:{' '}
                 {checkmk?.lastSyncAt ? new Date(checkmk.lastSyncAt).toLocaleString() : t('checkmk.never')}
               </p>
@@ -500,7 +500,7 @@ export const NetworkDiscovery: React.FC = () => {
                     onChange={e => setCidr(e.target.value)}
                     placeholder="192.168.1.0/24"
                   />
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                     {t('scan.ipRangeHelp')}
                   </p>
                 </div>
@@ -516,7 +516,7 @@ export const NetworkDiscovery: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex items-start gap-2 text-xs text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-800 rounded-lg p-3">
+              <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800 rounded-lg p-3">
                 <Info size={13} className="mt-0.5 flex-shrink-0" />
                 <span>{t('scan.scanInfo')}</span>
               </div>
@@ -575,7 +575,7 @@ export const NetworkDiscovery: React.FC = () => {
                             </span>
                           )}
                           {host.vendor && (
-                            <span className="text-xs font-medium text-gray-400 dark:text-slate-500 ml-2">
+                            <span className="text-xs font-medium text-gray-500 dark:text-slate-400 ml-2">
                               {t('scan.vendor', { vendor: host.vendor })}
                             </span>
                           )}
@@ -624,7 +624,7 @@ export const NetworkDiscovery: React.FC = () => {
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                         : 'border-gray-200 dark:border-slate-700 hover:border-blue-300'
                     }`}>
-                    <Terminal size={24} className={platform === p ? 'text-blue-500' : 'text-gray-400'} />
+                    <Terminal size={24} className={platform === p ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'} />
                     <span className={`text-sm font-bold ${platform === p ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'}`}>
                       {p === 'windows' ? t('agent.windowsPowerShell') : t('agent.linuxBash')}
                     </span>
@@ -829,7 +829,7 @@ export const NetworkDiscovery: React.FC = () => {
                                 setSelectedStaged(new Set(filteredStaged.map(x => x.id)));
                               }
                             }}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-white mt-1"
+                            className="text-gray-500 hover:text-gray-600 dark:hover:text-white mt-1 dark:text-gray-400"
                           >
                             {filteredStaged.length > 0 && selectedStaged.size === filteredStaged.length ? (
                               <CheckSquare size={16} className="text-blue-500" />
@@ -858,7 +858,7 @@ export const NetworkDiscovery: React.FC = () => {
                                 else next.add(item.id);
                                 setSelectedStaged(next);
                               }}
-                              className="text-gray-400 hover:text-gray-600 dark:hover:text-white mt-1"
+                              className="text-gray-500 hover:text-gray-600 dark:hover:text-white mt-1 dark:text-gray-400"
                             >
                               {selectedStaged.has(item.id) ? (
                                 <CheckSquare size={16} className="text-blue-500" />
@@ -902,7 +902,7 @@ export const NetworkDiscovery: React.FC = () => {
                             <div className="text-xs">
                               <div className="font-semibold font-mono dark:text-slate-200">{item.hostname}</div>
                               {item.ip && item.ip !== item.hostname && (
-                                <div className="font-mono text-gray-400 dark:text-slate-500">{item.ip}</div>
+                                <div className="font-mono text-gray-500 dark:text-slate-400">{item.ip}</div>
                               )}
                             </div>
                           </Td>
@@ -916,13 +916,13 @@ export const NetworkDiscovery: React.FC = () => {
                                     </span>
                                   ))}
                                   {JSON.parse(item.open_ports).length > 4 && (
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] text-gray-400 dark:text-slate-500">
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] text-gray-500 dark:text-slate-400">
                                       +{JSON.parse(item.open_ports).length - 4}
                                     </span>
                                   )}
                                 </div>
                               ) : (
-                                <div className="text-gray-400 dark:text-slate-500 truncate max-w-[150px]" title={item.os || ''}>
+                                <div className="text-gray-500 dark:text-slate-400 truncate max-w-[150px]" title={item.os || ''}>
                                   {item.os || '—'}
                                 </div>
                               )}
@@ -972,7 +972,7 @@ export const NetworkDiscovery: React.FC = () => {
                       ))}
                       {filteredStaged.length === 0 && (
                         <tr>
-                          <Td colSpan={8} className="text-center py-12 text-gray-400 italic">
+                          <Td colSpan={8} className="text-center py-12 text-gray-500 italic dark:text-gray-400">
                             {t('staged.noItems')}
                           </Td>
                         </tr>

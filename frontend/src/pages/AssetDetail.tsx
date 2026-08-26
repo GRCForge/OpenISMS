@@ -73,13 +73,13 @@ const MarkdownText: React.FC<{ text: string }> = ({ text }) => {
     )
     // Checked task checkbox — before unchecked and bullets
     .replace(/^- \[x\] (.{0,1000})$/gim,
-      '<label class="flex items-center gap-2 py-0.5 select-none"><input type="checkbox" checked disabled class="w-4 h-4 rounded accent-blue-500 cursor-default shrink-0" /><span class="line-through text-gray-400 dark:text-slate-500">$1</span></label>')
+      '<label class="flex items-center gap-2 py-0.5 select-none"><input type="checkbox" checked disabled class="w-4 h-4 rounded accent-blue-500 cursor-default shrink-0" /><span class="line-through text-gray-500 dark:text-slate-400">$1</span></label>')
     // Unchecked task checkbox
     .replace(/^- \[ \] (.{0,1000})$/gm,
       '<label class="flex items-center gap-2 py-0.5 select-none"><input type="checkbox" disabled class="w-4 h-4 rounded cursor-default shrink-0" />$1</label>')
     // Bullet points
     .replace(/^[-*] (.{0,1000})$/gm,
-      '<span class="flex items-start gap-1.5 py-0.5"><span class="text-gray-400 dark:text-slate-500 shrink-0">•</span><span>$1</span></span>')
+      '<span class="flex items-start gap-1.5 py-0.5"><span class="text-gray-500 dark:text-slate-400 shrink-0">•</span><span>$1</span></span>')
     .replace(/@([^\s@,.;:!]{1,100}(?:\s+[^\s@,.;:!]{1,100})?)/g,
       '<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-1 rounded">@$1</span>')
     .replace(/\n/g, '<br />');
@@ -674,19 +674,19 @@ export const AssetDetail: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className={`p-2 rounded-lg shrink-0 ${current ? riskColorMap[current.risk_level] : 'bg-gray-400'}`}><Shield className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.risk')}</p><p className="text-sm font-bold dark:text-white truncate">{current ? (riskLabels[current.risk_level as RiskLevel] || current.risk_level) : t('detail.notAssessed')}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">{t('detail.risk')}</p><p className="text-sm font-bold dark:text-white truncate">{current ? (riskLabels[current.risk_level as RiskLevel] || current.risk_level) : t('detail.notAssessed')}</p></div>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className="p-2 rounded-lg shrink-0 bg-indigo-500"><Activity className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.protectionNeed')}</p><p className="text-sm font-bold dark:text-white">{current?.risk_score != null ? `${current.risk_score.toFixed(1)} / 5` : '–'}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">{t('detail.protectionNeed')}</p><p className="text-sm font-bold dark:text-white">{current?.risk_score != null ? `${current.risk_score.toFixed(1)} / 5` : '–'}</p></div>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className="p-2 rounded-lg shrink-0 bg-orange-500"><Clock className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.nextReview')}</p><p className="text-sm font-bold dark:text-white truncate">{current?.next_review_at ? format(new Date(current.next_review_at), 'dd.MM.yyyy', { locale: dateFnsLocale }) : t('detail.pendingReview')}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">{t('detail.nextReview')}</p><p className="text-sm font-bold dark:text-white truncate">{current?.next_review_at ? format(new Date(current.next_review_at), 'dd.MM.yyyy', { locale: dateFnsLocale }) : t('detail.pendingReview')}</p></div>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-3 flex items-center gap-3">
           <div className="p-2 rounded-lg shrink-0 bg-blue-500"><User className="text-white" size={16} /></div>
-          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-400">{t('detail.owner')}</p><p className="text-sm font-bold dark:text-white truncate">{asset.owner?.name || '–'}</p></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">{t('detail.owner')}</p><p className="text-sm font-bold dark:text-white truncate">{asset.owner?.name || '–'}</p></div>
         </div>
       </div>
 
@@ -699,7 +699,7 @@ export const AssetDetail: React.FC = () => {
               }`}>
               <Icon size={15} />{label}
               {badge !== undefined && badge > 0 && (
-                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${tab === key ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-500'}`}>{badge}</span>
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${tab === key ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'}`}>{badge}</span>
               )}
             </button>
           ))}
@@ -756,7 +756,7 @@ export const AssetDetail: React.FC = () => {
                   <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-slate-800/20 rounded-xl border border-gray-200 dark:border-slate-800">
                     <div className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-xs"><Server className="text-gray-600 dark:text-slate-400" size={24}/></div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-slate-500 font-bold uppercase tracking-wider text-[10px]">{t('detail.systemAssessor')}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">{t('detail.systemAssessor')}</p>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold dark:text-white">{asset.assessor?.name}</p>
                         {asset.assessor && (
@@ -791,7 +791,7 @@ export const AssetDetail: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-400 dark:text-slate-500 italic">{t('detail.noExternalVendor')}</div>
+                    <div className="text-center py-8 text-gray-500 dark:text-slate-400 italic">{t('detail.noExternalVendor')}</div>
                   )}
                 </CardBody>
               </Card>
@@ -813,8 +813,8 @@ export const AssetDetail: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4 mt-6">
                            <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl">
-                              <p className="text-xs text-gray-400 dark:text-slate-500 uppercase font-bold mb-1">{t('detail.riskScore')}</p>
-                              <p className="text-3xl font-bold dark:text-white">{current.risk_score?.toFixed(1) || '0.0'} <span className="text-sm font-normal text-gray-400">/ 5.0</span></p>
+                              <p className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold mb-1">{t('detail.riskScore')}</p>
+                              <p className="text-3xl font-bold dark:text-white">{current.risk_score?.toFixed(1) || '0.0'} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/ 5.0</span></p>
                            </div>
                            <div className={`p-4 rounded-xl flex items-center gap-3 ${current.risk_level === 'critical' || current.risk_level === 'high' ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30' : 'bg-green-50 dark:bg-green-900/10'}`}>
                               <Badge value={current.risk_level} label={riskLabels[current.risk_level as RiskLevel] || current.risk_level} />
@@ -823,7 +823,7 @@ export const AssetDetail: React.FC = () => {
                         {current.risk_treatment && (
                           <div className="mt-4 p-4 rounded-xl border dark:border-slate-800 bg-white dark:bg-slate-900/30 space-y-3">
                             <div className="flex items-center justify-between">
-                              <p className="text-xs font-bold uppercase text-gray-400 dark:text-slate-500">{t('detail.riskTreatment')}</p>
+                              <p className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400">{t('detail.riskTreatment')}</p>
                               <Badge value={current.risk_treatment === 'accept' ? 'critical' : current.risk_treatment === 'avoid' ? 'high' : current.risk_treatment === 'transfer' ? 'medium' : 'low'} label={treatmentLabels[current.risk_treatment] || current.risk_treatment} />
                             </div>
                             {current.mitigation && <p className="text-sm text-gray-600 dark:text-slate-400">{current.mitigation}</p>}
@@ -844,18 +844,18 @@ export const AssetDetail: React.FC = () => {
                         )}
                         {current.notes && (
                           <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/30 border dark:border-slate-800">
-                            <p className="text-xs font-bold uppercase text-gray-400 dark:text-slate-500 mb-1">{t('detail.assessmentNotes')}</p>
+                            <p className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 mb-1">{t('detail.assessmentNotes')}</p>
                             <p className="text-sm text-gray-600 dark:text-slate-400">{current.notes}</p>
                           </div>
                         )}
-                        <div className="flex items-center justify-between pt-2 border-t dark:border-slate-800 text-xs text-gray-400">
+                        <div className="flex items-center justify-between pt-2 border-t dark:border-slate-800 text-xs text-gray-500 dark:text-gray-400">
                           <span>{t('detail.assessedBy')}<strong className="dark:text-slate-300">{current.assessorUser?.name || '–'}</strong></span>
                           {current.assessed_at && <span>{format(new Date(current.assessed_at), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale })}</span>}
                         </div>
                      </div>
                    ) : (
                      <div className="text-center py-12">
-                        <p className="text-gray-400 dark:text-slate-500 mb-4 italic">{t('detail.noAssessment')}</p>
+                        <p className="text-gray-500 dark:text-slate-400 mb-4 italic">{t('detail.noAssessment')}</p>
                         {!isViewer && canAssess && <Button onClick={() => setAssessModalOpen(true)}><Shield size={16}/>{t('detail.assessment')}</Button>}
                      </div>
                    )}
@@ -865,35 +865,35 @@ export const AssetDetail: React.FC = () => {
                 <CardHeader><h2 className="font-semibold dark:text-white">{t('detail.bcmTitle')}</h2></CardHeader>
                 <CardBody className="space-y-4">
                    <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
+                      <span className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold flex items-center">
                          {t('detail.rto')}
                          <InfoTooltip text={t('detail.rtoTooltip')} />
                       </span>
                       <span className="text-xl font-mono dark:text-slate-200">{asset.rto || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
+                      <span className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold flex items-center">
                          {t('detail.rpo')}
                          <InfoTooltip text={t('detail.rpoTooltip')} />
                       </span>
                       <span className="text-xl font-mono dark:text-slate-200">{asset.rpo || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
+                      <span className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold flex items-center">
                          {t('detail.sdo')}
                          <InfoTooltip text={t('detail.sdoTooltip')} />
                       </span>
                       <span className="text-xl font-mono dark:text-slate-200">{asset.sdo || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
+                      <span className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold flex items-center">
                          {t('detail.mto')}
                          <InfoTooltip text={t('detail.mtoTooltip')} />
                       </span>
                       <span className="text-xl font-mono dark:text-slate-200">{asset.mto || t('detail.notDefined')}</span>
                    </div>
                    <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold flex items-center">
+                      <span className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold flex items-center">
                          {t('detail.ioa')}
                          <InfoTooltip text={t('detail.ioaTooltip')} />
                       </span>
@@ -931,7 +931,7 @@ export const AssetDetail: React.FC = () => {
                </CardHeader>
                <CardBody>
                  <Mermaid chart={generateMermaid()} className="min-h-[300px]" />
-                 <p className="text-xs text-center text-gray-400 dark:text-slate-500 mt-2">
+                 <p className="text-xs text-center text-gray-500 dark:text-slate-400 mt-2">
                    {t('detail.topologyTip')}
                  </p>
                </CardBody>
@@ -986,7 +986,7 @@ export const AssetDetail: React.FC = () => {
                      {isEnabled('discovery') && (
                        <div className="flex items-center gap-3">
                          {asset.cve_last_checked && (
-                           <span className="text-xs text-gray-400 dark:text-slate-500">
+                           <span className="text-xs text-gray-500 dark:text-slate-400">
                              Aktualisiert: {format(new Date(asset.cve_last_checked), 'dd.MM.yyyy HH:mm', { locale: de })}
                              {asset.cve_ids?.[0]?.source && <span className="ml-1 uppercase font-bold">· {(asset.cve_ids?.[0] as any)?.source || ''}</span>}
                            </span>
@@ -1117,7 +1117,7 @@ export const AssetDetail: React.FC = () => {
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed font-sans">{cve.description || t('detail.noCveDescription')}</p>
-                                        {cve.published && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{cve.published}</p>}
+                                        {cve.published && <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{cve.published}</p>}
                                       </div>
                                       <div className="flex-shrink-0 self-center">
                                         <a
@@ -1138,13 +1138,13 @@ export const AssetDetail: React.FC = () => {
                          )}
                        </>
                      ) : (
-                       <p className="text-sm text-gray-400 dark:text-slate-500 italic py-6 text-center">
+                       <p className="text-sm text-gray-500 dark:text-slate-400 italic py-6 text-center">
                          {t('detail.vulnModuleDisabled')}
                        </p>
                      )}
 
                     <div className="pt-4 border-t dark:border-slate-800">
-                       <p className="text-xs text-gray-400 dark:text-slate-500 mb-2 font-bold uppercase">Hardening Status (CIS / BSI)</p>
+                       <p className="text-xs text-gray-500 dark:text-slate-400 mb-2 font-bold uppercase">Hardening Status (CIS / BSI)</p>
                        <div className="flex items-center gap-2">
                           {asset.hardening_status ? (
                             <><CheckCircle className="text-green-500" size={18}/> <span className="text-sm text-green-700 dark:text-green-400 font-bold">Konform</span></>
@@ -1159,11 +1159,11 @@ export const AssetDetail: React.FC = () => {
                  <CardHeader><h2 className="font-semibold dark:text-white">Datensicherung (Backup)</h2></CardHeader>
                  <CardBody className="space-y-4">
                     <div className="flex flex-col gap-1">
-                       <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold">Zugeordneter Plan</span>
+                       <span className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold">Zugeordneter Plan</span>
                        <span className="text-sm font-medium dark:text-slate-200">{asset.backup_plan || 'Kein Backup-Plan zugeordnet'}</span>
                     </div>
                     <div className="flex flex-col gap-1 pt-3 border-t dark:border-slate-800">
-                       <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold">Letzter Restore-Test</span>
+                       <span className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold">Letzter Restore-Test</span>
                        <span className={`text-sm ${asset.last_restore_test ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} font-bold`}>
                          {asset.last_restore_test ? format(new Date(asset.last_restore_test), 'dd.MM.yyyy') : 'Noch nie getestet!'}
                        </span>
@@ -1190,7 +1190,7 @@ export const AssetDetail: React.FC = () => {
               {(!asset.vvtEntries || asset.vvtEntries.length === 0) ? (
                 <div className="text-center py-12">
                    <BookOpen size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3 opacity-30" />
-                   <p className="text-sm text-gray-400 dark:text-slate-500 italic">Dieses Asset ist aktuell in keinem VVT-Eintrag verzeichnet.</p>
+                   <p className="text-sm text-gray-500 dark:text-slate-400 italic">Dieses Asset ist aktuell in keinem VVT-Eintrag verzeichnet.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -1200,7 +1200,7 @@ export const AssetDetail: React.FC = () => {
                         <p className="text-sm font-bold dark:text-slate-200">{v.name}</p>
                         <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate max-w-lg">{v.purpose}</p>
                         <div className="flex items-center gap-2 mt-2">
-                           <span className="text-[10px] font-mono text-gray-400">Ref: VVT-{String(v.id).padStart(3, '0')}</span>
+                           <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">Ref: VVT-{String(v.id).padStart(3, '0')}</span>
                            <Badge size="xs" value={v.status === 'active' ? 'active' : v.status === 'draft' ? 'evaluation' : 'archived'} label={v.status} />
                         </div>
                       </div>
@@ -1221,14 +1221,14 @@ export const AssetDetail: React.FC = () => {
             <CardHeader><div className="flex items-center gap-2"><AlertOctagon size={18} className="text-red-500"/><h2 className="font-semibold dark:text-white">{t('detail.incidentsTitle')}</h2></div></CardHeader>
             <CardBody className="p-0">
               {(!asset.incidents || asset.incidents.length === 0) ? (
-                <p className="text-sm text-gray-400 dark:text-slate-500 italic p-6 text-center">{t('detail.noIncidents')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 italic p-6 text-center">{t('detail.noIncidents')}</p>
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-slate-800">
                   {asset.incidents.map((i: any) => (
                     <Link key={i.id} to="/incidents" className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold dark:text-slate-200 truncate">{i.title}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 uppercase font-mono">{i.ref} · {format(new Date(i.created_at), 'dd.MM.yyyy')}</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 uppercase font-mono dark:text-gray-400">{i.ref} · {format(new Date(i.created_at), 'dd.MM.yyyy')}</p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0 ml-4">
                         <Badge value={i.severity} label={i.severity} />
@@ -1248,12 +1248,12 @@ export const AssetDetail: React.FC = () => {
               <CardHeader><div className="flex items-center justify-between"><div className="flex items-center gap-2"><AlertTriangle size={18} className="text-red-500"/><h2 className="font-semibold dark:text-white">{t('detail.relatedRisks', { count: linkedRisks.length })}</h2></div><Link to="/risks" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('detail.toRiskRegister')}</Link></div></CardHeader>
               <CardBody className="p-0">
                 {linkedRisks.length === 0 ? (
-                  <p className="text-sm text-gray-400 dark:text-slate-500 italic p-6 text-center">{t('detail.noLinkedRisks')}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 italic p-6 text-center">{t('detail.noLinkedRisks')}</p>
                 ) : (
                   <div className="divide-y divide-gray-100 dark:divide-slate-800">
                     {linkedRisks.map((r: any) => (
                       <Link key={r.id} to="/risks" className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <p className="text-sm font-medium dark:text-slate-200 truncate mr-3"><span className="font-mono text-xs text-gray-400 mr-2">{r.ref}</span>{r.title}</p>
+                        <p className="text-sm font-medium dark:text-slate-200 truncate mr-3"><span className="font-mono text-xs text-gray-500 mr-2 dark:text-gray-400">{r.ref}</span>{r.title}</p>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {r.inherent_level && <Badge value={r.inherent_level} label={riskLabels[r.inherent_level as RiskLevel] || r.inherent_level} />}
                           {r.residual_level && <><ChevronRight size={12} className="text-gray-300"/><Badge value={r.residual_level} label={riskLabels[r.residual_level as RiskLevel] || r.residual_level} /></>}
@@ -1284,7 +1284,7 @@ export const AssetDetail: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">{t('detail.linkedGdprPolicies')}</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1 dark:text-gray-400">{t('detail.linkedGdprPolicies')}</p>
                     <div className="divide-y dark:divide-slate-800 border dark:border-slate-800 rounded-lg overflow-hidden">
                       {visiblePolicies.filter((p: any) => p.category === 'dpa' || p.title.toLowerCase().includes('datenschutz')).length > 0 ? (
                         visiblePolicies.filter((p: any) => p.category === 'dpa' || p.title.toLowerCase().includes('datenschutz')).map((p: any) => (
@@ -1297,7 +1297,7 @@ export const AssetDetail: React.FC = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="p-4 text-center text-xs text-gray-400 italic">{t('detail.noGdprPolicies')}</div>
+                        <div className="p-4 text-center text-xs text-gray-500 italic dark:text-gray-400">{t('detail.noGdprPolicies')}</div>
                       )}
                     </div>
                   </div>
@@ -1317,7 +1317,7 @@ export const AssetDetail: React.FC = () => {
                         {safeFrameworks.includes(fw as any) ? (
                           <CheckCircle size={16} className="text-green-500" />
                         ) : (
-                          <span className="text-[10px] text-gray-400 uppercase font-bold">Nicht relevant</span>
+                          <span className="text-[10px] text-gray-500 uppercase font-bold dark:text-gray-400">Nicht relevant</span>
                         )}
                       </div>
                     ))}
@@ -1340,7 +1340,7 @@ export const AssetDetail: React.FC = () => {
               <Card>
                 <CardBody className="p-0">
                   {(!visiblePolicies || visiblePolicies.length === 0) ? (
-                    <div className="text-center py-8 text-gray-400 dark:text-slate-500 italic text-sm">{t('detail.noDocLibrary')}</div>
+                    <div className="text-center py-8 text-gray-500 dark:text-slate-400 italic text-sm">{t('detail.noDocLibrary')}</div>
                   ) : (
                     <div className="divide-y divide-gray-100 dark:divide-slate-800 text-sm">
                       {visiblePolicies.map((p: any) => (
@@ -1351,15 +1351,15 @@ export const AssetDetail: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate dark:text-slate-200">{p.title}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{p.code || t('detail.noFolderDoc')}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{p.code || t('detail.noFolderDoc')}</span>
                               <span className="text-gray-300">·</span>
                               <Badge value={p.category} label={catLabels[p.category] || p.category} />
                               <span className="text-gray-300">·</span>
-                              <span className="text-[10px] text-gray-400">v{p.version} {p.valid_from ? `(Ab ${format(new Date(p.valid_from), 'dd.MM.yy')})` : ''}</span>
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">v{p.version} {p.valid_from ? `(Ab ${format(new Date(p.valid_from), 'dd.MM.yy')})` : ''}</span>
                             </div>
                             {p.history && p.history.length > 0 && (
                                <div className="mt-2 pl-4 border-l-2 border-slate-200 dark:border-slate-800 space-y-1">
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Archivierte Versionen:</p>
+                                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-tighter mb-1 dark:text-gray-400">Archivierte Versionen:</p>
                                   {p.history.map((h: any) => (
                                     <div key={h.id} className="flex items-center gap-2 text-[10px] text-gray-500">
                                        <span className="font-bold">v{h.version}</span>
@@ -1407,19 +1407,19 @@ export const AssetDetail: React.FC = () => {
                   {visibleDocs.length === 0 ? (
                     <div className="text-center py-12">
                       <FileText size={40} className="mx-auto text-gray-300 dark:text-slate-700 mb-3 opacity-30" />
-                      <p className="text-gray-400 dark:text-slate-500 italic text-sm">Noch keine lokalen Dateien hochgeladen</p>
+                      <p className="text-gray-500 dark:text-slate-400 italic text-sm">Noch keine lokalen Dateien hochgeladen</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-100 dark:divide-slate-800">
                       {visibleDocs.map(doc => (
                         <div key={doc.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors text-sm">
-                          <FileText size={18} className="text-gray-400 shrink-0" />
+                          <FileText size={18} className="text-gray-500 shrink-0 dark:text-gray-400" />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate dark:text-slate-200">{doc.original_name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className={`text-[10px] px-1.5 py-0.5 rounded-sm ${catColors[doc.category as keyof typeof catColors] || 'bg-gray-100'}`}>{catLabels[doc.category] || doc.category}</span>
                               <span className="text-gray-300">·</span>
-                              <span className="text-xs text-gray-400 dark:text-slate-500">Uploader: {doc.uploader?.name}</span>
+                              <span className="text-xs text-gray-500 dark:text-slate-400">Uploader: {doc.uploader?.name}</span>
                             </div>
                           </div>
                           <div className="flex gap-1 text-sm">
@@ -1455,8 +1455,8 @@ export const AssetDetail: React.FC = () => {
                           <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center font-bold text-blue-700 dark:text-blue-400 shrink-0 shadow-xs">{c.author?.name?.charAt(0)}</div>
                           <div className="flex-1 min-w-0">
                              <p className="text-sm font-bold dark:text-slate-200 flex items-center justify-between">
-                               <span>{c.author?.name} <span className="text-[10px] font-normal text-gray-400 bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded ml-2 uppercase tracking-wider">{c.author?.role}</span></span>
-                               <span className="text-[10px] font-normal text-gray-400 dark:text-slate-500">{format(new Date(c.created_at), 'dd.MM.yyyy HH:mm')}</span>
+                               <span>{c.author?.name} <span className="text-[10px] font-normal text-gray-500 bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded ml-2 uppercase tracking-wider dark:text-gray-400">{c.author?.role}</span></span>
+                               <span className="text-[10px] font-normal text-gray-500 dark:text-slate-400">{format(new Date(c.created_at), 'dd.MM.yyyy HH:mm')}</span>
                              </p>
                              <div className="text-sm text-gray-600 dark:text-slate-400 mt-2 leading-relaxed">
                                 <MarkdownText text={c.content} />
@@ -1473,7 +1473,7 @@ export const AssetDetail: React.FC = () => {
                                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${task.status === 'done' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-slate-600'}`}>
                                          {task.status === 'done' && <Check size={9} />}
                                        </span>
-                                       <span className={task.status === 'done' ? 'line-through text-gray-400 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300'}>
+                                       <span className={task.status === 'done' ? 'line-through text-gray-500 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300'}>
                                          {task.title}
                                        </span>
                                        {task.assignee && <span className="text-blue-500 dark:text-blue-400 text-[10px] ml-auto shrink-0">@{task.assignee.name}</span>}
@@ -1493,7 +1493,7 @@ export const AssetDetail: React.FC = () => {
                              </div>
                           </div>
                           {!isViewer && (user?.role === 'admin' || user?.id === c.user_id) && (
-                            <button onClick={async () => { if(confirm(t('detail.deleteCommentConfirm'))) { await api.delete(`/assets/${id}/comments/${c.id}`); loadComments(); } }} className="text-gray-400 hover:text-red-500 transition-colors self-start"><Trash2 size={14}/></button>
+                            <button onClick={async () => { if(confirm(t('detail.deleteCommentConfirm'))) { await api.delete(`/assets/${id}/comments/${c.id}`); loadComments(); } }} className="text-gray-500 hover:text-red-500 transition-colors self-start dark:text-gray-400"><Trash2 size={14}/></button>
                           )}
                        </div>
 
@@ -1507,7 +1507,7 @@ export const AssetDetail: React.FC = () => {
                                <div className="flex-1 min-w-0">
                                  <p className="text-xs font-bold dark:text-slate-200 flex items-center justify-between">
                                    <span>{reply.author?.name}</span>
-                                   <span className="text-[10px] font-normal text-gray-400 dark:text-slate-500">{format(new Date(reply.created_at), 'dd.MM.yyyy HH:mm')}</span>
+                                   <span className="text-[10px] font-normal text-gray-500 dark:text-slate-400">{format(new Date(reply.created_at), 'dd.MM.yyyy HH:mm')}</span>
                                  </p>
                                  <div className="text-xs text-gray-600 dark:text-slate-400 mt-1 leading-relaxed">
                                     <MarkdownText text={reply.content} />
@@ -1522,7 +1522,7 @@ export const AssetDetail: React.FC = () => {
                        )}
                      </div>
                    ))}
-                   {comments.length === 0 && <div className="text-center py-12 text-gray-400 italic">{t('detail.comments.noComments')}</div>}
+                   {comments.length === 0 && <div className="text-center py-12 text-gray-500 italic dark:text-gray-400">{t('detail.comments.noComments')}</div>}
                 </div>
                 {!isViewer && (
                   <form onSubmit={handleComment} className="mt-6 pt-6 border-t dark:border-slate-800">
@@ -1531,7 +1531,7 @@ export const AssetDetail: React.FC = () => {
                         <span className="text-blue-700 dark:text-blue-300">
                           {t('detail.comments.replyingToPrefix')} <span className="font-bold">{replyingTo.author?.name}</span>: <span className="italic">"{replyingTo.content.substring(0, 50)}{replyingTo.content.length > 50 ? '...' : ''}"</span>
                         </span>
-                        <button type="button" onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white"><X size={14}/></button>
+                        <button type="button" onClick={() => setReplyingTo(null)} className="text-gray-500 hover:text-gray-600 dark:hover:text-white dark:text-gray-400"><X size={14}/></button>
                       </div>
                     )}
                     <div className="flex items-center gap-1 mb-2 flex-wrap">
@@ -1650,7 +1650,7 @@ export const AssetDetail: React.FC = () => {
                         ];
                         return (
                         <div className="absolute left-4 bottom-full mb-1 w-64 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 p-2 max-h-48 overflow-y-auto animate-fade-in">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase px-2 mb-1">{t('detail.mentionTitle')}</p>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase px-2 mb-1 dark:text-gray-400">{t('detail.mentionTitle')}</p>
                           {mentionCandidates.map((item, i) => (
                             <button
                               key={`${item.type}-${item.id}`}
@@ -1681,17 +1681,17 @@ export const AssetDetail: React.FC = () => {
                             </button>
                           ))}
                           {mentionCandidates.length === 0 && (
-                            <p className="text-xs text-gray-400 italic px-2 py-1">{t('detail.comments.noMatchingUsers')}</p>
+                            <p className="text-xs text-gray-500 italic px-2 py-1 dark:text-gray-400">{t('detail.comments.noMatchingUsers')}</p>
                           )}
                         </div>
                         );
                       })()}
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-1 mb-2">{t('detail.comments.toolbar.pasteHint')}</p>
+                    <p className="text-[10px] text-gray-500 mt-1 mb-2 dark:text-gray-400">{t('detail.comments.toolbar.pasteHint')}</p>
                     <div className="flex flex-col sm:flex-row justify-between items-center mt-1 gap-3">
                        <div className="flex items-center gap-3 w-full sm:w-auto">
                           <Input type="date" label={t('detail.comments.meetingDate')} value={meetingDate} onChange={e => setMeetingDate(e.target.value)} className="!py-1" />
-                          <p className="text-[10px] text-gray-400 italic hidden sm:block">{t('detail.comments.mentionHint')}</p>
+                          <p className="text-[10px] text-gray-500 italic hidden sm:block dark:text-gray-400">{t('detail.comments.mentionHint')}</p>
                        </div>
                        <Button type="submit" disabled={!comment.trim() || saving} className="w-full sm:w-auto">{saving ? t('detail.comments.saving') : t('detail.comments.postButton')}</Button>
                     </div>
@@ -1773,27 +1773,27 @@ export const AssetDetail: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Input label={t('detail.rto')} value={editForm.rto || ''} onChange={e => setEditForm({ ...editForm, rto: e.target.value })} placeholder={t('detail.rtoPlaceholder')} />
-              <p className="text-[10px] text-gray-400 mt-1">{t('detail.rtoSub')}</p>
+              <p className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">{t('detail.rtoSub')}</p>
             </div>
             <div>
               <Input label={t('detail.rpo')} value={editForm.rpo || ''} onChange={e => setEditForm({ ...editForm, rpo: e.target.value })} placeholder={t('detail.rpoPlaceholder')} />
-              <p className="text-[10px] text-gray-400 mt-1">{t('detail.rpoSub')}</p>
+              <p className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">{t('detail.rpoSub')}</p>
             </div>
             <div>
               <Input label={t('detail.sdo')} value={editForm.sdo || ''} onChange={e => setEditForm({ ...editForm, sdo: e.target.value })} placeholder={t('detail.sdoPlaceholder')} />
-              <p className="text-[10px] text-gray-400 mt-1">{t('detail.sdoSub')}</p>
+              <p className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">{t('detail.sdoSub')}</p>
             </div>
             <div>
               <Input label={t('detail.mto')} value={editForm.mto || ''} onChange={e => setEditForm({ ...editForm, mto: e.target.value })} placeholder={t('detail.mtoPlaceholder')} />
-              <p className="text-[10px] text-gray-400 mt-1">{t('detail.mtoSub')}</p>
+              <p className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">{t('detail.mtoSub')}</p>
             </div>
             <div>
               <Input label={t('detail.ioa')} value={editForm.ioa || ''} onChange={e => setEditForm({ ...editForm, ioa: e.target.value })} placeholder={t('detail.ioaPlaceholder')} />
-              <p className="text-[10px] text-gray-400 mt-1">{t('detail.ioaSub')}</p>
+              <p className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">{t('detail.ioaSub')}</p>
             </div>
             <div>
               <Select label={t('detail.dataCategory')} value={editForm.data_category || 'none'} onChange={e => setEditForm({ ...editForm, data_category: e.target.value })} options={Object.entries(dataCatLabels).map(([v, l]) => ({ value: v, label: l }))} />
-              <p className="text-[10px] text-gray-400 mt-1">{t('detail.dataCatSub')}</p>
+              <p className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">{t('detail.dataCatSub')}</p>
             </div>
           </div>
 
@@ -1807,7 +1807,7 @@ export const AssetDetail: React.FC = () => {
                   <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('detail.linkedVvtEntries')}</label>
                   <div className="max-h-40 overflow-y-auto bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg p-2 space-y-1 custom-scrollbar">
                     {vvtEntriesList.length === 0 ? (
-                      <p className="text-xs text-gray-400 p-2">{t('detail.noVvtEntries')}</p>
+                      <p className="text-xs text-gray-500 p-2 dark:text-gray-400">{t('detail.noVvtEntries')}</p>
                     ) : vvtEntriesList.map(v => (
                       <label key={v.id} className="flex items-center gap-2 p-1.5 hover:bg-gray-50 dark:hover:bg-slate-700 rounded cursor-pointer">
                         <input 
@@ -1942,7 +1942,7 @@ export const AssetDetail: React.FC = () => {
                                 {s.title}
                               </span>
                             </div>
-                            <span className="block text-[11px] text-gray-400 dark:text-slate-500 font-mono mt-0.5">{s.cpe}</span>
+                            <span className="block text-[11px] text-gray-500 dark:text-slate-400 font-mono mt-0.5">{s.cpe}</span>
                           </button>
                         </li>
                       ))}
@@ -1951,7 +1951,7 @@ export const AssetDetail: React.FC = () => {
                 )}
 
                 {asset.cpe_resolved_at && (
-                  <p className="text-xs text-gray-400 dark:text-slate-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     {t('detail.cpeResolvedAt', { date: format(new Date(asset.cpe_resolved_at), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale }) })}
                   </p>
                 )}
@@ -2006,7 +2006,7 @@ export const AssetDetail: React.FC = () => {
             <p className="text-sm text-gray-500 dark:text-slate-400">{t('detail.linkDocHint')}</p>
             <div className="space-y-2 max-h-64 overflow-y-auto">
                {(asset.policies || []).length === 0 && documents.length === 0 && (
-                 <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 italic">{t('detail.noDocsAvailable')}</p>
+                 <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-6 italic">{t('detail.noDocsAvailable')}</p>
                )}
                {(asset.policies || []).map((p: any) => (
                  <button key={`pol-${p.id}`} onClick={() => {
@@ -2016,7 +2016,7 @@ export const AssetDetail: React.FC = () => {
                     <BookOpen size={16} className="text-purple-500 flex-shrink-0"/>
                     <div>
                       <span className="text-sm font-medium dark:text-slate-300 block">{p.title || t('detail.policyLabel')}</span>
-                      <span className="text-xs text-gray-400 dark:text-slate-500">{t('detail.policyLabel')}</span>
+                      <span className="text-xs text-gray-500 dark:text-slate-400">{t('detail.policyLabel')}</span>
                     </div>
                  </button>
                ))}
@@ -2028,7 +2028,7 @@ export const AssetDetail: React.FC = () => {
                     <FileText size={16} className="text-blue-500 flex-shrink-0"/>
                     <div>
                       <span className="text-sm font-medium dark:text-slate-300 block">{d.original_name}</span>
-                      {(d as any).category && <span className="text-xs text-gray-400 dark:text-slate-500">{(catLabels as any)[(d as any).category] || (d as any).category}</span>}
+                      {(d as any).category && <span className="text-xs text-gray-500 dark:text-slate-400">{(catLabels as any)[(d as any).category] || (d as any).category}</span>}
                     </div>
                  </button>
                ))}
@@ -2116,11 +2116,11 @@ export const AssetDetail: React.FC = () => {
                     <p className="font-bold text-sm dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">{v.name}</p>
                     <Badge size="xs" value={v.status === 'active' ? 'active' : 'evaluation'} label={v.status} />
                   </div>
-                  <p className="text-[11px] text-gray-400 line-clamp-2">{v.purpose}</p>
+                  <p className="text-[11px] text-gray-500 line-clamp-2 dark:text-gray-400">{v.purpose}</p>
                 </button>
               ))}
               {vvtEntriesList.filter(v => !asset.vvtEntries?.some((ex: any) => ex.id === v.id)).length === 0 && (
-                <div className="col-span-2 text-center py-12 text-gray-400 italic">{t('detail.vvtNoMoreVvts')}</div>
+                <div className="col-span-2 text-center py-12 text-gray-500 italic dark:text-gray-400">{t('detail.vvtNoMoreVvts')}</div>
               )}
             </div>
             <div className="pt-4 border-t dark:border-slate-800 flex justify-end">
@@ -2166,38 +2166,38 @@ export const AssetDetail: React.FC = () => {
           <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl border dark:border-slate-800">
-                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{t('detail.vvtNameLabelClean')}</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase mb-1 dark:text-gray-400">{t('detail.vvtNameLabelClean')}</p>
                 <p className="text-sm font-bold dark:text-slate-200">{vvtViewEntry.name}</p>
               </div>
               <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl border dark:border-slate-800">
-                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{t('common:fields.status')}</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase mb-1 dark:text-gray-400">{t('common:fields.status')}</p>
                 <Badge value={vvtViewEntry.status === 'active' ? 'active' : 'evaluation'} label={vvtViewEntry.status} />
               </div>
             </div>
 
             <div className="p-4 bg-gray-50 dark:bg-slate-800/30 rounded-xl border dark:border-slate-800">
-              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{t('detail.vvtPurposeLabelClean')}</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase mb-1 dark:text-gray-400">{t('detail.vvtPurposeLabelClean')}</p>
               <p className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed">{vvtViewEntry.purpose || '–'}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtLegalBasisLabel')}</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase dark:text-gray-400">{t('detail.vvtLegalBasisLabel')}</p>
                 <p className="text-xs dark:text-slate-300">{vvtViewEntry.legal_basis || '–'}</p>
               </div>
               <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtRetentionLabel')}</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase dark:text-gray-400">{t('detail.vvtRetentionLabel')}</p>
                 <p className="text-xs dark:text-slate-300">{vvtViewEntry.retention_period || '–'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtDataCategoriesLabel')}</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase dark:text-gray-400">{t('detail.vvtDataCategoriesLabel')}</p>
                   <p className="text-xs dark:text-slate-300">{vvtViewEntry.data_categories || '–'}</p>
                </div>
                <div className="p-4 border dark:border-slate-800 rounded-xl space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">{t('detail.vvtDataSubjectsLabel')}</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase dark:text-gray-400">{t('detail.vvtDataSubjectsLabel')}</p>
                   <p className="text-xs dark:text-slate-300">{vvtViewEntry.data_subjects || '–'}</p>
                </div>
             </div>

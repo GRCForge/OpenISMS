@@ -40,7 +40,7 @@ const statusColors: Record<ImplStatus, string> = {
   not_started: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300',
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   implemented: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  not_applicable: 'bg-slate-100 text-slate-400 dark:bg-slate-800/60 dark:text-slate-500',
+  not_applicable: 'bg-slate-100 text-slate-400 dark:bg-slate-800/60 dark:text-slate-400',
 };
 
 const THEME_ORDER: Theme[] = ['Organizational', 'People', 'Physical', 'Technological'];
@@ -204,7 +204,7 @@ export const Iso27001: React.FC = () => {
       <div className="py-16 text-center">
         <ListChecks size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
         <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
-        <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">{t('empty.description')}</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{t('empty.description')}</p>
         {canManage && <Button onClick={seed} disabled={seeding} className="mt-4"><Download size={16} />{seeding ? t('empty.loading') : t('empty.loadButton')}</Button>}
       </div>
     </CardBody></Card>
@@ -254,7 +254,7 @@ export const Iso27001: React.FC = () => {
                 <div className="w-16 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} /></div>
                 <span className="text-xs font-bold text-gray-600 dark:text-slate-400">{pct}%</span>
               </div>
-              {isExpanded ? <ChevronDown size={16} className="text-gray-400 shrink-0" /> : <ChevronRight size={16} className="text-gray-400 shrink-0" />}
+              {isExpanded ? <ChevronDown size={16} className="text-gray-500 shrink-0 dark:text-gray-400" /> : <ChevronRight size={16} className="text-gray-500 shrink-0 dark:text-gray-400" />}
             </button>
             {isExpanded && (
               <div className="border-t dark:border-slate-700">
@@ -266,11 +266,11 @@ export const Iso27001: React.FC = () => {
                     {items.map(ctrl => (
                       <tr key={ctrl.id} className={`hover:bg-gray-50 dark:hover:bg-slate-800/50 ${!ctrl.applicable ? 'opacity-50' : ''}`}>
                         <Td><span className="font-mono text-xs text-gray-500 dark:text-slate-400">{ctrl.ref}</span></Td>
-                        <Td><p className="font-medium text-sm dark:text-slate-200">{t('controls.' + ctrl.ref + '.title', { defaultValue: ctrl.title })}</p>{ctrl.owner && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{ctrl.owner.name}</p>}</Td>
+                        <Td><p className="font-medium text-sm dark:text-slate-200">{t('controls.' + ctrl.ref + '.title', { defaultValue: ctrl.title })}</p>{ctrl.owner && <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{ctrl.owner.name}</p>}</Td>
                         <Td><input type="checkbox" checked={ctrl.applicable} disabled={!canWrite} onChange={() => toggleApplicable(ctrl)} className="w-4 h-4 rounded accent-blue-600 cursor-pointer disabled:cursor-not-allowed" /></Td>
                         <Td><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[ctrl.implementation_status]}`}>{statusLabels[ctrl.implementation_status]}</span></Td>
                         <Td className="text-gray-500 dark:text-slate-400 text-xs">{ctrl.last_review_date ? format(new Date(ctrl.last_review_date), 'dd.MM.yyyy') : '–'}</Td>
-                        <Td>{canWrite && <button onClick={() => openEdit(ctrl)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14} /></button>}</Td>
+                        <Td>{canWrite && <button onClick={() => openEdit(ctrl)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"><Pencil size={14} /></button>}</Td>
                       </tr>
                     ))}
                   </Tbody>

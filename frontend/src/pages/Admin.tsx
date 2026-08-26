@@ -115,7 +115,7 @@ const SmtpSettings: React.FC = () => {
               <Send size={14} />{sending ? t('smtp.sending') : t('smtp.send')}
             </Button>
           </div>
-          <p className="text-xs text-gray-400 dark:text-slate-500">{t('smtp.send_test_help')}</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400">{t('smtp.send_test_help')}</p>
         </div>
       </CardBody>
     </Card>
@@ -457,7 +457,7 @@ const CustomRolesEditor: React.FC = () => {
       </CardHeader>
       <CardBody className="space-y-4">
         <p className="text-sm text-gray-500 dark:text-slate-400">{t('custom_roles.description')}</p>
-        {roles.length === 0 && <p className="text-sm text-gray-400 italic">{t('custom_roles.no_roles')}</p>}
+        {roles.length === 0 && <p className="text-sm text-gray-500 italic dark:text-gray-400">{t('custom_roles.no_roles')}</p>}
         {roles.length > 0 && (
           <div className="border dark:border-slate-700 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
@@ -492,7 +492,7 @@ const CustomRolesEditor: React.FC = () => {
                       <>
                         <td className="px-4 py-2 font-medium dark:text-white">
                           {r.name}
-                          {!!r.users_count && <span className="ml-2 text-xs font-normal text-gray-400 dark:text-slate-500">{t('custom_roles.users_count', { count: r.users_count })}</span>}
+                          {!!r.users_count && <span className="ml-2 text-xs font-normal text-gray-500 dark:text-slate-400">{t('custom_roles.users_count', { count: r.users_count })}</span>}
                         </td>
                         <td className="px-4 py-2"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{t('roles.' + r.base_role + '_short', { defaultValue: r.base_role })}</span></td>
                         <td className="px-4 py-2 text-gray-500 dark:text-slate-400 text-xs hidden sm:table-cell">{r.description || '—'}</td>
@@ -604,7 +604,7 @@ const OidcMappingsEditor: React.FC = () => {
         <p className="text-sm text-gray-500 dark:text-slate-400">
           {t('oidc_mappings.description')}
         </p>
-        {mappings.length === 0 && <p className="text-sm text-gray-400 italic">{t('oidc_mappings.no_mappings')}</p>}
+        {mappings.length === 0 && <p className="text-sm text-gray-500 italic dark:text-gray-400">{t('oidc_mappings.no_mappings')}</p>}
         {mappings.length > 0 && (
           <div className="border dark:border-slate-700 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
@@ -801,14 +801,14 @@ const ApiDocs: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl border dark:border-slate-800 space-y-2">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('api_docs.interactive_title')}</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider dark:text-gray-400">{t('api_docs.interactive_title')}</p>
               <p className="text-sm text-gray-600 dark:text-slate-400">{t('api_docs.interactive_desc')}</p>
               <a href={backendUrl} target="_blank" rel="noreferrer">
                 <Button size="sm" className="mt-2"><ExternalLink size={14} />{t('api_docs.open_swagger')}</Button>
               </a>
             </div>
             <div className="p-4 rounded-xl border dark:border-slate-800 space-y-2">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('api_docs.spec_title')}</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider dark:text-gray-400">{t('api_docs.spec_title')}</p>
               <p className="text-sm text-gray-600 dark:text-slate-400">{t('api_docs.spec_desc')}</p>
               <a href={`${backendUrl.replace('/docs', '/openapi.json')}?download=1`} download="openapi.json">
                 <Button size="sm" variant="secondary" className="mt-2"><Download size={14} />{t('api_docs.spec_download')}</Button>
@@ -830,7 +830,7 @@ const ApiDocs: React.FC = () => {
             ].map(([key, name, desc]) => (
               <div key={key} className="p-2 rounded-lg border dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30">
                 <p className="font-bold text-gray-700 dark:text-slate-300">{t('api_docs.cat.' + key, { defaultValue: name })}</p>
-                <p className="text-gray-400 dark:text-slate-500">{t('api_docs.cat.' + key + '_desc', { defaultValue: desc })}</p>
+                <p className="text-gray-500 dark:text-slate-400">{t('api_docs.cat.' + key + '_desc', { defaultValue: desc })}</p>
               </div>
             ))}
           </div>
@@ -925,7 +925,7 @@ const BackupRestore: React.FC = () => {
         <div className={`flex items-center gap-3 p-4 rounded-xl border ${result.ok ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
           {result.ok ? <CheckCircle2 size={18} className="text-green-600 shrink-0" /> : <XCircle size={18} className="text-red-600 shrink-0" />}
           <p className={`text-sm font-medium ${result.ok ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>{result.text}</p>
-          <button onClick={() => setResult(null)} className="ml-auto text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+          <button onClick={() => setResult(null)} className="ml-auto text-gray-500 hover:text-gray-600 text-lg leading-none dark:text-gray-400">×</button>
         </div>
       )}
 
@@ -936,7 +936,7 @@ const BackupRestore: React.FC = () => {
           <p className="text-sm text-gray-500 dark:text-slate-400">{t('backup.create_desc')}</p>
 
           {loading ? (
-            <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader2 size={14} className="animate-spin" />{t('backup.loading_stats')}</div>
+            <div className="flex items-center gap-2 text-gray-500 text-sm dark:text-gray-400"><Loader2 size={14} className="animate-spin" />{t('backup.loading_stats')}</div>
           ) : info && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
@@ -946,7 +946,7 @@ const BackupRestore: React.FC = () => {
               ].map(s => (
                 <div key={s.label} className="p-3 rounded-xl border dark:border-slate-800 bg-gray-50 dark:bg-slate-800/40 text-center">
                   <p className="text-xl font-bold dark:text-white">{s.value}</p>
-                  <p className="text-xs text-gray-400">{s.label}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -957,7 +957,7 @@ const BackupRestore: React.FC = () => {
               {exporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
               {exporting ? t('backup.exporting') : t('backup.download_btn')}
             </Button>
-            <p className="text-xs text-gray-400 dark:text-slate-500">{t('backup.zip_help')}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">{t('backup.zip_help')}</p>
           </div>
         </CardBody>
       </Card>
@@ -990,13 +990,13 @@ const BackupRestore: React.FC = () => {
               <div className="space-y-1">
                 <FileArchive size={32} className="mx-auto text-green-500" />
                 <p className="font-medium text-green-700 dark:text-green-400">{selectedFile.name}</p>
-                <p className="text-xs text-gray-400">{fmtBytes(selectedFile.size)} · {t('backup.click_to_change')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{fmtBytes(selectedFile.size)} · {t('backup.click_to_change')}</p>
               </div>
             ) : (
               <div className="space-y-2">
                 <Upload size={32} className="mx-auto text-gray-300 dark:text-slate-600" />
                 <p className="text-sm font-medium text-gray-500 dark:text-slate-400">{t('backup.drag_drop_help')}</p>
-                <p className="text-xs text-gray-400">{t('backup.zip_limits')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('backup.zip_limits')}</p>
               </div>
             )}
           </div>
@@ -1022,7 +1022,7 @@ const BackupRestore: React.FC = () => {
             <div className="flex items-center justify-between pt-2">
               <div>
                 <p className="text-sm font-medium dark:text-slate-200">{t('backup.selected')}</p>
-                <p className="text-xs text-gray-400">{t('backup.proceed_warning')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('backup.proceed_warning')}</p>
               </div>
               <Button
                 onClick={() => setConfirmOpen(true)}
@@ -1251,17 +1251,17 @@ const ModulesSettings: React.FC = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className={`p-2 rounded-xl shrink-0 ${enabled ? 'bg-green-100 dark:bg-green-900/40' : 'bg-gray-100 dark:bg-slate-800'}`}>
-                        <mod.icon size={20} className={enabled ? mod.iconColor : 'text-gray-400 dark:text-slate-500'} />
+                        <mod.icon size={20} className={enabled ? mod.iconColor : 'text-gray-500 dark:text-slate-400'} />
                       </div>
                       <div className="min-w-0">
                         <p className={`font-semibold text-sm leading-tight ${enabled ? 'text-green-900 dark:text-green-100' : 'text-gray-700 dark:text-slate-300'}`}>
                           {t('modules_config.' + mod.key + '.label', { defaultValue: mod.label })}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-slate-500 mt-0.5 leading-relaxed">{t('modules_config.' + mod.key + '.description', { defaultValue: mod.description })}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-relaxed">{t('modules_config.' + mod.key + '.description', { defaultValue: mod.description })}</p>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {mod.features.map((f, idx) => (
                             <span key={f} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                              enabled ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-500'
+                              enabled ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
                             }`}>{t('modules_config.' + mod.key + '.features.' + idx, { defaultValue: f })}</span>
                           ))}
                         </div>
@@ -1413,7 +1413,7 @@ const LlmSettings: React.FC = () => {
                 onChange={e => setCfg(c => ({ ...c, [cfg.provider]: { ...activeCfg, baseUrl: e.target.value } }))}
                 placeholder={cfg.provider === 'ollama' ? 'http://localhost:11434' : t('llm.base_url_placeholder')}
               />
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t('llm.base_url_help')}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{t('llm.base_url_help')}</p>
             </div>
           )}
         </div>

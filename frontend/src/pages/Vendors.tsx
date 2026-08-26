@@ -406,11 +406,11 @@ export const Vendors: React.FC = () => {
                 <div className="space-y-2 mb-5">
                   {v.website && /^https?:\/\//i.test(v.website) && (
                     <a href={v.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
-                      <Globe size={14} className="text-gray-400" /> <span className="truncate">{v.website.replace(/^https?:\/\//, '')}</span>
+                      <Globe size={14} className="text-gray-500 dark:text-gray-400" /> <span className="truncate">{v.website.replace(/^https?:\/\//, '')}</span>
                     </a>
                   )}
                   <Link to={`/contacts?vendor=${v.id}`} className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
-                    <User size={14} className="text-gray-400" />
+                    <User size={14} className="text-gray-500 dark:text-gray-400" />
                     <span>{t('vendors:card.contacts', { count: v.contacts?.length || 0 })}</span>
                     <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
@@ -418,9 +418,9 @@ export const Vendors: React.FC = () => {
 
                 <div className="flex items-center gap-3 pt-4 border-t dark:border-slate-800 mt-auto">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('vendors:card.audit')}</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 dark:text-gray-400">{t('vendors:card.audit')}</p>
                     <div className="flex items-center gap-1.5">
-                      <Clock size={14} className={v.next_review_date && new Date(v.next_review_date) < new Date() ? 'text-red-500' : 'text-gray-400'} />
+                      <Clock size={14} className={v.next_review_date && new Date(v.next_review_date) < new Date() ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'} />
                       <span className={`text-sm truncate ${v.next_review_date && new Date(v.next_review_date) < new Date() ? 'text-red-600 font-bold' : 'dark:text-slate-300'}`}>
                         {v.next_review_date ? format(new Date(v.next_review_date), 'P', { locale: dateFnsLocale }) : '–'}
                       </span>
@@ -622,7 +622,7 @@ export const Vendors: React.FC = () => {
           <div className="space-y-3">
             <h3 className="text-sm font-bold dark:text-white">{t('vendors:triage.past_runs')}</h3>
             {triageRuns.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 border border-dashed dark:border-slate-800 rounded-xl">{t('vendors:triage.no_runs')}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-6 border border-dashed dark:border-slate-800 rounded-xl">{t('vendors:triage.no_runs')}</p>
             ) : (
               <div className="space-y-2">
                 {triageRuns.map(run => {
@@ -660,7 +660,7 @@ export const Vendors: React.FC = () => {
                             {run.risk_level && <span className={`text-xs font-semibold ${riskColors[run.risk_level] || ''}`}>{t(`vendors:riskLevels.${run.risk_level}`)}</span>}
                             <span className="text-xs text-gray-500 dark:text-slate-400">{run.document?.original_name}</span>
                           </div>
-                          <p className="text-[10px] text-gray-400 mt-0.5">
+                          <p className="text-[10px] text-gray-500 mt-0.5 dark:text-gray-400">
                             {format(new Date(run.created_at), 'Pp', { locale: dateFnsLocale })}
                             {run.llm_provider && ` · ${run.llm_provider} / ${run.llm_model}`}
                             {run.triggeredBy && ` · ${t('vendors:triage.triggered_by', { name: run.triggeredBy.name })}`}
@@ -681,7 +681,7 @@ export const Vendors: React.FC = () => {
                             </button>
                           )}
                           {user?.role === 'admin' && (
-                            <button onClick={() => deleteTriage(run.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-red-600 transition-colors">
+                            <button onClick={() => deleteTriage(run.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400">
                               <Trash2 size={14} />
                             </button>
                           )}
@@ -708,10 +708,10 @@ export const Vendors: React.FC = () => {
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-xs font-semibold dark:text-slate-200">{c.ref}</span>
-                                        {c.mandatory && <span className="text-[9px] uppercase text-gray-400">{t('vendors:triage.mandatory')}</span>}
+                                        {c.mandatory && <span className="text-[9px] uppercase text-gray-500 dark:text-gray-400">{t('vendors:triage.mandatory')}</span>}
                                       </div>
                                       <p className="text-[11px] text-gray-500 dark:text-slate-400">{c.requirement}</p>
-                                      {c.note && <p className="text-[11px] text-gray-400 dark:text-slate-500 italic mt-0.5">{c.note}</p>}
+                                      {c.note && <p className="text-[11px] text-gray-500 dark:text-slate-400 italic mt-0.5">{c.note}</p>}
                                     </div>
                                   </div>
                                 ))}
@@ -737,7 +737,7 @@ export const Vendors: React.FC = () => {
                                         </div>
                                         {f.description && <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">{f.description}</p>}
                                         {f.quote && (
-                                          <blockquote className="mt-2 pl-3 border-l-2 border-gray-300 dark:border-slate-600 text-xs text-gray-500 dark:text-slate-500 italic">"{f.quote}"</blockquote>
+                                          <blockquote className="mt-2 pl-3 border-l-2 border-gray-300 dark:border-slate-600 text-xs text-gray-500 dark:text-slate-400 italic">"{f.quote}"</blockquote>
                                         )}
                                         {f.remediation && (
                                           <div className="mt-2 p-2 rounded bg-blue-50 dark:bg-blue-900/20 text-xs text-blue-800 dark:text-blue-300">
@@ -820,7 +820,7 @@ export const Vendors: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{doc.description || t('vendors:docs.noDescription')}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
+                      <p className="text-[10px] text-gray-500 mt-0.5 dark:text-gray-400">
                         {t('vendors:docs.uploadedAt', {
                           date: format(new Date(doc.created_at || Date.now()), 'Pp', { locale: dateFnsLocale }),
                           uploader: doc.uploader?.name || 'Unknown',

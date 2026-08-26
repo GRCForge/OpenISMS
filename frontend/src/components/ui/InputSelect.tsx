@@ -118,12 +118,12 @@ export const InputSelect: React.FC<InputSelectProps> = ({
           className="w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-semibold border-b border-gray-100 dark:border-slate-700/50 flex items-center justify-between"
         >
           <span>{t('ui.addEntry', { value: value.trim() })}</span>
-          <span className="text-[10px] text-gray-400 font-normal px-1 py-0.5 bg-gray-100 dark:bg-slate-700 rounded-xs">{t('ui.new')}</span>
+          <span className="text-[10px] text-gray-500 font-normal px-1 py-0.5 bg-gray-100 dark:bg-slate-700 rounded-xs dark:text-gray-400">{t('ui.new')}</span>
         </button>
       )}
 
       {filteredOptions.length === 0 && !showCreateOption ? (
-        <div className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">
+        <div className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">
           {t('ui.noOptions')}
         </div>
       ) : filteredOptions.length === 0 && showCreateOption ? null : (
@@ -160,7 +160,7 @@ export const InputSelect: React.FC<InputSelectProps> = ({
       <div className="relative flex items-center">
         <input
           ref={inputRef}
-          className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500"
+          className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all placeholder:text-gray-500 dark:placeholder:text-slate-400"
           type="text"
           value={value}
           onChange={e => { onChange(e.target.value); updatePos(); setIsOpen(true); }}
@@ -175,7 +175,7 @@ export const InputSelect: React.FC<InputSelectProps> = ({
           onClick={() => { updatePos(); setIsOpen(o => !o); }}
           aria-label={t('ui.toggleOptions')}
           aria-expanded={isOpen}
-          className="absolute right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"
+          className="absolute right-2 p-1 rounded-md text-gray-500 hover:text-gray-600 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400 dark:text-gray-400"
         >
           <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>

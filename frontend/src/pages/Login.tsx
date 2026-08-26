@@ -158,7 +158,7 @@ export const Login: React.FC = () => {
         {(ssoEnabled || passkeySupported) && (
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
-            <span className="text-xs text-gray-400 dark:text-slate-500">{t('orWithPassword')}</span>
+            <span className="text-xs text-gray-500 dark:text-slate-400">{t('orWithPassword')}</span>
             <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
           </div>
         )}
@@ -172,7 +172,7 @@ export const Login: React.FC = () => {
           </Button>
         </form>
       </div>
-      <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+      <p className="text-xs text-slate-400 dark:text-slate-400 font-mono">
         {t('copyright')}
       </p>
     </div>

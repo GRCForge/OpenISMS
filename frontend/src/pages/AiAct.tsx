@@ -320,7 +320,7 @@ export const AiAct: React.FC = () => {
                 >
                   <Td>
                     <p className="font-medium dark:text-slate-200">{i.name}</p>
-                    {i.use_case && <p className="text-[11px] text-gray-400 line-clamp-1">{i.use_case}</p>}
+                    {i.use_case && <p className="text-[11px] text-gray-500 line-clamp-1 dark:text-gray-400">{i.use_case}</p>}
                   </Td>
                   <Td>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${riskCategoryColors[i.risk_category]}`}>
@@ -355,7 +355,7 @@ export const AiAct: React.FC = () => {
                           href={i.documentation_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
+                          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
                           title={t('docLink')}
                         >
                           <ExternalLink size={14} />
@@ -365,14 +365,14 @@ export const AiAct: React.FC = () => {
                         <>
                           <button
                             onClick={() => openDocs(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
                             title={t('manageDocsTitle')}
                           >
                             <Paperclip size={14} />
                           </button>
                           <button
                             onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
                           >
                             <Pencil size={14} />
                           </button>

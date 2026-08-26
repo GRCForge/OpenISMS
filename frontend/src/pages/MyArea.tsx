@@ -63,7 +63,7 @@ const priorityColor: Record<string, string> = {
   critical: 'text-red-600 dark:text-red-400',
   high: 'text-orange-500 dark:text-orange-400',
   medium: 'text-blue-500 dark:text-blue-400',
-  low: 'text-gray-400 dark:text-slate-600',
+  low: 'text-gray-500 dark:text-slate-600',
 };
 
 export const MyArea: React.FC = () => {
@@ -146,7 +146,7 @@ export const MyArea: React.FC = () => {
           <Card className="p-8 text-center">
             <CheckCircle size={32} className="mx-auto text-green-400 mb-2" />
             <p className="text-gray-500 dark:text-slate-400 font-medium">{t('employee.empty')}</p>
-            <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('employee.emptyDescription')}</p>
+            <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('employee.emptyDescription')}</p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4">
@@ -165,7 +165,7 @@ export const MyArea: React.FC = () => {
                     {training.training?.description && (
                       <p className="text-xs text-gray-500 dark:text-slate-400 max-w-2xl">{training.training.description}</p>
                     )}
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-slate-500 pt-1">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-slate-400 pt-1">
                       {training.completed_at && (
                         <span>
                           {t('employee.completedAt')} <strong>{format(parseISO(training.completed_at), 'dd.MM.yyyy')}</strong>
@@ -187,7 +187,7 @@ export const MyArea: React.FC = () => {
                           {t('employee.contested')}
                         </span>
                         {training.contestation_comment && (
-                          <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 max-w-[200px] truncate" title={training.contestation_comment}>
+                          <span className="text-[10px] text-gray-500 dark:text-slate-400 mt-1 max-w-[200px] truncate" title={training.contestation_comment}>
                             "{training.contestation_comment}"
                           </span>
                         )}
@@ -231,7 +231,7 @@ export const MyArea: React.FC = () => {
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase text-gray-400 mb-1">{t('contestModal.selectedTraining')}</p>
+              <p className="text-xs font-semibold uppercase text-gray-500 mb-1 dark:text-gray-400">{t('contestModal.selectedTraining')}</p>
               <p className="text-sm font-bold dark:text-white">{selectedTraining?.training_title}</p>
               {selectedTraining?.completed_at && (
                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
@@ -241,7 +241,7 @@ export const MyArea: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="contestComment" className="block text-xs font-semibold uppercase text-gray-400">
+              <label htmlFor="contestComment" className="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
                 {t('contestModal.reasonLabel')} <span className="text-red-500">{t('contestModal.reasonRequired')}</span>
               </label>
               <textarea
@@ -325,7 +325,7 @@ export const MyArea: React.FC = () => {
           <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <CheckSquare size={16} className="text-blue-600" />
             {t('tasks.title')}
-            {tasks.length > 0 && <span className="text-xs font-normal text-gray-400">{t('tasks.openCount', { count: tasks.length })}</span>}
+            {tasks.length > 0 && <span className="text-xs font-normal text-gray-500 dark:text-gray-400">{t('tasks.openCount', { count: tasks.length })}</span>}
           </h2>
           <Link to="/tasks" className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
             {t('tasks.allTasks')} <ArrowRight size={14} />
@@ -336,7 +336,7 @@ export const MyArea: React.FC = () => {
           <Card className="p-8 text-center">
             <CheckCircle2 size={32} className="mx-auto text-green-400 mb-2" />
             <p className="text-gray-500 dark:text-slate-400 font-medium">{t('tasks.empty')}</p>
-            <p className="text-gray-400 dark:text-slate-600 text-sm mt-1">{t('tasks.emptyDescription')}</p>
+            <p className="text-gray-500 dark:text-slate-600 text-sm mt-1">{t('tasks.emptyDescription')}</p>
           </Card>
         ) : (
           <div className="space-y-2">
@@ -370,7 +370,7 @@ export const MyArea: React.FC = () => {
                         )}
                       </div>
                       {task.due_date && (
-                        <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-400 dark:text-slate-500'}`}>
+                        <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-500 dark:text-slate-400'}`}>
                           {isOverdue ? `${t('tasks.overdueSuffix')} ` : ''}
                           {t('tasks.dueLabel')} {format(parseISO(task.due_date), 'd. MMM yyyy', { locale: de })}
                         </p>
@@ -445,13 +445,13 @@ export const MyArea: React.FC = () => {
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{item.name}</p>
-                      {item.sub && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate">{item.sub}</p>}
+                      {item.sub && <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">{item.sub}</p>}
                     </div>
                     <ChevronRight size={14} className="text-gray-300 dark:text-slate-700 group-hover:text-blue-500 shrink-0 ml-2 transition-colors" />
                   </Link>
                 ))}
                 {section.total > section.items.length && (
-                  <Link to={section.link} className="flex items-center justify-center gap-1 py-2 text-xs text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <Link to={section.link} className="flex items-center justify-center gap-1 py-2 text-xs text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                     {t('sections.showMore', { count: section.total - section.items.length })}
                   </Link>
                 )}

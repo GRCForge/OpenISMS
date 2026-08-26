@@ -31,7 +31,7 @@ const entityColors: Record<AuditEntityType, string> = {
   assessment: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
   user: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
   reminder: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  auth: 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-500',
+  auth: 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400',
   vendor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   document: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
   settings: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-400',
@@ -130,7 +130,7 @@ const DetailsCell: React.FC<{ details?: any }> = ({ details: rawDetails }) => {
     const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
     const changes = keys.filter(k => !sameValue(before[k], after[k]));
 
-    if (changes.length === 0) return <span className="text-xs text-gray-400 dark:text-slate-500 italic">{t('details.noChanges')}</span>;
+    if (changes.length === 0) return <span className="text-xs text-gray-500 dark:text-slate-400 italic">{t('details.noChanges')}</span>;
 
     return (
       <details className="cursor-pointer group">
@@ -140,7 +140,7 @@ const DetailsCell: React.FC<{ details?: any }> = ({ details: rawDetails }) => {
             <div key={k} className="text-xs grid grid-cols-[100px_1fr] sm:grid-cols-[120px_1fr_16px_1fr] items-start sm:items-center gap-1.5 sm:gap-2">
               <span className="font-semibold text-gray-700 dark:text-slate-300">{t(`fields.${k}`, { defaultValue: k })}</span>
               <span className="line-through text-red-500/80 dark:text-red-400/70 truncate" title={formatValue(t, k, before[k])}>{formatValue(t, k, before[k])}</span>
-              <ArrowRight size={12} className="text-gray-400 shrink-0 hidden sm:block" />
+              <ArrowRight size={12} className="text-gray-500 shrink-0 hidden sm:block dark:text-gray-400" />
               <span className="text-green-600 dark:text-green-400 font-medium truncate sm:col-start-4" title={formatValue(t, k, after[k])}>{formatValue(t, k, after[k])}</span>
             </div>
           ))}
@@ -157,7 +157,7 @@ const DetailsCell: React.FC<{ details?: any }> = ({ details: rawDetails }) => {
       <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs">
         {entries.map(([k, v]) => (
           <span key={k} className="inline-flex items-center gap-1 bg-gray-50 dark:bg-slate-900/50 px-2 py-0.5 rounded-lg border dark:border-slate-800 text-gray-600 dark:text-slate-400">
-            <span className="font-semibold text-gray-500 dark:text-slate-500">{t(`fields.${k}`, { defaultValue: k })}:</span>
+            <span className="font-semibold text-gray-500 dark:text-slate-400">{t(`fields.${k}`, { defaultValue: k })}:</span>
             <span className="text-gray-900 dark:text-slate-200 font-medium truncate max-w-[150px]" title={formatValue(t, k, v)}>{formatValue(t, k, v)}</span>
           </span>
         ))}
@@ -291,7 +291,7 @@ export const AuditLogPage: React.FC = () => {
         <Select value={entityType} onChange={e => setEntityType(e.target.value)} options={[{ value: '', label: t('filters.allEntities') }, ...Object.entries(entityLabels).map(([v, l]) => ({ value: v, label: l }))]} />
         <Select value={action} onChange={e => setAction(e.target.value)} options={[{ value: '', label: t('filters.allActions') }, ...Object.entries(actionLabels).map(([v, l]) => ({ value: v, label: l }))]} />
         <div className="flex items-center gap-1.5 shrink-0">
-          <Calendar size={14} className="text-gray-400" />
+          <Calendar size={14} className="text-gray-500 dark:text-gray-400" />
           <span className="text-xs text-gray-500">{t('filters.from')}</span>
           <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <span className="text-xs text-gray-500">{t('filters.to')}</span>
@@ -317,7 +317,7 @@ export const AuditLogPage: React.FC = () => {
             <Tbody>
               {logs.map(log => (
                 <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <Td className="text-gray-500 dark:text-slate-500 text-xs whitespace-nowrap">{format(new Date(log.created_at), 'Ppp', { locale: dateFnsLocale })}</Td>
+                  <Td className="text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">{format(new Date(log.created_at), 'Ppp', { locale: dateFnsLocale })}</Td>
                   <Td>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${actionColors[log.action] || 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-400'}`}>
                       {actionLabels[log.action] || log.action}
@@ -336,7 +336,7 @@ export const AuditLogPage: React.FC = () => {
                 </tr>
               ))}
               {logs.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400 dark:text-slate-500">{t('empty.noResults')}</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-500 dark:text-slate-400">{t('empty.noResults')}</td></tr>
               )}
             </Tbody>
           </Table>

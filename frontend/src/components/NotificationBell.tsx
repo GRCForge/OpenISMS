@@ -96,18 +96,18 @@ export const NotificationBell: React.FC = () => {
                   onClick={() => push.subscribed ? push.unsubscribe() : push.requestPermission()}
                   disabled={push.loading}
                   title={push.subscribed ? t('pushDisable') : t('pushEnable')}
-                  className={`p-1.5 rounded-lg transition-colors text-xs flex items-center gap-1 ${push.subscribed ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                  className={`p-1.5 rounded-lg transition-colors text-xs flex items-center gap-1 ${push.subscribed ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 dark:text-gray-400'}`}
                 >
                   {push.subscribed ? <Bell size={13} /> : <BellOff size={13} />}
                 </button>
               )}
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200"><X size={16} /></button>
+              <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-600 dark:hover:text-slate-200 dark:text-gray-400"><X size={16} /></button>
             </div>
           </div>
 
           <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
             {data.total === 0 ? (
-              <div className="p-10 text-center text-gray-400 dark:text-slate-600">
+              <div className="p-10 text-center text-gray-500 dark:text-slate-600">
                 <CheckCircle className="mx-auto mb-3 opacity-20" size={40} />
                 <p className="text-sm italic">{t('empty')}</p>
               </div>
@@ -120,7 +120,7 @@ export const NotificationBell: React.FC = () => {
                       <div className="flex-1 min-w-0">
                          <div className="flex justify-between items-start">
                             <p className="text-sm font-bold text-gray-900 dark:text-white">{n.title}</p>
-                            <span className="text-[10px] text-gray-400">{n.created_at ? format(new Date(n.created_at), 'HH:mm') : ''}</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{n.created_at ? format(new Date(n.created_at), 'HH:mm') : ''}</span>
                          </div>
                          <p className="text-xs text-gray-600 dark:text-slate-400 mt-0.5 line-clamp-2">{n.content}</p>
                       </div>
@@ -135,7 +135,7 @@ export const NotificationBell: React.FC = () => {
                       <div className="flex justify-between items-start gap-2">
                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{n.asset_name}</p>
                         {n.id && (
-                          <button onClick={(e) => dismiss(e, n.id!)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-400 hover:text-red-500 transition-all">
+                          <button onClick={(e) => dismiss(e, n.id!)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500 hover:text-red-500 transition-all dark:text-gray-400">
                             <Trash2 size={12} />
                           </button>
                         )}
@@ -153,7 +153,7 @@ export const NotificationBell: React.FC = () => {
                       <div className="flex justify-between items-start gap-2">
                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{n.asset_name}</p>
                         {n.id && (
-                          <button onClick={(e) => dismiss(e, n.id!)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-400 hover:text-red-500 transition-all">
+                          <button onClick={(e) => dismiss(e, n.id!)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500 hover:text-red-500 transition-all dark:text-gray-400">
                             <Trash2 size={12} />
                           </button>
                         )}

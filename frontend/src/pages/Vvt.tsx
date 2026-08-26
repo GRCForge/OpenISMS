@@ -470,7 +470,7 @@ export const Vvt: React.FC = () => {
                   <Td className="font-mono text-xs text-gray-500 hidden md:table-cell">VVT-{String(e.id).padStart(3, '0')}</Td>
                   <Td>
                     <p className="text-sm font-medium dark:text-slate-200">{e.name}</p>
-                    <p className="text-[11px] text-gray-400 truncate max-w-xs">{e.purpose}</p>
+                    <p className="text-[11px] text-gray-500 truncate max-w-xs dark:text-gray-400">{e.purpose}</p>
                   </Td>
                   <Td className="text-sm dark:text-slate-400 hidden sm:table-cell">{(e as any).responsible?.name || '–'}</Td>
                   <Td className="hidden sm:table-cell">
@@ -622,7 +622,7 @@ export const Vvt: React.FC = () => {
               <input type="date" value={form.last_review_date} onChange={e => setForm({ ...form, last_review_date: e.target.value })}
                 className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl px-3 py-2 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
                 disabled={!canWrite} />
-              <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('modal.lastReviewDateHelp', 'Wann wurde dieser Eintrag zuletzt inhaltlich geprüft?')}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400">{t('modal.lastReviewDateHelp', 'Wann wurde dieser Eintrag zuletzt inhaltlich geprüft?')}</p>
             </div>
             <div />
  
@@ -634,12 +634,12 @@ export const Vvt: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-2"><Server size={14}/> {t('modal.linkedAssets', 'Verknüpfte IT-Systeme / Assets')}</label>
               <div className="relative flex items-center">
-                <Search className="absolute left-3 text-gray-400" size={14} />
+                <Search className="absolute left-3 text-gray-500 dark:text-gray-400" size={14} />
                 <input type="text" placeholder={t('modal.filterAssetsPlaceholder', 'Asset filtern...')} value={assetSearch} onChange={e => setAssetSearch(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden dark:text-white" />
               </div>
               <div className="max-h-40 overflow-y-auto border dark:border-slate-700 rounded-xl p-2 bg-gray-50/30 dark:bg-slate-800/20 custom-scrollbar">
                 {filteredAssets.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('modal.noAssetsFound', 'Keine Assets gefunden')}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">{t('modal.noAssetsFound', 'Keine Assets gefunden')}</p>
                 ) : (
                   filteredAssets.map(a => (
                     <label key={a.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 cursor-pointer transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
@@ -654,12 +654,12 @@ export const Vvt: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-2"><Building2 size={14}/> {t('modal.linkedVendors', 'Weitere Auftragsverarbeiter')}</label>
               <div className="relative flex items-center">
-                <Search className="absolute left-3 text-gray-400" size={14} />
+                <Search className="absolute left-3 text-gray-500 dark:text-gray-400" size={14} />
                 <input type="text" placeholder={t('modal.filterVendorsPlaceholder', 'Dienstleister filtern...')} value={vendorSearch} onChange={e => setVendorSearch(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden dark:text-white" />
               </div>
               <div className="max-h-40 overflow-y-auto border dark:border-slate-700 rounded-xl p-2 bg-gray-50/30 dark:bg-slate-800/20 custom-scrollbar">
                 {filteredVendors.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-slate-500 p-2 text-center">{t('modal.noVendorsFound', 'Keine Dienstleister gefunden')}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 p-2 text-center">{t('modal.noVendorsFound', 'Keine Dienstleister gefunden')}</p>
                 ) : (
                   filteredVendors.map(v => (
                     <label key={v.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 cursor-pointer transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-700">

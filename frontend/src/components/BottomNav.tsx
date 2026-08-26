@@ -28,7 +28,7 @@ export const BottomNav: React.FC = () => {
             className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
               active
                 ? 'text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                : 'text-gray-500 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300'
             }`}
           >
             <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />

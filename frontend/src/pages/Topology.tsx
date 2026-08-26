@@ -211,14 +211,14 @@ export const Topology: React.FC = () => {
         </CardHeader>
         <CardBody>
           {!chart ? (
-            <div className="text-center py-16 text-gray-400 dark:text-slate-500">
+            <div className="text-center py-16 text-gray-500 dark:text-slate-400">
               <Network size={40} className="mx-auto mb-3 opacity-40" />
               <p className="italic">{filtered.length === 0 ? t('graph.noAssets') : t('graph.noDependencies')}</p>
             </div>
           ) : (
             <>
               <Mermaid chart={chart} className="min-h-[400px]" />
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-3 text-center">{t('graph.tip')}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-3 text-center">{t('graph.tip')}</p>
             </>
           )}
         </CardBody>

@@ -37,7 +37,7 @@ const statusColors: Record<ImplStatus, string> = {
   not_started: 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300',
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   implemented: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  not_applicable: 'bg-slate-100 text-slate-400 dark:bg-slate-800/60 dark:text-slate-500',
+  not_applicable: 'bg-slate-100 text-slate-400 dark:bg-slate-800/60 dark:text-slate-400',
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -204,7 +204,7 @@ export const Nis2: React.FC = () => {
       <div className="py-16 text-center">
         <ListChecks size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
         <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
-        <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">{t('empty.description')}</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{t('empty.description')}</p>
         {canManage && <Button onClick={seed} disabled={seeding} className="mt-4"><Download size={16} />{seeding ? t('empty.loading') : t('empty.loadButton')}</Button>}
       </div>
     </CardBody></Card>
@@ -273,7 +273,7 @@ export const Nis2: React.FC = () => {
                 <div className="w-16 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} /></div>
                 <span className="text-xs font-bold text-gray-600 dark:text-slate-400">{pct}%</span>
               </div>
-              {isCatExpanded ? <ChevronDown size={16} className="text-gray-400 shrink-0" /> : <ChevronRight size={16} className="text-gray-400 shrink-0" />}
+              {isCatExpanded ? <ChevronDown size={16} className="text-gray-500 shrink-0 dark:text-gray-400" /> : <ChevronRight size={16} className="text-gray-500 shrink-0 dark:text-gray-400" />}
             </button>
             {isCatExpanded && (
               <div className="border-t dark:border-slate-700">
@@ -291,24 +291,24 @@ export const Nis2: React.FC = () => {
                             <Td><span className="font-mono text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">{m.article_ref}</span></Td>
                             <Td>
                               <div className="flex items-start gap-2">
-                                {m.description && <button type="button" onClick={() => toggleExpanded(m.id)} className="mt-0.5 p-0.5 rounded text-gray-400 hover:text-blue-600 transition-colors shrink-0" title={expanded ? t('description.hide') : t('description.show')}>{expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button>}
+                                {m.description && <button type="button" onClick={() => toggleExpanded(m.id)} className="mt-0.5 p-0.5 rounded text-gray-500 hover:text-blue-600 transition-colors shrink-0 dark:text-gray-400" title={expanded ? t('description.hide') : t('description.show')}>{expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button>}
                                 <div>
                                   <p className="font-medium text-sm dark:text-slate-200">{t('measures.' + m.article_ref + '.title', { defaultValue: m.title })}</p>
-                                  {m.responsible && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{m.responsible.name}</p>}
+                                  {m.responsible && <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{m.responsible.name}</p>}
                                 </div>
                               </div>
                             </Td>
                             <Td><span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusColors[m.implementation_status]}`}>{statusLabels[m.implementation_status]}</span></Td>
                             <Td>{m.deadline ? <span className={`text-xs font-medium ${overdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'}`}>{format(new Date(m.deadline), 'dd.MM.yyyy')}{overdue && ' ⚠'}</span> : <span className="text-gray-300 dark:text-slate-600">–</span>}</Td>
                             <Td className="text-gray-500 dark:text-slate-400 text-xs">{m.last_review_date ? format(new Date(m.last_review_date), 'dd.MM.yyyy') : '–'}</Td>
-                            <Td>{canWrite && <button onClick={() => openEdit(m)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors" title={t('modal.edit')}><Pencil size={14} /></button>}</Td>
+                            <Td>{canWrite && <button onClick={() => openEdit(m)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400" title={t('modal.edit')}><Pencil size={14} /></button>}</Td>
                           </tr>
                           {expanded && m.description && (
                             <tr className="bg-gray-50 dark:bg-slate-800/30">
                               <td />
                               <td colSpan={5} className="px-4 py-3">
                                 <p className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">{t('measures.' + m.article_ref + '.description', { defaultValue: m.description })}</p>
-                                {m.evidence && <div className="mt-2"><span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">{t('description.evidence')}</span><span className="text-xs text-gray-600 dark:text-slate-400">{m.evidence}</span></div>}
+                                {m.evidence && <div className="mt-2"><span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">{t('description.evidence')}</span><span className="text-xs text-gray-600 dark:text-slate-400">{m.evidence}</span></div>}
                               </td>
                             </tr>
                           )}

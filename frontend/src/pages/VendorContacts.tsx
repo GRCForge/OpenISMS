@@ -187,7 +187,7 @@ export const VendorContacts: React.FC = () => {
                 </Td>
                 <Td>
                    <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-gray-400 shrink-0" />
+                      <Building2 size={14} className="text-gray-500 shrink-0 dark:text-gray-400" />
                       <span className="text-sm dark:text-slate-400 truncate">{c.vendor?.name}</span>
                    </div>
                 </Td>
@@ -202,8 +202,8 @@ export const VendorContacts: React.FC = () => {
                   <div className="flex justify-end gap-2">
                     {canEdit && (
                       <>
-                        <button onClick={() => { setEditContact(c); setForm({ name: c.name, email: c.email || '', phone: c.phone || '', role: c.role || '', notes: c.notes || '', vendor_id: String(c.vendor_id) }); setIsNewVendor(false); setModalOpen(true); }} className="p-1 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14}/></button>
-                        {user?.role === 'admin' && <button onClick={() => deleteContact(c.vendor_id, c.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>}
+                        <button onClick={() => { setEditContact(c); setForm({ name: c.name, email: c.email || '', phone: c.phone || '', role: c.role || '', notes: c.notes || '', vendor_id: String(c.vendor_id) }); setIsNewVendor(false); setModalOpen(true); }} className="p-1 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"><Pencil size={14}/></button>
+                        {user?.role === 'admin' && <button onClick={() => deleteContact(c.vendor_id, c.id)} className="p-1 text-gray-500 hover:text-red-500 transition-colors dark:text-gray-400"><Trash2 size={14}/></button>}
                       </>
                     )}
                   </div>
@@ -211,7 +211,7 @@ export const VendorContacts: React.FC = () => {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-400 dark:text-slate-500">{t('empty')}</td></tr>
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-500 dark:text-slate-400">{t('empty')}</td></tr>
             )}
           </Tbody>
         </Table>

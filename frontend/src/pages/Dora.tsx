@@ -408,7 +408,7 @@ export const Dora: React.FC = () => {
                 >
                   <Td>
                     <p className="font-medium dark:text-slate-200">{i.name}</p>
-                    {i.contact_name && <p className="text-[11px] text-gray-400">{i.contact_name}</p>}
+                    {i.contact_name && <p className="text-[11px] text-gray-500 dark:text-gray-400">{i.contact_name}</p>}
                   </Td>
                   <Td className="text-gray-600 dark:text-slate-300">{i.ict_service}</Td>
                   <Td>
@@ -437,7 +437,7 @@ export const Dora: React.FC = () => {
                         <>
                           <button
                             onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
                           >
                             <Pencil size={14} />
                           </button>
@@ -556,7 +556,7 @@ export const Dora: React.FC = () => {
                         <>
                           <button
                             onClick={() => openEditTest(testItem)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
                           >
                             <Pencil size={14} />
                           </button>

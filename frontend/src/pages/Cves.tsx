@@ -182,7 +182,7 @@ export const Cves: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-12 text-center text-gray-400 dark:text-slate-500">
+          <div className="py-12 text-center text-gray-500 dark:text-slate-400">
             {t('empty')}
           </div>
         ) : (
@@ -276,7 +276,7 @@ export const Cves: React.FC = () => {
                           href={cveUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1 rounded-md text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors inline-flex items-center justify-center"
+                          className="p-1 rounded-md text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors inline-flex items-center justify-center dark:text-gray-400"
                           title={t('sourceTitle', { source: c.source.toUpperCase() })}
                         >
                           <ExternalLink size={14} />

@@ -404,7 +404,7 @@ export const Bcm: React.FC = () => {
                 >
                   <Td>
                     <p className="font-medium dark:text-slate-200">{i.name}</p>
-                    {i.description && <p className="text-[11px] text-gray-400 line-clamp-1">{i.description}</p>}
+                    {i.description && <p className="text-[11px] text-gray-500 line-clamp-1 dark:text-gray-400">{i.description}</p>}
                   </Td>
                   <Td>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${criticalityColors[i.criticality]}`}>
@@ -441,7 +441,7 @@ export const Bcm: React.FC = () => {
                         <>
                           <button
                             onClick={() => openEdit(i)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
                           >
                             <Pencil size={14} />
                           </button>
@@ -527,7 +527,7 @@ export const Bcm: React.FC = () => {
                 >
                   <Td>
                     <p className="font-medium dark:text-slate-200">{ex.title}</p>
-                    {ex.participants && <p className="text-[11px] text-gray-400 line-clamp-1">{ex.participants}</p>}
+                    {ex.participants && <p className="text-[11px] text-gray-500 line-clamp-1 dark:text-gray-400">{ex.participants}</p>}
                   </Td>
                   <Td className="text-gray-600 dark:text-slate-300">{exerciseTypeLabels[ex.exercise_type]}</Td>
                   <Td className="text-gray-500">{ex.process?.name || '—'}</Td>
@@ -545,7 +545,7 @@ export const Bcm: React.FC = () => {
                         <>
                           <button
                             onClick={() => openEditExercise(ex)}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400"
                           >
                             <Pencil size={14} />
                           </button>

@@ -121,7 +121,7 @@ export const CommandPalette: React.FC = () => {
 
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-slate-800">
-          <Search size={16} className="text-gray-400 dark:text-slate-500 shrink-0" />
+          <Search size={16} className="text-gray-500 dark:text-slate-400 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -136,7 +136,7 @@ export const CommandPalette: React.FC = () => {
               <X size={15} />
             </button>
           ) : (
-            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono text-gray-400 dark:text-slate-600 border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
+            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono text-gray-500 dark:text-slate-600 border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
               ESC
             </kbd>
           )}
@@ -145,10 +145,10 @@ export const CommandPalette: React.FC = () => {
         {/* Results list */}
         <div ref={listRef} className="max-h-[320px] overflow-y-auto">
           {loading && (
-            <p className="px-4 py-10 text-center text-sm text-gray-400 dark:text-slate-500">{t('cmdPalette.loading')}</p>
+            <p className="px-4 py-10 text-center text-sm text-gray-500 dark:text-slate-400">{t('cmdPalette.loading')}</p>
           )}
           {!loading && results.length === 0 && (
-            <p className="px-4 py-10 text-center text-sm text-gray-400 dark:text-slate-500">
+            <p className="px-4 py-10 text-center text-sm text-gray-500 dark:text-slate-400">
               {query ? t('cmdPalette.noResults', { query }) : t('cmdPalette.noItems')}
             </p>
           )}
@@ -170,7 +170,7 @@ export const CommandPalette: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.title}</p>
                   {r.subtitle && (
-                    <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{r.subtitle}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{r.subtitle}</p>
                   )}
                 </div>
                 <span className="text-[10px] text-gray-300 dark:text-slate-600 shrink-0 font-medium uppercase tracking-wider">
@@ -182,7 +182,7 @@ export const CommandPalette: React.FC = () => {
         </div>
 
         {/* Footer hints */}
-        <div className="px-4 py-2.5 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 flex items-center gap-4 text-[11px] text-gray-400 dark:text-slate-500">
+        <div className="px-4 py-2.5 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 flex items-center gap-4 text-[11px] text-gray-500 dark:text-slate-400">
           <span className="flex items-center gap-1">
             <kbd className="font-mono border border-gray-200 dark:border-slate-700 px-1 py-0.5 rounded bg-white dark:bg-slate-700 text-gray-500 dark:text-slate-400">⇕</kbd>
             {t('cmdPalette.navigate')}
