@@ -228,7 +228,7 @@ export const Controls: React.FC = () => {
                             setSelectedIds([]);
                           }
                         }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 rounded border-gray-500 dark:border-slate-500 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     )}
                   </Th>
@@ -257,7 +257,7 @@ export const Controls: React.FC = () => {
                               setSelectedIds(prev => prev.filter(id => id !== c.id));
                             }
                           }}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-gray-500 dark:border-slate-500 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                       )}
                     </Td>

@@ -1405,7 +1405,7 @@ export const Compliance: React.FC = () => {
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('description')}</label>
             <textarea
-              className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-white dark:bg-slate-800 border border-gray-500 dark:border-slate-500 rounded-xl p-3 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
               value={masterTrainingForm.description}
               onChange={e => setMasterTrainingForm({ ...masterTrainingForm, description: e.target.value })}

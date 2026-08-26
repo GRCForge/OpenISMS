@@ -161,7 +161,7 @@ export const Assessments: React.FC = () => {
             type="checkbox"
             checked={currentOnly}
             onChange={e => setCurrentOnly(e.target.checked)}
-            className="rounded border-gray-300 text-blue-600"
+            className="rounded border-gray-500 dark:border-slate-500 text-blue-600"
           />
           {t('filters.currentOnly')}
         </label>

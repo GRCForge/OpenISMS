@@ -137,7 +137,7 @@ export const Login: React.FC = () => {
 
         {ssoEnabled && (
           <>
-            <a href="/api/auth/oidc/login" className="flex items-center justify-center gap-3 w-full border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-2">
+            <a href="/api/auth/oidc/login" className="flex items-center justify-center gap-3 w-full border border-gray-500 dark:border-slate-500 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-2">
               <KeyRound size={18} className="text-blue-600 dark:text-blue-400" />
               {ssoName}
             </a>
@@ -148,7 +148,7 @@ export const Login: React.FC = () => {
           <button
             onClick={handlePasskeyLogin}
             disabled={loading}
-            className="flex items-center justify-center gap-3 w-full border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-2"
+            className="flex items-center justify-center gap-3 w-full border border-gray-500 dark:border-slate-500 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-2"
           >
             <Fingerprint size={18} className="text-green-600 dark:text-green-400" />
             {t('passkeyLogin')}

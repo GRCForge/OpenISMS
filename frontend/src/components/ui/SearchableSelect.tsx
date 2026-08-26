@@ -92,7 +92,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`px-3 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-slate-100 flex items-center justify-between text-left cursor-pointer w-full focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all ${
+        className={`px-3 py-2 bg-white dark:bg-slate-800 border border-gray-500 dark:border-slate-500 rounded-lg text-sm text-gray-900 dark:text-slate-100 flex items-center justify-between text-left cursor-pointer w-full focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all ${
           disabled ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-slate-900' : ''
         }`}
       >

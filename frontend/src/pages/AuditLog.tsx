@@ -293,9 +293,9 @@ export const AuditLogPage: React.FC = () => {
         <div className="flex items-center gap-1.5 shrink-0">
           <Calendar size={14} className="text-gray-500 dark:text-gray-400" />
           <span className="text-xs text-gray-500">{t('filters.from')}</span>
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="border border-gray-500 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <span className="text-xs text-gray-500">{t('filters.to')}</span>
-          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="border border-gray-500 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </FilterBar>
 

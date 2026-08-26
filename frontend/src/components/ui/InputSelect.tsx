@@ -160,7 +160,7 @@ export const InputSelect: React.FC<InputSelectProps> = ({
       <div className="relative flex items-center">
         <input
           ref={inputRef}
-          className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all placeholder:text-gray-500 dark:placeholder:text-slate-400"
+          className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-800 border border-gray-500 dark:border-slate-500 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all placeholder:text-gray-500 dark:placeholder:text-slate-400"
           type="text"
           value={value}
           onChange={e => { onChange(e.target.value); updatePos(); setIsOpen(true); }}

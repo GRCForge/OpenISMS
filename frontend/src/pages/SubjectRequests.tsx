@@ -429,7 +429,7 @@ export const SubjectRequests: React.FC = () => {
 
           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800/40 rounded-lg border dark:border-slate-700">
             <input type="checkbox" id="id_verified" checked={form.requester_id_verified} onChange={e => setForm(f => ({ ...f, requester_id_verified: e.target.checked }))}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              className="w-4 h-4 rounded border-gray-500 dark:border-slate-500 text-blue-600 focus:ring-blue-500" />
             <label htmlFor="id_verified" className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
               <Shield size={13} className="text-blue-500" />{t('modal.idVerified')}
             </label>
