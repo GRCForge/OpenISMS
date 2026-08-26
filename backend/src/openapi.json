@@ -10316,6 +10316,76 @@
           }
         }
       }
+    },
+    "/discovery/staged/bulk-delete": {
+      "post": {
+        "tags": [
+          "Auto-Discovery"
+        ],
+        "summary": "bulk delete anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `discovery.access` und das aktivierte Modul `discovery`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/discovery/staged/bulk-ignore": {
+      "post": {
+        "tags": [
+          "Auto-Discovery"
+        ],
+        "summary": "bulk ignore anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `discovery.access` und das aktivierte Modul `discovery`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
