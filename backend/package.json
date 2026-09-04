@@ -12,7 +12,7 @@
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.122.0",
+    "@anthropic-ai/sdk": "^0.123.0",
     "@google/generative-ai": "^0.24.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@simplewebauthn/server": "^13.3.3",
@@ -31,7 +31,7 @@
     "multer": "^2.3.0",
     "mysql2": "^3.24.2",
     "node-cron": "^4.6.0",
-    "nodemailer": "^9.0.6",
+    "nodemailer": "^9.1.1",
     "openai": "^7.8.0",
     "openid-client": "^6.8.7",
     "otplib": "^13.5.0",
