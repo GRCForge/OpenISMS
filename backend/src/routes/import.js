@@ -274,7 +274,11 @@ router.post('/process', authenticate, requirePermission('import','access','admin
         // Special handling for foreign keys or complex entity types
         if (type === 'vendor_contact') {
           // 1. Find or create vendor
-          let vendor = await Vendor.findOne({ where: { name: data.company_name } });
+          // String() am Sink statt implizitem Vertrauen auf readRows(): Sequelize
+          // wuerde ein Objekt als Operator-Ausdruck interpretieren (Op-Injection).
+          // Die Werte sind hier bereits Strings, die Zusicherung soll aber lokal
+          // an der Query stehen und nicht drei Funktionen weiter oben.
+          let vendor = await Vendor.findOne({ where: { name: String(data.company_name) } });
           if (!vendor) {
             vendor = await Vendor.create({
               name: data.company_name,
@@ -295,12 +299,12 @@ router.post('/process', authenticate, requirePermission('import','access','admin
         } else if (type === 'asset') {
           data.owner_id = req.user.id;
           if (data.owner_email) {
-            const owner = await User.findOne({ where: { email: data.owner_email, active: true } });
+            const owner = await User.findOne({ where: { email: String(data.owner_email), active: true } });
             if (owner) data.owner_id = owner.id;
           }
           data.assessor_id = data.owner_id;
           if (data.assessor_email) {
-            const assessor = await User.findOne({ where: { email: data.assessor_email, active: true } });
+            const assessor = await User.findOne({ where: { email: String(data.assessor_email), active: true } });
             if (assessor) data.assessor_id = assessor.id;
           }
         }
