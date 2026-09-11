@@ -31,7 +31,7 @@
     "multer": "^2.3.0",
     "mysql2": "^3.24.2",
     "node-cron": "^4.6.0",
-    "nodemailer": "^9.1.1",
+    "nodemailer": "^10.0.0",
     "openai": "^7.8.0",
     "openid-client": "^6.8.7",
     "otplib": "^13.5.0",
