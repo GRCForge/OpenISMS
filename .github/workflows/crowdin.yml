@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Crowdin Action
-        uses: crowdin/github-action@71fdb8814261dd703be4ca7c6450d21b1868da4b # v3.0.1
+        uses: crowdin/github-action@0d5670f539973aea2f01abce61a8989934df0025 # v3.0.2
         with:
           # On push to main: upload sources only; translations are fetched via manual run or schedule
           upload_sources: ${{ github.event_name == 'push' || inputs.upload_sources == 'true' }}
