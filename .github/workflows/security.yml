@@ -1,8 +1,16 @@
 name: Security & Quality
 
-# Runs on PRs against main and can be triggered manually.
-# Push-on-main is intentionally disabled — checks run when code is reviewed
-# in a PR, not on every direct commit, to keep Actions minute usage minimal.
+# Runs on PRs against main, on every push to main (i.e. right after a PR
+# merges), and can be triggered manually. The push-to-main run is the real
+# safety net: it re-scans everything regardless of what ran at PR time.
+#
+# Gating (see the 'gate' job): Dependabot PRs skip this workflow entirely —
+# branch protection lets them merge without waiting, and the push-to-main
+# re-run below catches anything that matters. Human PRs run the security/
+# scanning jobs only; Frontend/Backend build+smoke-test are deferred to the
+# push-to-main run, same as for Dependabot. A push to main always runs
+# everything. Fix-forward via a follow-up branch/PR if that run finds
+# something — see the daily-work-briefing Freigaben for the reasoning.
 #
 # Required GitHub Secrets:
 #   SNYK_TOKEN        — Snyk API token  (https://app.snyk.io/account)
@@ -43,11 +51,39 @@ permissions:
   actions: read
 
 jobs:
+  # ── Gate: decide which sections run for this trigger ─────────────────────
+  # Dependabot PR: skip everything here (branch protection bypass lets these
+  #   merge without waiting; the push-to-main re-run below still scans them).
+  # Human PR: security/scanning jobs only — build & smoke-test are deferred
+  #   to the push-to-main run right after merge, same as for Dependabot.
+  # push to main (post-merge, from any source): run everything.
+  gate:
+    name: Determine which sections run
+    runs-on: self-hosted
+    outputs:
+      run_security: ${{ steps.decide.outputs.run_security }}
+      run_build: ${{ steps.decide.outputs.run_build }}
+    steps:
+      - id: decide
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "run_security=true" >> "$GITHUB_OUTPUT"
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.head_ref }}" == dependabot/* ]]; then
+            echo "run_security=false" >> "$GITHUB_OUTPUT"
+            echo "run_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_security=true" >> "$GITHUB_OUTPUT"
+            echo "run_build=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # ── CodeQL: GitHub-native SAST ────────────────────────────────────────────
   # Results appear in the Security tab → Code scanning alerts.
   # Runs on self-hosted to preserve cloud minutes.
   codeql:
     name: CodeQL — SAST
+    needs: gate
+    if: needs.gate.outputs.run_security == 'true'
     runs-on: self-hosted
     permissions:
       contents: read
@@ -94,6 +130,8 @@ jobs:
   # ── Frontend: TypeScript type-check + build ────────────────────────────────
   frontend-build:
     name: Frontend — TypeScript & Build
+    needs: gate
+    if: needs.gate.outputs.run_build == 'true'
     runs-on: self-hosted
     permissions:
       contents: read
@@ -125,6 +163,8 @@ jobs:
   # openid-client bump) at import time — before they reach production.
   backend-check:
     name: Backend — Install & Smoke Test
+    needs: gate
+    if: needs.gate.outputs.run_build == 'true'
     runs-on: self-hosted
     permissions:
       contents: read
@@ -191,6 +231,8 @@ jobs:
   # ── npm audit: vulnerability check on every push ──────────────────────────
   npm-audit:
     name: npm audit — Dependency Vulnerabilities
+    needs: gate
+    if: needs.gate.outputs.run_security == 'true'
     runs-on: self-hosted
     permissions:
       contents: read
@@ -225,7 +267,8 @@ jobs:
   # ── Snyk: Monorepo dependency scan ────────────────────────────────────────
   snyk-dependencies:
     name: Snyk — Dependency Scan
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: gate
+    if: needs.gate.outputs.run_security == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: self-hosted
     continue-on-error: true
     permissions:
@@ -266,6 +309,8 @@ jobs:
   # Scans the full git history — no API token required.
   gitleaks:
     name: Gitleaks — Secret Scanning
+    needs: gate
+    if: needs.gate.outputs.run_security == 'true'
     runs-on: self-hosted
     permissions:
       contents: read
@@ -295,6 +340,8 @@ jobs:
   # from transitive deps with no upstream patch.
   trivy:
     name: Trivy — Vulnerability & Misconfiguration
+    needs: gate
+    if: needs.gate.outputs.run_security == 'true'
     runs-on: self-hosted
     permissions:
       contents: read
@@ -324,7 +371,8 @@ jobs:
   # Required GitHub Secrets: SONAR_TOKEN, SONAR_HOST_URL, SONAR_PROJECT_KEY
   sonarqube:
     name: SonarQube — Code Quality
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: gate
+    if: needs.gate.outputs.run_security == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: self-hosted
     continue-on-error: true
     permissions:
