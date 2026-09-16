@@ -15,7 +15,7 @@
     "@anthropic-ai/sdk": "^0.125.0",
     "@google/generative-ai": "^0.24.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@simplewebauthn/server": "^14.0.1",
+    "@simplewebauthn/server": "^14.0.2",
     "adm-zip": "^0.6.1",
     "archiver": "^8.0.0",
     "bcryptjs": "^3.0.3",
@@ -43,7 +43,7 @@
     "sequelize": "^6.37.8",
     "swagger-ui-dist": "^5.32.15",
     "web-push": "^3.6.7",
-    "zod": "^4.6.2"
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
