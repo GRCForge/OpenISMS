@@ -1,5 +1,6 @@
 const { Setting } = require('../models');
 const { encrypt, decrypt } = require('./cryptoService');
+const oidcEnv = require('./oidcEnv');
 
 // Baseline for the role matrix. Until now nothing read it — the routes carried
 // hardcoded role checks — so the two had drifted apart and enabling enforcement
@@ -199,19 +200,69 @@ const setGeneral = async (patch = {}) => {
   return merged;
 };
 
-const getOidcRaw = async () => ({ ...DEFAULTS.oidc, ...(await getRaw('oidc')) });
+// Reiner Datenbankstand, ohne Umgebung. Ausschliesslich fuer setOidc - was
+// gespeichert wird, darf nie einen Wert aus der Umgebung enthalten. Sonst
+// wuerde das Entfernen einer Variablen den zuletzt gesehenen Umgebungswert
+// dauerhaft in der Datenbank zuruecklassen, und niemand koennte den
+// Unterschied noch sehen.
+const getOidcDb = async () => ({ ...DEFAULTS.oidc, ...(await getRaw('oidc')) });
 
-// Vollstaendige Config inkl. entschluesseltem Secret – nur backend-intern (Login-Flow).
+// Was aus der Umgebung kommt, gewinnt. Begruendung und Vorrangregel stehen in
+// services/oidcEnv.js. Das clientSecret ist hier bewusst NICHT enthalten -
+// diese Funktion liefert die Anzeige- und Entscheidungsdaten, das Geheimnis
+// gibt es nur ueber getOidcConfig().
+const getOidcRaw = async () => {
+  const { werte } = oidcEnv.ausUmgebung();
+  return { ...(await getOidcDb()), ...werte };
+};
+
+// Welche Felder gibt die Umgebung vor? Routen und Oberflaeche brauchen das,
+// um ein Feld zu sperren, statt ein Speichern anzubieten, das nicht wirkt.
+const getOidcEnvStatus = () => {
+  const { felder, secret } = oidcEnv.ausUmgebung();
+  const mappings = oidcEnv.mappingsAusUmgebung();
+  return {
+    fields: felder,
+    secretFromEnv: secret !== null,
+    mappingsFromEnv: mappings.aktiv,
+    mappingsError: mappings.fehler,
+  };
+};
+
+// Vollstaendige Config inkl. Secret – nur backend-intern (Login-Flow).
+// Ein Secret aus der Umgebung wird direkt verwendet; entschluesselt wird nur,
+// was tatsaechlich aus der Datenbank kommt.
 const getOidcConfig = async () => {
   const o = await getOidcRaw();
+  const { secret } = oidcEnv.ausUmgebung();
+  if (secret !== null) return { ...o, clientSecret: secret };
   return { ...o, clientSecret: o.clientSecretEnc ? decrypt(o.clientSecretEnc) : null };
 };
 
+// Ist SSO benutzbar? Liegt hier und nicht bei den Aufrufern, weil die Frage
+// "ist ein Secret hinterlegt" seit der Umgebungsunterstuetzung zwei Quellen
+// hat. Wer weiter nur clientSecretEnc prueft, bekommt bei einem Secret aus
+// der .env ein falsches Nein - und der SSO-Knopf auf der Anmeldeseite bliebe
+// unsichtbar, ohne dass irgendwo ein Fehler auftaucht.
+const isOidcUsable = async () => {
+  const o = await getOidcRaw();
+  const { secret } = oidcEnv.ausUmgebung();
+  return !!(o.enabled && o.issuer && o.clientId && (secret !== null || o.clientSecretEnc));
+};
+
 const setOidc = async (patch = {}) => {
-  const current = await getOidcRaw();
-  const next = { ...current, ...patch };
+  const current = await getOidcDb();
+  // Umgebungsfelder werden nicht gespeichert. Die Routen lehnen einen solchen
+  // Versuch bereits mit einer benannten Meldung ab; diese Zeile ist die zweite
+  // Sicherung, damit auch ein anderer Aufrufer die Datenbank nicht still mit
+  // einem Schattenwert fuellt.
+  const { felder } = oidcEnv.ausUmgebung();
+  const gefiltert = Object.fromEntries(
+    Object.entries(patch).filter(([feld]) => !felder.includes(feld)),
+  );
+  const next = { ...current, ...gefiltert };
   // Secret nur ersetzen, wenn ein neues (nicht-leeres) uebergeben wurde.
-  if (patch.clientSecret) next.clientSecretEnc = encrypt(patch.clientSecret);
+  if (gefiltert.clientSecret) next.clientSecretEnc = encrypt(gefiltert.clientSecret);
   delete next.clientSecret;
   await saveSetting('oidc', next);
   return next;
@@ -286,4 +337,4 @@ const setSetting = async (key, value) => {
   }
 };
 
-module.exports = { getGeneral, setGeneral, getOidcRaw, getOidcConfig, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting, getCheckmkRaw, getCheckmkConfig, getCheckmkPublic, setCheckmk };
+module.exports = { getGeneral, setGeneral, getOidcRaw, getOidcConfig, setOidc, getOidcEnvStatus, isOidcUsable, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting, getCheckmkRaw, getCheckmkConfig, getCheckmkPublic, setCheckmk };

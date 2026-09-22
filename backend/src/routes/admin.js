@@ -6,7 +6,9 @@ const client = require('openid-client');
 const rateLimit = require('express-rate-limit');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
-const { getGeneral, setGeneral, getOidcRaw, setOidc, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting } = require('../services/settingsService');
+const oidcEnv = require('../services/oidcEnv');
+const { geltendeMappings } = require('../services/oidcMappings');
+const { getGeneral, setGeneral, getOidcRaw, setOidc, getOidcEnvStatus, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting } = require('../services/settingsService');
 const { sendEmail, testSmtp, getSmtpConfig } = require('../services/emailService');
 const { encrypt: encryptValue } = require('../services/cryptoService');
 const { invalidate, getCallbackUrl } = require('../services/oidcService');
@@ -180,6 +182,16 @@ router.delete('/custom-roles/:id', requirePermission('admin','roles','admin'), a
 // --- OIDC Claim Mappings ---
 router.get('/oidc-mappings', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
+    // Kommen die Mappings aus der Umgebung, werden sie hier ebenfalls
+    // geliefert - die Oberflaeche soll zeigen, was tatsaechlich gilt, nicht
+    // eine leere Tabelle. Die ANTWORTFORM bleibt bewusst ein Array: Sie in
+    // ein Objekt zu verpacken haette den Aufrufer im Frontend gebrochen, und
+    // ob die Liste aenderbar ist, steht ohnehin schon in GET /admin/oidc
+    // (mappingsFromEnv, mappingsError). Eine zweite Quelle dafuer waere eine
+    // Gelegenheit, dass beide auseinanderlaufen.
+    if (getOidcEnvStatus().mappingsFromEnv) {
+      return res.json(await geltendeMappings());
+    }
     const mappings = await OidcClaimMapping.findAll({
       include: [{ model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] }],
       order: [['priority', 'DESC'], ['id', 'ASC']],
@@ -190,6 +202,13 @@ router.get('/oidc-mappings', requirePermission('admin','sso','admin'), async (re
 
 router.post('/oidc-mappings', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
+    const env = getOidcEnvStatus();
+    if (env.mappingsFromEnv) {
+      return res.status(409).json({
+        error: `Die Claim-Mappings gibt die Umgebung vor (${oidcEnv.MAPPING_VARIABLE}) `
+          + `und koennen hier nicht geaendert werden.`,
+      });
+    }
     const { claim_path, claim_value, role, custom_role_id, priority } = req.body || {};
     if (!claim_path?.trim() || !claim_value?.trim()) return res.status(400).json({ error: 'claim_path und claim_value erforderlich' });
     if (!role && !custom_role_id) return res.status(400).json({ error: 'role oder custom_role_id erforderlich' });
@@ -207,6 +226,13 @@ router.post('/oidc-mappings', requirePermission('admin','sso','admin'), async (r
 
 router.delete('/oidc-mappings/:id', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
+    const env = getOidcEnvStatus();
+    if (env.mappingsFromEnv) {
+      return res.status(409).json({
+        error: `Die Claim-Mappings gibt die Umgebung vor (${oidcEnv.MAPPING_VARIABLE}) `
+          + `und koennen hier nicht geaendert werden.`,
+      });
+    }
     const mapping = await OidcClaimMapping.findByPk(req.params.id);
     if (!mapping) return res.status(404).json({ error: 'Nicht gefunden' });
     const label = `${mapping.claim_path}=${mapping.claim_value}`;
@@ -221,14 +247,23 @@ router.delete('/oidc-mappings/:id', requirePermission('admin','sso','admin'), as
 router.get('/oidc', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const o = await getOidcRaw();
+    const env = getOidcEnvStatus();
     res.json({
       enabled: o.enabled,
       displayName: o.displayName || 'Single Sign-On',
       issuer: o.issuer || '',
       clientId: o.clientId || '',
       scopes: o.scopes || 'openid profile email',
-      clientSecretSet: !!o.clientSecretEnc,
+      // Ein Secret aus der Umgebung erzeugt kein Chiffrat. Ohne die zweite
+      // Bedingung meldete die Oberflaeche "kein Secret hinterlegt", waehrend
+      // die Anmeldung laengst funktioniert.
+      clientSecretSet: !!o.clientSecretEnc || env.secretFromEnv,
       callbackUrl: getCallbackUrl(),
+      // Damit die Oberflaeche sperren kann, statt ein Speichern anzubieten,
+      // das keine Wirkung haette.
+      envManagedFields: env.fields,
+      mappingsFromEnv: env.mappingsFromEnv,
+      mappingsError: env.mappingsError,
     });
   } catch (e) { serverError(res, e, 'admin'); }
 });
@@ -236,6 +271,25 @@ router.get('/oidc', requirePermission('admin','sso','admin'), async (req, res) =
 router.put('/oidc', requirePermission('admin','sso','admin'), async (req, res) => {
   try {
     const { enabled, displayName, issuer, clientId, clientSecret, scopes } = req.body || {};
+
+    // Felder, die die Umgebung vorgibt, koennen hier nicht geaendert werden.
+    // Abgelehnt statt still ignoriert: Ein "gespeichert", das nichts bewirkt,
+    // ist der Fehler, den niemand findet - und in einem ISMS gehoert eine
+    // wirkungslose Aenderung erst recht nicht als Erfolg ins Protokoll.
+    const env = getOidcEnvStatus();
+    if (env.fields.length > 0) {
+      const gesendet = { enabled, displayName, issuer, clientId, clientSecret, scopes };
+      const kollision = env.fields.filter((f) => gesendet[f] !== undefined);
+      if (kollision.length > 0) {
+        return res.status(409).json({
+          error: `Diese Felder gibt die Umgebung vor und koennen hier nicht geaendert werden: `
+            + `${kollision.join(', ')}. Sie stammen aus den Variablen `
+            + `${kollision.map((f) => oidcEnv.FELDER[f]).join(', ')} und werden dort gepflegt.`,
+          envManagedFields: env.fields,
+        });
+      }
+    }
+
     const patch = {};
     if (enabled !== undefined) patch.enabled = !!enabled;
     if (displayName !== undefined) patch.displayName = displayName;
