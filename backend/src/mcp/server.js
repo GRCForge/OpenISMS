@@ -710,8 +710,8 @@ server.tool(
   'Show the CheckMK integration configuration (without the secret) and the result of the last sync run.',
   {},
   async () => {
-    const { getCheckmkPublic } = require('../services/settingsService');
-    return { content: [{ type: 'text', text: JSON.stringify(await getCheckmkPublic(), null, 2) }] };
+    const { getIntegrationPublic } = require('../services/settingsService');
+    return { content: [{ type: 'text', text: JSON.stringify(await getIntegrationPublic('checkmk'), null, 2) }] };
   }
 );
 
@@ -720,13 +720,15 @@ server.tool(
   'Fetch the live host list from CheckMK (name, IP, state, plugin output). Read-only, writes nothing to the ISMS.',
   {},
   async () => {
-    const { getCheckmkConfig } = require('../services/settingsService');
-    const { fetchHosts } = require('../services/checkmkService');
-    const cfg = await getCheckmkConfig();
+    const { getIntegrationConfig } = require('../services/settingsService');
+    const { adapter } = require('../services/integrations');
+    const cmk = adapter('checkmk');
+    const cfg = await getIntegrationConfig('checkmk');
     if (!cfg.url || !cfg.secret) {
       return { content: [{ type: 'text', text: 'CheckMK integration is not configured.' }], isError: true };
     }
-    return { content: [{ type: 'text', text: JSON.stringify(await fetchHosts(cfg), null, 2) }] };
+    const { hosts } = await cmk.vorschau(cfg);
+    return { content: [{ type: 'text', text: JSON.stringify(hosts, null, 2) }] };
   }
 );
 
@@ -737,10 +739,12 @@ server.tool(
     dry_run: z.boolean().optional().default(true).describe('true (default) reports what would change without writing anything'),
   },
   async ({ dry_run }, { mcpUser }) => {
-    const { getCheckmkConfig, setCheckmk } = require('../services/settingsService');
-    const { syncFromCheckmk } = require('../services/checkmkSyncService');
+    const { getIntegrationConfig, setIntegration } = require('../services/settingsService');
+    const { adapter } = require('../services/integrations');
+    const { abgleichen } = require('../services/discoverySync');
+    const cmk = adapter('checkmk');
 
-    const cfg = await getCheckmkConfig();
+    const cfg = await getIntegrationConfig('checkmk');
     if (!cfg.url || !cfg.secret) {
       return { content: [{ type: 'text', text: 'CheckMK integration is not configured.' }], isError: true };
     }
@@ -748,12 +752,19 @@ server.tool(
       return { content: [{ type: 'text', text: 'CheckMK integration is disabled. Enable it before syncing.' }], isError: true };
     }
 
-    const result = await syncFromCheckmk({ cfg, dryRun: dry_run });
+    const { records, zusatz } = await cmk.lesen(cfg);
+    const result = await abgleichen({
+      source: cmk.id,
+      records,
+      dryRun: dry_run,
+      zaehltBestandVollstaendig: cmk.zaehltBestandVollstaendig,
+      zusatz,
+    });
 
     // Ein Probelauf setzt keinen Sync-Stand — sonst behauptet die Anzeige eine
     // Aktualitaet, die nie geschrieben wurde.
     if (!dry_run) {
-      await setCheckmk({
+      await setIntegration('checkmk', {
         lastSyncAt: result.run_at,
         lastSyncSummary: {
           hosts_seen: result.hosts_seen,

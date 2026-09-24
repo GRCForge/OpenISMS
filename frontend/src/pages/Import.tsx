@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { Upload, Download, CheckCircle, AlertCircle, ChevronRight, Table, Settings2 } from 'lucide-react';
 import api from '../lib/api';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
@@ -8,6 +9,19 @@ import { Select } from '../components/ui/Select';
 import { useToast } from '../contexts/ToastContext';
 
 type EntityType = 'asset' | 'user' | 'vendor' | 'risk' | 'vendor_contact';
+
+// Assets werden nicht mehr direkt angelegt, sondern als Vorschlaege in die
+// Netzwerk-Erkennung gestellt. Das Ergebnis muss das sagen — "50 Datensaetze
+// erstellt" waere sonst eine Zahl, zu der es keine Assets gibt.
+interface ImportResult {
+  created: number;
+  errors: { row: number | string; error: string }[];
+  staged?: number;
+  staged_updated?: number;
+  assets_updated?: number;
+  skipped_ignored?: number;
+  needs_approval?: boolean;
+}
 
 interface PreviewData {
   headers: string[];
@@ -20,11 +34,12 @@ interface PreviewData {
 export const Import: React.FC = () => {
   const { t } = useTranslation('import');
   const toast = useToast();
+  const navigate = useNavigate();
   const [entityType, setEntityType] = useState<EntityType>('asset');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -250,9 +265,29 @@ export const Import: React.FC = () => {
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle size={40} />
             </div>
-            <div>
+            <div className="space-y-2">
               <h2 className="text-2xl font-bold dark:text-white">{t('step3.done')}</h2>
-              <p className="text-gray-500">{t('step3.doneSubtitle', { count: result.created })}</p>
+              {result.needs_approval ? (
+                <>
+                  <p className="text-gray-500">
+                    {t('step3.stagedSubtitle', { count: result.staged ?? 0 })}
+                  </p>
+                  {(result.staged_updated || result.assets_updated || result.skipped_ignored) ? (
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                      {t('step3.stagedDetails', {
+                        updated: result.staged_updated ?? 0,
+                        linked: result.assets_updated ?? 0,
+                        ignored: result.skipped_ignored ?? 0,
+                      })}
+                    </p>
+                  ) : null}
+                  <p className="text-sm text-amber-700 dark:text-amber-400 max-w-xl mx-auto">
+                    {t('step3.approvalHint')}
+                  </p>
+                </>
+              ) : (
+                <p className="text-gray-500">{t('step3.doneSubtitle', { count: result.created })}</p>
+              )}
             </div>
 
             {result.errors.length > 0 && (
@@ -271,7 +306,12 @@ export const Import: React.FC = () => {
             )}
 
             <div className="flex justify-center gap-3">
-              <Button onClick={() => setStep(1)}>{t('step3.startNew')}</Button>
+              {result.needs_approval && (
+                <Button onClick={() => navigate('/discovery')}>
+                  {t('step3.toApproval')}
+                </Button>
+              )}
+              <Button variant={result.needs_approval ? 'secondary' : 'primary'} onClick={() => setStep(1)}>{t('step3.startNew')}</Button>
               <Button variant="secondary" onClick={() => window.history.back()}>{t('step3.backToOverview')}</Button>
             </div>
           </CardBody>

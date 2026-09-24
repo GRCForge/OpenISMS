@@ -41,7 +41,11 @@
     "errorCount": "{{count}} errors occurred:",
     "rowError": "Row {{row}}:",
     "startNew": "Start another import",
-    "backToOverview": "Back to overview"
+    "backToOverview": "Back to overview",
+    "stagedSubtitle": "{{count}} activos están ahora como propuesta en el descubrimiento de red.",
+    "stagedDetails": "{{updated}} propuestas existentes actualizadas · {{linked}} activos ya vinculados tocados · {{ignored}} rechazados anteriormente omitidos.",
+    "approvalHint": "La importación no crea activos. Se crean con la aprobación, que sigue siendo una decisión documentada.",
+    "toApproval": "Ir a la aprobación"
   },
   "toast": {
     "previewError": "Preview failed",

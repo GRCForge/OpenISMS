@@ -2,6 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const { readSheet } = require('read-excel-file/node');
 const { Asset, User, Vendor, VendorContact, Risk } = require('../models');
+const { abgleichen } = require('../services/discoverySync');
+const datei = require('../services/integrations/datei');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
@@ -90,6 +92,10 @@ const ENTITY_CONFIGS = {
       { key: 'eol_date', label: 'EOL-Datum', type: 'date' },
       { key: 'tags', label: 'Tags', type: 'array' },
       { key: 'department', label: 'Abteilung', aliases: ['abteilung'] },
+      // Der Schluessel, unter dem eine Zeile beim naechsten Import wiedererkannt
+      // wird. Fehlt er, dient der Name als Schluessel — dann legt eine
+      // Umbenennung in der Quelldatei einen zweiten Vorschlag an.
+      { key: 'external_id', label: 'Inventarnummer / Schlüssel', aliases: ['inventarnummer', 'inventory number', 'schlüssel', 'key', 'external_id', 'asset-id', 'asset id'] },
     ]
   },
   user: {
@@ -248,6 +254,13 @@ router.post('/process', authenticate, requirePermission('import','access','admin
     const { headers, rows } = await readRows(req.file);
     const results = { created: 0, errors: [] };
 
+    // Assets entstehen hier nicht. Eine Tabelle ist eine Quelle wie das
+    // Monitoring: Sie schlaegt vor, das Staging sammelt, die Freigabe
+    // entscheidet. Bis 3.0.0 war dieser Weg die einzige Moeglichkeit, an der
+    // dokumentierten Freigabe vorbei ins Inventar zu kommen — eine Datei aus
+    // einem Postfach genuegte.
+    const assetVorschlaege = [];
+
     for (let i = 0; i < rows.length; i++) {
       const rowValues = rows[i];
       try {
@@ -307,6 +320,37 @@ router.post('/process', authenticate, requirePermission('import','access','admin
             const assessor = await User.findOne({ where: { email: String(data.assessor_email), active: true } });
             if (assessor) data.assessor_id = assessor.id;
           }
+
+          // Asset hat keine Spalte "department". Bis hierher wurde die Angabe
+          // stillschweigend verworfen: Sequelize ignoriert unbekannte
+          // Attribute beim create, und das Asset entstand ja — nur ohne die
+          // Abteilung, die jemand extra gepflegt hatte. Sie wird jetzt als Tag
+          // gefuehrt, damit sie filterbar bleibt und nicht verschwindet.
+          if (data.department) {
+            data.tags = [...(Array.isArray(data.tags) ? data.tags : []), `abteilung:${data.department}`];
+          }
+          delete data.department;
+
+          // Der Schluessel, unter dem die Zeile beim naechsten Import
+          // wiedererkannt wird. Ohne eigene Inventarnummer der Name — dann ist
+          // eine Umbenennung in der Datei ein neuer Vorschlag, kein Update.
+          const schluessel = String(data.external_id || data.name).trim();
+          const { name, type: assetTyp, version, vendor, location, ...rest } = data;
+          assetVorschlaege.push({
+            external_id: schluessel,
+            name,
+            // Der Standort aus einer Tabelle ist "Rack 2" oder "Serverraum",
+            // keine Adresse. In die IP-Spalte gehoert er nicht — die
+            // Netzwerk-Erkennung zeigt sie als IP an. Er faehrt in der payload
+            // mit und wird bei der Freigabe zum Standort des Assets.
+            ip: null,
+            os: `Aus Datei "${req.file.originalname}", Zeile ${i + 2}`,
+            vendor: vendor || null,
+            version: version || null,
+            asset_type: assetTyp || 'software',
+            payload: datei.payloadFiltern({ ...rest, type: assetTyp, location }),
+          });
+          continue;
         }
 
         await config.model.create(data);
@@ -316,8 +360,39 @@ router.post('/process', authenticate, requirePermission('import','access','admin
       }
     }
 
+    if (type === 'asset') {
+      // Doppelte Schluessel innerhalb einer Datei: der letzte gewinnt, und die
+      // Zeile wird benannt. Ohne diesen Schritt liefen zwei Zeilen mit
+      // demselben Schluessel nacheinander in denselben Staging-Eintrag — das
+      // Ergebnis waere richtig, aber die erste Zeile waere spurlos weg.
+      const nachSchluessel = new Map();
+      for (const v of assetVorschlaege) {
+        if (nachSchluessel.has(v.external_id)) {
+          results.errors.push({
+            row: '—',
+            error: `Schlüssel "${v.external_id}" kommt mehrfach vor. Nur der letzte Eintrag wurde übernommen.`,
+          });
+        }
+        nachSchluessel.set(v.external_id, v);
+      }
+
+      const abgleich = await abgleichen({
+        source: datei.id,
+        records: [...nachSchluessel.values()],
+        zaehltBestandVollstaendig: datei.zaehltBestandVollstaendig,
+      });
+      results.staged = abgleich.staging_created;
+      results.staged_updated = abgleich.staging_updated;
+      results.assets_updated = abgleich.assets_updated;
+      results.skipped_ignored = abgleich.skipped_ignored;
+      results.needs_approval = true;
+    }
+
     await auditFromReq(req, 'create', type, null, `Bulk-Import (${results.created} ${config.label})`, {
-      filename: req.file.originalname, created: results.created, errors: results.errors.length,
+      filename: req.file.originalname,
+      created: results.created,
+      staged: results.staged ?? 0,
+      errors: results.errors.length,
     });
     res.json(results);
   } catch (e) { serverError(res, e, 'import'); }

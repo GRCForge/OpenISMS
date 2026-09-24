@@ -540,6 +540,28 @@ const start = async () => {
     await sequelize.sync({ alter: { drop: false } });
     console.log('Database synchronized (no-drop mode)');
 
+    // Eine Spaltenverbreiterung, die sequelize.sync({alter}) nicht vornimmt.
+    //
+    // discovered_softwares.os traegt bei Connector-Eintraegen die Herkunftszeile
+    // ("CheckMK-Host: x | IP: ... | 5x CRIT: ..."). Mit mehreren Servicenamen
+    // darin sind 255 Zeichen erreicht — und Postgres kuerzt nicht, es bricht die
+    // Anweisung ab. Ausgerechnet der Host mit den meisten offenen Meldungen
+    // schaffte es dann nicht ins Staging.
+    //
+    // Das Modell sagt seit 3.0.1 TEXT; fuer eine 3.0.0-Installation aendert der
+    // Sync den Typ aber nicht. Deshalb hier, ausdruecklich und einmalig. Ein
+    // Fehlschlag wird NICHT verschluckt: eine halb migrierte Tabelle faellt
+    // sonst erst beim naechsten Abgleich auf, als Fehler ohne erkennbaren Bezug.
+    const [[osSpalte]] = await sequelize.query(`
+      SELECT data_type FROM information_schema.columns
+       WHERE table_schema = current_schema()
+         AND table_name = 'discovered_softwares' AND column_name = 'os'
+    `);
+    if (osSpalte && osSpalte.data_type !== 'text') {
+      await sequelize.query('ALTER TABLE "discovered_softwares" ALTER COLUMN "os" TYPE TEXT');
+      console.log('[DB] discovered_softwares.os auf TEXT verbreitert');
+    }
+
     // Apache AGE erst JETZT: Die Trigger haengen an den Tabellen, die der Sync
     // gerade angelegt hat. Davor scheiterte das Anlegen an "Relation assets
     // existiert nicht" - und zwar leise, weil ensureGraph() einen Fehlschlag

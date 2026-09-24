@@ -149,20 +149,6 @@ const DEFAULTS = {
     clientSecretEnc: null,
     scopes: 'openid profile email',
   },
-  // CheckMK-Anbindung. Das Secret liegt wie das OIDC-Client-Secret nur
-  // verschluesselt (secretEnc) und verlaesst das Backend nie im Klartext.
-  checkmk: {
-    enabled: false,
-    url: '',            // z. B. https://checkmk.intern
-    site: '',           // CheckMK-Site, z. B. 'cmk'
-    username: '',       // Automationsbenutzer
-    secretEnc: null,
-    // Aus: eine unverifizierte TLS-Verbindung ins Monitoring muss eine
-    // bewusste, sichtbare Entscheidung sein — kein stiller Fallback.
-    allowSelfSigned: false,
-    lastSyncAt: null,
-    lastSyncSummary: null,
-  },
 };
 
 const getRaw = async (key) => {
@@ -274,32 +260,41 @@ const setOidc = async (patch = {}) => {
   return next;
 };
 
-// ─── CheckMK-Anbindung ───────────────────────────────────────────────────────
+// ─── Drittsystem-Anbindungen ─────────────────────────────────────────────────
+//
+// Je Anbindung ein Settings-Schluessel, benannt wie die Quelle ('checkmk').
+// Die Vorgabewerte stehen im Adapter, nicht hier: sonst muesste eine neue
+// Quelle an zwei Stellen eingetragen werden, und die zweite wird vergessen.
+//
+// Lazy require: services/integrations laedt Adapter, die wiederum Modelle
+// anziehen koennen. Hier erst beim Aufruf zu laden haelt die Ladereihenfolge
+// des Backends unveraendert.
+const adapterVon = (id) => require('./integrations').adapter(id);
 
 // Rohform inkl. secretEnc — nur backend-intern verwenden, nie an einen Client geben.
-const getCheckmkRaw = async () => ({ ...DEFAULTS.checkmk, ...(await getRaw('checkmk')) });
+const getIntegrationRaw = async (id) => ({ ...(adapterVon(id).defaults || {}), ...(await getRaw(id)) });
 
 // Vollstaendige Config inkl. entschluesseltem Secret — ausschliesslich fuer den
 // Connector selbst. Analog zu getOidcConfig().
-const getCheckmkConfig = async () => {
-  const c = await getCheckmkRaw();
+const getIntegrationConfig = async (id) => {
+  const c = await getIntegrationRaw(id);
   return { ...c, secret: c.secretEnc ? decrypt(c.secretEnc) : null };
 };
 
 // Fuer die Anzeige: alles ausser dem Secret, plus ein Flag, ob eines hinterlegt ist.
-const getCheckmkPublic = async () => {
-  const { secretEnc, ...rest } = await getCheckmkRaw();
+const getIntegrationPublic = async (id) => {
+  const { secretEnc, ...rest } = await getIntegrationRaw(id);
   return { ...rest, secretConfigured: Boolean(secretEnc) };
 };
 
-const setCheckmk = async (patch = {}) => {
-  const current = await getCheckmkRaw();
+const setIntegration = async (id, patch = {}) => {
+  const current = await getIntegrationRaw(id);
   const next = { ...current, ...patch };
   // Secret nur ersetzen, wenn ein neues (nicht-leeres) uebergeben wurde —
   // sonst wuerde ein Speichern des Formulars ohne Secret-Eingabe es loeschen.
   if (patch.secret) next.secretEnc = encrypt(patch.secret);
   delete next.secret;
-  await saveSetting('checkmk', next);
+  await saveSetting(id, next);
   const { secretEnc, ...rest } = next;
   return { ...rest, secretConfigured: Boolean(secretEnc) };
 };
@@ -343,4 +338,4 @@ const setSetting = async (key, value) => {
   }
 };
 
-module.exports = { getGeneral, setGeneral, getOidcRaw, getOidcConfig, setOidc, getOidcEnvStatus, isOidcUsable, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting, getCheckmkRaw, getCheckmkConfig, getCheckmkPublic, setCheckmk };
+module.exports = { getGeneral, setGeneral, getOidcRaw, getOidcConfig, setOidc, getOidcEnvStatus, isOidcUsable, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting, getIntegrationRaw, getIntegrationConfig, getIntegrationPublic, setIntegration };

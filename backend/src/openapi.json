@@ -10073,151 +10073,6 @@
         "description": "Erfordert die Berechtigung `mappings.view`."
       }
     },
-    "/integrations/checkmk": {
-      "get": {
-        "tags": [
-          "Integrationen"
-        ],
-        "summary": "checkmk abrufen",
-        "x-generated": true,
-        "responses": {
-          "200": {
-            "description": "Erfolg"
-          },
-          "401": {
-            "description": "Nicht authentifiziert"
-          },
-          "403": {
-            "description": "Berechtigung fehlt"
-          }
-        },
-        "description": "Erfordert die Berechtigung `integrations.view`."
-      },
-      "put": {
-        "tags": [
-          "Integrationen"
-        ],
-        "summary": "checkmk aktualisieren",
-        "x-generated": true,
-        "responses": {
-          "200": {
-            "description": "Erfolg"
-          },
-          "400": {
-            "description": "Ungültige Eingabe"
-          },
-          "401": {
-            "description": "Nicht authentifiziert"
-          },
-          "403": {
-            "description": "Berechtigung fehlt"
-          }
-        },
-        "description": "Erfordert die Berechtigung `integrations.configure`.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      }
-    },
-    "/integrations/checkmk/test": {
-      "post": {
-        "tags": [
-          "Integrationen"
-        ],
-        "summary": "test anlegen",
-        "x-generated": true,
-        "responses": {
-          "200": {
-            "description": "Erfolg"
-          },
-          "400": {
-            "description": "Ungültige Eingabe"
-          },
-          "401": {
-            "description": "Nicht authentifiziert"
-          },
-          "403": {
-            "description": "Berechtigung fehlt"
-          }
-        },
-        "description": "Erfordert die Berechtigung `integrations.sync`.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      }
-    },
-    "/integrations/checkmk/hosts": {
-      "get": {
-        "tags": [
-          "Integrationen"
-        ],
-        "summary": "hosts abrufen",
-        "x-generated": true,
-        "responses": {
-          "200": {
-            "description": "Erfolg"
-          },
-          "401": {
-            "description": "Nicht authentifiziert"
-          },
-          "403": {
-            "description": "Berechtigung fehlt"
-          }
-        },
-        "description": "Erfordert die Berechtigung `integrations.view`."
-      }
-    },
-    "/integrations/checkmk/sync": {
-      "post": {
-        "tags": [
-          "Integrationen"
-        ],
-        "summary": "sync anlegen",
-        "x-generated": true,
-        "responses": {
-          "200": {
-            "description": "Erfolg"
-          },
-          "400": {
-            "description": "Ungültige Eingabe"
-          },
-          "401": {
-            "description": "Nicht authentifiziert"
-          },
-          "403": {
-            "description": "Berechtigung fehlt"
-          }
-        },
-        "description": "Erfordert die Berechtigung `integrations.sync`.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      }
-    },
     "/push/vapid-public-key": {
       "get": {
         "tags": [
@@ -10741,6 +10596,242 @@
           }
         },
         "description": "Erfordert die Berechtigung `graph.rebuild`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations": {
+      "get": {
+        "tags": [
+          "Integrationen"
+        ],
+        "summary": "integrations abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `integrations.view`."
+      }
+    },
+    "/integrations/{source}": {
+      "get": {
+        "tags": [
+          "Integrationen"
+        ],
+        "summary": "integrations abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `integrations.view`.",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (source)"
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Integrationen"
+        ],
+        "summary": "integrations aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `integrations.configure`.",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (source)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/{source}/test": {
+      "post": {
+        "tags": [
+          "Integrationen"
+        ],
+        "summary": "test anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `integrations.sync`.",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (source)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/{source}/hosts": {
+      "get": {
+        "tags": [
+          "Integrationen"
+        ],
+        "summary": "hosts abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `integrations.view`.",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (source)"
+          }
+        ]
+      }
+    },
+    "/integrations/{source}/sync": {
+      "post": {
+        "tags": [
+          "Integrationen"
+        ],
+        "summary": "sync anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `integrations.sync`.",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (source)"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {

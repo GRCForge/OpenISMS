@@ -8,7 +8,9 @@ const dns     = require('dns').promises;
 const http    = require('http');
 const https   = require('https');
 const { Op }  = require('sequelize');
-const { Asset, DiscoveredSoftware, sequelize } = require('../models');
+const { Asset, User, DiscoveredSoftware, sequelize } = require('../models');
+const registry = require('../services/integrations');
+const datei = require('../services/integrations/datei');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 
@@ -517,6 +519,30 @@ router.get('/staged', authenticate, requirePermission('discovery','access','admi
   }
 });
 
+// Stammt der Eintrag aus einer registrierten Quelle (CheckMK, Datei-Import),
+// wird die Herkunft am Asset festgehalten. Ohne diesen Schluessel muesste ein
+// spaeterer Abgleich ueber den Namen matchen und wuerde bei jeder Umbenennung
+// ein Duplikat anlegen.
+//
+// 'agent' und 'network-scan' melden keinen stabilen Schluessel: der Agent
+// meldet Software je Host, der Scan eine IP von heute. Sie stehen deshalb
+// nicht im Verzeichnis und bekommen keine Verknuepfung.
+const istConnectorQuelle = (source) => Boolean(source && registry.ADAPTER[source]);
+
+/**
+ * Prueft eine aus der payload vorgeschlagene Benutzer-ID.
+ *
+ * owner_id und assessor_id sind NOT NULL und Fremdschluessel. Zwischen Import
+ * und Freigabe koennen Wochen liegen; ist der Benutzer inzwischen deaktiviert
+ * oder geloescht, scheitert die Freigabe an der Datenbank — mit einer Meldung,
+ * die nicht sagt warum. Stattdessen faellt sie auf den Freigebenden zurueck.
+ */
+async function gueltigerBenutzer(id, t) {
+  if (!id) return null;
+  const u = await User.findOne({ where: { id, active: true }, attributes: ['id'], transaction: t });
+  return u ? u.id : null;
+}
+
 // Approve a staged item -> create Asset
 router.post('/staged/:id/approve', authenticate, requirePermission('discovery','access','admin','it-staff'), requireWriteAccess(), async (req, res) => {
   const { id } = req.params;
@@ -555,7 +581,7 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
         // Auch beim Zusammenfuehren die Connector-Herkunft nachtragen, sonst
         // bleibt ein per Namen gematchtes Asset beim naechsten Sync unverknuepft
         // und wuerde erneut als neuer Staging-Eintrag vorgelegt.
-        if (item.source && !['agent', 'network-scan'].includes(item.source) && !existing.external_id) {
+        if (istConnectorQuelle(item.source) && !existing.external_id) {
           patch.external_source = item.source;
           patch.external_id = item.hostname;
           patch.external_last_seen_at = new Date();
@@ -599,34 +625,53 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
           if (item.os) tags.push(`os:${item.os.replace(/\s+/g, '_')}`);
           const services = openPorts.map(p => p.service).join(', ');
           description = `Netzwerk-Scan: ${item.ip}${item.hostname !== item.ip ? ` (${item.hostname})` : ''}${item.os ? ` · System: ${item.os}${item.version ? ` ${item.version}` : ''}` : ''}${services ? ` · Dienste: ${services}` : ''} — freigegeben am ${today}`;
+        } else if (item.source === 'excel') {
+          tags = ['import', `schluessel:${item.hostname}`];
+          if (item.ip) tags.push(`ip:${item.ip}`);
+          description = `Aus einer importierten Liste uebernommen${item.os ? ` (${item.os})` : ''} und am ${today} freigegeben.`;
         } else {
           tags = ['auto-discovered', `host:${item.hostname}`];
           if (item.ip) tags.push(`ip:${item.ip}`);
           description = `Automatisch erkannt auf ${item.hostname}${item.ip ? ` (${item.ip})` : ''}${item.os ? ` · ${item.os}` : ''} und am ${today} freigegeben.`;
         }
 
-        // Stammt der Eintrag aus einem Drittsystem-Connector (z. B. CheckMK),
-        // wird die Herkunft am Asset festgehalten. Ohne diesen Schluessel
-        // muesste ein spaeterer Re-Sync ueber den Namen matchen und wuerde bei
-        // jeder Umbenennung ein Duplikat anlegen.
-        const isConnectorSource = item.source && !['agent', 'network-scan'].includes(item.source);
+        const isConnectorSource = istConnectorQuelle(item.source);
+
+        // Zusatzangaben aus der Quelle (Klassifizierung, Hosting, Tags ...).
+        // Gefiltert auf bekannte Felder — der Inhalt kommt bei einem
+        // Datei-Import aus einer hochgeladenen Tabelle.
+        const extra = datei.payloadLesen(item.payload);
+
+        const extraTags = Array.isArray(extra.tags) ? extra.tags.map(String) : [];
+        const alleTags = [...tags, ...extraTags.filter((x) => !tags.includes(x))];
 
         await Asset.create({
           name:             item.name,
-          type:             item.asset_type || 'software',
-          classification:   'internal',
-          lifecycle_status: 'evaluation',
-          location:         item.ip || null,
+          type:             extra.type || item.asset_type || 'software',
+          // Wo die Quelle nichts sagt, gilt 'internal' und 'evaluation': ein
+          // Vorschlag ist noch kein bewertetes Asset. Eine hoehere Einstufung
+          // aus einer Datei zu uebernehmen ist richtig, eine niedrigere zu
+          // erfinden waere es nicht.
+          classification:   extra.classification || 'internal',
+          lifecycle_status: extra.lifecycle_status || 'evaluation',
+          location:         extra.location || item.ip || null,
           version:          item.version || null,
           vendor:           item.vendor  || null,
-          owner_id:         req.user.id,
-          assessor_id:      req.user.id,
+          owner_id:         (await gueltigerBenutzer(extra.owner_id, t)) || req.user.id,
+          assessor_id:      (await gueltigerBenutzer(extra.assessor_id, t)) || req.user.id,
           external_source:  isConnectorSource ? item.source : null,
           external_id:      isConnectorSource ? item.hostname : null,
           external_last_seen_at: isConnectorSource ? new Date() : null,
-          tags,
-          description,
-          status:           'active',
+          tags:             alleTags,
+          // Die Beschreibung aus der Quelle hat Vorrang; die erzeugte Zeile
+          // haengt sich an, damit die Herkunft nicht verloren geht.
+          description:      extra.description ? `${extra.description}\n\n${description}` : description,
+          status:           extra.status || 'active',
+          ...(extra.hosting_type   ? { hosting_type: extra.hosting_type } : {}),
+          ...(extra.patch_status   ? { patch_status: extra.patch_status } : {}),
+          ...(extra.eol_date       ? { eol_date: extra.eol_date } : {}),
+          ...(extra.frameworks     ? { frameworks: extra.frameworks } : {}),
+          ...(extra.nis2_relevant !== undefined ? { nis2_relevant: Boolean(extra.nis2_relevant) } : {}),
         }, { transaction: t });
       }
 
