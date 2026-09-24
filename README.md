@@ -36,7 +36,7 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 7. [Roles & Permissions](#roles--permissions)
 8. [API Documentation](#api-documentation)
 9. [MCP Server (AI Integration)](#mcp-server-ai-integration)
-10. [Third-Party Integrations (CheckMK)](#third-party-integrations-checkmk)
+10. [Third-Party Integrations](#third-party-integrations)
 11. [Database Schema](#database-schema)
 12. [Directory Structure](#directory-structure)
 13. [Compliance Modules](#compliance-modules)
@@ -211,12 +211,15 @@ Where the Asset Topology draws the asset dependency tree, this answers questions
 ### Export & Import
 - **Export**: CSV (UTF-8/BOM, Excel-compatible) and Excel (`.xlsx`) on all list pages
 - **Import**: CSV and **Excel import** (`.xlsx`) for assets, users, vendors, risks, and a combined "Companies + Contacts" view
+- **Asset rows become proposals, not assets** (since v3.0.1): they land in the discovery staging queue like any other source, and an asset is created on approval. A spreadsheet from an inbox is not a shortcut past the approval that every other source has to pass.
+- Repeatable: map an inventory number (the asset name otherwise) and a re-import updates the proposal instead of adding a second one. It does **not** overwrite maintained fields of an already approved asset.
 - Microsoft 365 Quickstart: typical M365 services as a pre-built import template
 
 ### Network Discovery & Staging
 - **Network scan import**: discovered hosts land in an **approval queue** (staging) rather than being created as assets directly
 - **Agent discovery**: locally installed agent reports installed software → also goes to staging
-- Overview table with source badge (Network Scan / Agent), type (Hardware/Software), open ports
+- **Spreadsheet import**: asset rows from CSV/Excel arrive here as proposals too (`source='excel'`), via **Import**
+- Overview table with source badge (Network Scan / Agent / CheckMK / Import), type (Hardware/Software), open ports
 - Per entry: **Approve** (asset is created), **Ignore** or reject
 - Deduplication: already known IPs are not staged again
 
@@ -733,11 +736,15 @@ The server returns the JSON-RPC list of all **78 available tools**.
 
 ---
 
-## Third-Party Integrations (CheckMK)
+## Third-Party Integrations
 
 A monitoring system knows which hosts actually exist and whether they are running. That statement is exactly what a hand-maintained asset register cannot make. The CheckMK integration closes that gap.
 
-**It never creates assets.** Discovered hosts land in the existing discovery staging area (`source='checkmk'`); turning one into an asset stays a human decision, recorded as such. This mirrors the agent import, which follows the same rule.
+**A source never creates assets.** Discovered hosts land in the existing discovery staging area (`source='checkmk'`); turning one into an asset stays a human decision, recorded as such. The agent import, the network scan and the spreadsheet import all follow the same rule.
+
+Sources live in `backend/src/services/integrations/` and are listed at `GET /api/integrations`. Each one declares its config fields, its connection test and how it maps records to proposals; the reconcile itself is shared (`services/discoverySync.js`). **Adding a source is one file plus one line in the registry** — no new routes, no new settings key.
+
+One property is worth naming, because getting it wrong costs data: `zaehltBestandVollstaendig`. Only a source that enumerates its inventory completely may conclude, from a record being absent, that an asset is gone and mark it `MISSING`. CheckMK may. An uploaded spreadsheet is an excerpt somebody sent, and may not.
 
 ### Setup
 
@@ -778,7 +785,7 @@ The last case is the one such integrations usually omit. An asset your monitorin
 | `isms_checkmk_hosts` | Fetch the live host list — read-only, writes nothing |
 | `isms_checkmk_sync` | Reconcile. `dry_run` defaults to `true` |
 
-The layout is deliberately generic (`/api/integrations/<system>/…`) so further sources can sit alongside CheckMK without restructuring.
+The MCP tools stay CheckMK-specific by name; the REST layer is generic (`/api/integrations/<source>/…`), so further sources sit alongside CheckMK without restructuring.
 
 ---
 
