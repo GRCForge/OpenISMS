@@ -1,0 +1,73 @@
+{
+  "title": "Relationship analysis",
+  "subtitle": "Questions of open-ended depth: what depends on an asset, why a requirement counts as met, how two objects are connected. The tables remain authoritative — the graph is their analysis.",
+  "unavailable_title": "Relationship analysis is not available.",
+  "unavailable_hint": "Apache AGE is not set up in this database. The rest of the ISMS is unaffected.",
+  "rebuild": "Rebuild graph",
+  "rebuilding": "Rebuilding…",
+  "rebuild_done": "Rebuilt: {{nodes}} nodes, {{edges}} edges ({{ms}} ms)",
+  "rebuild_failed": "Rebuild failed.",
+  "error_generic": "Analysis failed.",
+  "tabs": {
+    "impact": "Impact analysis",
+    "evidence": "Evidence",
+    "path": "Connection"
+  },
+  "entity": {
+    "asset": "Asset",
+    "vendor": "Vendor",
+    "risk": "Risk",
+    "control": "Control",
+    "threat": "Threat",
+    "incident": "Incident",
+    "vvt": "RoPA entry",
+    "bcm_process": "Business process",
+    "policy": "Policy",
+    "ai_system": "AI system",
+    "dsfa": "DPIA",
+    "requirement": "Requirement"
+  },
+  "framework": {
+    "iso27001": "ISO 27001",
+    "bsi": "BSI IT-Grundschutz",
+    "nis2": "NIS 2",
+    "c5": "BSI C5",
+    "tisax": "TISAX"
+  },
+  "impact": {
+    "entity_type": "Kind",
+    "entity_id": "ID",
+    "depth": "Depth",
+    "analyse": "Analyse",
+    "distance": "Distance",
+    "kind": "Kind",
+    "name": "Name",
+    "empty": "Nothing found — either the object does not exist, or it is not linked to anything.",
+    "truncated": "The list is capped at 500 matches. A smaller depth gives a result you can still act on.",
+    "hops_one": "{{count}} hop",
+    "hops_other": "{{count}} hops",
+    "results_one": "{{count}} affected object up to depth {{depth}}",
+    "results_other": "{{count}} affected objects up to depth {{depth}}"
+  },
+  "evidence": {
+    "framework": "Framework",
+    "ref": "Reference",
+    "check": "Show evidence",
+    "covered": "covered",
+    "not_covered": "not covered",
+    "no_control": "No control is mapped to this requirement, so it is not covered.",
+    "no_risk": "No risk is linked to this control.",
+    "coverage_full": "full",
+    "coverage_partial": "partial"
+  },
+  "path": {
+    "from_type": "From (kind)",
+    "from_id": "From (ID)",
+    "to_type": "To (kind)",
+    "to_id": "To (ID)",
+    "find": "Find connection",
+    "none": "No connection found within five hops.",
+    "found_one": "Shortest connection across {{count}} hop",
+    "found_other": "Shortest connection across {{count}} hops"
+  }
+}

@@ -50,6 +50,7 @@ const Iso27001 = lazy(() => import('./pages/Iso27001').then(m => ({ default: m.I
 const BsiGrundschutz = lazy(() => import('./pages/BsiGrundschutz').then(m => ({ default: m.BsiGrundschutz })));
 const Nis2 = lazy(() => import('./pages/Nis2').then(m => ({ default: m.Nis2 })));
 const C5 = lazy(() => import('./pages/C5').then(m => ({ default: m.C5 })));
+const Graph = lazy(() => import('./pages/Graph').then(m => ({ default: m.Graph })));
 
 const App: React.FC = () => (
   <AuthProvider>
@@ -69,6 +70,7 @@ const App: React.FC = () => (
               <Route path="cves" element={<RoleGate roles={['admin', 'assessor', 'it-staff']}><Cves /></RoleGate>} />
               <Route path="assets/:id" element={<AssetDetail />} />
               <Route path="topology" element={<Topology />} />
+              <Route path="graph" element={<Graph />} />
               <Route path="risks" element={<Risks />} />
               <Route path="controls" element={<Controls />} />
               <Route path="incidents" element={<Incidents />} />

@@ -13,7 +13,7 @@ const NAMESPACES = [
   'c5', 'bsigrundschutz', 'iso27001', 'nis2',
   'subjectrequests', 'myarea', 'aiact', 'bcm', 'dora',
   'networkdiscovery', 'tisax', 'policylibrary', 'managementreport',
-  'pentests', 'vvt', 'documentanalysis',
+  'pentests', 'vvt', 'documentanalysis', 'graph',
 ];
 
 i18n
@@ -26,7 +26,17 @@ i18n
     defaultNS: 'common',
     ns: NAMESPACES,
     backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+      // Die Version haengt an der URL, damit ein Update seine Texte auch
+      // wirklich zeigt.
+      //
+      // Die Sprachdateien tragen - anders als die gebauten JS-Buendel - keinen
+      // Inhalts-Hash im Namen und werden mit einem Tag Cache-Lebensdauer
+      // ausgeliefert. i18next holt sie per fetch NACH dem Seitenaufbau, und
+      // davon ist selbst ein hartes Neuladen nicht erfasst. Nach einem Update
+      // sah man deshalb bis zu 24 Stunden lang die alten Texte - neue
+      // Beschriftungen fehlten, geaenderte blieben stehen, und beides sah nach
+      // einem Fehler in der Uebersetzung aus statt nach einem Cache.
+      loadPath: `/locales/{{lng}}/{{ns}}.json?v=${__APP_VERSION__}`,
     },
     detection: {
       order: ['localStorage', 'navigator'],

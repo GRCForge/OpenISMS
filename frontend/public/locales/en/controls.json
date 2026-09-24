@@ -90,5 +90,31 @@
     "withMappings": "controls with cross-references",
     "filterPlaceholder": "Filter by ID or title…",
     "nameAndStatus": "Name & Status"
+  },
+  "requirements": {
+    "title": "Requirements met",
+    "hint": "One control can satisfy requirements from several frameworks. Each mapping is saved immediately and recorded in the audit log.",
+    "none": "No requirement mapped yet.",
+    "framework_label": "Framework",
+    "requirement_label": "Requirement",
+    "coverage_label": "Coverage",
+    "coverage_full": "full",
+    "coverage_partial": "partial",
+    "select": "— Select —",
+    "loading": "Loading…",
+    "catalogue_empty": "The catalogue is empty, or the corresponding module is disabled.",
+    "add": "Add mapping",
+    "adding": "Adding…",
+    "add_failed": "The mapping could not be created.",
+    "remove": "Remove mapping",
+    "delete_failed": "The mapping could not be removed.",
+    "dangling": "Requirement {{id}} no longer exists — remove this mapping.",
+    "framework": {
+      "iso27001": "ISO 27001",
+      "bsi": "BSI IT-Grundschutz",
+      "nis2": "NIS 2",
+      "c5": "BSI C5",
+      "tisax": "TISAX"
+    }
   }
 }

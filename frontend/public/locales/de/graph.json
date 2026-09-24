@@ -1,0 +1,73 @@
+{
+  "title": "Beziehungsauswertung",
+  "subtitle": "Fragen mit unbestimmter Tiefe: Was haengt an einem Asset, warum gilt eine Anforderung als erfuellt, wie haengen zwei Objekte zusammen. Die Tabellen bleiben massgeblich — der Graph ist ihre Auswertung.",
+  "unavailable_title": "Die Graph-Auswertung steht nicht bereit.",
+  "unavailable_hint": "In dieser Datenbank ist Apache AGE nicht eingerichtet. Das uebrige ISMS ist davon nicht betroffen.",
+  "rebuild": "Graph neu aufbauen",
+  "rebuilding": "Wird aufgebaut…",
+  "rebuild_done": "Neu aufgebaut: {{nodes}} Knoten, {{edges}} Kanten ({{ms}} ms)",
+  "rebuild_failed": "Neuaufbau fehlgeschlagen.",
+  "error_generic": "Auswertung fehlgeschlagen.",
+  "tabs": {
+    "impact": "Auswirkungsanalyse",
+    "evidence": "Nachweis",
+    "path": "Verbindung"
+  },
+  "entity": {
+    "asset": "Asset",
+    "vendor": "Lieferant",
+    "risk": "Risiko",
+    "control": "Massnahme",
+    "threat": "Bedrohung",
+    "incident": "Vorfall",
+    "vvt": "VVT-Eintrag",
+    "bcm_process": "Geschaeftsprozess",
+    "policy": "Richtlinie",
+    "ai_system": "KI-System",
+    "dsfa": "DSFA",
+    "requirement": "Anforderung"
+  },
+  "framework": {
+    "iso27001": "ISO 27001",
+    "bsi": "BSI IT-Grundschutz",
+    "nis2": "NIS-2",
+    "c5": "BSI C5",
+    "tisax": "TISAX"
+  },
+  "impact": {
+    "entity_type": "Art",
+    "entity_id": "ID",
+    "depth": "Tiefe",
+    "analyse": "Auswerten",
+    "distance": "Abstand",
+    "kind": "Art",
+    "name": "Bezeichnung",
+    "empty": "Nichts gefunden — entweder gibt es das Objekt nicht, oder es ist mit nichts verknuepft.",
+    "truncated": "Die Anzeige ist auf 500 Treffer begrenzt. Eine kleinere Tiefe liefert ein Ergebnis, aus dem sich noch etwas ableiten laesst.",
+    "hops_one": "{{count}} Schritt",
+    "hops_other": "{{count}} Schritte",
+    "results_one": "{{count}} betroffenes Objekt bis Tiefe {{depth}}",
+    "results_other": "{{count}} betroffene Objekte bis Tiefe {{depth}}"
+  },
+  "evidence": {
+    "framework": "Regelwerk",
+    "ref": "Referenz",
+    "check": "Nachweis zeigen",
+    "covered": "belegt",
+    "not_covered": "nicht belegt",
+    "no_control": "Keine Massnahme ist dieser Anforderung zugeordnet. Damit ist sie nicht belegt.",
+    "no_risk": "Der Massnahme ist kein Risiko zugeordnet.",
+    "coverage_full": "vollstaendig",
+    "coverage_partial": "teilweise"
+  },
+  "path": {
+    "from_type": "Von (Art)",
+    "from_id": "Von (ID)",
+    "to_type": "Nach (Art)",
+    "to_id": "Nach (ID)",
+    "find": "Verbindung suchen",
+    "none": "Keine Verbindung innerhalb von fuenf Schritten gefunden.",
+    "found_one": "Kuerzeste Verbindung ueber {{count}} Schritt",
+    "found_other": "Kuerzeste Verbindung ueber {{count}} Schritte"
+  }
+}
