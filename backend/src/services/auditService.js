@@ -2,9 +2,10 @@ const { AuditLog } = require('../models');
 const { signAudit, verifyAuditSignature } = require('./cryptoService');
 
 // Deterministic serialization with recursively sorted object keys. This makes the
-// canonical form independent of key ordering, which matters because MySQL's JSON
-// column type re-orders object keys — without this, a round-tripped `details`
-// object would hash differently and be misreported as tampered.
+// canonical form independent of key ordering, which matters because the JSONB
+// column type re-orders object keys (as MySQL's JSON did before it) — without
+// this, a round-tripped `details` object would hash differently and be
+// misreported as tampered.
 const stableStringify = (value) => {
   if (value === null || typeof value !== 'object') return JSON.stringify(value ?? null);
   if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
@@ -13,8 +14,11 @@ const stableStringify = (value) => {
 };
 
 // Canonical HMAC input over the immutable audit fields. created_at is reduced to
-// whole seconds because MySQL DATETIME has no sub-second precision (the in-memory
-// Date would otherwise differ from the stored value on read-back).
+// whole seconds. That started as a MySQL necessity (DATETIME has no sub-second
+// precision, so the in-memory Date differed from the stored value on read-back)
+// and is kept deliberately on Postgres: timestamptz stores microseconds, a JS
+// Date carries milliseconds, and the truncation between them would otherwise
+// change the hashed representation and report an untouched entry as tampered.
 const canonicalize = (row) => stableStringify({
   action: row.action ?? null,
   entity_type: row.entity_type ?? null,

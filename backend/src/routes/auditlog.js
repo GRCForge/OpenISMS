@@ -51,7 +51,7 @@ router.get('/', authenticate, requirePermission('auditlog','view','admin','asses
     setFilter(where, 'entity_type', entity_type);
     setFilter(where, 'action', action);
     setFilter(where, 'actor_id', actor_id);
-    if (scalar(search)) where.entity_name = { [Op.like]: `%${escapeLike(String(search))}%` };
+    if (scalar(search)) where.entity_name = { [Op.iLike]: `%${escapeLike(String(search))}%` };
     const fromDate = validDate(from);
     const toDate = validDate(to, true);
     if (fromDate || toDate) {

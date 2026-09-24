@@ -16,7 +16,7 @@ const CustomRole = sequelize.define('CustomRole', {
   // is what every existing row gets on upgrade. Entries the matrix does not define
   // fall through to the route's own role check, so adding a module later does not
   // silently lock a custom role out of it.
-  permissions: { type: DataTypes.JSON, allowNull: true },
+  permissions: { type: DataTypes.JSONB, allowNull: true },
 }, { tableName: 'custom_roles', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
 module.exports = CustomRole;

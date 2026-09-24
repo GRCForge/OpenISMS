@@ -31,6 +31,12 @@ const DEFAULT_PERMISSIONS = {
   review:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], sign_off: ['admin','assessor'] },
   modules:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], edit: ['admin'] },
   auditlog:    { view: ['admin','assessor'], verify: ['admin'] },
+  // Graph-Auswertungen (v2.3.0). Lesen ist breit erlaubt: Die Auswertung zeigt
+  // Beziehungen zwischen Objekten, die diese Rollen ohnehin einzeln sehen
+  // duerfen, und Auswirkungsanalyse und Nachweispfad sind gerade fuer
+  // Management und Revision gedacht. Der Neuaufbau bleibt beim Administrator:
+  // Er laeuft ueber den gesamten Bestand.
+  graph:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer'], rebuild: ['admin'] },
   comments:    { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin','owner','assessor','it-staff','dpo'] },
   // vendors.js guarded inline with isItStaff()||isDpo(), which resolves to
   // admin/assessor/it-staff/dpo — wider than the create/edit lists shipped here.

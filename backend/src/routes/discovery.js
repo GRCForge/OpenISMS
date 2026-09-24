@@ -426,7 +426,7 @@ router.post('/report', authenticate, requirePermission('discovery','access','adm
 
       try {
         const existingAsset = await Asset.findOne({
-          where: { name: { [Op.like]: escapeLike(name) }, status: { [Op.ne]: 'decommissioned' } }
+          where: { name: { [Op.iLike]: escapeLike(name) }, status: { [Op.ne]: 'decommissioned' } }
         });
 
         if (existingAsset) {
@@ -437,7 +437,7 @@ router.post('/report', authenticate, requirePermission('discovery','access','adm
         } else {
           const existingStaged = await DiscoveredSoftware.findOne({
             where: {
-              name: { [Op.like]: escapeLike(name) },
+              name: { [Op.iLike]: escapeLike(name) },
               hostname: hostname,
               version: sw.version?.trim() || null
             }
@@ -533,8 +533,8 @@ router.post('/staged/:id/approve', authenticate, requirePermission('discovery','
 
       const isNetworkScan = item.source === 'network-scan';
       const searchWhere = isNetworkScan && item.ip
-        ? { name: { [Op.like]: `%${escapeLike(item.ip)}%` } }
-        : { name: { [Op.like]: escapeLike(item.name) } };
+        ? { name: { [Op.iLike]: `%${escapeLike(item.ip)}%` } }
+        : { name: { [Op.iLike]: escapeLike(item.name) } };
 
       const existing = await Asset.findOne({
         where: { ...searchWhere, status: { [Op.ne]: 'decommissioned' } },
@@ -808,7 +808,7 @@ router.post('/import', authenticate, requirePermission('discovery','access','adm
 
         // Skip if already exists as a non-decommissioned asset
         const existingAsset = await Asset.findOne({
-          where: { name: { [Op.like]: `%${escapeLike(host.ip)}%` }, status: { [Op.ne]: 'decommissioned' } }
+          where: { name: { [Op.iLike]: `%${escapeLike(host.ip)}%` }, status: { [Op.ne]: 'decommissioned' } }
         });
         if (existingAsset) { skipped++; continue; }
 

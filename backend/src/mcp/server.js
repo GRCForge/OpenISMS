@@ -613,7 +613,7 @@ server.tool(
       where.status = { [Op.ne]: 'decommissioned' };
     }
     if (classification) where.classification = classification;
-    if (search) where.name = { [Op.like]: `%${search}%` };
+    if (search) where.name = { [Op.iLike]: `%${search}%` };
 
     const assets = await Asset.findAll({
       where, limit,
@@ -1304,8 +1304,8 @@ server.tool(
     if (status) where.status = status;
     if (level) where.residual_level = level;
     if (search) where[Op.or] = [
-      { title: { [Op.like]: `%${search}%` } },
-      { description: { [Op.like]: `%${search}%` } },
+      { title: { [Op.iLike]: `%${search}%` } },
+      { description: { [Op.iLike]: `%${search}%` } },
     ];
 
     const risks = await Risk.findAll({
@@ -1530,8 +1530,8 @@ server.tool(
     const where = {};
     if (search) {
       where[Op.or] = [
-        { code: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
+        { code: { [Op.iLike]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const threats = await Threat.findAll({ where, order: [['code', 'ASC']] });
@@ -1555,7 +1555,7 @@ server.tool(
     const where = {};
     if (status) where.status = status;
     if (severity) where.severity = severity;
-    if (search) where.title = { [Op.like]: `%${search}%` };
+    if (search) where.title = { [Op.iLike]: `%${search}%` };
 
     const incidents = await Incident.findAll({
       where, limit,
@@ -1745,8 +1745,8 @@ server.tool(
     if (framework) where.framework = framework;
     if (status) where.status = status;
     if (search) where[Op.or] = [
-      { code: { [Op.like]: `%${search}%` } },
-      { title: { [Op.like]: `%${search}%` } },
+      { code: { [Op.iLike]: `%${search}%` } },
+      { title: { [Op.iLike]: `%${search}%` } },
     ];
 
     const controls = await Control.findAll({
@@ -2433,7 +2433,7 @@ server.tool(
 
     const isNetworkScan = item.source === 'network-scan';
     const searchWhere = isNetworkScan && item.ip
-      ? { name: { [Op.like]: `%${item.ip}%` } }
+      ? { name: { [Op.iLike]: `%${item.ip}%` } }
       : { name: item.name };
 
     const existing = await Asset.findOne({
@@ -2509,7 +2509,7 @@ server.tool(
   },
   async ({ query, limit }) => {
     const { Asset, Risk, Incident, Task } = getModels();
-    const like = { [Op.like]: `%${query}%` };
+    const like = { [Op.iLike]: `%${query}%` };
     const [assets, risks, incidents, tasks] = await Promise.all([
       Asset.findAll({ where: { name: like }, limit, attributes: ['id','name','type','status'] }),
       Risk.findAll({ where: { title: like }, limit, attributes: ['id','ref','title','residual_level','status'] }),
@@ -2691,9 +2691,9 @@ server.tool(
     if (status) where.status = status;
     if (search) {
       where[Op.or] = [
-        { title: { [Op.like]: `%${search}%` } },
-        { code: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
+        { code: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
@@ -3198,7 +3198,7 @@ server.tool(
       Asset.findAll({
         where: {
           status: 'active',
-          id: { [Op.notIn]: sequelize.literal('(SELECT asset_id FROM assessments WHERE is_current = 1 AND asset_id IS NOT NULL)') },
+          id: { [Op.notIn]: sequelize.literal('(SELECT asset_id FROM assessments WHERE is_current = true AND asset_id IS NOT NULL)') },
         },
         attributes: ['id', 'name', 'type', 'classification'],
       }),
@@ -4310,8 +4310,8 @@ server.tool(
     if (applicable !== undefined) where.applicable = applicable;
     if (search) {
       where[Op.or] = [
-        { ref: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
+        { ref: { [Op.iLike]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const items = await Iso27001Control.findAll({
@@ -4371,9 +4371,9 @@ server.tool(
     if (layer) where.layer = layer;
     if (search) {
       where[Op.or] = [
-        { req_id: { [Op.like]: `%${search}%` } },
-        { baustein_id: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
+        { req_id: { [Op.iLike]: `%${search}%` } },
+        { baustein_id: { [Op.iLike]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const items = await BsiRequirement.findAll({
@@ -4421,8 +4421,8 @@ server.tool(
     if (status && status !== 'all') where.implementation_status = status;
     if (search) {
       where[Op.or] = [
-        { article_ref: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
+        { article_ref: { [Op.iLike]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const items = await Nis2Measure.findAll({
@@ -4474,8 +4474,8 @@ server.tool(
     if (domain) where.domain = domain;
     if (search) {
       where[Op.or] = [
-        { criterion_id: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
+        { criterion_id: { [Op.iLike]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const items = await C5Criterion.findAll({
@@ -4526,8 +4526,8 @@ server.tool(
     if (chapter) where.chapter = chapter;
     if (search) {
       where[Op.or] = [
-        { ref: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
+        { ref: { [Op.iLike]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const items = await TisaxRequirement.findAll({ where, order: [['ref', 'ASC']], limit });
@@ -4734,8 +4734,8 @@ server.tool(
     if (mandatory !== undefined) where.mandatory = mandatory;
     if (search) {
       where[Op.or] = [
-        { title: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const items = await Training.findAll({
@@ -4940,7 +4940,7 @@ server.tool(
     if (entity_type) where.entity_type = entity_type;
     if (action) where.action = action;
     if (actor_id) where.actor_id = actor_id;
-    if (search) where.entity_name = { [Op.like]: `%${search}%` };
+    if (search) where.entity_name = { [Op.iLike]: `%${search}%` };
     if (from || to) {
       where.created_at = {};
       if (from) where.created_at[Op.gte] = new Date(from);
@@ -5013,8 +5013,8 @@ server.tool(
     if (status && status !== 'all') where.status = status;
     if (search) {
       where[Op.or] = [
-        { title: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
       ];
     }
     const items = await LegalRequirement.findAll({

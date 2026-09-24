@@ -25,7 +25,7 @@ const VendorTriageRun = sequelize.define('VendorTriageRun', {
   // Requirement coverage matrix (e.g. GDPR Art. 28(3)(a-h)): [{ ref, requirement,
   // status: met|partial|missing|na, note }]. This is the actual "is the AVV
   // sufficient?" verdict, alongside the findings.
-  coverage: { type: DataTypes.JSON, allowNull: true },
+  coverage: { type: DataTypes.JSONB, allowNull: true },
   // Whether the document was truncated before analysis (very long contract).
   truncated: { type: DataTypes.BOOLEAN, defaultValue: false },
   error_message: { type: DataTypes.TEXT },

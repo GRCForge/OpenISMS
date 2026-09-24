@@ -7,7 +7,7 @@ const DataFlow = sequelize.define('DataFlow', {
   description: { type: DataTypes.TEXT },
   source_id: { type: DataTypes.INTEGER, allowNull: true },
   target_id: { type: DataTypes.INTEGER, allowNull: true },
-  data_categories: { type: DataTypes.JSON, defaultValue: [] },
+  data_categories: { type: DataTypes.JSONB, defaultValue: [] },
   transfer_mechanism: {
     type: DataTypes.ENUM('api', 'file', 'database', 'manual', 'email', 'sftp', 'message_queue', 'other'),
     defaultValue: 'api',

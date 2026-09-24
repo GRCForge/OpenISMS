@@ -6,7 +6,25 @@ const { encrypt, decrypt } = require('../services/cryptoService');
 const User = sequelize.define('User', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   name: { type: DataTypes.STRING(100), allowNull: false },
-  email: { type: DataTypes.STRING(255), allowNull: false },
+  // Die E-Mail ist die Anmeldeidentitaet. Unter MySQL verglich die Kollation
+  // sie ohne Ruecksicht auf Gross-/Kleinschreibung, und die Anwendung verliess
+  // sich darauf, ohne es irgendwo auszusprechen. Postgres vergleicht exakt -
+  // waere das so geblieben, haette ein Anbieter, der "Max@example.com" liefert,
+  // waehrend das Konto "max@example.com" heisst, kein Konto gefunden und bei
+  // aktivem Auto-Provisioning ein ZWEITES angelegt: eine zweite Identitaet fuer
+  // dieselbe Person, mit der Standardrolle statt der zugeordneten.
+  //
+  // Deshalb wird hier normalisiert statt auf eine Kollation vertraut. Das ist
+  // die bessere Loesung, weil sie im Code steht: Was gespeichert wird, ist
+  // kleingeschrieben und ohne Rand, und der eindeutige Index auf lower(email)
+  // in index.js haelt auch das fest, was an diesem Setter vorbeikaeme.
+  email: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    set(value) {
+      this.setDataValue('email', typeof value === 'string' ? value.trim().toLowerCase() : value);
+    },
+  },
   password_hash: { type: DataTypes.STRING(255), allowNull: false },
   role: { type: DataTypes.ENUM('admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), allowNull: false, defaultValue: 'assessor' },
   department: { type: DataTypes.STRING(100) },

@@ -40,7 +40,7 @@ router.get('/', authenticate, async (req, res) => {
       Asset.findAll({
         where: {
           status: 'active',
-          id: { [Op.notIn]: sequelize.literal('(SELECT asset_id FROM assessments WHERE is_current = 1 AND asset_id IS NOT NULL)') },
+          id: { [Op.notIn]: sequelize.literal('(SELECT asset_id FROM assessments WHERE is_current = true AND asset_id IS NOT NULL)') },
         },
         attributes: ['id', 'name', 'type', 'classification'],
       }),

@@ -46,6 +46,17 @@ router.post('/', authenticate, requirePermission('users','create','admin'), asyn
     const { name, email, password, role, department, custom_role_id } = req.body;
     const check = await validatePassword(password);
     if (!check.valid) return res.status(400).json({ error: `Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}` });
+
+    // Seit v2.3.0 haelt ein eindeutiger Index auf lower(email) die Anmeldeidentitaet
+    // eindeutig. Ohne diese Vorabpruefung kaeme der Verstoss als roher
+    // Datenbankfehler zurueck - der landet hier im error-Feld der Antwort und
+    // damit in der Oberflaeche, samt Index- und Tabellennamen. Eine benannte
+    // Meldung ist verstaendlicher und verraet nichts ueber das Schema.
+    const normalisiert = String(email || '').trim().toLowerCase();
+    if (!normalisiert) return res.status(400).json({ error: 'E-Mail-Adresse erforderlich' });
+    if (await User.findOne({ where: { email: normalisiert } })) {
+      return res.status(409).json({ error: 'Diese E-Mail-Adresse wird bereits von einem Benutzer verwendet.' });
+    }
     const password_hash = await User.hashPassword(password);
     // Eine benutzerdefinierte Rolle pinnt die effektive Rolle auf ihre Basisrolle.
     let effectiveRole = role;

@@ -16,7 +16,7 @@ router.get('/', authenticate, requirePermission('threats','view','admin','owner'
     const { source, search } = req.query;
     const where = {};
     setFilter(where, 'source', source);
-    if (search) where[Op.or] = [{ code: { [Op.like]: `%${escapeLike(search)}%` } }, { title: { [Op.like]: `%${escapeLike(search)}%` } }];
+    if (search) where[Op.or] = [{ code: { [Op.iLike]: `%${escapeLike(search)}%` } }, { title: { [Op.iLike]: `%${escapeLike(search)}%` } }];
     const threats = await Threat.findAll({ where, order: [['source', 'ASC'], ['code', 'ASC'], ['title', 'ASC']] });
     res.json(threats);
   } catch (e) { serverError(res, e, 'threats'); }
