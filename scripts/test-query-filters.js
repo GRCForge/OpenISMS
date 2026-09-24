@@ -4,7 +4,7 @@
 /**
  * Query-string input reaches Sequelize where clauses and LIMIT/OFFSET directly.
  * Express turns ?status[ne]=x into an object and ?limit=abc into a string, and
- * both used to travel all the way to MySQL and come back as a failed request.
+ * both used to travel all the way to the database and come back as a failed request.
  * These helpers drop what cannot be compared and clamp what can.
  *
  * Run: node scripts/test-query-filters.js
@@ -49,7 +49,12 @@ eq('Objekt → Standardwert', boundedInt({ a: 1 }, 200, 1, 500), 200);
 
 console.log('validDate:');
 eq('ISO-Datum wird akzeptiert', validDate('2026-08-20') instanceof Date, true);
-eq('Tagesende wird gesetzt', validDate('2026-08-20', true).toISOString().slice(11, 19), '23:59:59');
+// toTimeString() und nicht toISOString(): validDate() erzeugt absichtlich das
+// Tagesende in ORTSZEIT, toISOString() rechnet nach UTC um. Die Pruefung war
+// dadurch von der Zeitzone des ausfuehrenden Rechners abhaengig - in der CI
+// (UTC) bestand sie, auf jedem Entwicklungsrechner mit Zeitverschiebung nicht
+// (in Mitteleuropa im Sommer "21:59:59").
+eq('Tagesende wird gesetzt', validDate('2026-08-20', true).toTimeString().slice(0, 8), '23:59:59');
 eq('Unsinn → null', validDate('nicht-ein-datum'), null);
 eq('leer → null', validDate(''), null);
 eq('Objekt → null', validDate({}), null);

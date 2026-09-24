@@ -19,7 +19,7 @@
 )
 
 ## Description
-OpenISMS is a complete, practice-oriented Information Security Management System (ISMS) built on Node.js, React and MySQL — a GRCForge project designed to support **ISO 27001**, **NIS-2**, **GDPR**, **EU AI Act**, **TISAX**, **DORA** and **BSI C5**.
+OpenISMS is a complete, practice-oriented Information Security Management System (ISMS) built on Node.js, React and PostgreSQL — a GRCForge project designed to support **ISO 27001**, **NIS-2**, **GDPR**, **EU AI Act**, **TISAX**, **DORA** and **BSI C5**.
 
 > **Initial login:** the administrator account is `admin@isms.local`. There is **no** hard-coded default password — set `ADMIN_PASSWORD` before first start, or the app generates a random one-time password and prints it to the server/container logs on first start (the install script also stores and shows it). Change it after first login.
 
@@ -102,6 +102,24 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 - Per asset: own dependency graph (grandparents → parents → current → children → grandchildren) with colour-coded levels and legend
 - **Reverse links**: list of all dependent assets (child assets) visible and clickable in the Topology tab
 
+### Relationship Analysis (graph, since v2.3.0)
+Powered by **Apache AGE** inside the same PostgreSQL database — no second datastore,
+no synchronisation, one backup. Optional: without the extension everything else
+works and only this page reports that it is unavailable.
+
+Where the Asset Topology draws the asset dependency tree, this answers questions of
+**open-ended depth** across every module:
+- **Impact analysis**: what hangs off an object over 1–4 steps — business processes,
+  risks, controls, requirements — grouped by kind with the distance to each. Edges
+  are followed in both directions, because a failure travels against the arrow
+- **Evidence as a path**: why a requirement counts as met — the controls that satisfy
+  it, the risks they mitigate, the assets behind them, and plainly whether it is
+  covered at all
+- **Connection**: the shortest path between any two objects, as a diagram
+- **Tables stay authoritative.** The graph is a projection maintained by database
+  triggers in the same transaction; `POST /api/graph/rebuild` restores it from the
+  tables at any time
+
 ### Risk Assessment (CIA Triad)
 - Assessment based on **Confidentiality (C)**, **Integrity (I)**, **Availability (A)** on a scale of 1–5
 - Automatic risk calculation: score + level (Low / Medium / High / Critical)
@@ -135,6 +153,9 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 - Status: Implemented · Planned · Not applicable (with justification)
 - Linked to risks with effectiveness rating (1–5)
 - SoA overview filtered by framework
+- **Cross-framework requirement mapping** (since v2.3.0): one control can satisfy
+  requirements from ISO 27001, BSI IT-Grundschutz, NIS-2, C5 and TISAX at the same
+  time, with full/partial coverage per mapping. Each mapping is audit-logged
 
 ### Policy Library
 - Central management of policies, guidelines, procedures, contracts
@@ -266,7 +287,7 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 | Component | Technology |
 |---|---|
 | Backend | Node.js ≥ 26.3 · Express 5 · Sequelize ORM |
-| Database | MySQL 8.0 |
+| Database | PostgreSQL 15+ (18 recommended) · Apache AGE for the relationship analysis (optional) |
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS 4 |
 | Authentication | JWT (24 h) · OIDC SSO (openid-client, PKCE) · TOTP · WebAuthn/passkeys |
 | Security | helmet (nonce CSP) · rate-limit · CORS · AES-256-GCM · bcrypt · hashed API tokens · HMAC audit integrity |
@@ -319,7 +340,7 @@ docker compose -f docker-compose.single.yml up -d --build
 ```bash
 docker run -d --name isms --restart unless-stopped \
   -p 8080:3001 \
-  -e DATABASE_URL="mysql://isms_user:PASS@192.168.1.100:3306/isms" \
+  -e DATABASE_URL="postgres://isms_user:PASS@192.168.1.100:5432/isms" \
   -e JWT_SECRET="<min-32-char-random-value>" \
   -e ENCRYPTION_KEY="<min-32-char-random-value>" \
   -e APP_URL="http://192.168.1.50:8080" \
@@ -344,7 +365,7 @@ docker run -d --name isms --restart unless-stopped \
 
 | Key | Example |
 |---|---|
-| `DATABASE_URL` | `mysql://isms_user:PASS@192.168.1.100:3306/isms` |
+| `DATABASE_URL` | `postgres://isms_user:PASS@192.168.1.100:5432/isms` |
 | `JWT_SECRET` | long random value |
 | `ENCRYPTION_KEY` | long random value |
 | `APP_URL` | `http://<UNRAID-IP>:8080` |
@@ -358,7 +379,7 @@ docker run -d --name isms --restart unless-stopped \
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | ✓¹ | `mysql://user:pass@host:3306/isms` |
+| `DATABASE_URL` | ✓¹ | `postgres://user:pass@host:5432/isms` |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | ✓¹ | Alternative to `DATABASE_URL` |
 | `JWT_SECRET` | ✓ | Token signing key (≥ 32 characters) |
 | `ENCRYPTION_KEY` | recommended | AES-256 key for encrypting stored secrets (OIDC/SMTP/LLM secrets, TOTP secrets) |
@@ -372,7 +393,10 @@ docker run -d --name isms --restart unless-stopped \
 | `UPLOAD_DIR` | – | Default: `/app/uploads` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Seed administrator credentials. **If `ADMIN_PASSWORD` is unset, a random one-time password is generated and printed to the logs on first start** (no known default) |
 | `DB_POOL_MIN` / `DB_POOL_MAX` | – | Sequelize connection pool (default `2` / `10`) |
-| `DB_CONNECT_TIMEOUT_MS` | – | MySQL connect timeout, fail fast on a dead DB (default `10000`) |
+| `DB_CONNECT_TIMEOUT_MS` | – | Connect timeout, fail fast on a dead DB (default `10000`) |
+| `DB_SSL` | – | `require` encrypts without validating the certificate, `verify` validates it (with `DB_SSL_CA`) |
+| `GRAPH_NAME` | – | Name of the AGE graph (default `isms`). Only change before first start |
+| `GRAPH_REBUILD_ON_START` | – | Rebuild the graph from the tables on every start (default `false`) |
 | `KEEPALIVE_TIMEOUT_MS` / `HEADERS_TIMEOUT_MS` | – | HTTP keep-alive tuning; keep above the reverse-proxy idle timeout (default `65000` / `66000`) |
 | `UV_THREADPOOL_SIZE` | – | libuv threadpool for bcrypt/hash/zip/parse workloads (Docker image default `8`) |
 
@@ -382,7 +406,9 @@ docker run -d --name isms --restart unless-stopped \
 
 ## Single Sign-On (OIDC)
 
-SSO is configured **inside the app** — no restart, no `.env` change required.
+SSO is configured **inside the app** — no restart, no `.env` change required. Since
+v2.3.0 it can alternatively be pinned through environment variables, for
+installations rolled out by configuration management.
 
 Supported providers (generic OIDC): Authentik · Keycloak · Microsoft Entra · Google · Zitadel · Okta · Auth0 · any OIDC-compatible IdP.
 
@@ -398,6 +424,24 @@ Supported providers (generic OIDC): Authentik · Keycloak · Microsoft Entra · 
 - On the first SSO login a local user is created automatically (default role configurable, auto-provisioning can be disabled)
 - **Profile picture** from the `picture` claim is automatically saved and updated on every login
 - Local login always remains available
+
+**Alternatively via environment variables (since v2.3.0):**
+
+`OIDC_ENABLED` · `OIDC_DISPLAY_NAME` · `OIDC_ISSUER` · `OIDC_CLIENT_ID` ·
+`OIDC_CLIENT_SECRET` · `OIDC_SCOPES` · `OIDC_CLAIM_MAPPINGS`
+
+Use this when the login path has to be part of the rollout instead of a manual step
+after every rebuild. **The environment wins hard:** a field set there is shown
+read-only in the app and `PUT /api/admin/oidc` rejects a change to it with a named
+reason — rather than reporting a save that has no effect. A value from the
+environment is never written to the database, so removing the variable brings back
+whatever the database held.
+
+`OIDC_CLAIM_MAPPINGS` takes a JSON array using the same field names as the table;
+custom roles are named by **name**, not id. If the variable is set but unusable, **no**
+mappings apply — not the ones from the database either. A typo must not silently hand
+out a different role than intended; the reason is logged and shown in the app. See
+`.env.example` for the full documentation.
 
 ---
 
@@ -901,7 +945,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 
 ## Local Development
 
-Requirements: Node.js >=26.3.0, MySQL 8.0
+Requirements: Node.js >=26.3.0, PostgreSQL 15+ (Apache AGE optional, for the relationship analysis)
 
 ```bash
 # Backend
@@ -943,11 +987,11 @@ Siehe auch die Sicherheitsanweisungen in [SECURITY.md](SECURITY.md) für verantw
 
 - Set `JWT_SECRET` to at least 32 random characters
 - Set `ENCRYPTION_KEY` (AES-256-GCM) — used for OIDC/SMTP/LLM secrets **and** TOTP secrets at rest; if changed, those secrets must be re-entered
-- Change all database passwords in `.env`. The bundled `docker-compose.yml` binds MySQL to `127.0.0.1` only — do not expose the DB port to the network
+- Change all database passwords in `.env`. The bundled `docker-compose.yml` binds PostgreSQL to `127.0.0.1` only — do not expose the DB port to the network
 - Put HTTPS via a reverse proxy in front (nginx, Traefik, Caddy). Set `SECURE_COOKIES=true` only once the proxy forwards `X-Forwarded-Proto: https` — otherwise the Secure flag prevents the session cookie from being set (breaks passkey/OIDC login)
 - Include the Docker volume `uploads` in your backup strategy
 - **Initial admin password:** if `ADMIN_PASSWORD` is not set, a random one-time password is generated and printed to the logs on first start — retrieve it there (or set `ADMIN_PASSWORD`) and change it after first login
-- Set up regular MySQL backups of the `isms` schema
+- Set up regular PostgreSQL backups of the `isms` database. `pg_dump` also captures the AGE graph; the in-app backup deliberately does not, because the graph is rebuilt from the tables on restore
 
 **Built-in hardening (already active):**
 - **Secrets at rest:** passwords are bcrypt-hashed (cost 12); API tokens are stored only as a SHA-256 hash (cleartext shown once); TOTP secrets and OIDC/SMTP/LLM secrets are AES-256-GCM encrypted

@@ -51,7 +51,7 @@ function isPrivateIP(ip) {
 }
 
 // Escape LIKE metacharacters so a software/host name containing % or _ is
-// matched literally instead of as a wildcard (default MySQL escape char: \).
+// matched literally instead of as a wildcard (default LIKE escape char: \).
 function escapeLike(s) {
   return String(s).replace(/[\\%_]/g, c => `\\${c}`);
 }

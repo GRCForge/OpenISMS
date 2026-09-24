@@ -49,7 +49,7 @@ const parseId = (roh) => {
 
 // GET /api/graph/meta — was es im Graphen gibt. Die Oberflaeche baut daraus
 // ihre Legende und ihre Filter, statt die Label noch einmal zu fuehren.
-router.get('/meta', requirePermission('graph', 'view', 'admin', 'assessor'), (req, res) => {
+router.get('/meta', requirePermission('graph', 'view', 'admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer'), (req, res) => {
   res.json({
     available: graph.istVerfuegbar(),
     detail: graph.statusText(),
@@ -73,7 +73,7 @@ router.get('/meta', requirePermission('graph', 'view', 'admin', 'assessor'), (re
  * Kantenrichtung. Nur vorwaerts zu suchen haette die Auswirkungsanalyse genau
  * um die Antwort gebracht, fuer die es sie gibt.
  */
-router.get('/impact/:type/:id', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor'), async (req, res) => {
+router.get('/impact/:type/:id', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer'), async (req, res) => {
   try {
     const id = parseId(req.params.id);
     if (id === null) return res.status(400).json({ error: 'Ungueltige id' });
@@ -156,7 +156,7 @@ router.get('/impact/:type/:id', requireGraph, requirePermission('graph', 'view',
  * zusammenhaengend, weil die Kataloge gar nicht mit den Massnahmen verbunden
  * waren.
  */
-router.get('/evidence/:framework/:ref', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor'), async (req, res) => {
+router.get('/evidence/:framework/:ref', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer'), async (req, res) => {
   try {
     const framework = String(req.params.framework || '').toLowerCase();
     const bekannt = spec.REQUIREMENT_SOURCES.map(q => q.framework);
@@ -231,7 +231,7 @@ router.get('/evidence/:framework/:ref', requireGraph, requirePermission('graph',
  * Das ist die Frage, wegen der es control_requirements gibt. Bis v2.2.x trug
  * eine Massnahme genau ein `framework`, also war die Antwort immer "eins".
  */
-router.get('/coverage/:controlId', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor'), async (req, res) => {
+router.get('/coverage/:controlId', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer'), async (req, res) => {
   try {
     const pk = parseId(req.params.controlId);
     if (pk === null) return res.status(400).json({ error: 'Ungueltige id' });
@@ -270,7 +270,7 @@ router.get('/coverage/:controlId', requireGraph, requirePermission('graph', 'vie
  * Pruefungssituation regelmaessig gestellt und bisher von Hand rekonstruiert
  * wurde.
  */
-router.get('/path/:fromType/:fromId/:toType/:toId', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor'), async (req, res) => {
+router.get('/path/:fromType/:fromId/:toType/:toId', requireGraph, requirePermission('graph', 'view', 'admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer'), async (req, res) => {
   try {
     const vonId = parseId(req.params.fromId);
     const nachId = parseId(req.params.toId);

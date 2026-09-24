@@ -44,7 +44,7 @@ router.get('/', authenticate, requirePermission('auditlog','view','admin','asses
     const { entity_type, action, actor_id, from, to, search, limit = 200, offset = 0 } = req.query;
 
     // Query parameters arrive as whatever the client sent: ?limit=abc parsed to
-    // NaN and ?limit=-1 passed the upper bound, both of which reached MySQL as an
+    // NaN and ?limit=-1 passed the upper bound, both of which reached the database as an
     // invalid LIMIT and came back as a 500. A malformed filter should narrow to a
     // sane default, not fail the page.
     const where = {};

@@ -1,30 +1,51 @@
-# Full-Stack-Deployment: App + Database + (optional) phpMyAdmin
+# Full-Stack-Deployment: App + Datenbank
 #
 #   docker compose up -d --build
 #
-# Environment variables are taken from .env (see .env.example)
+# Die Variablen kommen aus .env (siehe .env.example)
 services:
   isms-db:
-    image: mysql:8.0
+    # PostgreSQL 18 mit Apache AGE. Das Image kommt vom AGE-Projekt und bringt
+    # die Erweiterung fertig gebaut mit - ein reines postgres:18 haette sie
+    # nicht, und AGE ist keine Erweiterung, die sich zur Laufzeit nachladen
+    # laesst.
+    #
+    # FEST AUF EINE VERSION GEPINNT, nicht "latest": AGE unterstuetzt neue
+    # PostgreSQL-Hauptversionen mit Verzoegerung, weil das Projekt sie einzeln
+    # nachzieht. Ein bewegliches Tag koennte deshalb auf einen Stand springen,
+    # zu dem die Erweiterung noch gar nicht passt - und das faellt erst beim
+    # Hochfahren auf, mit den Daten schon im Volume.
+    image: apache/age:release_PG18_1.8.0
     container_name: isms-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-isms}
-      MYSQL_USER: ${MYSQL_USER:-isms_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-isms_password}
-    # Bind only to the loopback interface: the app reaches the DB over the internal
-    # Docker network (isms-db:3306), so the host mapping is for local admin tools
-    # only and must not be exposed to the LAN/internet.
+      POSTGRES_DB: ${POSTGRES_DB:-isms}
+      POSTGRES_USER: ${POSTGRES_USER:-isms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD muss gesetzt sein}
+    # AGE muss beim Start des Servers geladen sein, nicht erst beim ersten
+    # Zugriff: LOAD 'age' ist einem normalen Benutzer nicht erlaubt, und ohne
+    # vorgeladene Bibliothek scheitert jede Cypher-Abfrage mit "Zugriff auf
+    # Bibliothek age ist nicht erlaubt".
+    command: ["postgres", "-c", "shared_preload_libraries=age"]
+    # Nur an das Loopback-Interface binden: Die App erreicht die Datenbank ueber
+    # das interne Docker-Netz (isms-db:5432), die Host-Abbildung ist allein fuer
+    # lokale Administrationswerkzeuge und darf nicht ins LAN/Internet.
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      # pg_isready mit Benutzer UND Datenbank: Ohne beides meldet es schon
+      # Bereitschaft, waehrend die Initialisierung noch laeuft, und die App
+      # startet in eine halbfertige Datenbank.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-isms_user} -d ${POSTGRES_DB:-isms}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      # Die erste Initialisierung eines Clusters dauert laenger als ein
+      # spaeterer Start. start_period haelt die Fehlversuche so lange aus dem
+      # Zaehler heraus.
+      start_period: 30s
 
   openisms-app:
     build:
@@ -37,9 +58,9 @@ services:
       isms-db:
         condition: service_healthy
     environment:
-      # Use DATABASE_URL if provided, else construct from individual vars
-      # Note: isms-db is the hostname of the database container
-      DATABASE_URL: ${DATABASE_URL:-mysql://${MYSQL_USER:-isms_user}:${MYSQL_PASSWORD:-isms_password}@isms-db:3306/${MYSQL_DATABASE:-isms}}
+      # DATABASE_URL verwenden, wenn gesetzt, sonst aus den Einzelwerten bauen.
+      # isms-db ist der Hostname des Datenbank-Containers.
+      DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-isms_user}:${POSTGRES_PASSWORD}@isms-db:5432/${POSTGRES_DB:-isms}}
       # Secrets sind PFLICHT: die App startet seit v1.8.1 ohne sie nicht. Kein
       # unsicheres Default mehr — compose bricht mit Fehler ab, wenn nicht gesetzt.
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET muss gesetzt sein (>= 32 zufaellige Zeichen)}
@@ -58,5 +79,5 @@ services:
       - uploads_data:/app/uploads
 
 volumes:
-  mysql_data:
+  postgres_data:
   uploads_data:
