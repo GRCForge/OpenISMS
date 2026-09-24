@@ -31,7 +31,8 @@
   "healthStatus": {
     "good": "Gut",
     "needsImprovement": "Benötigt Verbesserungen",
-    "critical": "Kritisch"
+    "critical": "Kritisch",
+    "unavailable": "Nicht ermittelbar"
   },
   "controlPieLabels": {
     "implemented": "Implementiert",

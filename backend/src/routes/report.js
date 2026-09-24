@@ -3,6 +3,7 @@ const { heavyLimiter } = require('../middleware/rateLimiter');
 router.use(heavyLimiter);
 const { Op } = require('sequelize');
 const { Asset, Assessment, Risk, Incident, Control, Task, Reminder, Kpi, KpiMeasurement } = require('../models');
+const healthScore = require('../services/healthScore');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 
@@ -59,7 +60,7 @@ router.get('/trends', async (req, res) => {
     // sequential round-trips (none depend on the bucketing/distribution above).
     const ninetyDaysAgo = new Date(now);
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-    const [totalAssets, resolvedIncidents, kpis, openIncidents] = await Promise.all([
+    const [totalAssets, resolvedIncidents, kpis, openIncidents, allRisks] = await Promise.all([
       Asset.count({ where: { status: { [Op.ne]: 'decommissioned' } } }),
       Incident.findAll({
         where: { status: { [Op.in]: ['resolved', 'closed'] }, updated_at: { [Op.gte]: ninetyDaysAgo } },
@@ -70,6 +71,14 @@ router.get('/trends', async (req, res) => {
         order: [['title', 'ASC']],
       }),
       Incident.count({ where: { status: { [Op.in]: ['reported', 'investigating', 'contained'] } } }),
+      // Das RISIKOREGISTER, nicht die CIA-Bewertungen der Assets. Beides hiess
+      // bisher "offene hohe Risiken" und meinte Verschiedenes - der Bericht
+      // zaehlte Assessments, das MCP-Werkzeug Risiken. Fuer eine Kennzahl, die
+      // in einem Managementbericht steht, ist das Risikoregister die richtige
+      // Quelle: Ein hohes Restrisiko ist eine bewertete, benannte Aussage,
+      // eine hohe CIA-Einstufung nur ein Schutzbedarf.
+      // Ohne Zeitfenster - ein Risiko von vor 13 Monaten ist nicht erledigt.
+      Risk.findAll({ attributes: ['residual_level', 'status'], raw: true }),
     ]);
 
     // Monthly bucketing
@@ -109,7 +118,13 @@ router.get('/trends', async (req, res) => {
     const controlCoverage = totalControls > 0 ? Math.round((implementedControls / totalControls) * 100) : 0;
 
     const overdueCount = allReminders.filter(r => r.status === 'overdue').length;
-    const openHighRisks = riskDist.critical + riskDist.high;
+
+    // Offen heisst: weder akzeptiert noch geschlossen. Ein akzeptiertes Risiko
+    // ist eine getroffene Entscheidung und kein offener Punkt.
+    const offeneRisiken = allRisks.filter(r => !['accepted', 'closed'].includes(r.status));
+    const criticalRisks = offeneRisiken.filter(r => r.residual_level === 'critical').length;
+    const highRisks = offeneRisiken.filter(r => r.residual_level === 'high').length;
+    const openHighRisks = criticalRisks + highRisks;
 
     const taskTotal = allTasks.length;
     const taskCompletionRate = taskTotal > 0 ? Math.round((taskStatus.done / taskTotal) * 100) : 0;
@@ -124,13 +139,18 @@ router.get('/trends', async (req, res) => {
       mttr = Math.round((totalDays / resolvedIncidents.length) * 10) / 10;
     }
 
-    // ISMS health score
-    const healthScore = Math.round(
-      (controlCoverage / 100) * 30 +
-      (assessmentCoverage / 100) * 25 +
-      Math.max(0, 1 - (overdueCount / Math.max(totalAssets, 1))) * 25 +
-      Math.max(0, 1 - (riskDist.critical * 0.1 + riskDist.high * 0.03)) * 20
-    );
+    // ISMS-Health-Score - eine Berechnung fuer alle Aufrufer,
+    // siehe services/healthScore.js (dort steht auch, warum).
+    const health = healthScore.berechne({
+      totalAssets,
+      assessedAssets: assessedCount,
+      totalControls,
+      implementedControls,
+      overdueReviews: overdueCount,
+      criticalRisks,
+      highRisks,
+      totalRisks: allRisks.length,
+    });
 
     // (manual KPIs fetched in the parallel batch above)
 
@@ -140,7 +160,11 @@ router.get('/trends', async (req, res) => {
       controlStatus,
       taskStatus,
       autoKpis: {
-        health_score: healthScore,
+        health_score: health.score,
+        // Womit die Zahl zustande kam. Eine 0 soll unterscheidbar sein von
+        // "alles schlecht" - sie kann auch heissen: noch nichts erfasst.
+        health_score_parts: health.parts,
+        health_score_basis: health.basis,
         control_coverage: controlCoverage,
         assessment_coverage: assessmentCoverage,
         open_high_risks: openHighRisks,
