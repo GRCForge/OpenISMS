@@ -60,7 +60,9 @@
     "copy": "Copy",
     "save_success": "Configuration saved.",
     "discovery_success": "Discovery successful: {{issuer}}",
-    "discovery_failed": "Discovery failed."
+    "discovery_failed": "Discovery failed.",
+    "env_managed_notice": "Part of this configuration is managed through environment variables and is locked here. The environment takes precedence: changes to these fields are rejected rather than reported as saved without taking effect.",
+    "env_managed_field": "Set through {{variable}} and not editable here."
   },
   "general": {
     "title": "General Settings",
@@ -147,7 +149,11 @@
     "add_btn": "Add Mapping",
     "adding": "Adding…",
     "added": "Mapping added.",
-    "delete_confirm": "Delete mapping?"
+    "delete_confirm": "Delete mapping?",
+    "env_managed_notice": "These mappings come from {{variable}}. While that variable is set, this list is the only one that applies — mappings stored here are not read.",
+    "env_managed_row": "Set through the environment",
+    "env_error_title": "The mappings from the environment are unusable.",
+    "env_error_effect": "NO mapping currently applies — not even the ones in the database. Anyone signing in receives the default SSO role."
   },
   "rbac": {
     "title": "Adjust Permissions",

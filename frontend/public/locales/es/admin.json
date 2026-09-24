@@ -60,7 +60,9 @@
     "copy": "Copy",
     "save_success": "Configuration saved.",
     "discovery_success": "Discovery successful: {{issuer}}",
-    "discovery_failed": "Discovery failed."
+    "discovery_failed": "Discovery failed.",
+    "env_managed_notice": "Parte de esta configuración se gestiona mediante variables de entorno y está bloqueada aquí. El entorno tiene prioridad: los cambios en estos campos se rechazan en lugar de notificarse como guardados sin surtir efecto.",
+    "env_managed_field": "Se define mediante {{variable}} y no puede modificarse aquí."
   },
   "general": {
     "title": "General Settings",
@@ -147,7 +149,11 @@
     "add_btn": "Add Mapping",
     "adding": "Adding…",
     "added": "Mapping added.",
-    "delete_confirm": "Delete mapping?"
+    "delete_confirm": "Delete mapping?",
+    "env_managed_notice": "Estas asignaciones provienen de {{variable}}. Mientras esa variable esté definida, solo se aplica esta lista: las asignaciones guardadas aquí no se leen.",
+    "env_managed_row": "Definido mediante el entorno",
+    "env_error_title": "Las asignaciones del entorno no son utilizables.",
+    "env_error_effect": "Actualmente NO se aplica ninguna asignación, ni siquiera las de la base de datos. Quien inicie sesión recibirá el rol SSO predeterminado."
   },
   "rbac": {
     "title": "Adjust Permissions",

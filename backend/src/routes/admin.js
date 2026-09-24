@@ -262,7 +262,13 @@ router.get('/oidc', requirePermission('admin','sso','admin'), async (req, res) =
       // Damit die Oberflaeche sperren kann, statt ein Speichern anzubieten,
       // das keine Wirkung haette.
       envManagedFields: env.fields,
+      // Die Zuordnung Feld -> Variablenname kommt mit, damit die Oberflaeche an
+      // einem gesperrten Feld sagen kann, WO es gepflegt wird. Sie dort noch
+      // einmal zu hinterlegen waere eine zweite Liste, die irgendwann von
+      // oidcEnv.FELDER abweicht - und dann steht am Feld der falsche Name.
+      envVariables: oidcEnv.FELDER,
       mappingsFromEnv: env.mappingsFromEnv,
+      mappingsVariable: oidcEnv.MAPPING_VARIABLE,
       mappingsError: env.mappingsError,
     });
   } catch (e) { serverError(res, e, 'admin'); }
