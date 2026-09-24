@@ -102,7 +102,7 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 - Per asset: own dependency graph (grandparents → parents → current → children → grandchildren) with colour-coded levels and legend
 - **Reverse links**: list of all dependent assets (child assets) visible and clickable in the Topology tab
 
-### Relationship Analysis (graph, since v2.3.0)
+### Relationship Analysis (graph, since v3.0.0)
 Powered by **Apache AGE** inside the same PostgreSQL database — no second datastore,
 no synchronisation, one backup. Optional: without the extension everything else
 works and only this page reports that it is unavailable.
@@ -153,7 +153,7 @@ Where the Asset Topology draws the asset dependency tree, this answers questions
 - Status: Implemented · Planned · Not applicable (with justification)
 - Linked to risks with effectiveness rating (1–5)
 - SoA overview filtered by framework
-- **Cross-framework requirement mapping** (since v2.3.0): one control can satisfy
+- **Cross-framework requirement mapping** (since v3.0.0): one control can satisfy
   requirements from ISO 27001, BSI IT-Grundschutz, NIS-2, C5 and TISAX at the same
   time, with full/partial coverage per mapping. Each mapping is audit-logged
 
@@ -407,7 +407,7 @@ docker run -d --name isms --restart unless-stopped \
 ## Single Sign-On (OIDC)
 
 SSO is configured **inside the app** — no restart, no `.env` change required. Since
-v2.3.0 it can alternatively be pinned through environment variables, for
+v3.0.0 it can alternatively be pinned through environment variables, for
 installations rolled out by configuration management.
 
 Supported providers (generic OIDC): Authentik · Keycloak · Microsoft Entra · Google · Zitadel · Okta · Auth0 · any OIDC-compatible IdP.
@@ -425,7 +425,7 @@ Supported providers (generic OIDC): Authentik · Keycloak · Microsoft Entra · 
 - **Profile picture** from the `picture` claim is automatically saved and updated on every login
 - Local login always remains available
 
-**Alternatively via environment variables (since v2.3.0):**
+**Alternatively via environment variables (since v3.0.0):**
 
 `OIDC_ENABLED` · `OIDC_DISPLAY_NAME` · `OIDC_ISSUER` · `OIDC_CLIENT_ID` ·
 `OIDC_CLIENT_SECRET` · `OIDC_SCOPES` · `OIDC_CLAIM_MAPPINGS`

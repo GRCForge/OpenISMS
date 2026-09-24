@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 
-// PostgreSQL seit v2.3.0. Die Begruendung steht in den Release Notes; kurz: Der
+// PostgreSQL seit v3.0.0. Die Begruendung steht in den Release Notes; kurz: Der
 // Graph (Apache AGE) liegt in derselben Datenbank und derselben Transaktion wie
 // die Tabellen, ein zweiter Datenspeicher waere sonst noetig gewesen.
 //

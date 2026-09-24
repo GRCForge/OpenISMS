@@ -5,7 +5,7 @@
 //
 // The backslash is the default escape character in PostgreSQL's LIKE/ILIKE just
 // as it was in MySQL's LIKE, so this needed no change when the project moved to
-// PostgreSQL in v2.3.0 — it is called out here because that is not obvious and
+// PostgreSQL in v3.0.0 — it is called out here because that is not obvious and
 // the next reader should not have to look it up.
 //
 // Note that the comparison itself is case-insensitive only because the call

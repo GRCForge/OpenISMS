@@ -31,7 +31,7 @@ const DEFAULT_PERMISSIONS = {
   review:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], sign_off: ['admin','assessor'] },
   modules:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], edit: ['admin'] },
   auditlog:    { view: ['admin','assessor'], verify: ['admin'] },
-  // Graph-Auswertungen (v2.3.0). Lesen ist breit erlaubt: Die Auswertung zeigt
+  // Graph-Auswertungen (v3.0.0). Lesen ist breit erlaubt: Die Auswertung zeigt
   // Beziehungen zwischen Objekten, die diese Rollen ohnehin einzeln sehen
   // duerfen, und Auswirkungsanalyse und Nachweispfad sind gerade fuer
   // Management und Revision gedacht. Der Neuaufbau bleibt beim Administrator:

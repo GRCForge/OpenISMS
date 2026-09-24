@@ -1,4 +1,4 @@
-# v2.3.0 — PostgreSQL, and relationships you can actually ask about
+# v3.0.0 — PostgreSQL, and relationships you can actually ask about
 
 > **BREAKING: MySQL is no longer supported, and there is no upgrade path from 2.2.x.**
 > Existing installations stay on 2.2.x. See [Upgrading](#upgrading) before you read
@@ -29,8 +29,14 @@ with different comparison semantics — and the places where those semantics dif
 are exactly the places where a silent mistake does the most damage (see
 [What changed underneath](#what-changed-underneath)).
 
-- Running 2.2.x on MySQL? **Stay there.** 2.2.x keeps working.
-- Setting up fresh? Use 2.3.0.
+- Setting up fresh? Use 3.0.0.
+- Running 2.2.x on MySQL? It keeps working — but read the next paragraph first.
+
+**2.2.x no longer receives security patches.** Only the latest release does, and
+that is now 3.0.0. An existing MySQL installation therefore has no supported
+position: not on 2.2.x, and not on 3.0.0 without setting it up anew and re-entering
+its data. If that installation carries anything you rely on, plan the move
+deliberately rather than leaving it where it is — `SECURITY.md` states the policy.
 
 The bundled `docker-compose.yml` brings PostgreSQL 18 with AGE along. For an
 external database, see `.env.example`.

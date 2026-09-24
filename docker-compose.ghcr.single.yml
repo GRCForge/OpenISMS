@@ -1,11 +1,11 @@
 # Single-Container-Deployment mit VORGEBAUTEM GHCR-Image und EXTERNER Datenbank.
 # Ideal fuer Unraid o.ae. - kein lokaler Build noetig.
 #
-#   export ISMS_VERSION=latest   # oder ein Release-Tag wie v2.3.0
+#   export ISMS_VERSION=latest   # oder ein Release-Tag wie v3.0.0
 #   cp .env.example .env         # DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY, APP_URL setzen
 #   docker compose -f docker-compose.ghcr.single.yml up -d
 #
-# ANFORDERUNGEN AN DIE EXTERNE DATENBANK (seit v2.3.0)
+# ANFORDERUNGEN AN DIE EXTERNE DATENBANK (seit v3.0.0)
 # PostgreSQL 15 oder neuer. MySQL wird nicht mehr unterstuetzt; ein Upgrade von
 # 2.2.x ist nicht vorgesehen (siehe Release Notes).
 #

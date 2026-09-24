@@ -10,7 +10,7 @@ import { Mermaid } from '../components/ui/Mermaid';
 import { mermaidLabel } from '../lib/mermaid';
 import { useAuth } from '../contexts/AuthContext';
 
-// Beziehungsauswertung ueber den Graphen (Apache AGE, seit v2.3.0).
+// Beziehungsauswertung ueber den Graphen (Apache AGE, seit v3.0.0).
 //
 // Diese Seite beantwortet die Fragen, fuer die die Listenansichten nicht
 // gebaut sind - naemlich die mit unbestimmter Tiefe. "Welche Prozesse haengen

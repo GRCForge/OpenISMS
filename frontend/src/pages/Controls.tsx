@@ -341,7 +341,7 @@ export const Controls: React.FC = () => {
               </div>
             </div>
 
-            {/* Cross-Framework-Zuordnung (v2.3.0). Speichert sofort und nicht
+            {/* Cross-Framework-Zuordnung (v3.0.0). Speichert sofort und nicht
                 ueber saveEdit: Eine Zuordnung ist eine eigene Aussage mit
                 eigenem Audit-Eintrag, kein Feld dieser Massnahme. */}
             <div className="md:col-span-2 pt-4 border-t dark:border-slate-800">

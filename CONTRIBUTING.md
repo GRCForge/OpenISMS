@@ -40,7 +40,7 @@ behavior to **maximilian@herz.dev**.
 ### Prerequisites
 
 - **Node.js** ≥ 26.3.0 (enforced by the `engines` field and the Docker base image)
-- **PostgreSQL** 15 or newer (since v2.3.0 — MySQL is no longer supported)
+- **PostgreSQL** 15 or newer (since v3.0.0 — MySQL is no longer supported)
 - **Apache AGE** matching your PostgreSQL major version — optional. It powers
   the relationship analysis; without it everything else still works. The
   quickest way to get both is the database container from `docker-compose.yml`
@@ -104,7 +104,7 @@ All changes are developed on versioned branches, **never directly on `main`**.
 
 | Change type | Branch name | Example |
 |---|---|---|
-| New feature | `release/vX.(Y+1).0` | `release/v2.3.0` |
+| New feature | `release/vX.(Y+1).0` | `release/v3.0.0` |
 | Bug fix / minor improvement | `release/vX.Y.(Z+1)` | `release/v2.2.2` |
 | Security fix | `security/vX.Y.(Z+1)` | `security/v2.2.2` |
 | Breaking change | `release/v(X+1).0.0` | `release/v3.0.0` |

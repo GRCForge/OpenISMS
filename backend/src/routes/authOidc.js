@@ -270,7 +270,7 @@ router.get('/callback', async (req, res) => {
 
     // Apply OIDC claim → role mappings (highest priority wins)
     try {
-      // Quelle ist seit v2.3.0 nicht mehr zwingend die Tabelle: Ist
+      // Quelle ist seit v3.0.0 nicht mehr zwingend die Tabelle: Ist
       // OIDC_CLAIM_MAPPINGS gesetzt, gilt ausschliesslich diese Liste.
       // geltendeMappings() liefert beides in derselben Form.
       const mappings = await geltendeMappings();

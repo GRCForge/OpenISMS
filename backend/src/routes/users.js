@@ -47,7 +47,7 @@ router.post('/', authenticate, requirePermission('users','create','admin'), asyn
     const check = await validatePassword(password);
     if (!check.valid) return res.status(400).json({ error: `Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}` });
 
-    // Seit v2.3.0 haelt ein eindeutiger Index auf lower(email) die Anmeldeidentitaet
+    // Seit v3.0.0 haelt ein eindeutiger Index auf lower(email) die Anmeldeidentitaet
     // eindeutig. Ohne diese Vorabpruefung kaeme der Verstoss als roher
     // Datenbankfehler zurueck - der landet hier im error-Feld der Antwort und
     // damit in der Oberflaeche, samt Index- und Tabellennamen. Eine benannte

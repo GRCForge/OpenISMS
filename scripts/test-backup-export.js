@@ -10,7 +10,7 @@
  * than one batch), the single-shot path (no usable primary key), empty tables,
  * and a query failure mid-stream, which must not yield a parseable file.
  *
- * Since v2.3.0 the export runs on PostgreSQL: identifiers are double-quoted and
+ * Since v3.0.0 the export runs on PostgreSQL: identifiers are double-quoted and
  * the primary key comes from pg_index instead of SHOW KEYS. The real
  * utils/pgSchema module is used rather than a second mock of it, so a change to
  * the quoting or the primary-key lookup is caught here too.

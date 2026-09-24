@@ -273,7 +273,7 @@ User.hasMany(UserTraining, { as: 'trainings', foreignKey: 'user_id' });
 User.hasMany(PushSubscription, { as: 'pushSubscriptions', foreignKey: 'user_id', onDelete: 'CASCADE' });
 PushSubscription.belongsTo(User, { foreignKey: 'user_id' });
 
-// --- Cross-Framework-Zuordnung (v2.3.0) ---
+// --- Cross-Framework-Zuordnung (v3.0.0) ---
 // Eine Massnahme erfuellt Anforderungen aus mehreren Regelwerken. Die Gegenseite
 // ist bewusst KEIN belongsToMany: Das Ziel ist polymorph (framework +
 // requirement_id), Sequelize kann darueber keine Assoziation bilden. Die Routen
@@ -282,7 +282,7 @@ Control.hasMany(ControlRequirement, { as: 'requirements', foreignKey: 'control_i
 ControlRequirement.belongsTo(Control, { as: 'control', foreignKey: 'control_id' });
 ControlRequirement.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id' });
 
-// --- BCM-Prozess <-> Asset (v2.3.0) ---
+// --- BCM-Prozess <-> Asset (v3.0.0) ---
 BcmProcess.belongsToMany(Asset, { through: BcmProcessAsset, as: 'assets', foreignKey: 'bcm_process_id', otherKey: 'asset_id' });
 Asset.belongsToMany(BcmProcess, { through: BcmProcessAsset, as: 'bcmProcesses', foreignKey: 'asset_id', otherKey: 'bcm_process_id' });
 BcmProcess.hasMany(BcmProcessAsset, { as: 'assetLinks', foreignKey: 'bcm_process_id', onDelete: 'CASCADE' });

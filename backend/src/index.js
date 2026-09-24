@@ -258,7 +258,7 @@ app.use('/api/discovery', requireModule('discovery'), require('./routes/discover
 app.use('/api/subject-requests', requireModule('dsgvo'), require('./routes/subject-requests'));
 app.use('/api/legal-requirements', require('./routes/legal-requirements'));
 app.use('/api/review', require('./routes/review'));
-// Graph-Auswertungen (Apache AGE, seit v2.3.0). Kein requireModule: Der Graph
+// Graph-Auswertungen (Apache AGE, seit v3.0.0). Kein requireModule: Der Graph
 // wertet aus, was ohnehin da ist, und schaltet sich selbst ab, wenn AGE fehlt.
 app.use('/api/graph', require('./routes/graph'));
 app.use('/api/modules', require('./routes/modules'));
@@ -534,7 +534,7 @@ const start = async () => {
     //
     // Ebenso entfallen: das Nachruesten von custom_roles.permissions und das
     // Abraeumen der alten camelCase-Spalten in push_subscriptions. Beides
-    // reparierte Schemata aelterer Versionen. v2.3.0 hat keinen Upgrade-Pfad
+    // reparierte Schemata aelterer Versionen. v3.0.0 hat keinen Upgrade-Pfad
     // von 2.2.x (siehe Release Notes), jede Installation faengt leer an.
 
     await sequelize.sync({ alter: { drop: false } });
