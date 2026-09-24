@@ -10,6 +10,11 @@
  * than one batch), the single-shot path (no usable primary key), empty tables,
  * and a query failure mid-stream, which must not yield a parseable file.
  *
+ * Since v3.0.0 the export runs on PostgreSQL: identifiers are double-quoted and
+ * the primary key comes from pg_index instead of SHOW KEYS. The real
+ * utils/pgSchema module is used rather than a second mock of it, so a change to
+ * the quoting or the primary-key lookup is caught here too.
+ *
  * Run: node scripts/test-backup-export.js
  */
 
@@ -18,6 +23,7 @@ const path = require('path');
 const { PassThrough } = require('stream');
 
 const SRC = path.join(__dirname, '..', 'backend', 'src');
+const pg = require(path.join(SRC, 'utils/pgSchema'));
 
 // Lift streamDatabaseJson out of the route module: requiring the route would pull
 // in express, multer and the models for no benefit.
@@ -35,12 +41,18 @@ function makeSequelize(tables, { failOn = null } = {}) {
     queries,
     query: async (sql, opts) => {
       queries.push(sql);
-      const tbl = (sql.match(/FROM `([^`]+)`/) || [])[1];
-      if (failOn && tbl === failOn) throw new Error('DB weg');
-      if (sql.startsWith('SHOW KEYS')) {
-        const pk = tables[tbl].pk;
-        return [pk ? [{ Column_name: pk }] : []];
+
+      // Die Primaerschluessel-Auskunft aus utils/pgSchema. Sie laeuft mit
+      // QueryTypes.SELECT und bekommt den Tabellennamen gebunden, nicht im Text —
+      // deshalb steht der Name hier in opts.bind und nicht im SQL.
+      if (sql.includes('pg_index')) {
+        const name = opts.bind[0];
+        const pk = tables[name].pk;
+        return pk ? [{ name: pk }] : [];
       }
+
+      const tbl = (sql.match(/FROM "([^"]+)"/) || [])[1];
+      if (failOn && tbl === failOn) throw new Error('DB weg');
       const rows = tables[tbl].rows;
       const pk = tables[tbl].pk;
       const limit = Number((sql.match(/LIMIT (\d+)/) || [])[1] || rows.length);
@@ -56,7 +68,7 @@ function makeSequelize(tables, { failOn = null } = {}) {
 
 async function collect(tables, opts) {
   const sequelize = makeSequelize(tables, opts);
-  const streamDatabaseJson = new Function('sequelize', src.slice(start, end) + '; return streamDatabaseJson;')(sequelize);
+  const streamDatabaseJson = new Function('sequelize', 'pg', src.slice(start, end) + '; return streamDatabaseJson;')(sequelize, pg);
   const stream = new PassThrough();
   const chunks = [];
   stream.on('data', c => chunks.push(c));
@@ -98,7 +110,10 @@ async function collect(tables, opts) {
   }
   const paged = queries.filter(q => q.includes('LIMIT 500')).length;
   check(`große Tabelle wird in Batches gelesen (${paged} Abfragen)`, paged >= 3);
-  check('kleine Tabellen ohne Paging', queries.some(q => q === 'SELECT * FROM `settings`'));
+  check('kleine Tabellen ohne Paging', queries.some(q => q === 'SELECT * FROM "settings"'));
+  // Bezeichner MUESSEN doppelt quotiert sein: Postgres faltet unquotierte auf
+  // Kleinschreibung, und dieses Schema enthaelt "VendorContacts".
+  check('Bezeichner werden quotiert', queries.every(q => !q.includes('`')));
 
   console.log('Abbruch mitten im Stream:');
   const broken = await collect(tables, { failOn: 'risk_controls' });

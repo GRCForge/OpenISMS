@@ -1,0 +1,73 @@
+{
+  "title": "Análisis de relaciones",
+  "subtitle": "Preguntas de profundidad indeterminada: qué depende de un activo, por qué un requisito se considera cumplido, cómo se conectan dos objetos. Las tablas siguen siendo la fuente autorizada; el grafo es su análisis.",
+  "unavailable_title": "El análisis de relaciones no está disponible.",
+  "unavailable_hint": "Apache AGE no está configurado en esta base de datos. El resto del SGSI no se ve afectado.",
+  "rebuild": "Reconstruir grafo",
+  "rebuilding": "Reconstruyendo…",
+  "rebuild_done": "Reconstruido: {{nodes}} nodos, {{edges}} aristas ({{ms}} ms)",
+  "rebuild_failed": "La reconstrucción falló.",
+  "error_generic": "El análisis falló.",
+  "tabs": {
+    "impact": "Análisis de impacto",
+    "evidence": "Evidencia",
+    "path": "Conexión"
+  },
+  "entity": {
+    "asset": "Activo",
+    "vendor": "Proveedor",
+    "risk": "Riesgo",
+    "control": "Control",
+    "threat": "Amenaza",
+    "incident": "Incidente",
+    "vvt": "Registro RAT",
+    "bcm_process": "Proceso de negocio",
+    "policy": "Política",
+    "ai_system": "Sistema de IA",
+    "dsfa": "EIPD",
+    "requirement": "Requisito"
+  },
+  "framework": {
+    "iso27001": "ISO 27001",
+    "bsi": "BSI IT-Grundschutz",
+    "nis2": "NIS 2",
+    "c5": "BSI C5",
+    "tisax": "TISAX"
+  },
+  "impact": {
+    "entity_type": "Tipo",
+    "entity_id": "ID",
+    "depth": "Profundidad",
+    "analyse": "Analizar",
+    "distance": "Distancia",
+    "kind": "Tipo",
+    "name": "Nombre",
+    "empty": "No se encontró nada: el objeto no existe o no está vinculado a nada.",
+    "truncated": "La lista está limitada a 500 coincidencias. Una profundidad menor da un resultado utilizable.",
+    "hops_one": "{{count}} salto",
+    "hops_other": "{{count}} saltos",
+    "results_one": "{{count}} objeto afectado hasta la profundidad {{depth}}",
+    "results_other": "{{count}} objetos afectados hasta la profundidad {{depth}}"
+  },
+  "evidence": {
+    "framework": "Marco",
+    "ref": "Referencia",
+    "check": "Mostrar evidencia",
+    "covered": "cubierto",
+    "not_covered": "no cubierto",
+    "no_control": "Ningún control está asignado a este requisito, por lo que no está cubierto.",
+    "no_risk": "Ningún riesgo está vinculado a este control.",
+    "coverage_full": "completa",
+    "coverage_partial": "parcial"
+  },
+  "path": {
+    "from_type": "Desde (tipo)",
+    "from_id": "Desde (ID)",
+    "to_type": "Hasta (tipo)",
+    "to_id": "Hasta (ID)",
+    "find": "Buscar conexión",
+    "none": "No se encontró conexión en cinco saltos.",
+    "found_one": "Conexión más corta en {{count}} salto",
+    "found_other": "Conexión más corta en {{count}} saltos"
+  }
+}

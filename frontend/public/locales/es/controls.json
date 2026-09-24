@@ -90,5 +90,31 @@
     "withMappings": "controles con referencias cruzadas",
     "filterPlaceholder": "Filtrar por ID o título…",
     "nameAndStatus": "Nombre y estado"
+  },
+  "requirements": {
+    "title": "Requisitos cumplidos",
+    "hint": "Un mismo control puede cumplir requisitos de varios marcos. Cada asignación se guarda de inmediato y queda registrada en el registro de auditoría.",
+    "none": "Todavía no hay ningún requisito asignado.",
+    "framework_label": "Marco",
+    "requirement_label": "Requisito",
+    "coverage_label": "Cobertura",
+    "coverage_full": "completa",
+    "coverage_partial": "parcial",
+    "select": "— Seleccionar —",
+    "loading": "Cargando…",
+    "catalogue_empty": "El catálogo está vacío o el módulo correspondiente está desactivado.",
+    "add": "Añadir asignación",
+    "adding": "Añadiendo…",
+    "add_failed": "No se pudo crear la asignación.",
+    "remove": "Eliminar asignación",
+    "delete_failed": "No se pudo eliminar la asignación.",
+    "dangling": "El requisito {{id}} ya no existe: elimine esta asignación.",
+    "framework": {
+      "iso27001": "ISO 27001",
+      "bsi": "BSI IT-Grundschutz",
+      "nis2": "NIS 2",
+      "c5": "BSI C5",
+      "tisax": "TISAX"
+    }
   }
 }

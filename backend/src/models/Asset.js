@@ -30,8 +30,8 @@ const Asset = sequelize.define('Asset', {
 
   // 4. Abhängigkeiten
   parent_id: { type: DataTypes.INTEGER, allowNull: true },
-  business_processes: { type: DataTypes.JSON, defaultValue: [] },
-  data_flows: { type: DataTypes.JSON, defaultValue: [] },
+  business_processes: { type: DataTypes.JSONB, defaultValue: [] },
+  data_flows: { type: DataTypes.JSONB, defaultValue: [] },
 
   // 5. Security & Vulnerability
   patch_status: { type: DataTypes.ENUM('up-to-date', 'pending', 'critical'), defaultValue: 'up-to-date' },
@@ -41,7 +41,7 @@ const Asset = sequelize.define('Asset', {
   cve_medium: { type: DataTypes.INTEGER, defaultValue: 0 },
   cve_low: { type: DataTypes.INTEGER, defaultValue: 0 },
   cve_last_checked: { type: DataTypes.DATE, allowNull: true },
-  cve_ids: { type: DataTypes.JSON, defaultValue: [] },
+  cve_ids: { type: DataTypes.JSONB, defaultValue: [] },
   cve_search_query: { type: DataTypes.STRING(500), allowNull: true },
   // Phase 1: CPE-based matching
   cpe: { type: DataTypes.STRING(255), allowNull: true },
@@ -72,8 +72,8 @@ const Asset = sequelize.define('Asset', {
   // Import verlustbehaftet normalisiert werden.
   external_status: { type: DataTypes.STRING(50), allowNull: true },
 
-  tags: { type: DataTypes.JSON },
-  frameworks: { type: DataTypes.JSON, defaultValue: [] },
+  tags: { type: DataTypes.JSONB },
+  frameworks: { type: DataTypes.JSONB, defaultValue: [] },
   // 6. Privacy / DSMS
   vvt_status: { type: DataTypes.ENUM('none', 'pending', 'complete'), defaultValue: 'none' },
   dsfa_required: { type: DataTypes.BOOLEAN, defaultValue: false },

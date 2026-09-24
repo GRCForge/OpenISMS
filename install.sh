@@ -141,7 +141,7 @@ write_systemd_unit() {
   cat > /etc/systemd/system/openisms.service <<EOF
 [Unit]
 Description=OpenISMS Backend API
-After=network.target mysql.service mariadb.service
+After=network.target postgresql.service
 Wants=network-online.target
 
 [Service]
@@ -521,7 +521,7 @@ if [[ "$MODE" == "1" ]]; then
   if [[ -z "${DOCKER_SETUP:-}" ]]; then
     echo ""
     echo "Choose Docker setup:"
-    echo "  1) Full Setup (App + MySQL) - Recommended for new deployments"
+    echo "  1) Full Setup (App + PostgreSQL/AGE) - Recommended for new deployments"
     echo "  2) Single Container (local build, requires external DB)"
     echo "  3) GHCR Pull (pre-built image from GitHub, requires external DB)"
     echo ""
@@ -533,9 +533,9 @@ if [[ "$MODE" == "1" ]]; then
     info "Starting full-stack deployment (building locally)..."
     docker compose up -d --build
   elif [[ "$DOCKER_SETUP" == "2" ]]; then
-    # Single-container deployment requires an external MySQL database
+    # Single-container deployment requires an external PostgreSQL database
     echo ""
-    read -rp "DATABASE_URL (mysql://user:pass@host:3306/db): " DB_URL
+    read -rp "DATABASE_URL (postgres://user:pass@host:5432/db): " DB_URL
     if grep -q "DATABASE_URL=" .env; then
       sed -i "s|DATABASE_URL=.*|DATABASE_URL=${DB_URL}|" .env
     else
@@ -546,7 +546,7 @@ if [[ "$MODE" == "1" ]]; then
   else
     # Pull pre-built image from GHCR — no local build required
     echo ""
-    read -rp "DATABASE_URL (mysql://user:pass@host:3306/db): " DB_URL
+    read -rp "DATABASE_URL (postgres://user:pass@host:5432/db): " DB_URL
     if grep -q "DATABASE_URL=" .env; then
       sed -i "s|DATABASE_URL=.*|DATABASE_URL=${DB_URL}|" .env
     else

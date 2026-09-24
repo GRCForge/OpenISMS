@@ -29,12 +29,12 @@ const DocumentAnalysisRun = sequelize.define('DocumentAnalysisRun', {
   },
   summary: { type: DataTypes.TEXT },
   // Requirement coverage matrix: [{ ref, requirement, status: met|partial|missing|na, note }]
-  coverage: { type: DataTypes.JSON, allowNull: true },
+  coverage: { type: DataTypes.JSONB, allowNull: true },
   truncated: { type: DataTypes.BOOLEAN, defaultValue: false },
   // Extracted plain text, snapshotted at analysis time so the split-view's
   // quote-highlighting stays consistent even if the underlying file is later
   // replaced (new Policy version, re-uploaded Document).
-  extracted_text: { type: DataTypes.TEXT('long'), allowNull: true },
+  extracted_text: { type: DataTypes.TEXT, allowNull: true },
   source_file_hash: { type: DataTypes.STRING(64), allowNull: true },
   error_message: { type: DataTypes.TEXT },
   started_at: { type: DataTypes.DATE },

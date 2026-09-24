@@ -61,7 +61,7 @@ router.get('/', authenticate, requirePermission('incidents','view','admin','owne
     const where = { ...getAccessWhere(req.user) };
     setFilter(where, 'status', status);
     setFilter(where, 'severity', severity);
-    if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
+    if (search) where.title = { [Op.iLike]: `%${escapeLike(search)}%` };
     const incidents = await Incident.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(incidents);
   } catch (e) { serverError(res, e, 'incidents'); }

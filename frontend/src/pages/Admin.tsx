@@ -127,7 +127,20 @@ const SmtpSettings: React.FC = () => {
 interface OidcState {
   enabled: boolean; displayName: string; issuer: string; clientId: string;
   scopes: string; clientSecretSet: boolean; callbackUrl: string;
+  // Felder, die die Umgebung vorgibt. Sie werden hier gesperrt angezeigt: Das
+  // Backend lehnt eine Aenderung daran mit 409 ab, ein bedienbares Feld wuerde
+  // also nur einen Fehler produzieren, den niemand erwartet hat.
+  envManagedFields?: string[];
+  // Feldname -> Name der Umgebungsvariablen, vom Backend geliefert.
+  envVariables?: Record<string, string>;
+  mappingsFromEnv?: boolean;
+  mappingsVariable?: string;
+  mappingsError?: string | null;
 }
+
+/** Wird dieses Feld von der Umgebung vorgegeben? */
+const isEnvManaged = (cfg: Pick<OidcState, 'envManagedFields'> | null, field: string) =>
+  !!cfg?.envManagedFields?.includes(field);
 
 const OidcSettings: React.FC = () => {
   const { t } = useTranslation('admin');
@@ -147,10 +160,19 @@ const OidcSettings: React.FC = () => {
   const save = async () => {
     setSaving(true); setMsg(null);
     try {
-      await api.put('/admin/oidc', {
+      // Umgebungsverwaltete Felder werden gar nicht erst mitgeschickt. Das
+      // Backend wiese sie mit 409 zurueck — und zwar die GANZE Anfrage, also
+      // auch die Felder daneben, die sehr wohl aenderbar sind. Wer bei
+      // gesetztem OIDC_ISSUER nur den Anzeigenamen anpassen will, bekaeme
+      // sonst eine Fehlermeldung ueber ein Feld, das er nicht angefasst hat.
+      const alle: Record<string, unknown> = {
         enabled: cfg.enabled, displayName: cfg.displayName, issuer: cfg.issuer,
         clientId: cfg.clientId, scopes: cfg.scopes, ...(secret ? { clientSecret: secret } : {}),
-      });
+      };
+      const body = Object.fromEntries(
+        Object.entries(alle).filter(([feld]) => !isEnvManaged(cfg, feld)),
+      );
+      await api.put('/admin/oidc', body);
       setSecret('');
       await load();
       setMsg({ ok: true, text: t('oidc.save_success') });
@@ -169,22 +191,65 @@ const OidcSettings: React.FC = () => {
     } finally { setTesting(false); }
   };
 
+  // Ein gesperrtes Feld sagt, WO es gepflegt wird. Ein blosses "nicht
+  // aenderbar" laesst den Bedienenden suchen; der Variablenname beendet die
+  // Suche sofort. Er kommt vom Backend, damit hier keine zweite Liste
+  // entsteht, die von oidcEnv.FELDER abweichen kann.
+  const envHinweis = (feld: string) => (
+    isEnvManaged(cfg, feld) ? (
+      <p className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 mt-1">
+        <Lock size={11} className="shrink-0" aria-hidden="true" />
+        <span>{t('oidc.env_managed_field', { variable: cfg.envVariables?.[feld] || feld })}</span>
+      </p>
+    ) : null
+  );
+
+  const gesperrt = cfg.envManagedFields || [];
+  // Ist jedes Feld umgebungsverwaltet, hat Speichern nichts mehr zu tun.
+  const alleFelder = ['enabled', 'displayName', 'issuer', 'clientId', 'clientSecret', 'scopes'];
+  const nichtsZuSpeichern = alleFelder.every(f => gesperrt.includes(f));
+
   return (
     <Card>
       <CardHeader><div className="flex items-center gap-2"><KeyRound size={18} className="text-blue-500" /><h2 className="font-semibold dark:text-white">{t('oidc.title')}</h2></div></CardHeader>
       <CardBody className="space-y-5">
-        <label className="flex items-center gap-3 p-3 rounded-lg border bg-gray-50 dark:bg-slate-800/40 dark:border-slate-700 cursor-pointer">
-          <input type="checkbox" checked={cfg.enabled} onChange={e => upd({ enabled: e.target.checked })} className="w-4 h-4 rounded text-blue-600" />
-          <span className="text-sm font-medium dark:text-slate-200">{t('oidc.enable')}</span>
-        </label>
+        {gesperrt.length > 0 && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40">
+            <Lock size={15} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <p className="text-xs text-amber-800 dark:text-amber-300">{t('oidc.env_managed_notice')}</p>
+          </div>
+        )}
 
-        <Input label={t('oidc.display_name')} value={cfg.displayName} onChange={e => upd({ displayName: e.target.value })} placeholder={t('oidc.display_name_placeholder')} />
-        <Input label={t('oidc.issuer_url')} value={cfg.issuer} onChange={e => upd({ issuer: e.target.value })} placeholder="https://auth.example.com/application/o/isms/" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label={t('oidc.client_id')} value={cfg.clientId} onChange={e => upd({ clientId: e.target.value })} />
-          <Input label={`${t('oidc.client_secret')}${cfg.clientSecretSet ? t('oidc.client_secret_set') : ''}`} type="password" value={secret} onChange={e => setSecret(e.target.value)} placeholder={cfg.clientSecretSet ? t('oidc.client_secret_placeholder') : ''} />
+        <div>
+          <label className={`flex items-center gap-3 p-3 rounded-lg border bg-gray-50 dark:bg-slate-800/40 dark:border-slate-700 ${isEnvManaged(cfg, 'enabled') ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+            <input type="checkbox" checked={cfg.enabled} disabled={isEnvManaged(cfg, 'enabled')} onChange={e => upd({ enabled: e.target.checked })} className="w-4 h-4 rounded text-blue-600 disabled:cursor-not-allowed" />
+            <span className="text-sm font-medium dark:text-slate-200">{t('oidc.enable')}</span>
+          </label>
+          {envHinweis('enabled')}
         </div>
-        <Input label={t('oidc.scopes')} value={cfg.scopes} onChange={e => upd({ scopes: e.target.value })} placeholder="openid profile email" />
+
+        <div>
+          <Input label={t('oidc.display_name')} value={cfg.displayName} disabled={isEnvManaged(cfg, 'displayName')} onChange={e => upd({ displayName: e.target.value })} placeholder={t('oidc.display_name_placeholder')} className="disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed" />
+          {envHinweis('displayName')}
+        </div>
+        <div>
+          <Input label={t('oidc.issuer_url')} value={cfg.issuer} disabled={isEnvManaged(cfg, 'issuer')} onChange={e => upd({ issuer: e.target.value })} placeholder="https://auth.example.com/application/o/isms/" className="disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed" />
+          {envHinweis('issuer')}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Input label={t('oidc.client_id')} value={cfg.clientId} disabled={isEnvManaged(cfg, 'clientId')} onChange={e => upd({ clientId: e.target.value })} className="disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed" />
+            {envHinweis('clientId')}
+          </div>
+          <div>
+            <Input label={`${t('oidc.client_secret')}${cfg.clientSecretSet ? t('oidc.client_secret_set') : ''}`} type="password" value={secret} disabled={isEnvManaged(cfg, 'clientSecret')} onChange={e => setSecret(e.target.value)} placeholder={cfg.clientSecretSet ? t('oidc.client_secret_placeholder') : ''} className="disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed" />
+            {envHinweis('clientSecret')}
+          </div>
+        </div>
+        <div>
+          <Input label={t('oidc.scopes')} value={cfg.scopes} disabled={isEnvManaged(cfg, 'scopes')} onChange={e => upd({ scopes: e.target.value })} placeholder="openid profile email" className="disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed" />
+          {envHinweis('scopes')}
+        </div>
 
         <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30">
           <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold mb-1">{t('oidc.redirect_uri_help')}</p>
@@ -202,7 +267,10 @@ const OidcSettings: React.FC = () => {
 
         <div className="flex gap-3 pt-2">
           <Button variant="secondary" onClick={test} disabled={testing || !cfg.issuer}>{testing ? t('smtp.testing') : t('smtp.test_connection')}</Button>
-          <Button onClick={save} disabled={saving}>{saving ? t('save_saving') : t('save')}</Button>
+          {/* Die Discovery-Pruefung bleibt auch bei gesperrtem Issuer bedienbar -
+              sie aendert nichts und ist genau dann nuetzlich, wenn man wissen
+              will, ob der aus der Umgebung gesetzte Issuer erreichbar ist. */}
+          <Button onClick={save} disabled={saving || nichtsZuSpeichern}>{saving ? t('save_saving') : t('save')}</Button>
         </div>
       </CardBody>
     </Card>
@@ -391,7 +459,9 @@ const SecuritySettings: React.FC = () => {
 // ---- Custom Roles ----
 type PermMatrix = Record<string, Record<string, boolean>>;
 interface CustomRoleItem { id: number; name: string; description: string | null; base_role: string; users_count?: number; permissions?: PermMatrix | null; }
-interface OidcMappingItem { id: number; claim_path: string; claim_value: string; role: string | null; custom_role_id: number | null; priority: number; customRole?: { id: number; name: string; base_role: string } | null; }
+// id ist optional: Eintraege aus OIDC_CLAIM_MAPPINGS stehen in keiner Tabelle
+// und haben deshalb keine. Sie sind dann auch nicht loeschbar.
+interface OidcMappingItem { id?: number; claim_path: string; claim_value: string; role: string | null; custom_role_id: number | null; priority: number; customRole?: { id: number; name: string; base_role: string } | null; }
 
 const BASE_ROLES = ['admin', 'assessor', 'dpo', 'employee', 'it-staff', 'management', 'owner', 'viewer'] as const;
 
@@ -569,10 +639,18 @@ const OidcMappingsEditor: React.FC = () => {
   const [form, setForm] = useState({ claim_path: '', claim_value: '', role: 'viewer', custom_role_id: '', priority: '0', use_custom: false });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  // Ob die Liste aus OIDC_CLAIM_MAPPINGS stammt, steht in GET /admin/oidc —
+  // die Mapping-Route liefert bewusst weiterhin ein blankes Array.
+  const [env, setEnv] = useState<{ fromEnv: boolean; variable?: string; error?: string | null }>({ fromEnv: false });
 
   const load = async () => {
-    const [m, r] = await Promise.all([api.get('/admin/oidc-mappings'), api.get('/admin/custom-roles')]);
+    const [m, r, o] = await Promise.all([
+      api.get('/admin/oidc-mappings'),
+      api.get('/admin/custom-roles'),
+      api.get('/admin/oidc'),
+    ]);
     setMappings(m.data); setCustomRoles(r.data);
+    setEnv({ fromEnv: !!o.data.mappingsFromEnv, variable: o.data.mappingsVariable, error: o.data.mappingsError });
   };
   useEffect(() => { load().catch(() => {}); }, []);
 
@@ -605,7 +683,31 @@ const OidcMappingsEditor: React.FC = () => {
         <p className="text-sm text-gray-500 dark:text-slate-400">
           {t('oidc_mappings.description')}
         </p>
-        {mappings.length === 0 && <p className="text-sm text-gray-500 italic dark:text-gray-400">{t('oidc_mappings.no_mappings')}</p>}
+
+        {env.fromEnv && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40">
+            <Lock size={15} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              {t('oidc_mappings.env_managed_notice', { variable: env.variable || 'OIDC_CLAIM_MAPPINGS' })}
+            </p>
+          </div>
+        )}
+
+        {/* Ist die Variable gesetzt, aber unbrauchbar, gilt KEIN Mapping — jeder
+            Anmeldende bekaeme die Standardrolle. Das ist die harmlosere
+            Richtung, aber nichts, was still bleiben darf. */}
+        {env.error && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40">
+            <AlertTriangle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" aria-hidden="true" />
+            <div className="text-xs text-red-800 dark:text-red-300">
+              <p className="font-semibold">{t('oidc_mappings.env_error_title')}</p>
+              <p className="mt-1 font-mono break-all">{env.error}</p>
+              <p className="mt-1">{t('oidc_mappings.env_error_effect')}</p>
+            </div>
+          </div>
+        )}
+
+        {mappings.length === 0 && !env.error && <p className="text-sm text-gray-500 italic dark:text-gray-400">{t('oidc_mappings.no_mappings')}</p>}
         {mappings.length > 0 && (
           <div className="border dark:border-slate-700 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
@@ -619,8 +721,12 @@ const OidcMappingsEditor: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-slate-700">
-                {mappings.map(m => (
-                  <tr key={m.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
+                {/* Eintraege aus der Umgebung haben keine id — sie stehen in
+                    keiner Tabelle. Der Index als Schluessel ist hier richtig:
+                    die Liste wird nie umsortiert oder teilweise ersetzt, sie
+                    wird als Ganzes neu geladen. */}
+                {mappings.map((m, i) => (
+                  <tr key={m.id ?? `env-${i}`} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
                     <td className="px-4 py-2 font-mono text-xs text-blue-700 dark:text-blue-300">{m.claim_path}</td>
                     <td className="px-4 py-2 font-mono text-xs">{m.claim_value}</td>
                     <td className="px-4 py-2">
@@ -630,13 +736,21 @@ const OidcMappingsEditor: React.FC = () => {
                       }
                     </td>
                     <td className="px-4 py-2 text-center text-xs text-gray-500">{m.priority}</td>
-                    <td className="px-4 py-2"><IconButton label={t('common:actions.delete')} variant="danger" onClick={() => del(m.id)}><Trash2 size={13} /></IconButton></td>
+                    <td className="px-4 py-2">
+                      {env.fromEnv
+                        ? <Lock size={13} className="text-gray-400 dark:text-slate-500 mx-auto" aria-label={t('oidc_mappings.env_managed_row')} />
+                        : <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => del(m.id!)}><Trash2 size={13} /></IconButton>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+        {/* Kein Formular, wenn die Umgebung die Liste vorgibt: Das Backend
+            lehnt POST mit 409 ab, ein bedienbares Formular waere eine
+            Einladung in eine Fehlermeldung. */}
+        {!env.fromEnv && (
         <div className="border dark:border-slate-700 rounded-xl p-4 bg-gray-50/50 dark:bg-slate-800/30 space-y-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('oidc_mappings.new_mapping')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -667,6 +781,7 @@ const OidcMappingsEditor: React.FC = () => {
           </div>
           {msg && <p className="text-xs text-green-600 dark:text-green-400">{msg}</p>}
         </div>
+        )}
       </CardBody>
     </Card>
   );

@@ -117,7 +117,7 @@ async function completeRelatedTask(relatedType, relatedId, titlePrefix) {
     where: {
       related_type: relatedType,
       related_id: relatedId,
-      title: { [Op.like]: `${titlePrefix}%` },
+      title: { [Op.iLike]: `${titlePrefix}%` },
       status: { [Op.notIn]: ['done', 'cancelled'] }
     }
   });

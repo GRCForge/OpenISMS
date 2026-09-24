@@ -1,8 +1,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
+
+// Die Version aus der VERSION-Datei im Repo-Wurzelverzeichnis. Sie wandert in
+// die URL, unter der i18next seine Sprachdateien laedt - siehe src/i18n.ts.
+const APP_VERSION = (() => {
+  for (const p of ['../VERSION', './VERSION']) {
+    try { const v = readFileSync(p, 'utf8').trim(); if (v) return v; } catch { /* naechster */ }
+  }
+  return 'dev';
+})();
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   server: {
     proxy: {
       '/api': { target: 'http://localhost:3001', changeOrigin: true }

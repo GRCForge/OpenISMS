@@ -195,6 +195,7 @@ jobs:
           node scripts/openapi-sync.js --check
           node scripts/test-mcp-gate.js
           node scripts/test-backup-export.js
+          node scripts/test-graph-projection.js
           node scripts/test-query-filters.js
           node scripts/test-job-lock.js
           node scripts/test-oidc-audience.js

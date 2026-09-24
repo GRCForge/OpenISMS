@@ -158,7 +158,11 @@ router.post('/login', async (req, res) => {
       return res.status(403).json(genericLockoutError);
     }
 
-    const user = await User.findOne({ where: { email, active: true } });
+    // Gespeichert wird kleingeschrieben (siehe models/User.js), also muss auch
+    // hier normalisiert gesucht werden. Unter MySQL nahm die Kollation das ab;
+    // ohne diese Zeile koennte sich unter Postgres niemand mehr anmelden, der
+    // seine Adresse mit einem Grossbuchstaben tippt.
+    const user = await User.findOne({ where: { email: String(email || '').trim().toLowerCase(), active: true } });
     if (!user) {
       // Run a dummy bcrypt compare so the response time matches the valid-user
       // path — otherwise the timing difference reveals whether an email exists.

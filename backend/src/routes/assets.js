@@ -47,7 +47,7 @@ router.get('/', authenticate, requirePermission('assets','view','admin','owner',
     } else {
       where.status = { [Op.ne]: 'decommissioned' };
     }
-    if (search) where.name = { [Op.like]: `%${escapeLike(search)}%` };
+    if (search) where.name = { [Op.iLike]: `%${escapeLike(search)}%` };
 
     // Non-staff roles (owner/viewer/employee/management) only see assets they own
     // or assess — the same scope the detail endpoint enforces.

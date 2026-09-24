@@ -90,5 +90,31 @@
     "withMappings": "Controls mit Querverweisen",
     "filterPlaceholder": "Nach ID oder Titel filtern…",
     "nameAndStatus": "Bezeichnung & Status"
+  },
+  "requirements": {
+    "title": "Erfuellte Anforderungen",
+    "hint": "Dieselbe Massnahme kann Anforderungen aus mehreren Regelwerken erfuellen. Jede Zuordnung wird sofort gespeichert und im Audit-Log vermerkt.",
+    "none": "Noch keine Anforderung zugeordnet.",
+    "framework_label": "Regelwerk",
+    "requirement_label": "Anforderung",
+    "coverage_label": "Abdeckung",
+    "coverage_full": "vollstaendig",
+    "coverage_partial": "teilweise",
+    "select": "— Auswaehlen —",
+    "loading": "Wird geladen…",
+    "catalogue_empty": "Der Katalog ist leer oder das zugehoerige Modul ist abgeschaltet.",
+    "add": "Zuordnung hinzufuegen",
+    "adding": "Wird hinzugefuegt…",
+    "add_failed": "Zuordnung konnte nicht angelegt werden.",
+    "remove": "Zuordnung entfernen",
+    "delete_failed": "Zuordnung konnte nicht entfernt werden.",
+    "dangling": "Anforderung {{id}} existiert nicht mehr — Zuordnung entfernen.",
+    "framework": {
+      "iso27001": "ISO 27001",
+      "bsi": "BSI IT-Grundschutz",
+      "nis2": "NIS-2",
+      "c5": "BSI C5",
+      "tisax": "TISAX"
+    }
   }
 }

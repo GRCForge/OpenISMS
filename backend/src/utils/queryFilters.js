@@ -6,7 +6,7 @@
  * Express parses ?status[ne]=x into an object and ?status[]=a&status[]=b into an
  * array, so a filter written as `where.status = status` does not necessarily
  * compare a string. Sequelize v6 no longer reads string operator aliases, so the
- * object form is not an injection — it simply reaches MySQL as something it
+ * object form is not an injection — it simply reaches PostgreSQL as something it
  * cannot compare and comes back as a failed request. A filter that cannot be
  * understood should be ignored, not turn the whole list into an error.
  */

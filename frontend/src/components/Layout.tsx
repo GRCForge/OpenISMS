@@ -4,7 +4,7 @@ import {
   Shield, LayoutDashboard, Server, ClipboardCheck, Bell,
   Users, LogOut, Menu, ChevronRight, CheckCircle,
   Upload, AlertTriangle, Building2, Sun, Moon, FileText, Network, Settings, ShieldAlert, ShieldCheck, AlertOctagon, BarChart3, BookOpen, CheckSquare, Fingerprint, Trash2, LayoutList, Radar, Copy, Check, KeyRound, Search, UserCheck, Scale,
-  Zap, Bot, LifeBuoy, Target, Car, PanelLeftClose, PanelLeftOpen
+  Zap, Bot, LifeBuoy, Target, Car, PanelLeftClose, PanelLeftOpen, Share2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -93,6 +93,7 @@ const NAV_GROUPS: NavGroup[] = [
       { path: '/vendors',     icon: Building2,      labelKey: 'vendors', perm: ['vendors','view'] },
       { path: '/contacts',    icon: Users,          labelKey: 'contacts' },
       { path: '/topology',    icon: Network,        labelKey: 'topology', perm: ['assets','view'] },
+      { path: '/graph',       icon: Share2,         labelKey: 'graph', perm: ['graph','view'] },
       { path: '/assessments', icon: ClipboardCheck, labelKey: 'assessments', perm: ['assessments','view'] },
       { path: '/reminders',   icon: Bell,           labelKey: 'reminders', perm: ['reminders','view'] },
       { path: '/bcm',         icon: LifeBuoy,       labelKey: 'bcm',  module: 'bcm', roles: ['admin', 'assessor'], perm: ['bcm','view'] },

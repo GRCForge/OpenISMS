@@ -4,10 +4,15 @@
 
 | Version | Supported |
 |---|---|
-| 2.2.x (latest) | ✅ |
-| < 2.2 | ❌ |
+| 3.0.x (latest) | ✅ |
+| < 3.0 | ❌ |
 
-Only the latest minor release receives security patches.
+Only the latest release receives security patches.
+
+v3.0.0 moved the project from MySQL to PostgreSQL and offers no upgrade path from
+2.2.x (see the release notes). The rule above is unchanged and applies all the
+same: **2.2.x is out of support.** A MySQL installation that stays where it is
+will not receive security patches.
 
 ## Reporting a Vulnerability
 

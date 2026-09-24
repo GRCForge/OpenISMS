@@ -57,6 +57,8 @@ const VendorTriageRun = require('./VendorTriageRun');
 const VendorFinding = require('./VendorFinding');
 const DocumentAnalysisRun = require('./DocumentAnalysisRun');
 const DocumentAnalysisFinding = require('./DocumentAnalysisFinding');
+const ControlRequirement = require('./ControlRequirement');
+const BcmProcessAsset = require('./BcmProcessAsset');
 
 // Associations
 Training.hasMany(UserTraining, { as: 'assignments', foreignKey: 'training_id', onDelete: 'CASCADE' });
@@ -271,6 +273,22 @@ User.hasMany(UserTraining, { as: 'trainings', foreignKey: 'user_id' });
 User.hasMany(PushSubscription, { as: 'pushSubscriptions', foreignKey: 'user_id', onDelete: 'CASCADE' });
 PushSubscription.belongsTo(User, { foreignKey: 'user_id' });
 
+// --- Cross-Framework-Zuordnung (v3.0.0) ---
+// Eine Massnahme erfuellt Anforderungen aus mehreren Regelwerken. Die Gegenseite
+// ist bewusst KEIN belongsToMany: Das Ziel ist polymorph (framework +
+// requirement_id), Sequelize kann darueber keine Assoziation bilden. Die Routen
+// loesen es ueber den jeweiligen Katalog auf.
+Control.hasMany(ControlRequirement, { as: 'requirements', foreignKey: 'control_id', onDelete: 'CASCADE' });
+ControlRequirement.belongsTo(Control, { as: 'control', foreignKey: 'control_id' });
+ControlRequirement.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id' });
+
+// --- BCM-Prozess <-> Asset (v3.0.0) ---
+BcmProcess.belongsToMany(Asset, { through: BcmProcessAsset, as: 'assets', foreignKey: 'bcm_process_id', otherKey: 'asset_id' });
+Asset.belongsToMany(BcmProcess, { through: BcmProcessAsset, as: 'bcmProcesses', foreignKey: 'asset_id', otherKey: 'bcm_process_id' });
+BcmProcess.hasMany(BcmProcessAsset, { as: 'assetLinks', foreignKey: 'bcm_process_id', onDelete: 'CASCADE' });
+BcmProcessAsset.belongsTo(BcmProcess, { as: 'process', foreignKey: 'bcm_process_id' });
+BcmProcessAsset.belongsTo(Asset, { as: 'asset', foreignKey: 'asset_id' });
+
 module.exports = {
   sequelize, User, Asset, Assessment, Reminder, AuditLog, Document, Comment,
   Vendor, VendorContact, Policy, PolicyVersion, Setting, Risk, Notification,
@@ -284,4 +302,5 @@ module.exports = {
   Group, GroupMember, PushSubscription,
   VendorTriageRun, VendorFinding,
   DocumentAnalysisRun, DocumentAnalysisFinding,
+  ControlRequirement, BcmProcessAsset,
 };

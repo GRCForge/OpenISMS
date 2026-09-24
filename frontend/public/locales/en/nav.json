@@ -134,6 +134,10 @@
     "admin": {
       "label": "Admin",
       "hint": "Settings"
+    },
+    "graph": {
+      "label": "Relationships",
+      "hint": "Graph analysis"
     }
   },
   "overdueReviews_one": "{{count}} overdue review",

@@ -60,7 +60,9 @@
     "copy": "Kopieren",
     "save_success": "Konfiguration gespeichert.",
     "discovery_success": "Discovery erfolgreich: {{issuer}}",
-    "discovery_failed": "Discovery fehlgeschlagen."
+    "discovery_failed": "Discovery fehlgeschlagen.",
+    "env_managed_notice": "Ein Teil dieser Konfiguration wird über Umgebungsvariablen gepflegt und ist hier gesperrt. Die Umgebung hat Vorrang: Änderungen an diesen Feldern werden abgelehnt, damit kein Speichern gemeldet wird, das keine Wirkung hat.",
+    "env_managed_field": "Wird über {{variable}} gesetzt und ist hier nicht änderbar."
   },
   "general": {
     "title": "Allgemeine Einstellungen",
@@ -147,7 +149,11 @@
     "add_btn": "Zuordnung hinzufügen",
     "adding": "Hinzufügen…",
     "added": "Zuordnung hinzugefügt.",
-    "delete_confirm": "Zuordnung löschen?"
+    "delete_confirm": "Zuordnung löschen?",
+    "env_managed_notice": "Diese Zuordnungen gibt {{variable}} vor. Solange die Variable gesetzt ist, gilt ausschließlich diese Liste — die hier gespeicherten Zuordnungen werden nicht gelesen.",
+    "env_managed_row": "Über die Umgebung gesetzt",
+    "env_error_title": "Die Zuordnungen aus der Umgebung sind unbrauchbar.",
+    "env_error_effect": "Es greift derzeit KEINE Zuordnung — auch nicht die in der Datenbank. Wer sich anmeldet, bekommt die Standard-SSO-Rolle."
   },
   "rbac": {
     "title": "Berechtigungen anpassen",

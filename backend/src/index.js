@@ -11,6 +11,7 @@ const { permissionsPolicy } = require('./middleware/securityHeaders');
 const session = require('express-session');
 const passport = require('passport');
 const { sequelize } = require('./models');
+const { ensureGraph } = require('./services/graphService');
 const { startReminderService } = require('./services/reminderService');
 const { runTaskAutomation } = require('./services/taskAutomationService');
 const { seedCatalog } = require('./services/catalogSeed');
@@ -225,6 +226,7 @@ app.use('/api/report', require('./routes/report'));
 app.use('/api/reminders', require('./routes/reminders'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/risks', require('./routes/risks'));
+app.use('/api/controls/:controlId/requirements', require('./routes/controlRequirements'));
 app.use('/api/controls', require('./routes/controls'));
 app.use('/api/threats', require('./routes/threats'));
 app.use('/api/incidents', require('./routes/incidents'));
@@ -256,6 +258,9 @@ app.use('/api/discovery', requireModule('discovery'), require('./routes/discover
 app.use('/api/subject-requests', requireModule('dsgvo'), require('./routes/subject-requests'));
 app.use('/api/legal-requirements', require('./routes/legal-requirements'));
 app.use('/api/review', require('./routes/review'));
+// Graph-Auswertungen (Apache AGE, seit v3.0.0). Kein requireModule: Der Graph
+// wertet aus, was ohnehin da ist, und schaltet sich selbst ab, wenn AGE fehlt.
+app.use('/api/graph', require('./routes/graph'));
 app.use('/api/modules', require('./routes/modules'));
 app.use('/api/pentests', requireModule('pentest'), require('./routes/pentests'));
 app.use('/api/tisax', requireModule('tisax'), require('./routes/tisax'));
@@ -454,21 +459,53 @@ const connectWithRetry = async (maxRetries = 10, delayMs = 3000) => {
   }
 };
 
-// Drop duplicate non-primary indexes on a table (accumulated by sequelize.sync alter:true).
-// MySQL allows max 64 keys per table — duplicate UNIQUE indexes cause ER_TOO_MANY_KEYS.
+// Doppelte Indexe entfernen, die sequelize.sync({alter}) bei jedem Start neu
+// anlegt, wenn es einen bestehenden nicht wiedererkennt.
+//
+// Unter MySQL war das eine Notwendigkeit: dort ist bei 64 Schluesseln je Tabelle
+// Schluss, und der Start scheiterte irgendwann mit ER_TOO_MANY_KEYS. Postgres
+// kennt diese Grenze nicht - hier geht es nur noch um Schreiblast und Platz, ein
+// Index will bei jedem INSERT gepflegt werden. Deshalb bleibt die Bereinigung,
+// aber sie ist kein Notausgang mehr.
+//
+// Angefasst wird ausschliesslich, was Postgres selbst als redundant ausweist:
+// gleiche Tabelle, gleiche Spaltenliste, und KEIN Constraint dahinter. Ein
+// Index, an dem ein PRIMARY KEY, UNIQUE oder ein Fremdschluessel haengt, wird
+// nie gedroppt - der Constraint waere mit weg.
 const cleanupDuplicateIndexes = async (tableName) => {
   try {
-    const [rows] = await sequelize.query(`SHOW INDEX FROM \`${tableName}\``); // NOSONAR(javascript:S3649) - tableName is a hardcoded string literal, not user input
-    const byColumn = {};
+    const [rows] = await sequelize.query(`
+      SELECT ir.relname   AS name,
+             i.indkey::text AS columns,
+             i.indisunique  AS is_unique,
+             c.conname      AS constraint_name
+        FROM pg_index i
+        JOIN pg_class ir  ON ir.oid = i.indexrelid
+        JOIN pg_class t   ON t.oid = i.indrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        LEFT JOIN pg_constraint c ON c.conindid = i.indexrelid
+       WHERE t.relname = :tableName
+         AND n.nspname = current_schema()
+         AND NOT i.indisprimary
+       ORDER BY i.indexrelid
+    `, { replacements: { tableName } });
+
+    // Gruppieren nach Spaltenliste + Unique-Eigenschaft: Ein UNIQUE-Index und
+    // ein einfacher Index ueber dieselben Spalten sind NICHT dasselbe, der
+    // einfache darf den eindeutigen nicht ersetzen.
+    const nachForm = {};
     for (const r of rows) {
-      if (r.Key_name === 'PRIMARY') continue;
-      (byColumn[r.Column_name] = byColumn[r.Column_name] || []).push(r.Key_name);
+      if (r.constraint_name) continue; // traegt einen Constraint - unantastbar
+      const schluessel = `${r.columns}|${r.is_unique}`;
+      (nachForm[schluessel] = nachForm[schluessel] || []).push(r.name);
     }
-    for (const [col, keys] of Object.entries(byColumn)) {
-      // Keep the last key (usually the original constraint); drop all prior duplicates
-      for (const key of keys.slice(0, -1)) {
-        await sequelize.query(`ALTER TABLE \`${tableName}\` DROP INDEX \`${key}\``); // NOSONAR(javascript:S3649) - tableName hardcoded; key from SHOW INDEX output
-        console.log(`[DB] Removed duplicate index \`${key}\` on ${tableName}.${col}`);
+
+    for (const namen of Object.values(nachForm)) {
+      // Den ersten behalten (den aeltesten, ueblicherweise den beabsichtigten),
+      // alle spaeteren Dubletten verwerfen.
+      for (const name of namen.slice(1)) {
+        await sequelize.query(`DROP INDEX IF EXISTS ${sequelize.getQueryInterface().quoteIdentifier(name)}`);
+        console.log(`[DB] Removed duplicate index ${name} on ${tableName}`);
       }
     }
   } catch { /* table may not exist yet on first run */ }
@@ -478,84 +515,62 @@ const start = async () => {
   try {
     await connectWithRetry();
 
-    // Data Cleanup: Fix orphaned references before sync
-    try {
-      // Fix assets -> vendors
-      await sequelize.query('UPDATE assets SET vendor_id = NULL WHERE vendor_id IS NOT NULL AND vendor_id NOT IN (SELECT id FROM vendors)');
-      console.log('[DB] Cleaned up orphaned vendor_id references in assets table');
-      
-      // Fix VendorContacts -> vendors
-      // Sequelize might use "VendorContacts" or "vendor_contacts"
-      const [tables] = await sequelize.query("SHOW TABLES LIKE 'VendorContacts'");
-      const tableName = tables.length > 0 ? 'VendorContacts' : 'vendor_contacts';
-      await sequelize.query(`DELETE FROM \`${tableName}\` WHERE vendor_id NOT IN (SELECT id FROM vendors)`); // NOSONAR(javascript:S3649) - tableName is 'VendorContacts' or 'vendor_contacts' (hardcoded strings)
-      console.log(`[DB] Cleaned up orphaned references in ${tableName} table`);
-    } catch (e) {
-      /* ignore if tables don't exist yet */
-      console.log('[DB] Cleanup skipped (tables might not exist yet)');
-    }
-
-    // Purge duplicate indexes before sync to avoid ER_TOO_MANY_KEYS (MySQL max 64 keys)
+    // Doppelte Indexe vor dem Sync abraeumen (siehe cleanupDuplicateIndexes).
     for (const table of ['users', 'passkey_credentials', 'assets', 'vendors', 'risks', 'controls', 'incidents']) {
       await cleanupDuplicateIndexes(table);
     }
 
-    // Ensure ENUMs are updated (Sequelize alter often fails for ENUMs in MySQL)
-    await sequelize.query(`
-      ALTER TABLE vendors MODIFY COLUMN type ENUM(
-        'it_provider', 'software_vendor', 'hardware_vendor', 'cloud_provider',
-        'support', 'consultant', 'other', 'software', 'cloud', 'hardware', 'consulting', 'hosting', 'logistics'
-      ) DEFAULT 'other'
-    `).catch(e => console.warn('[DB] Could not alter vendors.type:', e.message));
-
-    // Convert vvt_entries.legal_basis from ENUM to VARCHAR(255)
-    await sequelize.query(`
-      ALTER TABLE vvt_entries MODIFY COLUMN legal_basis VARCHAR(255) DEFAULT 'legitimate_interests'
-    `).catch(e => console.warn('[DB] Could not alter vvt_entries.legal_basis:', e.message));
-
-    // Convert audit_logs action/entity_type from ENUM to VARCHAR(64) to support all action strings
-    await sequelize.query(`
-      ALTER TABLE audit_logs MODIFY COLUMN action VARCHAR(64) NOT NULL
-    `).catch(e => console.warn('[DB] Could not alter audit_logs.action:', e.message));
-    await sequelize.query(`
-      ALTER TABLE audit_logs MODIFY COLUMN entity_type VARCHAR(64) NOT NULL
-    `).catch(e => console.warn('[DB] Could not alter audit_logs.entity_type:', e.message));
-
-    await sequelize.query(`
-      ALTER TABLE users MODIFY COLUMN role ENUM('admin','owner','assessor','viewer','it-staff','dpo','employee','management') NOT NULL DEFAULT 'viewer'
-    `).catch(e => console.warn('[DB] Could not alter users.role:', e.message));
-
-    await sequelize.query(`
-      ALTER TABLE tasks MODIFY COLUMN assigned_role ENUM('admin','owner','assessor','viewer','it-staff','dpo','employee','management')
-    `).catch(e => console.warn('[DB] Could not alter tasks.assigned_role:', e.message));
-
-    await sequelize.query(`
-      ALTER TABLE custom_roles MODIFY COLUMN base_role ENUM('admin','assessor','dpo','it-staff','owner','viewer','employee','management') NOT NULL DEFAULT 'viewer'
-    `).catch(e => console.warn('[DB] Could not alter custom_roles.base_role:', e.message));
-
-    // 'management' was missing here while users.role and custom_roles.base_role
-    // both carry it, so a claim could not be mapped to that role directly.
-    await sequelize.query(`
-      ALTER TABLE oidc_claim_mappings MODIFY COLUMN role ENUM('admin','assessor','dpo','it-staff','owner','viewer','employee','management') NULL
-    `).catch(e => console.warn('[DB] Could not alter oidc_claim_mappings.role:', e.message));
-
-    // Per-custom-role permission matrix. NULL on existing rows, which keeps them on
-    // the global matrix for their base_role until an admin edits them.
-    await sequelize.query(`
-      ALTER TABLE custom_roles ADD COLUMN permissions JSON NULL
-    `).catch(() => { /* column already present */ });
-
-    // Drop old camelCase columns from push_subscriptions
-    await sequelize.query(`
-      ALTER TABLE push_subscriptions DROP COLUMN createdAt, DROP COLUMN updatedAt
-    `).catch(e => {});
+    // HIER STAND EINE REIHE VON "ALTER TABLE ... MODIFY COLUMN ... ENUM(...)".
+    //
+    // Sie war ein MySQL-Pflaster: Dort scheiterte sequelize.sync({alter}) an
+    // ENUM-Spalten still, sodass jede neue Rolle und jeder neue Lieferantentyp
+    // von Hand nachgezogen werden musste - und weil die Anweisungen ein
+    // .catch(warn) trugen, fiel ein Fehlschlag nur als Logzeile auf.
+    //
+    // Postgres hat echte ENUM-Typen, und der Postgres-Dialekt von Sequelize
+    // pflegt sie beim Sync selbst (ALTER TYPE ... ADD VALUE). Die Modelle sind
+    // damit die einzige Quelle der Wahrheit - eine Aufzaehlung steht nur noch
+    // an einer Stelle statt an zweien, die auseinanderlaufen koennen.
+    //
+    // Ebenso entfallen: das Nachruesten von custom_roles.permissions und das
+    // Abraeumen der alten camelCase-Spalten in push_subscriptions. Beides
+    // reparierte Schemata aelterer Versionen. v3.0.0 hat keinen Upgrade-Pfad
+    // von 2.2.x (siehe Release Notes), jede Installation faengt leer an.
 
     await sequelize.sync({ alter: { drop: false } });
     console.log('Database synchronized (no-drop mode)');
 
-    // Ensure unique index for user_id and endpoint on push_subscriptions
+    // Apache AGE erst JETZT: Die Trigger haengen an den Tabellen, die der Sync
+    // gerade angelegt hat. Davor scheiterte das Anlegen an "Relation assets
+    // existiert nicht" - und zwar leise, weil ensureGraph() einen Fehlschlag
+    // bewusst nur protokolliert, statt den Start abzubrechen.
+    //
+    // Und noch VOR dem Katalog-Seeding weiter unten: So laufen die dort
+    // angelegten Massnahmen und Bedrohungen durch die Trigger in den Graphen,
+    // statt bis zum naechsten Neuaufbau zu fehlen.
+    await ensureGraph();
+
+    // Eine Anmeldeidentitaet je E-Mail. Unter MySQL uebernahm die Kollation den
+    // Vergleich ohne Ruecksicht auf Gross-/Kleinschreibung, ohne dass ein Index
+    // das festhielt; Postgres vergleicht exakt. models/User.js schreibt deshalb
+    // nur noch kleingeschrieben, und dieser Index haelt fest, was daran
+    // vorbeikaeme - etwa ein direkter INSERT.
     await sequelize.query(
-      "CREATE UNIQUE INDEX uq_push_user_endpoint ON push_subscriptions (user_id, endpoint(191))"
+      'CREATE UNIQUE INDEX IF NOT EXISTS uq_users_email_lower ON users (lower(email))'
+    ).catch(e => {
+      // Nicht verschlucken: Schlaegt das fehl, gibt es bereits zwei Konten mit
+      // derselben Adresse, und dann ist unbestimmt, welches sich anmeldet.
+      console.error('[DB] Eindeutiger Index auf lower(email) konnte nicht angelegt werden - '
+        + 'vermutlich existieren doppelte E-Mail-Adressen:', e.message);
+    });
+
+    // Ein Endpunkt je Benutzer. Unter MySQL musste der Index auf die ersten 191
+    // Zeichen begrenzt werden (Schluessellaenge); Postgres kennt keine
+    // Praefix-Indexe und braucht die Kruecke nicht. Die btree-Obergrenze von
+    // ~2700 Byte liegt weit ueber jeder realen Push-Endpunkt-URL, und ein
+    // Ueberschreiten scheitert laut beim INSERT statt still zu verdoppeln.
+    await sequelize.query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS uq_push_user_endpoint ON push_subscriptions (user_id, endpoint)'
     ).catch(() => {});
 
     // DB-Indexes für häufig gefilterte Spalten (idempotent)

@@ -56,9 +56,13 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const { User, OidcClaimMapping, CustomRole } = require('../models');
+// OidcClaimMapping und CustomRole werden hier nicht mehr direkt gebraucht -
+// die Mappings kommen jetzt aus services/oidcMappings.js, gleich ob aus
+// der Tabelle oder aus OIDC_CLAIM_MAPPINGS.
+const { User } = require('../models');
 const { auditFromReq } = require('../services/auditService');
-const { getOidcRaw, getGeneral } = require('../services/settingsService');
+const { getOidcRaw, getGeneral, isOidcUsable } = require('../services/settingsService');
+const { geltendeMappings } = require('../services/oidcMappings');
 const { buildConfig, getCallbackUrl, client } = require('../services/oidcService');
 
 const frontendBase = (req) => {
@@ -85,7 +89,11 @@ setInterval(() => {
 router.get('/status', async (req, res) => {
   try {
     const o = await getOidcRaw();
-    const enabled = !!(o.enabled && o.issuer && o.clientId && o.clientSecretEnc);
+    // Frueher wurde hier direkt o.clientSecretEnc geprueft. Seit das Secret
+    // auch aus OIDC_CLIENT_SECRET kommen kann, waere das ein falsches Nein:
+    // Das Chiffrat bleibt dann leer, SSO ist aber vollstaendig konfiguriert -
+    // und der Anmeldeknopf erschiene nie, ohne dass irgendwo ein Fehler steht.
+    const enabled = await isOidcUsable();
     res.json({ ssoEnabled: enabled, name: o.displayName || 'Single Sign-On' });
   } catch (e) {
     console.error('[OIDC] status error:', e.message);
@@ -262,10 +270,10 @@ router.get('/callback', async (req, res) => {
 
     // Apply OIDC claim → role mappings (highest priority wins)
     try {
-      const mappings = await OidcClaimMapping.findAll({
-        include: [{ model: CustomRole, as: 'customRole' }],
-        order: [['priority', 'DESC'], ['id', 'ASC']],
-      });
+      // Quelle ist seit v3.0.0 nicht mehr zwingend die Tabelle: Ist
+      // OIDC_CLAIM_MAPPINGS gesetzt, gilt ausschliesslich diese Liste.
+      // geltendeMappings() liefert beides in derselben Form.
+      const mappings = await geltendeMappings();
       let mappedRole = null;
       let mappedCustomRoleId = null;
       // Diagnose-Log (18.08.2026, Notion-Aufgabe "Keycloak-OIDC-Rollenmapping"):

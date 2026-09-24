@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
+import { RequirementMapping } from '../components/controls/RequirementMapping';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
@@ -338,6 +339,13 @@ export const Controls: React.FC = () => {
                   </label>
                 ))}
               </div>
+            </div>
+
+            {/* Cross-Framework-Zuordnung (v3.0.0). Speichert sofort und nicht
+                ueber saveEdit: Eine Zuordnung ist eine eigene Aussage mit
+                eigenem Audit-Eintrag, kein Feld dieser Massnahme. */}
+            <div className="md:col-span-2 pt-4 border-t dark:border-slate-800">
+              <RequirementMapping controlId={editing.id} canEdit={canWrite} />
             </div>
 
             <div className="md:col-span-2 flex gap-3 pt-4 border-t dark:border-slate-800">

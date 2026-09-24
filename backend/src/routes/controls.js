@@ -38,7 +38,7 @@ router.get('/', authenticate, requirePermission('controls','view','admin','owner
     setFilter(where, 'framework', framework);
     setFilter(where, 'status', status);
     setFilter(where, 'type', type);
-    if (search) where[Op.or] = [{ code: { [Op.like]: `%${escapeLike(search)}%` } }, { title: { [Op.like]: `%${escapeLike(search)}%` } }];
+    if (search) where[Op.or] = [{ code: { [Op.iLike]: `%${escapeLike(search)}%` } }, { title: { [Op.iLike]: `%${escapeLike(search)}%` } }];
     const controls = await Control.findAll({ where, include: includeAll, order: [['framework', 'ASC'], ['code', 'ASC']] });
     res.json(controls);
   } catch (e) { serverError(res, e, 'controls'); }

@@ -41,7 +41,7 @@ router.get('/', authenticate, requirePermission('risks','view','admin','owner','
     setFilter(where, 'status', status);
     setFilter(where, 'treatment', treatment);
     setFilter(where, 'inherent_level', level);
-    if (search) where.title = { [Op.like]: `%${escapeLike(search)}%` };
+    if (search) where.title = { [Op.iLike]: `%${escapeLike(search)}%` };
     const risks = await Risk.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
     res.json(risks);
   } catch (e) { serverError(res, e, 'risks'); }

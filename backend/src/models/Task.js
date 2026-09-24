@@ -22,7 +22,7 @@ const Task = sequelize.define('Task', {
   created_by_id: { type: DataTypes.INTEGER, allowNull: true },
   related_type: { type: DataTypes.STRING(50), allowNull: true },
   related_id: { type: DataTypes.INTEGER, allowNull: true },
-  tags: { type: DataTypes.JSON, defaultValue: [] },
+  tags: { type: DataTypes.JSONB, defaultValue: [] },
   completed_at: { type: DataTypes.DATE, allowNull: true },
   assigned_to_group_id: { type: DataTypes.INTEGER, allowNull: true },
   completed_by_id: { type: DataTypes.INTEGER, allowNull: true },
