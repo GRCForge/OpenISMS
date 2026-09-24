@@ -40,6 +40,13 @@ ENV NODE_ENV=production
 # pdf/docx parsing all use it — 8 reduces head-of-line blocking under concurrent load.
 ENV UV_THREADPOOL_SIZE=8
 COPY backend/package.json backend/package-lock.json ./
+# Keine Telemetrie aus dem Build heraus. Der PostgreSQL-Treiber `pg` zieht seit
+# v3.0.0 @scarf/scarf mit, das in seinem postinstall-Schritt einen Aufruf nach
+# aussen macht. Fuer ein ISMS-Image ist eine Verbindung, die niemand angefordert
+# hat, das falsche Signal - und in abgeschotteten Build-Umgebungen laeuft sie
+# ohnehin nur in einen Timeout.
+ENV SCARF_ANALYTICS=false
+ENV DO_NOT_TRACK=1
 # --loglevel=error suppresses the dottie deprecation warning (transitive dep of
 # sequelize@6; dottie@2.0.7 is the latest version — no fix available upstream).
 RUN npm ci --omit=dev --loglevel=error || npm install --omit=dev --loglevel=error

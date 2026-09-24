@@ -56,6 +56,9 @@ OpenISMS is a complete, practice-oriented Information Security Management System
 ### Risk Register & Risk Matrix
 ![Risk Register](docs/screenshots/risks.png)
 
+### Relationship Analysis
+![Relationship Analysis](docs/screenshots/graph.png)
+
 ### Compliance Overview
 ![Compliance Overview](docs/screenshots/compliance.png)
 
