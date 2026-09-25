@@ -710,8 +710,8 @@ server.tool(
   'Show the CheckMK integration configuration (without the secret) and the result of the last sync run.',
   {},
   async () => {
-    const { getCheckmkPublic } = require('../services/settingsService');
-    return { content: [{ type: 'text', text: JSON.stringify(await getCheckmkPublic(), null, 2) }] };
+    const { getIntegrationPublic } = require('../services/settingsService');
+    return { content: [{ type: 'text', text: JSON.stringify(await getIntegrationPublic('checkmk'), null, 2) }] };
   }
 );
 
@@ -720,13 +720,15 @@ server.tool(
   'Fetch the live host list from CheckMK (name, IP, state, plugin output). Read-only, writes nothing to the ISMS.',
   {},
   async () => {
-    const { getCheckmkConfig } = require('../services/settingsService');
-    const { fetchHosts } = require('../services/checkmkService');
-    const cfg = await getCheckmkConfig();
+    const { getIntegrationConfig } = require('../services/settingsService');
+    const { adapter } = require('../services/integrations');
+    const cmk = adapter('checkmk');
+    const cfg = await getIntegrationConfig('checkmk');
     if (!cfg.url || !cfg.secret) {
       return { content: [{ type: 'text', text: 'CheckMK integration is not configured.' }], isError: true };
     }
-    return { content: [{ type: 'text', text: JSON.stringify(await fetchHosts(cfg), null, 2) }] };
+    const { hosts } = await cmk.vorschau(cfg);
+    return { content: [{ type: 'text', text: JSON.stringify(hosts, null, 2) }] };
   }
 );
 
@@ -737,10 +739,12 @@ server.tool(
     dry_run: z.boolean().optional().default(true).describe('true (default) reports what would change without writing anything'),
   },
   async ({ dry_run }, { mcpUser }) => {
-    const { getCheckmkConfig, setCheckmk } = require('../services/settingsService');
-    const { syncFromCheckmk } = require('../services/checkmkSyncService');
+    const { getIntegrationConfig, setIntegration } = require('../services/settingsService');
+    const { adapter } = require('../services/integrations');
+    const { abgleichen } = require('../services/discoverySync');
+    const cmk = adapter('checkmk');
 
-    const cfg = await getCheckmkConfig();
+    const cfg = await getIntegrationConfig('checkmk');
     if (!cfg.url || !cfg.secret) {
       return { content: [{ type: 'text', text: 'CheckMK integration is not configured.' }], isError: true };
     }
@@ -748,12 +752,19 @@ server.tool(
       return { content: [{ type: 'text', text: 'CheckMK integration is disabled. Enable it before syncing.' }], isError: true };
     }
 
-    const result = await syncFromCheckmk({ cfg, dryRun: dry_run });
+    const { records, zusatz } = await cmk.lesen(cfg);
+    const result = await abgleichen({
+      source: cmk.id,
+      records,
+      dryRun: dry_run,
+      zaehltBestandVollstaendig: cmk.zaehltBestandVollstaendig,
+      zusatz,
+    });
 
     // Ein Probelauf setzt keinen Sync-Stand — sonst behauptet die Anzeige eine
     // Aktualitaet, die nie geschrieben wurde.
     if (!dry_run) {
-      await setCheckmk({
+      await setIntegration('checkmk', {
         lastSyncAt: result.run_at,
         lastSyncSummary: {
           hosts_seen: result.hosts_seen,
@@ -1853,24 +1864,43 @@ server.tool(
   'Fetch the full management report: 12-month trends, risk/control/task distribution, auto-calculated KPIs (Health Score, MTTR, coverage rates) and manual KPIs.',
   {},
   async () => {
-    // Reuse the same logic as the report route
+    // DIESELBE Berechnung wie im Managementbericht.
+    //
+    // Der Kommentar hier lautete "Reuse the same logic as the report route" -
+    // und tat es nicht: Es folgte eine EIGENE Formel (40/20/30/10 statt
+    // 30/25/25/20, Aufgabenquote statt Bewertungsabdeckung). Dieselbe
+    // Installation lieferte dem Bericht und diesem Werkzeug verschiedene
+    // Zahlen. Jetzt rechnet services/healthScore.js fuer beide.
     try {
-      const reportRoute = require('../routes/report');
-      // Directly call the DB queries used in the route
-      const { Asset, Risk, Incident, Control, Task, Reminder } = getModels();
-      const [totalAssets, implementedControls, totalControls, openHighRisks, overdueReminders, totalTasks, doneTasks] = await Promise.all([
+      const healthScore = require('../services/healthScore');
+      const { Asset, Risk, Control, Reminder, Assessment } = getModels();
+      const [totalAssets, assessedAssets, implementedControls, totalControls,
+             criticalRisks, highRisks, totalRisks, overdueReminders] = await Promise.all([
         Asset.count({ where: { status: { [Op.ne]: 'decommissioned' } } }),
+        Assessment.count({ where: { is_current: true } }),
         Control.count({ where: { status: 'implemented' } }),
         Control.count(),
-        Risk.count({ where: { residual_level: { [Op.in]: ['high','critical'] }, status: { [Op.notIn]: ['accepted','closed'] } } }),
+        Risk.count({ where: { residual_level: 'critical', status: { [Op.notIn]: ['accepted', 'closed'] } } }),
+        Risk.count({ where: { residual_level: 'high', status: { [Op.notIn]: ['accepted', 'closed'] } } }),
+        Risk.count(),
         Reminder.count({ where: { status: 'overdue' } }),
-        Task.count({ where: { status: { [Op.ne]: 'cancelled' } } }),
-        Task.count({ where: { status: 'done' } }),
       ]);
-      const coverage = totalControls > 0 ? Math.round((implementedControls / totalControls) * 100) : 0;
-      const taskRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-      const healthScore = Math.round(coverage * 0.4 + taskRate * 0.2 + Math.max(0, 100 - openHighRisks * 5) * 0.3 + Math.max(0, 100 - overdueReminders * 10) * 0.1);
-      const report = { health_score: Math.min(100, healthScore), control_coverage: coverage, task_completion_rate: taskRate, open_high_risks: openHighRisks, overdue_reminders: overdueReminders, total_assets: totalAssets };
+      const health = healthScore.berechne({
+        totalAssets, assessedAssets, totalControls, implementedControls,
+        overdueReviews: overdueReminders, criticalRisks, highRisks, totalRisks,
+      });
+      const report = {
+        health_score: health.score,
+        health_score_parts: health.parts,
+        // Ohne die Basis laesst sich eine 0 nicht von "alles schlecht"
+        // unterscheiden - sie kann auch heissen: noch nichts erfasst.
+        health_score_basis: health.basis,
+        control_coverage: totalControls > 0 ? Math.round((implementedControls / totalControls) * 100) : 0,
+        assessment_coverage: totalAssets > 0 ? Math.round((assessedAssets / totalAssets) * 100) : 0,
+        open_high_risks: criticalRisks + highRisks,
+        overdue_reminders: overdueReminders,
+        total_assets: totalAssets,
+      };
       return { content: [{ type: 'text', text: JSON.stringify(report, null, 2) }] };
     } catch (e) {
       return { content: [{ type: 'text', text: `Error: ${e.message}` }], isError: true };

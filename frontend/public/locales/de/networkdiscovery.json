@@ -110,7 +110,9 @@
       "ignore": "Ignorieren",
       "delete": "Eintrag löschen"
     },
-    "noItems": "Keine Einträge in dieser Ansicht. Führen Sie einen Netzwerk-Scan aus oder starten Sie den Explorer-Agent."
+    "noItems": "Keine Einträge in dieser Ansicht. Führen Sie einen Netzwerk-Scan aus oder starten Sie den Explorer-Agent.",
+    "sourceCheckmk": "CheckMK",
+    "sourceImport": "Import"
   },
   "messages": {
     "loadFailed": "Konnte Software nicht laden, um freizugeben",

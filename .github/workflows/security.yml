@@ -200,6 +200,7 @@ jobs:
           node scripts/test-job-lock.js
           node scripts/test-oidc-audience.js
           node scripts/test-rate-limit-once.js
+          node scripts/test-discovery-sync.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

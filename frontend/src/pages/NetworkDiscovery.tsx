@@ -62,9 +62,25 @@ interface ScanResult {
   found: number;
 }
 
+// Herkunft eines Staging-Eintrags.
+//
+// Vorher stand hier eine Ja/Nein-Frage: alles, was nicht 'network-scan' war,
+// hiess "Agent". Seit es Connector-Quellen gibt, war das schlicht falsch —
+// ein von CheckMK gemeldeter Host wurde als Agent-Fund ausgewiesen. Eine
+// unbekannte Quelle zeigt jetzt ihren eigenen Namen statt den einer fremden.
+const QUELLEN: Record<string, { key: string; farbe: string }> = {
+  'network-scan': { key: 'staged.sourceNetworkScan', farbe: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  agent:          { key: 'staged.sourceAgent',       farbe: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+  checkmk:        { key: 'staged.sourceCheckmk',     farbe: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  excel:          { key: 'staged.sourceImport',      farbe: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+};
+const QUELLE_UNBEKANNT = 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300';
+
 export const NetworkDiscovery: React.FC = () => {
   const toast = useToast();
   const { t } = useTranslation('networkdiscovery');
+  const quellenName = (q: string) => (QUELLEN[q] ? t(QUELLEN[q].key) : q);
+  const quellenFarbe = (q: string) => QUELLEN[q]?.farbe ?? QUELLE_UNBEKANNT;
   const [tab, setTab] = useState<Tab>('scan');
 
   // Network scan state
@@ -881,12 +897,8 @@ export const NetworkDiscovery: React.FC = () => {
                             <div className="space-y-1">
                               <div className="font-semibold text-gray-900 dark:text-slate-100 text-sm">{item.name}</div>
                               <div className="flex gap-1 flex-wrap">
-                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                                  item.source === 'network-scan'
-                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                    : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                }`}>
-                                  {item.source === 'network-scan' ? t('staged.sourceNetworkScan') : t('staged.sourceAgent')}
+                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${quellenFarbe(item.source)}`}>
+                                  {quellenName(item.source)}
                                 </span>
                                 <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
                                   item.asset_type === 'hardware'

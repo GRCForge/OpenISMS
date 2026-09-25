@@ -41,7 +41,11 @@
     "errorCount": "{{count}} errors occurred:",
     "rowError": "Row {{row}}:",
     "startNew": "Start another import",
-    "backToOverview": "Back to overview"
+    "backToOverview": "Back to overview",
+    "stagedSubtitle": "{{count}} assets are now proposals in Network Discovery.",
+    "stagedDetails": "{{updated}} existing proposals updated · {{linked}} already linked assets touched · {{ignored}} previously rejected skipped.",
+    "approvalHint": "The import creates no assets. They are created on approval — which stays a documented decision.",
+    "toApproval": "Go to approval"
   },
   "toast": {
     "previewError": "Preview failed",

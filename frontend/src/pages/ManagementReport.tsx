@@ -221,17 +221,28 @@ export const ManagementReport: React.FC = () => {
     return days >= 0 && days <= 60;
   }).sort((a, b) => new Date(a.accepted_until).getTime() - new Date(b.accepted_until).getTime());
 
-  const healthScore = trends?.autoKpis?.health_score ?? Math.round(
-    (controlCoverage / 100) * 30 + (assessedPct / 100) * 25 +
-    Math.max(0, 1 - (overdueReminders.length / Math.max(assets.length, 1))) * 25 +
-    Math.max(0, 1 - (riskCounts.critical * 0.1 + riskCounts.high * 0.03)) * 20
-  );
-  const healthLabel = healthScore >= 75
-    ? t('healthStatus.good', 'Gut')
-    : healthScore >= 50
-      ? t('healthStatus.needsImprovement', 'Verbesserungsbedarf')
-      : t('healthStatus.critical', 'Kritisch');
-  const healthColor = healthScore >= 75 ? 'text-green-600' : healthScore >= 50 ? 'text-amber-600' : 'text-red-600';
+  // KEIN Rueckfall auf eine eigene Rechnung.
+  //
+  // Hier stand die Formel ein drittes Mal - neben routes/report.js und
+  // mcp/server.js. Griff der Rueckfall, zeigte die Oberflaeche eine Zahl, die
+  // nach anderen Regeln entstanden war als die im Excel-Export und die, die
+  // ein Auditor ueber den MCP abfragt. Eine Kennzahl, deren Wert davon
+  // abhaengt, welcher Code sie gerade ausrechnet, ist keine Kennzahl.
+  //
+  // Liefert das Backend nichts, ist das eine fehlende Angabe und wird als
+  // solche gezeigt - nicht durch einen Ersatzwert verdeckt.
+  const healthScore: number | null = trends?.autoKpis?.health_score ?? null;
+  const hasHealthScore = typeof healthScore === 'number';
+  const healthLabel = !hasHealthScore
+    ? t('healthStatus.unavailable', 'Nicht ermittelbar')
+    : healthScore! >= 75
+      ? t('healthStatus.good', 'Gut')
+      : healthScore! >= 50
+        ? t('healthStatus.needsImprovement', 'Verbesserungsbedarf')
+        : t('healthStatus.critical', 'Kritisch');
+  const healthColor = !hasHealthScore
+    ? 'text-gray-500'
+    : healthScore! >= 75 ? 'text-green-600' : healthScore! >= 50 ? 'text-amber-600' : 'text-red-600';
 
   // Chart data
   const riskPieData = useMemo(() => [
@@ -272,7 +283,7 @@ export const ManagementReport: React.FC = () => {
     const colNote = t('excel.headers.note', 'Hinweis');
 
     const summarySheet = [
-      { [colKey]: t('excel.summary.healthScore', 'ISMS Health Score'),            [colVal]: `${healthScore}/100`, [colNote]: healthLabel },
+      { [colKey]: t('excel.summary.healthScore', 'ISMS Health Score'),            [colVal]: hasHealthScore ? `${healthScore}/100` : '–', [colNote]: healthLabel },
       { [colKey]: t('excel.summary.totalAssets', 'Erfasste Assets'),              [colVal]: assets.length, [colNote]: '' },
       { [colKey]: t('excel.summary.assessedAssets', 'Assets bewertet'),              [colVal]: currentAssessments.length, [colNote]: `${assessedPct}%` },
       { [colKey]: t('excel.summary.criticalRisks', 'Kritische Risiken'),            [colVal]: riskCounts.critical, [colNote]: riskCounts.critical > 0 ? t('excel.summary.immediateMeasures', 'Sofortmaßnahmen') : 'OK' },
@@ -408,7 +419,7 @@ export const ManagementReport: React.FC = () => {
               <CardBody className="flex flex-col items-center gap-3 w-full justify-between h-full">
                 <p className="text-sm font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">{t('healthScore', 'ISMS Health Score')}</p>
                 <div className="flex-1 flex items-center justify-center my-2">
-                  <Gauge value={healthScore} size={175} />
+                  <Gauge value={healthScore ?? 0} size={175} />
                 </div>
                 <div className="text-center space-y-1.5">
                   <p className={`text-lg font-extrabold ${healthColor}`}>{healthLabel}</p>
@@ -806,7 +817,7 @@ export const ManagementReport: React.FC = () => {
           <p className="text-sm text-gray-600 dark:text-slate-400">{t('signOffModal.description', 'Hiermit bestätigen Sie die Kenntnisnahme des aktuellen Management-Reports gemäß ISO 27001 Kap. 9.3.')}</p>
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-900/40 text-sm">
             <p className="font-medium dark:text-slate-200">{t('signOffModal.reportDate', { date: format(new Date(), 'dd. MMMM yyyy', { locale: dateFnsLocale }), defaultValue: 'Berichtsstand: {{date}}' })}</p>
-            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('signOffModal.healthScore', { score: healthScore, label: healthLabel, defaultValue: 'ISMS Health Score: {{score}}/100 — {{label}}' })}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('signOffModal.healthScore', { score: hasHealthScore ? healthScore : '–', label: healthLabel, defaultValue: 'ISMS Health Score: {{score}}/100 — {{label}}' })}</p>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('signOffModal.notes', 'Anmerkungen (optional)')}</label>

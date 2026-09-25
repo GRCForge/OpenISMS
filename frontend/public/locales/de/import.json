@@ -41,7 +41,11 @@
     "errorCount": "{{count}} Fehler aufgetreten:",
     "rowError": "Zeile {{row}}:",
     "startNew": "Einen weiteren Import starten",
-    "backToOverview": "Zurück zur Übersicht"
+    "backToOverview": "Zurück zur Übersicht",
+    "stagedSubtitle": "{{count}} Assets stehen jetzt als Vorschlag in der Netzwerk-Erkennung.",
+    "stagedDetails": "{{updated}} bestehende Vorschläge aktualisiert · {{linked}} bereits verknüpfte Assets angefasst · {{ignored}} zuvor abgelehnte übersprungen.",
+    "approvalHint": "Der Import legt keine Assets an. Sie entstehen erst mit der Freigabe — diese bleibt eine dokumentierte Entscheidung.",
+    "toApproval": "Zur Freigabe"
   },
   "toast": {
     "previewError": "Vorschau fehlgeschlagen",

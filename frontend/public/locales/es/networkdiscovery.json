@@ -110,7 +110,9 @@
       "ignore": "Ignore",
       "delete": "Delete entry"
     },
-    "noItems": "No entries in this view. Run a network scan or start the discovery agent."
+    "noItems": "No entries in this view. Run a network scan or start the discovery agent.",
+    "sourceCheckmk": "CheckMK",
+    "sourceImport": "Importación"
   },
   "messages": {
     "loadFailed": "Could not load software to be approved",
