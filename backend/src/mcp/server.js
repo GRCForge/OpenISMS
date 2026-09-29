@@ -329,6 +329,9 @@ const TOOL_GATES = {
   'isms_assess_threat_advisory': { perm: ['threat_intel', 'assess'], moduleKey: 'threat_intel', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   'isms_record_threat_source_review': { perm: ['threat_intel', 'review'], moduleKey: 'threat_intel', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   'isms_list_nis2_measures': { perm: ['nis2', 'view'], moduleKey: 'nis2' },
+  'isms_list_nis2_self_check': { perm: ['nis2', 'view'], moduleKey: 'nis2' },
+  'isms_get_nis2_gaps': { perm: ['nis2', 'view'], moduleKey: 'nis2' },
+  'isms_answer_nis2_self_check': { perm: ['nis2', 'edit'], moduleKey: 'nis2', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
   'isms_update_nis2_measure': { perm: ['nis2', 'edit'], moduleKey: 'nis2', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
   'isms_list_c5_criteria': { perm: ['c5', 'view'], moduleKey: 'c5' },
   'isms_update_c5_criterion': { perm: ['c5', 'edit'], moduleKey: 'c5', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
@@ -4664,6 +4667,77 @@ server.tool(
     await source.update({ last_reviewed_at: today, next_review_at: nextReviewDate(source.review_frequency), last_review_note: note ?? null });
     await logAudit('review', 'threat_source', source.id, source.name, { reviewed_at: today, next_review_at: source.next_review_at, note }, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify(source, null, 2) }] };
+  }
+);
+
+// ─── NIS-2-Standortbestimmung ────────────────────────────────────────────────
+
+server.tool(
+  'isms_list_nis2_self_check',
+  'List the NIS2 self-check questions with their two answers (implementation and evidence), the article each maps to, and the recommendation attached to it.',
+  {
+    category: z.string().optional().describe('Filter by topic, e.g. "Bedrohungsanalyse"'),
+    only_gaps: z.boolean().default(false).describe('Only questions that are not both implemented and evidenced'),
+    limit: z.number().int().min(1).max(200).default(100),
+  },
+  async ({ category, only_gaps, limit }) => {
+    const { Nis2SelfCheckItem } = getModels();
+    const { gapKind } = require('../services/nis2SelfCheckScoring');
+    const where = {};
+    if (category) where.category = category;
+    const items = await Nis2SelfCheckItem.findAll({ where, order: [['sort_order', 'ASC']], limit });
+    const rows = items
+      .map(i => i.toJSON())
+      .filter(i => !only_gaps || (gapKind(i) && gapKind(i) !== 'unanswered'));
+    return { content: [{ type: 'text', text: JSON.stringify(rows, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_nis2_gaps',
+  'The NIS2 gap picture: fulfilment rate and maturity per topic, coverage per article of the directive, and the ranked list of gaps with the recommendation for each. Gaps are split into not implemented, partly implemented, and implemented but not evidenced.',
+  {},
+  async () => {
+    const { Nis2SelfCheckItem, Nis2Measure, Setting } = getModels();
+    const { summarise } = require('../services/nis2SelfCheckScoring');
+    // Das Betroffenheitsprofil entscheidet, was ueberhaupt zaehlt.
+    let entityType = 'unknown';
+    try {
+      const row = await Setting.findByPk('nis2_profile');
+      const value = typeof row?.value === 'string' ? JSON.parse(row.value) : row?.value;
+      if (value?.entity_type) entityType = value.entity_type;
+    } catch { /* ohne Profil wird wie fuer eine wesentliche Einrichtung gerechnet */ }
+    const [items, measures] = await Promise.all([Nis2SelfCheckItem.findAll(), Nis2Measure.findAll()]);
+    const stats = summarise(items, entityType, measures);
+    return { content: [{ type: 'text', text: JSON.stringify({ entity_type: entityType, ...stats }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_answer_nis2_self_check',
+  'Answer a NIS2 self-check question on both axes: is the measure implemented, and can it be evidenced.',
+  {
+    question_ref: z.string().describe('Question identifier, e.g. q7'),
+    answer_implementation: z.enum(['not_assessed', 'yes', 'partly', 'no']).optional(),
+    answer_evidence: z.enum(['not_assessed', 'yes', 'partly', 'no']).optional(),
+    evidence_source: z.string().optional().describe('What the answer rests on — policy, minutes, ticket'),
+    notes: z.string().optional(),
+  },
+  async (args, { mcpUser }) => {
+    const { Nis2SelfCheckItem } = getModels();
+    const item = await Nis2SelfCheckItem.findOne({ where: { question_ref: args.question_ref } });
+    if (!item) return { content: [{ type: 'text', text: `Question ${args.question_ref} not found` }], isError: true };
+    const { question_ref, ...patch } = args;
+    if (patch.answer_implementation !== undefined || patch.answer_evidence !== undefined) {
+      // Wer geantwortet hat, kommt aus der Sitzung, nie aus den Argumenten.
+      patch.answered_by_id = mcpUser?.id || null;
+      patch.answered_at = new Date();
+    }
+    await item.update(patch);
+    await logAudit('update', 'nis2_self_check', item.id, item.question_ref, {
+      answer_implementation: patch.answer_implementation, answer_evidence: patch.answer_evidence,
+    }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
   }
 );
 

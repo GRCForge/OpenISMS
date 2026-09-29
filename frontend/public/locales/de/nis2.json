@@ -187,5 +187,94 @@
         "description": "Bis zur Einstufung wird wie für eine wesentliche Einrichtung gerechnet — lieber zu viel prüfen als eine Pflicht übersehen."
       }
     }
+  },
+  "tabs": {
+    "catalogue": "Kriterienkatalog",
+    "selfCheck": "Standortbestimmung"
+  },
+  "selfCheck": {
+    "empty": {
+      "title": "Fragenkatalog noch nicht geladen",
+      "description": "37 Fragen entlang der NIS-2-Artikel 20, 21 und 23, jede zweiachsig: Ist die Maßnahme umgesetzt, und können wir sie belegen? Daraus entstehen Erfüllungsquote, Reifegrad je Thema und eine Lückenliste.",
+      "loadButton": "Fragenkatalog laden"
+    },
+    "seeded": "{{count}} Fragen angelegt.",
+    "sync": "Fragen abgleichen",
+    "synced": "{{count}} Fragen ergänzt.",
+    "syncedNone": "Der Fragenkatalog ist bereits vollständig.",
+    "questionCount": "{{count}} Fragen",
+    "openQuestions": "{{count}} offen",
+    "recommendation": "Empfehlung",
+    "createTask": "Aufgabe anlegen",
+    "taskCreated": "Aufgabe angelegt und mit der Frage verknüpft.",
+    "taskExists": "Aufgabe vorhanden",
+    "linkedTask": "Aufgabe",
+    "evidenceSource": "Nachweisquelle",
+    "evidenceSourcePlaceholder": "Richtlinie, Protokoll, Ticket …",
+    "noGaps": "Keine Lücken — alles Beantwortete ist umgesetzt und belegt.",
+    "noGapsUnanswered": "Noch keine Frage beantwortet. Lücken erscheinen, sobald der Fragebogen ausgefüllt wird.",
+    "coverageHint": "Abdeckung je NIS-2-Element: links was der Fragebogen sagt, rechts was der Kriterienkatalog dazu führt. Ein Element ohne Frage ist nicht geprüft — nicht erfüllt.",
+    "noQuestion": "keine Frage im Katalog",
+    "answeredRatio": "{{answered}}/{{total}} beantwortet",
+    "measureStatus": "Maßnahme",
+    "axis": {
+      "implementation": "Umsetzung",
+      "evidence": "Nachweis"
+    },
+    "answer": {
+      "not_assessed": "Offen",
+      "yes": "Ja",
+      "partly": "Teilweise",
+      "no": "Nein"
+    },
+    "status": {
+      "good": "Gut",
+      "improvable": "Ausbaufähig",
+      "critical": "Kritisch",
+      "unanswered": "Unbeantwortet"
+    },
+    "gapKind": {
+      "open": "Nicht umgesetzt",
+      "partial": "Teilweise umgesetzt",
+      "undocumented": "Nicht belegt",
+      "unanswered": "Unbeantwortet"
+    },
+    "gap": {
+      "open": "Nicht umgesetzt",
+      "openHint": "Maßnahme fehlt",
+      "partial": "Teilweise",
+      "partialHint": "Maßnahme angefangen",
+      "undocumented": "Nicht belegt",
+      "undocumentedHint": "Umgesetzt, aber ohne Nachweis"
+    },
+    "stats": {
+      "completion": "Ausfüllstand",
+      "answeredOf": "{{answered}} von {{total}} beantwortet",
+      "rate": "Erfüllungsquote",
+      "noAnswers": "noch keine Antwort"
+    },
+    "view": {
+      "questionnaire": "Fragebogen",
+      "gaps": "Lücken ({{count}})",
+      "coverage": "Abdeckung je Element"
+    },
+    "import": {
+      "button": "Antworten importieren",
+      "title": "Antwortsatz übernehmen",
+      "intro": "Eine Zeile je Frage: Kennung, Umsetzung, Nachweis, optional die Nachweisquelle. Trennzeichen Semikolon, Tabulator oder Komma; „Ja“, „Teilweise“ und „Nein“ werden erkannt. Eine Kopfzeile wird übersprungen.",
+      "label": "Antworten",
+      "preview": "{{count}} Zeilen erkannt",
+      "skipped": "{{count}} Zeilen nicht lesbar",
+      "apply": "Übernehmen",
+      "done": "{{applied}} Antworten übernommen.",
+      "unknown": "Unbekannte Fragekennungen: {{refs}}",
+      "nothing": "Keine verwertbaren Zeilen erkannt."
+    },
+    "errors": {
+      "load": "Fragenkatalog konnte nicht geladen werden.",
+      "seed": "Fragenkatalog konnte nicht geladen werden.",
+      "save": "Antwort konnte nicht gespeichert werden.",
+      "task": "Aufgabe konnte nicht angelegt werden."
+    }
   }
 }

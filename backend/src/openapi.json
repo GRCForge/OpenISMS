@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenISMS API",
     "description": "REST API für das Information Security Management System (OpenISMS).\n\n## Authentifizierung\nAlle geschützten Endpunkte erfordern einen **Bearer JWT-Token** im `Authorization`-Header:\n```\nAuthorization: Bearer <token>\n```\nDen Token erhalten Sie über `POST /api/auth/login`.\n\n## Rollen\n- `admin` – Vollzugriff\n- `assessor` – Risikobewerter / Auditor\n- `it-staff` – IT-Mitarbeiter (Security-Daten)\n- `dpo` – Datenschutzbeauftragter\n- `owner` – Asset-Verantwortlicher\n- `management` – Nur-Lesen (Management-Ebene)\n- `employee` – Schulungs-Tab, eigene Trainingsübersicht\n- `viewer` – Nur Lesezugriff\n\n**Custom Roles**: Eigene Rollennamen mit Basisrolle über `/api/admin/custom-roles` verwalten.",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "contact": {
       "name": "ISMS Support"
     }
@@ -11758,6 +11758,317 @@
           }
         },
         "description": "Erfordert die Berechtigung `nis2.seed` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nis2/self-check": {
+      "get": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "self check abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.view` und das aktivierte Modul `nis2`."
+      },
+      "post": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "self check anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.create` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nis2/self-check/stats": {
+      "get": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "stats abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.view` und das aktivierte Modul `nis2`."
+      }
+    },
+    "/nis2/self-check/seed": {
+      "post": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "seed anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.seed` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nis2/self-check/sync-catalog": {
+      "post": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "sync catalog anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.seed` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nis2/self-check/{id}": {
+      "put": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "self check aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.edit` und das aktivierte Modul `nis2`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "self check löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.delete` und das aktivierte Modul `nis2`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/nis2/self-check/bulk-answer": {
+      "post": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "bulk answer anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.edit` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nis2/self-check/{id}/to-task": {
+      "post": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "to task anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.create` und das aktivierte Modul `nis2`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {

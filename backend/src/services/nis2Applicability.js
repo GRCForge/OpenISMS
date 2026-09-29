@@ -60,11 +60,24 @@ const obligationFor = (applicability, entityType) => {
  * Der Reifegrad bildet die uebliche fuenfstufige Skala ab, damit sich das
  * Ergebnis gegen einen externen Self-Check halten laesst.
  */
+// Eine Skala fuer das ganze NIS-2-Modul — Kriterienkatalog wie Fragebogen.
+// Fuenf Stufen, weil externe Self-Checks ihr Ergebnis ueblicherweise so
+// darstellen und die Werte damit nebeneinander lesbar bleiben.
+//
+// Nebeneinander lesbar heisst nicht gleich: Die Quote eines fremden Werkzeugs
+// wird abweichen, und zwar auch dann, wenn dieselben Antworten eingehen. Wie
+// es gewichtet, ist nicht veroeffentlicht; eine Zahl nachzubauen, deren
+// Herleitung man nicht kennt, waere geraten. Gegen einen konkret vorliegenden
+// Bericht lag diese Skala bei 12 von 16 Kategorien auf derselben Stufe und
+// beim Gesamtergebnis ebenfalls — die Abweichungen gingen durchweg nach oben,
+// weil 'teilweise' hier milder gewertet wird. Was diese Skala dafuer leistet:
+// Ihre Herleitung steht vollstaendig in nis2SelfCheckScoring.js und laesst
+// sich in einem Audit erklaeren.
 const maturityFromRate = (rate) => {
   if (rate >= 0.95) return 5;
-  if (rate >= 0.80) return 4;
-  if (rate >= 0.55) return 3;
-  if (rate >= 0.30) return 2;
+  if (rate >= 0.75) return 4;
+  if (rate >= 0.50) return 3;
+  if (rate >= 0.25) return 2;
   return 1;
 };
 

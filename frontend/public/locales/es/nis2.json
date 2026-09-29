@@ -187,5 +187,94 @@
         "description": "Hasta clasificarla se calcula como para una entidad esencial: mejor comprobar de más que pasar por alto una obligación."
       }
     }
+  },
+  "tabs": {
+    "catalogue": "Catálogo de criterios",
+    "selfCheck": "Autoevaluación"
+  },
+  "selfCheck": {
+    "empty": {
+      "title": "El catálogo de preguntas aún no está cargado",
+      "description": "37 preguntas sobre los artículos 20, 21 y 23 de NIS2, cada una en dos ejes: ¿está implantada la medida y podemos demostrarlo? De ahí salen la tasa de cumplimiento, el nivel de madurez por tema y la lista de brechas.",
+      "loadButton": "Cargar catálogo de preguntas"
+    },
+    "seeded": "{{count}} preguntas creadas.",
+    "sync": "Sincronizar preguntas",
+    "synced": "{{count}} preguntas añadidas.",
+    "syncedNone": "El catálogo de preguntas ya está completo.",
+    "questionCount": "{{count}} preguntas",
+    "openQuestions": "{{count}} pendientes",
+    "recommendation": "Recomendación",
+    "createTask": "Crear tarea",
+    "taskCreated": "Tarea creada y vinculada a la pregunta.",
+    "taskExists": "Ya hay tarea",
+    "linkedTask": "Tarea",
+    "evidenceSource": "Fuente de la evidencia",
+    "evidenceSourcePlaceholder": "Política, acta, ticket …",
+    "noGaps": "Sin brechas: todo lo respondido está implantado y documentado.",
+    "noGapsUnanswered": "Aún no se ha respondido ninguna pregunta. Las brechas aparecerán al rellenar el cuestionario.",
+    "coverageHint": "Cobertura por elemento de NIS2: a la izquierda lo que dice el cuestionario, a la derecha lo que lleva el catálogo de criterios. Un elemento sin pregunta está sin comprobar, no cumplido.",
+    "noQuestion": "sin pregunta en el catálogo",
+    "answeredRatio": "{{answered}}/{{total}} respondidas",
+    "measureStatus": "Medida",
+    "axis": {
+      "implementation": "Implantación",
+      "evidence": "Evidencia"
+    },
+    "answer": {
+      "not_assessed": "Pendiente",
+      "yes": "Sí",
+      "partly": "Parcialmente",
+      "no": "No"
+    },
+    "status": {
+      "good": "Bueno",
+      "improvable": "Mejorable",
+      "critical": "Crítico",
+      "unanswered": "Sin responder"
+    },
+    "gapKind": {
+      "open": "No implantado",
+      "partial": "Parcialmente implantado",
+      "undocumented": "Sin evidencia",
+      "unanswered": "Sin responder"
+    },
+    "gap": {
+      "open": "No implantado",
+      "openHint": "Falta la medida",
+      "partial": "Parcial",
+      "partialHint": "Medida iniciada",
+      "undocumented": "Sin evidencia",
+      "undocumentedHint": "Implantado, pero sin prueba"
+    },
+    "stats": {
+      "completion": "Grado de cumplimentación",
+      "answeredOf": "{{answered}} de {{total}} respondidas",
+      "rate": "Tasa de cumplimiento",
+      "noAnswers": "aún sin respuestas"
+    },
+    "view": {
+      "questionnaire": "Cuestionario",
+      "gaps": "Brechas ({{count}})",
+      "coverage": "Cobertura por elemento"
+    },
+    "import": {
+      "button": "Importar respuestas",
+      "title": "Importar un conjunto de respuestas",
+      "intro": "Una línea por pregunta: identificador, implantación, evidencia y, opcionalmente, la fuente de la evidencia. Separador punto y coma, tabulador o coma; se reconocen «Ja», «Teilweise» y «Nein» además de las palabras en inglés. La línea de encabezado se omite.",
+      "label": "Respuestas",
+      "preview": "{{count}} líneas reconocidas",
+      "skipped": "{{count}} líneas ilegibles",
+      "apply": "Aplicar",
+      "done": "{{applied}} respuestas importadas.",
+      "unknown": "Identificadores de pregunta desconocidos: {{refs}}",
+      "nothing": "No se ha reconocido ninguna línea utilizable."
+    },
+    "errors": {
+      "load": "No se ha podido cargar el catálogo de preguntas.",
+      "seed": "No se ha podido cargar el catálogo de preguntas.",
+      "save": "No se ha podido guardar la respuesta.",
+      "task": "No se ha podido crear la tarea."
+    }
   }
 }

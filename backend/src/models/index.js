@@ -44,6 +44,7 @@ const Dsfa = require('./Dsfa');
 const Iso27001Control = require('./Iso27001Control');
 const BsiRequirement = require('./BsiRequirement');
 const Nis2Measure = require('./Nis2Measure');
+const Nis2SelfCheckItem = require('./Nis2SelfCheckItem');
 const C5Criterion = require('./C5Criterion');
 const CustomRole = require('./CustomRole');
 const OidcClaimMapping = require('./OidcClaimMapping');
@@ -247,6 +248,9 @@ Dsfa.belongsTo(User, { as: 'approver', foreignKey: 'approver_id' });
 Iso27001Control.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });
 BsiRequirement.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2Measure.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
+Nis2SelfCheckItem.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
+Nis2SelfCheckItem.belongsTo(User, { as: 'answeredBy', foreignKey: 'answered_by_id' });
+Nis2SelfCheckItem.belongsTo(Task, { as: 'task', foreignKey: 'task_id' });
 C5Criterion.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 
 // CustomRole / OIDC associations
@@ -314,7 +318,7 @@ module.exports = {
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
-  Iso27001Control, BsiRequirement, Nis2Measure, C5Criterion,
+  Iso27001Control, BsiRequirement, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,

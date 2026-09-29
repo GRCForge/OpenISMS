@@ -688,6 +688,9 @@ The server returns the JSON-RPC list of all **78 available tools**.
 | | `isms_create_ai_system` | Register an AI system in the AI Act inventory |
 | | `isms_update_ai_system` | Update AI system details, conformity, or approval status |
 | | `isms_delete_ai_system` | Delete an AI system and cancel related open tasks |
+| **NIS-2 self-check** | `isms_list_nis2_self_check` | The 37 questions with both answers, article mapping and recommendation |
+| | `isms_get_nis2_gaps` | Maturity per topic, coverage per article, ranked gaps with recommendations |
+| | `isms_answer_nis2_self_check` | Answer a question on both axes (implemented / evidenced) |
 | **Threat Landscape** | `isms_list_threat_sources` | List monitored threat sources with review cadence and overdue flag |
 | | `isms_list_threat_advisories` | List external advisories with assessment and what they turned into |
 | | `isms_get_threat_intel_stats` | Evidence figures for NIS-2 Art. 21(2)(a): monitoring and handover rates |
@@ -808,6 +811,7 @@ The MCP tools stay CheckMK-specific by name; the REST layer is generic (`/api/in
 | `risk_controls` | N:M link risks ↔ controls (with effectiveness) |
 | `controls` | Controls catalogue (ISO 27001, NIS-2, BSI, custom) with status and SoA |
 | `threats` | Threat catalogue (BSI elementary hazards, common, custom) |
+| `nis2_self_check` | NIS-2 self-check: 37 questions with implementation and evidence answer, evidence source, recommendation, per-profile applicability and the remediation task created from a gap |
 | `threat_sources` | Register of monitored threat sources (national CSIRT, CERT, vendor, news) with review cadence and fetch status |
 | `threat_advisories` | External advisories with severity, relevance assessment, assessor and links into risk / task / incident |
 | `threat_advisory_assets` | N:M link advisories ↔ assets (manual or CVE match, confirmed flag) |
@@ -914,7 +918,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 |---|---|---|
 | `dsgvo` | GDPR | Processing register (Art. 30), DPIA, data subject rights (Art. 15–22), data breaches |
 | `iso27001` | ISO 27001:2022 | Controls Annex A, SoA, assessments, conformance status |
-| `nis2` | NIS-2 | Risk management Art. 21, reporting obligations Art. 23, management liability |
+| `nis2` | NIS-2 | Criteria catalogue for Art. 20, 21 and 23 with per-profile applicability (essential / important / indirectly affected), plus a 37-question self-check answered on two axes (implemented / evidenced) with maturity per topic, coverage per article and a ranked gap list |
 | `bsi_grundschutz` | BSI IT-Grundschutz | Grundschutz controls catalogue, implementation status |
 | `c5` | BSI C5:2026 | Cloud criteria catalogue for cloud service providers |
 | `tisax` | TISAX (VDA ISA 6) | Requirements catalogue, assessments, maturity level measurement |

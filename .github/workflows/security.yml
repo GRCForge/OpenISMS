@@ -203,6 +203,7 @@ jobs:
           node scripts/test-discovery-sync.js
           node scripts/test-threat-intel.js
           node scripts/test-nis2-applicability.js
+          node scripts/test-nis2-self-check.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

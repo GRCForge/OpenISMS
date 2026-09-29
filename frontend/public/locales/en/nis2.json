@@ -187,5 +187,94 @@
         "description": "Until classified, the rate is computed as for an essential entity — better to check too much than to miss a duty you have."
       }
     }
+  },
+  "tabs": {
+    "catalogue": "Criteria catalogue",
+    "selfCheck": "Self-check"
+  },
+  "selfCheck": {
+    "empty": {
+      "title": "Question catalogue not loaded yet",
+      "description": "37 questions along NIS2 Articles 20, 21 and 23, each on two axes: is the measure in place, and can we prove it? From that come the fulfilment rate, a maturity level per topic, and a gap list.",
+      "loadButton": "Load question catalogue"
+    },
+    "seeded": "{{count}} questions created.",
+    "sync": "Sync questions",
+    "synced": "{{count}} questions added.",
+    "syncedNone": "The question catalogue is already complete.",
+    "questionCount": "{{count}} questions",
+    "openQuestions": "{{count}} open",
+    "recommendation": "Recommendation",
+    "createTask": "Create task",
+    "taskCreated": "Task created and linked to the question.",
+    "taskExists": "Task exists",
+    "linkedTask": "Task",
+    "evidenceSource": "Evidence source",
+    "evidenceSourcePlaceholder": "Policy, minutes, ticket …",
+    "noGaps": "No gaps — everything answered is in place and evidenced.",
+    "noGapsUnanswered": "No question answered yet. Gaps appear as the questionnaire is filled in.",
+    "coverageHint": "Coverage per NIS2 element: on the left what the questionnaire says, on the right what the criteria catalogue tracks. An element with no question is unchecked — not fulfilled.",
+    "noQuestion": "no question in the catalogue",
+    "answeredRatio": "{{answered}}/{{total}} answered",
+    "measureStatus": "Measure",
+    "axis": {
+      "implementation": "Implementation",
+      "evidence": "Evidence"
+    },
+    "answer": {
+      "not_assessed": "Open",
+      "yes": "Yes",
+      "partly": "Partly",
+      "no": "No"
+    },
+    "status": {
+      "good": "Good",
+      "improvable": "Improvable",
+      "critical": "Critical",
+      "unanswered": "Unanswered"
+    },
+    "gapKind": {
+      "open": "Not implemented",
+      "partial": "Partly implemented",
+      "undocumented": "Not evidenced",
+      "unanswered": "Unanswered"
+    },
+    "gap": {
+      "open": "Not implemented",
+      "openHint": "Measure missing",
+      "partial": "Partly",
+      "partialHint": "Measure started",
+      "undocumented": "Not evidenced",
+      "undocumentedHint": "In place, but no proof"
+    },
+    "stats": {
+      "completion": "Completion",
+      "answeredOf": "{{answered}} of {{total}} answered",
+      "rate": "Fulfilment rate",
+      "noAnswers": "no answers yet"
+    },
+    "view": {
+      "questionnaire": "Questionnaire",
+      "gaps": "Gaps ({{count}})",
+      "coverage": "Coverage per element"
+    },
+    "import": {
+      "button": "Import answers",
+      "title": "Import an answer set",
+      "intro": "One line per question: identifier, implementation, evidence, optionally the evidence source. Separator semicolon, tab or comma; \"Ja\", \"Teilweise\" and \"Nein\" are recognised alongside the English words. A header line is skipped.",
+      "label": "Answers",
+      "preview": "{{count}} lines recognised",
+      "skipped": "{{count}} lines unreadable",
+      "apply": "Apply",
+      "done": "{{applied}} answers imported.",
+      "unknown": "Unknown question identifiers: {{refs}}",
+      "nothing": "No usable lines recognised."
+    },
+    "errors": {
+      "load": "The question catalogue could not be loaded.",
+      "seed": "The question catalogue could not be loaded.",
+      "save": "The answer could not be saved.",
+      "task": "The task could not be created."
+    }
   }
 }

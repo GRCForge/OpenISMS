@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2 } from 'lucide-react';
+import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -17,6 +17,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
+import { SelfCheck } from '../components/nis2/SelfCheck';
 
 type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable';
 type EntityType = 'essential' | 'important' | 'indirect' | 'unknown';
@@ -141,6 +142,7 @@ export const Nis2: React.FC = () => {
     return key ? t(`categories.${key}`) : cat;
   };
 
+  const [tab, setTab] = useState<'catalogue' | 'selfCheck'>('catalogue');
   const [profile, setProfile] = useState<Nis2Profile>({ entity_type: 'unknown', sector: '', note: '' });
   const [profileDraft, setProfileDraft] = useState<Nis2Profile | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -312,25 +314,65 @@ export const Nis2: React.FC = () => {
 
   if (loading) return <div className="flex justify-center pt-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
-  if (measures.length === 0) return (
-    <Card><CardBody>
-      <div className="py-16 text-center">
-        <ListChecks size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
-        <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{t('empty.description')}</p>
-        {canManage && <Button onClick={seed} disabled={seeding} className="mt-4"><Download size={16} />{seeding ? t('empty.loading') : t('empty.loadButton')}</Button>}
+  const header = (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2"><AlertOctagon size={24} className="text-blue-600" aria-hidden="true" />{t('title')}</h1>
+        <p className="text-gray-600 dark:text-slate-400 text-sm">{t('subtitle', { count: measures.length })}</p>
       </div>
-    </CardBody></Card>
+    </div>
+  );
+
+  const tabs = (
+    <div className="flex gap-1 border-b border-gray-200 dark:border-slate-800" role="tablist">
+      {(['catalogue', 'selfCheck'] as const).map(key => (
+        <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors rounded-t-md flex items-center gap-1.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400 ${
+            tab === key
+              ? 'border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300'
+              : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}>
+          {key === 'catalogue'
+            ? <><ListChecks size={14} aria-hidden="true" />{t('tabs.catalogue')}</>
+            : <><ClipboardList size={14} aria-hidden="true" />{t('tabs.selfCheck')}</>}
+        </button>
+      ))}
+    </div>
+  );
+
+  // Der Fragebogen ist der sinnvolle Einstieg — er beantwortet, wo man steht,
+  // bevor der Kriterienkatalog fuehrt, was zu tun ist. Er bleibt deshalb auch
+  // dann erreichbar, wenn der Katalog noch nicht geladen wurde.
+  if (measures.length === 0) return (
+    <div className="space-y-6">
+      {header}
+      {tabs}
+      {tab === 'selfCheck' ? (
+        <SelfCheck canEdit={canWrite} canManage={canManage} onAnswered={load} />
+      ) : (
+        <Card><CardBody>
+          <div className="py-16 text-center">
+            <ListChecks size={40} className="mx-auto mb-3 text-gray-400 dark:text-slate-600" aria-hidden="true" />
+            <p className="text-gray-700 dark:text-slate-300 font-medium">{t('empty.title')}</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">{t('empty.description')}</p>
+            {canManage && <Button onClick={seed} disabled={seeding} className="mt-4"><Download size={16} />{seeding ? t('empty.loading') : t('empty.loadButton')}</Button>}
+          </div>
+        </CardBody></Card>
+      )}
+    </div>
+  );
+
+  if (tab === 'selfCheck') return (
+    <div className="space-y-6">
+      {header}
+      {tabs}
+      <SelfCheck canEdit={canWrite} canManage={canManage} onAnswered={load} />
+    </div>
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2"><AlertOctagon size={24} className="text-blue-600" />{t('title')}</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitle', { count: measures.length })}</p>
-        </div>
-      </div>
+      {header}
+      {tabs}
 
       {/* Betroffenheitsprofil — es entscheidet, welche Kriterien ueberhaupt
           gelten, und steht deshalb vor dem Katalog, nicht daneben. */}
