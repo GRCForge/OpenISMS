@@ -11,7 +11,10 @@
     "total": "Total",
     "implemented": "Implemented",
     "inProgress": "In progress",
-    "open": "Open"
+    "open": "Open",
+    "applicable": "Applicable",
+    "rate": "Fulfilment rate",
+    "maturity": "Maturity {{level}} of 5"
   },
   "entity": {
     "essential": {
@@ -26,7 +29,8 @@
   "filter": {
     "searchPlaceholder": "Article reference, title or category...",
     "allStatus": "All status",
-    "allCategories": "All categories"
+    "allCategories": "All categories",
+    "onlyApplicable": "Applicable only"
   },
   "table": {
     "article": "Article",
@@ -34,7 +38,8 @@
     "status": "Status",
     "deadline": "Deadline",
     "lastReview": "Last review",
-    "measureCount": "{{count}} measures"
+    "measureCount": "{{count}} measures",
+    "obligation": "Obligation"
   },
   "description": {
     "show": "Show description",
@@ -60,7 +65,9 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
-    "edit": "Edit"
+    "edit": "Edit",
+    "applicability": "Applicability per affectedness profile",
+    "applicabilityHint": "Defines what this criterion means for whom. Set to \"not applicable\", it drops out of the fulfilment rate for that profile."
   },
   "toast": {
     "loadError": "Error loading catalogue",
@@ -77,7 +84,10 @@
     "cryptography": "Cryptography",
     "accessControl": "HR Security & Access Control",
     "mfa": "Multi-Factor Authentication",
-    "reportingObligations": "Reporting Obligations"
+    "reportingObligations": "Reporting Obligations",
+    "governance": "Governance & management liability",
+    "correctiveActions": "Corrective measures",
+    "ownCriteria": "Own criteria"
   },
   "measures": {
     "Art. 21(2)(a)": {
@@ -132,5 +142,170 @@
       "title": "Final report (no later than one month after notification)",
       "description": "Submission of a final report no later than one month after the submission of the incident notification."
     }
+  },
+  "obligation": {
+    "required": "Required",
+    "recommended": "Recommended",
+    "not_applicable": "Not applicable"
+  },
+  "threatIntelLink": "Go to threat landscape",
+  "profile": {
+    "title": "Affectedness profile",
+    "change": "Change profile",
+    "modalTitle": "Set NIS2 affectedness",
+    "modalIntro": "The classification decides which criteria of the catalogue apply at all. It is a management decision carrying liability and is recorded in the audit log.",
+    "sector": "Sector",
+    "sectorPlaceholder": "e.g. digital infrastructure, health, manufacturing …",
+    "note": "Rationale for the classification",
+    "notePlaceholder": "What does the classification follow from? Thresholds, sector, customer contracts …",
+    "saved": "Affectedness profile saved.",
+    "unknownHint": "Not classified yet — until then the full catalogue applies as for an essential entity. That is the safe assumption, but it is no substitute for an assessment.",
+    "excluded": "{{count}} of {{total}} criteria do not apply to this profile and are excluded from the rate.",
+    "sync": "Sync catalogue",
+    "syncHint": "Adds criteria introduced in a newer version. Existing entries are left untouched.",
+    "synced": "{{count}} criteria added.",
+    "syncedNone": "The catalogue is already complete.",
+    "types": {
+      "essential": {
+        "label": "Essential entity (Annex I)",
+        "short": "Essential",
+        "description": "Energy, transport, banking, financial markets, health, drinking and waste water, digital infrastructure, ICT services, space, public administration. Full catalogue, proactive supervision."
+      },
+      "important": {
+        "label": "Important entity (Annex II)",
+        "short": "Important",
+        "description": "Postal and courier, waste, chemicals, food, manufacturing, digital providers, research. Same duties under Art. 21 and 23, ex-post supervision."
+      },
+      "indirect": {
+        "label": "Indirectly affected only (supply chain)",
+        "short": "Indirect",
+        "description": "Not in scope itself, but a supplier or service provider to an entity that is. No duties towards the authority; requirements arrive contractually via Art. 21(2)(d)."
+      },
+      "unknown": {
+        "label": "Not classified yet",
+        "short": "Open",
+        "description": "Until classified, the rate is computed as for an essential entity — better to check too much than to miss a duty you have."
+      }
+    }
+  },
+  "tabs": {
+    "catalogue": "Criteria catalogue",
+    "selfCheck": "Self-check"
+  },
+  "selfCheck": {
+    "empty": {
+      "title": "Question catalogue not loaded yet",
+      "description": "37 questions along NIS2 Articles 20, 21 and 23, each on two axes: is the measure in place, and can we prove it? From that come the fulfilment rate, a maturity level per topic, and a gap list.",
+      "loadButton": "Load question catalogue"
+    },
+    "seeded": "{{count}} questions created.",
+    "sync": "Sync questions",
+    "synced": "{{count}} questions added.",
+    "syncedNone": "The question catalogue is already complete.",
+    "questionCount": "{{count}} questions",
+    "openQuestions": "{{count}} open",
+    "recommendation": "Recommendation",
+    "createTask": "Create task",
+    "taskCreated": "Task created and linked to the question.",
+    "taskExists": "Task exists",
+    "linkedTask": "Task",
+    "evidenceSource": "Evidence source",
+    "evidenceSourcePlaceholder": "Policy, minutes, ticket …",
+    "noGaps": "No gaps — everything answered is in place and evidenced.",
+    "noGapsUnanswered": "No question answered yet. Gaps appear as the questionnaire is filled in.",
+    "coverageHint": "Coverage per NIS2 element: on the left what the questionnaire says, on the right what the criteria catalogue tracks. An element with no question is unchecked — not fulfilled.",
+    "noQuestion": "no question in the catalogue",
+    "answeredRatio": "{{answered}}/{{total}} answered",
+    "measureStatus": "Measure",
+    "axis": {
+      "implementation": "Implementation",
+      "evidence": "Evidence"
+    },
+    "answer": {
+      "not_assessed": "Open",
+      "yes": "Yes",
+      "partly": "Partly",
+      "no": "No"
+    },
+    "status": {
+      "good": "Good",
+      "improvable": "Improvable",
+      "critical": "Critical",
+      "unanswered": "Unanswered"
+    },
+    "gapKind": {
+      "open": "Not implemented",
+      "partial": "Partly implemented",
+      "undocumented": "Not evidenced",
+      "unanswered": "Unanswered"
+    },
+    "gap": {
+      "open": "Not implemented",
+      "openHint": "Measure missing",
+      "partial": "Partly",
+      "partialHint": "Measure started",
+      "undocumented": "Not evidenced",
+      "undocumentedHint": "In place, but no proof"
+    },
+    "stats": {
+      "completion": "Completion",
+      "answeredOf": "{{answered}} of {{total}} answered",
+      "rate": "Fulfilment rate",
+      "noAnswers": "no answers yet"
+    },
+    "view": {
+      "questionnaire": "Questionnaire",
+      "gaps": "Gaps ({{count}})",
+      "coverage": "Coverage per element"
+    },
+    "import": {
+      "button": "Import answers",
+      "title": "Import an answer set",
+      "intro": "One line per question: identifier, implementation, evidence, optionally the evidence source. Separator semicolon, tab or comma; \"Ja\", \"Teilweise\" and \"Nein\" are recognised alongside the English words. A header line is skipped.",
+      "label": "Answers",
+      "preview": "{{count}} lines recognised",
+      "skipped": "{{count}} lines unreadable",
+      "apply": "Apply",
+      "done": "{{applied}} answers imported.",
+      "unknown": "Unknown question identifiers: {{refs}}",
+      "nothing": "No usable lines recognised."
+    },
+    "errors": {
+      "load": "The question catalogue could not be loaded.",
+      "seed": "The question catalogue could not be loaded.",
+      "save": "The answer could not be saved.",
+      "task": "The task could not be created."
+    }
+  },
+  "scoring": {
+    "title": "Scoring model",
+    "summary": "Implementation {{impl}} % · Evidence {{evid}} % · Partly {{partly}} %",
+    "intro": "There is no generally agreed way to turn \"partly implemented\" into a percentage. These settings fix one — for the criteria catalogue and the questionnaire alike. Every change is written to the audit log, so a rate stays explainable afterwards.",
+    "weight": "Weighting: implementation {{impl}} % / evidence {{evid}} %",
+    "weightHint": "Without the measure there is nothing to document — but it still has to be documented (Art. 21(1)).",
+    "partly": "Value of \"partly\": {{value}} %",
+    "partlyHint": "Applies on both axes, and to \"in progress\" in the criteria catalogue.",
+    "gate": "Not implemented scores 0, even with evidence",
+    "gateHint": "Evidence for something that does not exist is a contradiction. Switchable, in case a framework sees it differently.",
+    "maturity": "Maturity from",
+    "maturityHint": "Lower bounds. Values out of order are sorted descending on save — otherwise a higher rate would yield a lower maturity.",
+    "level": {
+      "l5": "Level 5",
+      "l4": "Level 4",
+      "l3": "Level 3",
+      "l2": "Level 2"
+    },
+    "preview": "Worked examples",
+    "example": {
+      "yesYes": "Yes / Yes",
+      "yesPartly": "Yes / Partly",
+      "yesNo": "Yes / No",
+      "partlyPartly": "Partly / Partly",
+      "noYes": "No / Yes"
+    },
+    "saved": "Scoring model saved.",
+    "reset": "Scoring model reset.",
+    "resetButton": "Defaults",
+    "error": "The scoring model could not be saved."
   }
 }

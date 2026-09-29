@@ -11,7 +11,10 @@
     "total": "Total",
     "implemented": "Implemented",
     "inProgress": "In progress",
-    "open": "Open"
+    "open": "Open",
+    "applicable": "Aplicables",
+    "rate": "Tasa de cumplimiento",
+    "maturity": "Madurez {{level}} de 5"
   },
   "entity": {
     "essential": {
@@ -26,7 +29,8 @@
   "filter": {
     "searchPlaceholder": "Article reference, title or category...",
     "allStatus": "All status",
-    "allCategories": "All categories"
+    "allCategories": "All categories",
+    "onlyApplicable": "Solo aplicables"
   },
   "table": {
     "article": "Article",
@@ -34,7 +38,8 @@
     "status": "Status",
     "deadline": "Deadline",
     "lastReview": "Last review",
-    "measureCount": "{{count}} measures"
+    "measureCount": "{{count}} measures",
+    "obligation": "Obligación"
   },
   "description": {
     "show": "Show description",
@@ -60,7 +65,9 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
-    "edit": "Edit"
+    "edit": "Edit",
+    "applicability": "Aplicabilidad por perfil de afectación",
+    "applicabilityHint": "Define qué significa este criterio para cada perfil. Marcado como «no aplicable», queda fuera de la tasa de cumplimiento de ese perfil."
   },
   "toast": {
     "loadError": "Error loading catalogue",
@@ -77,7 +84,10 @@
     "cryptography": "Criptografía",
     "accessControl": "Seguridad del Personal y Control de Acceso",
     "mfa": "Autenticación de Múltiples Factores",
-    "reportingObligations": "Obligaciones de Notificación"
+    "reportingObligations": "Obligaciones de Notificación",
+    "governance": "Gobernanza y responsabilidad de la dirección",
+    "correctiveActions": "Medidas correctoras",
+    "ownCriteria": "Criterios propios"
   },
   "measures": {
     "Art. 21(2)(a)": {
@@ -132,5 +142,170 @@
       "title": "Final report (no later than one month after notification)",
       "description": "Submission of a final report no later than one month after the submission of the incident notification."
     }
+  },
+  "obligation": {
+    "required": "Obligatorio",
+    "recommended": "Recomendado",
+    "not_applicable": "No aplicable"
+  },
+  "threatIntelLink": "Ir al panorama de amenazas",
+  "profile": {
+    "title": "Perfil de afectación",
+    "change": "Cambiar perfil",
+    "modalTitle": "Definir la afectación por NIS2",
+    "modalIntro": "La clasificación decide qué criterios del catálogo son aplicables. Es una decisión de dirección con consecuencias de responsabilidad y queda registrada en el registro de auditoría.",
+    "sector": "Sector",
+    "sectorPlaceholder": "p. ej. infraestructura digital, salud, fabricación …",
+    "note": "Justificación de la clasificación",
+    "notePlaceholder": "¿De qué se deriva la clasificación? Umbrales, sector, contratos con clientes …",
+    "saved": "Perfil de afectación guardado.",
+    "unknownHint": "Aún sin clasificar: hasta entonces se aplica el catálogo completo, como para una entidad esencial. Es la suposición segura, pero no sustituye a un análisis.",
+    "excluded": "{{count}} de {{total}} criterios no son aplicables a este perfil y no cuentan para la tasa.",
+    "sync": "Sincronizar catálogo",
+    "syncHint": "Añade los criterios incorporados en una versión más reciente. Las entradas existentes no se tocan.",
+    "synced": "{{count}} criterios añadidos.",
+    "syncedNone": "El catálogo ya está completo.",
+    "types": {
+      "essential": {
+        "label": "Entidad esencial (anexo I)",
+        "short": "Esencial",
+        "description": "Energía, transporte, banca, mercados financieros, salud, agua potable y residual, infraestructura digital, servicios TIC, espacio, administración pública. Catálogo completo y supervisión proactiva."
+      },
+      "important": {
+        "label": "Entidad importante (anexo II)",
+        "short": "Importante",
+        "description": "Correos y mensajería, residuos, química, alimentación, fabricación, proveedores digitales, investigación. Las mismas obligaciones de los art. 21 y 23, con supervisión a posteriori."
+      },
+      "indirect": {
+        "label": "Afectada solo indirectamente (cadena de suministro)",
+        "short": "Indirecta",
+        "description": "No está en el ámbito de aplicación, pero suministra o presta servicios a una entidad que sí lo está. No hay obligaciones frente a la autoridad; los requisitos llegan por contrato vía art. 21(2)(d)."
+      },
+      "unknown": {
+        "label": "Aún sin clasificar",
+        "short": "Abierto",
+        "description": "Hasta clasificarla se calcula como para una entidad esencial: mejor comprobar de más que pasar por alto una obligación."
+      }
+    }
+  },
+  "tabs": {
+    "catalogue": "Catálogo de criterios",
+    "selfCheck": "Autoevaluación"
+  },
+  "selfCheck": {
+    "empty": {
+      "title": "El catálogo de preguntas aún no está cargado",
+      "description": "37 preguntas sobre los artículos 20, 21 y 23 de NIS2, cada una en dos ejes: ¿está implantada la medida y podemos demostrarlo? De ahí salen la tasa de cumplimiento, el nivel de madurez por tema y la lista de brechas.",
+      "loadButton": "Cargar catálogo de preguntas"
+    },
+    "seeded": "{{count}} preguntas creadas.",
+    "sync": "Sincronizar preguntas",
+    "synced": "{{count}} preguntas añadidas.",
+    "syncedNone": "El catálogo de preguntas ya está completo.",
+    "questionCount": "{{count}} preguntas",
+    "openQuestions": "{{count}} pendientes",
+    "recommendation": "Recomendación",
+    "createTask": "Crear tarea",
+    "taskCreated": "Tarea creada y vinculada a la pregunta.",
+    "taskExists": "Ya hay tarea",
+    "linkedTask": "Tarea",
+    "evidenceSource": "Fuente de la evidencia",
+    "evidenceSourcePlaceholder": "Política, acta, ticket …",
+    "noGaps": "Sin brechas: todo lo respondido está implantado y documentado.",
+    "noGapsUnanswered": "Aún no se ha respondido ninguna pregunta. Las brechas aparecerán al rellenar el cuestionario.",
+    "coverageHint": "Cobertura por elemento de NIS2: a la izquierda lo que dice el cuestionario, a la derecha lo que lleva el catálogo de criterios. Un elemento sin pregunta está sin comprobar, no cumplido.",
+    "noQuestion": "sin pregunta en el catálogo",
+    "answeredRatio": "{{answered}}/{{total}} respondidas",
+    "measureStatus": "Medida",
+    "axis": {
+      "implementation": "Implantación",
+      "evidence": "Evidencia"
+    },
+    "answer": {
+      "not_assessed": "Pendiente",
+      "yes": "Sí",
+      "partly": "Parcialmente",
+      "no": "No"
+    },
+    "status": {
+      "good": "Bueno",
+      "improvable": "Mejorable",
+      "critical": "Crítico",
+      "unanswered": "Sin responder"
+    },
+    "gapKind": {
+      "open": "No implantado",
+      "partial": "Parcialmente implantado",
+      "undocumented": "Sin evidencia",
+      "unanswered": "Sin responder"
+    },
+    "gap": {
+      "open": "No implantado",
+      "openHint": "Falta la medida",
+      "partial": "Parcial",
+      "partialHint": "Medida iniciada",
+      "undocumented": "Sin evidencia",
+      "undocumentedHint": "Implantado, pero sin prueba"
+    },
+    "stats": {
+      "completion": "Grado de cumplimentación",
+      "answeredOf": "{{answered}} de {{total}} respondidas",
+      "rate": "Tasa de cumplimiento",
+      "noAnswers": "aún sin respuestas"
+    },
+    "view": {
+      "questionnaire": "Cuestionario",
+      "gaps": "Brechas ({{count}})",
+      "coverage": "Cobertura por elemento"
+    },
+    "import": {
+      "button": "Importar respuestas",
+      "title": "Importar un conjunto de respuestas",
+      "intro": "Una línea por pregunta: identificador, implantación, evidencia y, opcionalmente, la fuente de la evidencia. Separador punto y coma, tabulador o coma; se reconocen «Ja», «Teilweise» y «Nein» además de las palabras en inglés. La línea de encabezado se omite.",
+      "label": "Respuestas",
+      "preview": "{{count}} líneas reconocidas",
+      "skipped": "{{count}} líneas ilegibles",
+      "apply": "Aplicar",
+      "done": "{{applied}} respuestas importadas.",
+      "unknown": "Identificadores de pregunta desconocidos: {{refs}}",
+      "nothing": "No se ha reconocido ninguna línea utilizable."
+    },
+    "errors": {
+      "load": "No se ha podido cargar el catálogo de preguntas.",
+      "seed": "No se ha podido cargar el catálogo de preguntas.",
+      "save": "No se ha podido guardar la respuesta.",
+      "task": "No se ha podido crear la tarea."
+    }
+  },
+  "scoring": {
+    "title": "Modelo de puntuación",
+    "summary": "Implantación {{impl}} % · Evidencia {{evid}} % · Parcial {{partly}} %",
+    "intro": "No hay una forma universalmente aceptada de convertir «parcialmente implantado» en un porcentaje. Estos ajustes fijan una, para el catálogo de criterios y el cuestionario a la vez. Cada cambio queda en el registro de auditoría, para que la tasa siga siendo explicable después.",
+    "weight": "Ponderación: implantación {{impl}} % / evidencia {{evid}} %",
+    "weightHint": "Sin la medida no hay nada que documentar, pero aun así hay que documentarla (art. 21(1)).",
+    "partly": "Valor de «parcialmente»: {{value}} %",
+    "partlyHint": "Se aplica en ambos ejes y también a «en curso» en el catálogo de criterios.",
+    "gate": "No implantado puntúa 0, incluso con evidencia",
+    "gateHint": "Una evidencia de algo que no existe es una contradicción. Desactivable por si un marco de referencia lo ve de otro modo.",
+    "maturity": "Madurez a partir de",
+    "maturityHint": "Límites inferiores. Los valores desordenados se ordenan de forma descendente al guardar; de lo contrario, una tasa más alta daría una madurez menor.",
+    "level": {
+      "l5": "Nivel 5",
+      "l4": "Nivel 4",
+      "l3": "Nivel 3",
+      "l2": "Nivel 2"
+    },
+    "preview": "Ejemplos calculados",
+    "example": {
+      "yesYes": "Sí / Sí",
+      "yesPartly": "Sí / Parcialmente",
+      "yesNo": "Sí / No",
+      "partlyPartly": "Parcialmente / Parcialmente",
+      "noYes": "No / Sí"
+    },
+    "saved": "Modelo de puntuación guardado.",
+    "reset": "Modelo de puntuación restablecido.",
+    "resetButton": "Valores por defecto",
+    "error": "No se ha podido guardar el modelo de puntuación."
   }
 }

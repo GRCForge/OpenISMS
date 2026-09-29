@@ -4,7 +4,7 @@ import {
   Shield, LayoutDashboard, Server, ClipboardCheck, Bell,
   Users, LogOut, Menu, ChevronRight, CheckCircle,
   Upload, AlertTriangle, Building2, Sun, Moon, FileText, Network, Settings, ShieldAlert, ShieldCheck, AlertOctagon, BarChart3, BookOpen, CheckSquare, Fingerprint, Trash2, LayoutList, Radar, Copy, Check, KeyRound, Search, UserCheck, Scale,
-  Zap, Bot, LifeBuoy, Target, Car, PanelLeftClose, PanelLeftOpen, Share2
+  Zap, Bot, LifeBuoy, Target, Car, PanelLeftClose, PanelLeftOpen, Share2, Radio
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -80,6 +80,7 @@ const NAV_GROUPS: NavGroup[] = [
       { path: '/assets',    icon: Server,       labelKey: 'assets', perm: ['assets','view'] },
       { path: '/cves',      icon: AlertTriangle, labelKey: 'cves', module: 'discovery', roles: ['admin', 'assessor', 'it-staff'], perm: ['assets','cve'] },
       { path: '/discovery', icon: Radar,        labelKey: 'discovery',  adminOnly: true, module: 'discovery', perm: ['discovery','access'] },
+      { path: '/threat-intel', icon: Radio,     labelKey: 'threatIntel', module: 'threat_intel', perm: ['threat_intel','view'] },
       { path: '/risks',     icon: ShieldAlert,  labelKey: 'risks', perm: ['risks','view'] },
       { path: '/incidents', icon: AlertOctagon, labelKey: 'incidents', perm: ['incidents','view'] },
       { path: '/tasks',     icon: CheckSquare,  labelKey: 'tasks', perm: ['tasks','view'] },

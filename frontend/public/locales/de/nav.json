@@ -138,6 +138,10 @@
     "graph": {
       "label": "Beziehungen",
       "hint": "Graph-Auswertung"
+    },
+    "threatIntel": {
+      "label": "Bedrohungslage",
+      "hint": "Warnmeldungen & Quellen"
     }
   },
   "overdueReviews_one": "{{count}} überfällige Überprüfung",

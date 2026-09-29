@@ -15,6 +15,9 @@ const Risk = require('./Risk');
 const Notification = require('./Notification');
 const Control = require('./Control');
 const Threat = require('./Threat');
+const ThreatSource = require('./ThreatSource');
+const ThreatAdvisory = require('./ThreatAdvisory');
+const ThreatAdvisoryAsset = require('./ThreatAdvisoryAsset');
 const RiskControl = require('./RiskControl');
 const Incident = require('./Incident');
 const VvtEntry = require('./VvtEntry');
@@ -41,6 +44,7 @@ const Dsfa = require('./Dsfa');
 const Iso27001Control = require('./Iso27001Control');
 const BsiRequirement = require('./BsiRequirement');
 const Nis2Measure = require('./Nis2Measure');
+const Nis2SelfCheckItem = require('./Nis2SelfCheckItem');
 const C5Criterion = require('./C5Criterion');
 const CustomRole = require('./CustomRole');
 const OidcClaimMapping = require('./OidcClaimMapping');
@@ -244,6 +248,9 @@ Dsfa.belongsTo(User, { as: 'approver', foreignKey: 'approver_id' });
 Iso27001Control.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });
 BsiRequirement.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2Measure.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
+Nis2SelfCheckItem.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
+Nis2SelfCheckItem.belongsTo(User, { as: 'answeredBy', foreignKey: 'answered_by_id' });
+Nis2SelfCheckItem.belongsTo(Task, { as: 'task', foreignKey: 'task_id' });
 C5Criterion.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 
 // CustomRole / OIDC associations
@@ -289,14 +296,29 @@ BcmProcess.hasMany(BcmProcessAsset, { as: 'assetLinks', foreignKey: 'bcm_process
 BcmProcessAsset.belongsTo(BcmProcess, { as: 'process', foreignKey: 'bcm_process_id' });
 BcmProcessAsset.belongsTo(Asset, { as: 'asset', foreignKey: 'asset_id' });
 
+// --- Bedrohungslage / Threat Intelligence (NIS-2 Art. 21(2)(a), ISO 27001 A.5.7) ---
+// Eine Warnmeldung haengt an genau einer Quelle, betrifft beliebig viele Assets
+// und muendet im Idealfall in ein Risiko, eine Aufgabe oder einen Vorfall. Die
+// drei Ziele sind bewusst optional und schliessen sich nicht aus: eine Meldung
+// kann sofort ein Incident sein UND ein Risiko hinterlassen.
+ThreatSource.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
+ThreatSource.hasMany(ThreatAdvisory, { as: 'advisories', foreignKey: 'source_id' });
+ThreatAdvisory.belongsTo(ThreatSource, { as: 'source', foreignKey: 'source_id' });
+ThreatAdvisory.belongsTo(User, { as: 'assessedBy', foreignKey: 'assessed_by_id' });
+ThreatAdvisory.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id' });
+ThreatAdvisory.belongsTo(Task, { as: 'task', foreignKey: 'task_id' });
+ThreatAdvisory.belongsTo(Incident, { as: 'incident', foreignKey: 'incident_id' });
+ThreatAdvisory.belongsToMany(Asset, { through: ThreatAdvisoryAsset, as: 'assets', foreignKey: 'advisory_id', otherKey: 'asset_id' });
+Asset.belongsToMany(ThreatAdvisory, { through: ThreatAdvisoryAsset, as: 'advisories', foreignKey: 'asset_id', otherKey: 'advisory_id' });
+
 module.exports = {
   sequelize, User, Asset, Assessment, Reminder, AuditLog, Document, Comment,
   Vendor, VendorContact, Policy, PolicyVersion, Setting, Risk, Notification,
-  Control, Threat, RiskControl, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
+  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
-  Iso27001Control, BsiRequirement, Nis2Measure, C5Criterion,
+  Iso27001Control, BsiRequirement, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,

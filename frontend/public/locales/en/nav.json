@@ -138,6 +138,10 @@
     "graph": {
       "label": "Relationships",
       "hint": "Graph analysis"
+    },
+    "threatIntel": {
+      "label": "Threat landscape",
+      "hint": "Advisories & sources"
     }
   },
   "overdueReviews_one": "{{count}} overdue review",

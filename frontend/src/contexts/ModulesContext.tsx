@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../lib/api';
 import { useAuth } from './AuthContext';
 
-export type ModuleKey = 'dsgvo' | 'tisax' | 'dora' | 'ai_act' | 'bcm' | 'pentest' | 'discovery' | 'iso27001' | 'bsi_grundschutz' | 'nis2' | 'c5' | 'mcp';
+export type ModuleKey = 'dsgvo' | 'tisax' | 'dora' | 'ai_act' | 'bcm' | 'pentest' | 'discovery' | 'iso27001' | 'bsi_grundschutz' | 'nis2' | 'c5' | 'mcp' | 'threat_intel';
 
 interface ModulesContextType {
   modules: Record<ModuleKey, boolean>;
@@ -13,7 +13,7 @@ interface ModulesContextType {
 
 const DEFAULTS: Record<ModuleKey, boolean> = {
   dsgvo: true, tisax: false, dora: false, ai_act: false, bcm: false, pentest: false, discovery: true,
-  iso27001: false, bsi_grundschutz: false, nis2: false, c5: false, mcp: true,
+  iso27001: false, bsi_grundschutz: false, nis2: false, c5: false, mcp: true, threat_intel: true,
 };
 
 const ModulesContext = createContext<ModulesContextType>({

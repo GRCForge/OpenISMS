@@ -201,6 +201,10 @@ jobs:
           node scripts/test-oidc-audience.js
           node scripts/test-rate-limit-once.js
           node scripts/test-discovery-sync.js
+          node scripts/test-threat-intel.js
+          node scripts/test-nis2-applicability.js
+          node scripts/test-nis2-self-check.js
+          node scripts/test-nis2-scoring-model.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

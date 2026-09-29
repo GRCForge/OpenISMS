@@ -270,6 +270,7 @@ app.use('/api/bcm', requireModule('bcm'), require('./routes/bcm'));
 app.use('/api/iso27001', requireModule('iso27001'), require('./routes/iso27001'));
 app.use('/api/bsi-grundschutz', requireModule('bsi_grundschutz'), require('./routes/bsi-grundschutz'));
 app.use('/api/nis2', requireModule('nis2'), require('./routes/nis2'));
+app.use('/api/threat-intel', requireModule('threat_intel'), require('./routes/threatIntel'));
 app.use('/api/c5', requireModule('c5'), require('./routes/c5'));
 app.use('/api/mappings', require('./routes/mappings'));
 
@@ -795,6 +796,48 @@ const start = async () => {
         console.log(`[CVE Cron] Done — refreshed: ${refreshed}, skipped: ${skipped}, failed: ${failed}`);
       } catch (e) {
         console.error('[CVE Cron] Fatal error:', e.message);
+      }
+    }));
+
+    // Bedrohungslage: Feeds der Quellen abrufen, die auto_fetch gesetzt haben
+    // (05:15). Ein Fehlschlag landet je Quelle in last_fetch_status und bricht
+    // den Lauf nicht ab — ein toter Feed darf die anderen nicht mitnehmen.
+    cron.schedule('15 5 * * *', () => withJobLock('threat-intel-refresh', async () => {
+      try {
+        const models = require('./models');
+        const { refreshAllSources } = require('./services/threatIntelService');
+        const summary = await refreshAllSources(models);
+        if (summary.sources > 0) {
+          console.log(`[ThreatIntel] Feeds refreshed — sources: ${summary.sources}, new: ${summary.created}, asset matches: ${summary.matched}, failed: ${summary.failed}`);
+        }
+      } catch (e) {
+        console.error('[ThreatIntel] Feed refresh failed:', e.message);
+      }
+    }));
+
+    // Erinnerung an faellige Quellendurchsichten (07:45). Benachrichtigt wird am
+    // Tag nach dem Termin, also genau einmal je Zyklus — eine taegliche
+    // Wiederholung wuerde als Rauschen weggeklickt und damit wertlos.
+    cron.schedule('45 7 * * *', () => withJobLock('threat-intel-review-due', async () => {
+      try {
+        const { ThreatSource } = require('./models');
+        const { notify } = require('./services/notifyService');
+        const { toDateOnly } = require('./services/threatIntelService');
+        const yesterday = toDateOnly(new Date(Date.now() - 86_400_000));
+        const due = await ThreatSource.findAll({ where: { active: true, next_review_at: yesterday } });
+        for (const source of due) {
+          if (!source.responsible_id) continue;
+          await notify({
+            userId: source.responsible_id,
+            type: 'reminder',
+            title: 'Bedrohungslage: Quelle zur Durchsicht faellig',
+            content: `Die Quelle "${source.name}" war am ${source.next_review_at} zur Durchsicht faellig.`,
+            link: '/threat-intel',
+          });
+        }
+        if (due.length) console.log(`[ThreatIntel] ${due.length} overdue source review(s) notified`);
+      } catch (e) {
+        console.error('[ThreatIntel] Review reminder failed:', e.message);
       }
     }));
 

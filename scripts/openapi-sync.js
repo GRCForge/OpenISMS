@@ -54,7 +54,7 @@ const TAG_BY_PREFIX = [
   ['/api/triage-profiles', 'Vertragsanalyse'], ['/api/templates', 'Vorlagen'],
   ['/api/mappings', 'Framework-Mappings'], ['/api/legal-requirements', 'Rechtliche Anforderungen'],
   ['/api/review', 'Management-Review'], ['/api/modules', 'Module'],
-  ['/api/threats', 'Bedrohungen'], ['/api/pentests', 'Pentests'],
+  ['/api/threat-intel', 'Bedrohungslage'], ['/api/threats', 'Bedrohungen'], ['/api/pentests', 'Pentests'],
   ['/api/bcm', 'BCM'], ['/api/dora', 'DORA'], ['/api/ai-act', 'EU AI Act'],
   ['/api/tisax', 'TISAX'], ['/api/nis2', 'NIS-2'], ['/api/c5', 'BSI C5'],
   ['/api/iso27001', 'ISO 27001'], ['/api/bsi-grundschutz', 'BSI Grundschutz'],

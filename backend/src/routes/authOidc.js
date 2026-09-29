@@ -5,39 +5,21 @@ const router = require('express').Router();
 // so a stored URL renders as a broken image no matter how valid it is. Bounded on
 // purpose: http(s) only, short timeout, image content types only, and a size cap,
 // because this fetches a URL an identity provider handed us.
-const { lookup: dnsLookup } = require('dns').promises;
+const { assertPublicUrl } = require('../utils/safeFetch');
 const MAX_AVATAR_BYTES = 512 * 1024;
 
 /**
  * The picture claim is attacker-influenced input in the general case: at many
  * IdPs a user can edit their own profile, so fetching the URL server-side is an
- * SSRF primitive unless the target is checked. Resolve the host first and refuse
- * anything that is not a public unicast address, and refuse redirects outright
- * so a public URL cannot bounce the request onto an internal one.
+ * SSRF primitive unless the target is checked. assertPublicUrl resolves the host
+ * and refuses anything that is not a public unicast address; redirects are
+ * refused outright so a public URL cannot bounce the request onto an internal
+ * one. The same guard serves the threat-intel feed fetch — one implementation,
+ * one place to fix.
  */
-const isBlockedAddress = (ip) => {
-  if (ip.includes(':')) { // IPv6
-    const v6 = ip.toLowerCase();
-    if (v6 === '::1' || v6 === '::') return true;
-    if (v6.startsWith('fe80') || v6.startsWith('fc') || v6.startsWith('fd')) return true;
-    const mapped = v6.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    return mapped ? isBlockedAddress(mapped[1]) : false;
-  }
-  const [a, b] = ip.split('.').map(Number);
-  if (a === 10 || a === 127 || a === 0) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 169 && b === 254) return true;   // link-local, incl. cloud metadata
-  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-  return false;
-};
-
 const inlineRemoteAvatar = async (url) => {
   try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
-    const { address } = await dnsLookup(parsed.hostname);
-    if (isBlockedAddress(address)) return null;
+    const parsed = await assertPublicUrl(url);
     // redirect: 'error' — a followed redirect would sidestep the check above.
     const res = await fetch(parsed.toString(), { signal: AbortSignal.timeout(4000), redirect: 'error' });
     if (!res.ok) return null;

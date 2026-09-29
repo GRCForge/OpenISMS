@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users as UsersIcon, History, KeyRound, Settings as SettingsIcon, CheckCircle2, XCircle, Copy, Loader2, ShieldCheck, Wrench, Trash2, Lock, RefreshCw, BookOpen, ExternalLink, Database, Download, Upload, AlertTriangle, FileArchive, Mail, Send, Wifi, Puzzle, Shield, Zap, Bot, LifeBuoy, Target, Car, Radar, AlertOctagon, Tag } from 'lucide-react';
+import { Users as UsersIcon, History, KeyRound, Settings as SettingsIcon, CheckCircle2, XCircle, Copy, Loader2, ShieldCheck, Wrench, Trash2, Lock, RefreshCw, BookOpen, ExternalLink, Database, Download, Upload, AlertTriangle, FileArchive, Mail, Send, Wifi, Puzzle, Shield, Zap, Bot, LifeBuoy, Target, Car, Radar, Radio, AlertOctagon, Tag } from 'lucide-react';
 import api from '../lib/api';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -1260,6 +1260,14 @@ const MODULE_DEFS: ModuleDefinition[] = [
     icon: Radar,
     iconColor: 'text-cyan-600 dark:text-cyan-400',
     features: ['Network Scan (Agent-based)', 'CVE Matching via CPE/OSV', 'CVSS Severity Levels', 'Automatic Asset Inventory'],
+  },
+  {
+    key: 'threat_intel',
+    label: 'Threat Landscape',
+    description: 'Register of monitored threat sources (national CSIRT, CERT, vendors, security news) with review cadence, advisory intake with assessment, and handover into the risk register — NIS2 Art. 21(2)(a), ISO 27001 A.5.7.',
+    icon: Radio,
+    iconColor: 'text-blue-600 dark:text-blue-400',
+    features: ['Source Register with Review Cadence', 'RSS/Atom and CISA KEV Feed Intake', 'Assessment with Relevance and Evidence', 'Handover into Risk, Task or Incident'],
   },
   {
     key: 'iso27001',

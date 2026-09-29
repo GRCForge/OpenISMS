@@ -287,7 +287,8 @@
     "legal_requirements": "Legal requirements",
     "users": "User management",
     "tokens": "API tokens",
-    "backup": "Backup & restore"
+    "backup": "Backup & restore",
+    "threat_intel": "Threat landscape"
   },
   "actions": {
     "view": "View",
