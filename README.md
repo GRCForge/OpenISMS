@@ -688,6 +688,12 @@ The server returns the JSON-RPC list of all **78 available tools**.
 | | `isms_create_ai_system` | Register an AI system in the AI Act inventory |
 | | `isms_update_ai_system` | Update AI system details, conformity, or approval status |
 | | `isms_delete_ai_system` | Delete an AI system and cancel related open tasks |
+| **Threat Landscape** | `isms_list_threat_sources` | List monitored threat sources with review cadence and overdue flag |
+| | `isms_list_threat_advisories` | List external advisories with assessment and what they turned into |
+| | `isms_get_threat_intel_stats` | Evidence figures for NIS-2 Art. 21(2)(a): monitoring and handover rates |
+| | `isms_create_threat_advisory` | Record an external advisory in the threat register |
+| | `isms_assess_threat_advisory` | Assess relevance and record who decided, when and why |
+| | `isms_record_threat_source_review` | Record a source review and schedule the next one |
 | **Policies & Guidelines** | `isms_list_policies` | List policies and guidelines with linked assets and controls |
 | | `isms_get_policy` | Full policy details including version history and mapped controls |
 | | `isms_create_policy` | Register a new policy or guideline |
@@ -802,6 +808,9 @@ The MCP tools stay CheckMK-specific by name; the REST layer is generic (`/api/in
 | `risk_controls` | N:M link risks ↔ controls (with effectiveness) |
 | `controls` | Controls catalogue (ISO 27001, NIS-2, BSI, custom) with status and SoA |
 | `threats` | Threat catalogue (BSI elementary hazards, common, custom) |
+| `threat_sources` | Register of monitored threat sources (national CSIRT, CERT, vendor, news) with review cadence and fetch status |
+| `threat_advisories` | External advisories with severity, relevance assessment, assessor and links into risk / task / incident |
+| `threat_advisory_assets` | N:M link advisories ↔ assets (manual or CVE match, confirmed flag) |
 | `incidents` | Incidents (category, severity, NIS-2 deadlines, lessons learned, reference number) |
 | `incident_assets` | N:M link incidents ↔ assets |
 | `incident_risks` | N:M link incidents ↔ risks |
@@ -914,6 +923,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 | `bcm` | BCM | Business continuity plans, BIA, exercise log |
 | `pentest` | Penetration Testing | Pentest reports, findings, remediation tracking |
 | `discovery` | Network Discovery | Network scan import, agent discovery, staging queue |
+| `threat_intel` | Threat Landscape | Source register with review cadence, advisory intake (RSS/Atom/CISA KEV), assessment and handover into risk, task or incident (NIS-2 Art. 21(2)(a), ISO 27001 A.5.7) — enabled by default |
 
 ---
 
@@ -921,8 +931,8 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 
 | Framework | Covered requirements |
 |---|---|
-| **ISO 27001:2022** | Asset register (A.8), CIA assessment & risk register (ISO 27005), Statement of Applicability (SoA), controls catalogue (Annex A), annual reviews, classification, document management, policy library, audit log, cross-framework control mapping |
-| **NIS-2** | Risk management (Art. 21), reporting obligations (Art. 23, 24h/72h deadlines), supply chain security via vendor module, incident documentation with reference numbers, management liability evidence (report), NIS-2 asset tagging |
+| **ISO 27001:2022** | Asset register (A.8), CIA assessment & risk register (ISO 27005), Statement of Applicability (SoA), controls catalogue (Annex A), threat intelligence (A.5.7), annual reviews, classification, document management, policy library, audit log, cross-framework control mapping |
+| **NIS-2** | Risk management (Art. 21), reporting obligations (Art. 23, 24h/72h deadlines), threat monitoring with source register and advisory assessment (Art. 21(2)(a)), supply chain security via vendor module, incident documentation with reference numbers, management liability (Art. 20) and corrective measures (Art. 21(4)), criteria catalogue adjustable by affectedness profile (essential / important / indirectly affected), NIS-2 asset tagging |
 | **GDPR** | Processing register (Art. 30), DPIA workflow (Art. 35), data subject rights tracker (Art. 15–22) with deadline calculation, data category (Art. 9), DPA documents (Art. 28), data breach documentation with authority reference numbers |
 | **EU AI Act** | Asset types "AI Application" and "AI Agent"; risk classification (prohibited/high/low/minimal), governance fields, technical documentation, conformity assessment workflow |
 | **TISAX** | VDA ISA 6 requirements catalogue, assessments with maturity level (0–3), remediation tracking |

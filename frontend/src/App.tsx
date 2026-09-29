@@ -49,6 +49,7 @@ const Pentests = lazy(() => import('./pages/Pentests').then(m => ({ default: m.P
 const Iso27001 = lazy(() => import('./pages/Iso27001').then(m => ({ default: m.Iso27001 })));
 const BsiGrundschutz = lazy(() => import('./pages/BsiGrundschutz').then(m => ({ default: m.BsiGrundschutz })));
 const Nis2 = lazy(() => import('./pages/Nis2').then(m => ({ default: m.Nis2 })));
+const ThreatIntel = lazy(() => import('./pages/ThreatIntel').then(m => ({ default: m.ThreatIntel })));
 const C5 = lazy(() => import('./pages/C5').then(m => ({ default: m.C5 })));
 const Graph = lazy(() => import('./pages/Graph').then(m => ({ default: m.Graph })));
 
@@ -102,6 +103,7 @@ const App: React.FC = () => (
               <Route path="iso27001" element={<ModuleGate module="iso27001"><Iso27001 /></ModuleGate>} />
               <Route path="bsi-grundschutz" element={<ModuleGate module="bsi_grundschutz"><BsiGrundschutz /></ModuleGate>} />
               <Route path="nis2" element={<ModuleGate module="nis2"><Nis2 /></ModuleGate>} />
+              <Route path="threat-intel" element={<ModuleGate module="threat_intel"><ThreatIntel /></ModuleGate>} />
               <Route path="c5" element={<ModuleGate module="c5"><C5 /></ModuleGate>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

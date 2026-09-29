@@ -11,7 +11,10 @@
     "total": "Gesamt",
     "implemented": "Implementiert",
     "inProgress": "In Bearbeitung",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "applicable": "Anwendbar",
+    "rate": "Erfüllungsquote",
+    "maturity": "Reifegrad {{level}} von 5"
   },
   "entity": {
     "essential": {
@@ -26,7 +29,8 @@
   "filter": {
     "searchPlaceholder": "Artikelreferenz, Titel oder Kategorie...",
     "allStatus": "Alle Status",
-    "allCategories": "Alle Kategorien"
+    "allCategories": "Alle Kategorien",
+    "onlyApplicable": "Nur anwendbare"
   },
   "table": {
     "article": "Artikel",
@@ -34,7 +38,8 @@
     "status": "Status",
     "deadline": "Deadline",
     "lastReview": "Letzte Prüfung",
-    "measureCount": "{{count}} Messungen"
+    "measureCount": "{{count}} Messungen",
+    "obligation": "Pflicht"
   },
   "description": {
     "show": "Beschreibung anzeigen",
@@ -60,7 +65,9 @@
     "cancel": "Abbrechen",
     "save": "Speichern",
     "saving": "Speichern...",
-    "edit": "Bearbeiten"
+    "edit": "Bearbeiten",
+    "applicability": "Anwendbarkeit je Betroffenheitsprofil",
+    "applicabilityHint": "Legt fest, was dieses Kriterium für wen bedeutet. Auf „Nicht anwendbar“ gesetzt, fällt es für das jeweilige Profil aus der Erfüllungsquote heraus."
   },
   "toast": {
     "loadError": "Fehler beim Laden des Katalogs",
@@ -77,7 +84,10 @@
     "cryptography": "Kryptografie",
     "accessControl": "Personalsicherheit & Zugangssteuerung",
     "mfa": "Multi-Faktor-Authentifizierung",
-    "reportingObligations": "Meldepflichten"
+    "reportingObligations": "Meldepflichten",
+    "governance": "Governance & Managementhaftung",
+    "correctiveActions": "Korrekturmaßnahmen",
+    "ownCriteria": "Eigene Kriterien"
   },
   "measures": {
     "Art. 21(2)(a)": {
@@ -131,6 +141,51 @@
     "Art. 23(4)": {
       "title": "Abschlussbericht (spätestens einen Monat nach Benachrichtigung)",
       "description": "Vorlage eines Abschlussberichts spätestens einen Monat nach Einreichung der Vorfallbenachrichtigung."
+    }
+  },
+  "obligation": {
+    "required": "Pflicht",
+    "recommended": "Empfohlen",
+    "not_applicable": "Nicht anwendbar"
+  },
+  "threatIntelLink": "Zur Bedrohungslage",
+  "profile": {
+    "title": "Betroffenheitsprofil",
+    "change": "Profil ändern",
+    "modalTitle": "NIS-2-Betroffenheit festlegen",
+    "modalIntro": "Die Einstufung entscheidet, welche Kriterien des Katalogs überhaupt gelten. Sie ist eine Managemententscheidung mit Haftungsfolge und wird im Audit-Log festgehalten.",
+    "sector": "Sektor",
+    "sectorPlaceholder": "z. B. Digitale Infrastruktur, Gesundheit, Herstellung …",
+    "note": "Begründung der Einstufung",
+    "notePlaceholder": "Woraus ergibt sich die Einstufung? Schwellenwerte, Sektorzuordnung, Kundenverträge …",
+    "saved": "Betroffenheitsprofil gespeichert.",
+    "unknownHint": "Noch nicht eingestuft — bis dahin gilt der volle Katalog wie für eine wesentliche Einrichtung. Das ist die sichere Annahme, ersetzt aber keine Prüfung.",
+    "excluded": "{{count}} von {{total}} Kriterien sind für dieses Profil nicht anwendbar und zählen nicht in die Quote.",
+    "sync": "Katalog abgleichen",
+    "syncHint": "Ergänzt Kriterien, die einer neueren Version hinzugefügt wurden. Bestehende Einträge bleiben unberührt.",
+    "synced": "{{count}} Kriterien ergänzt.",
+    "syncedNone": "Der Katalog ist bereits vollständig.",
+    "types": {
+      "essential": {
+        "label": "Wesentliche Einrichtung (Anhang I)",
+        "short": "Wesentlich",
+        "description": "Energie, Transport, Banken, Finanzmarkt, Gesundheit, Trinkwasser, Abwasser, digitale Infrastruktur, IKT-Dienste, Raumfahrt, öffentliche Verwaltung. Voller Katalog, proaktive Aufsicht."
+      },
+      "important": {
+        "label": "Wichtige Einrichtung (Anhang II)",
+        "short": "Wichtig",
+        "description": "Post und Kurier, Abfall, Chemie, Lebensmittel, Herstellung, digitale Dienste, Forschung. Dieselben Pflichten aus Art. 21 und 23, nachgelagerte Aufsicht."
+      },
+      "indirect": {
+        "label": "Nur indirekt betroffen (Lieferkette)",
+        "short": "Indirekt",
+        "description": "Selbst nicht im Anwendungsbereich, aber Lieferant oder Dienstleister einer betroffenen Einrichtung. Gegenüber der Behörde bestehen keine Pflichten; die Anforderungen kommen vertraglich über Art. 21(2)(d)."
+      },
+      "unknown": {
+        "label": "Noch nicht eingestuft",
+        "short": "Offen",
+        "description": "Bis zur Einstufung wird wie für eine wesentliche Einrichtung gerechnet — lieber zu viel prüfen als eine Pflicht übersehen."
+      }
     }
   }
 }

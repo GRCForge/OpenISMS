@@ -321,6 +321,13 @@ const TOOL_GATES = {
   'isms_update_iso27001_control': { perm: ['iso27001', 'edit'], moduleKey: 'iso27001', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   'isms_list_bsi_requirements': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
   'isms_update_bsi_requirement': { perm: ['bsi_grundschutz', 'edit'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  // --- Bedrohungslage / Threat Intelligence ---
+  'isms_list_threat_sources': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
+  'isms_list_threat_advisories': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
+  'isms_get_threat_intel_stats': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
+  'isms_create_threat_advisory': { perm: ['threat_intel', 'create'], moduleKey: 'threat_intel', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_assess_threat_advisory': { perm: ['threat_intel', 'assess'], moduleKey: 'threat_intel', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_record_threat_source_review': { perm: ['threat_intel', 'review'], moduleKey: 'threat_intel', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   'isms_list_nis2_measures': { perm: ['nis2', 'view'], moduleKey: 'nis2' },
   'isms_update_nis2_measure': { perm: ['nis2', 'edit'], moduleKey: 'nis2', requiredRoles: ['admin', 'assessor', 'dpo'], needsWrite: true },
   'isms_list_c5_criteria': { perm: ['c5', 'view'], moduleKey: 'c5' },
@@ -2565,7 +2572,7 @@ server.tool(
   'isms_set_feature_status',
   'Enable or disable a specific system feature/module.',
   {
-    feature: z.enum(['dsgvo', 'tisax', 'dora', 'ai_act', 'bcm', 'pentest', 'discovery', 'iso27001', 'bsi_grundschutz', 'nis2', 'c5', 'mcp']).describe('The feature key'),
+    feature: z.enum(['dsgvo', 'tisax', 'dora', 'ai_act', 'bcm', 'pentest', 'discovery', 'iso27001', 'bsi_grundschutz', 'nis2', 'c5', 'mcp', 'threat_intel']).describe('The feature key'),
     enabled: z.boolean().describe('Set true to enable, false to disable'),
   },
   async ({ feature, enabled }) => {
@@ -4485,6 +4492,178 @@ server.tool(
     await item.update(updates);
     await logAudit('update', 'nis2_measure', item.id, item.article_ref, updates, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+  }
+);
+
+// ─── Bedrohungslage (NIS-2 Art. 21(2)(a), ISO 27001 A.5.7) ──────────────────
+
+server.tool(
+  'isms_list_threat_sources',
+  'List the monitored threat-intelligence sources (national CSIRT, CERTs, vendors, security news) with their review cadence and whether a review is overdue.',
+  {
+    only_overdue: z.boolean().default(false).describe('Only sources whose review is overdue'),
+    only_active: z.boolean().default(true),
+  },
+  async ({ only_overdue, only_active }) => {
+    const { ThreatSource, User } = getModels();
+    const { isOverdue, toDateOnly } = require('../services/threatIntelService');
+    const where = only_active ? { active: true } : {};
+    const sources = await ThreatSource.findAll({
+      where,
+      include: [{ model: User, as: 'responsible', attributes: ['id', 'name', 'email'] }],
+      order: [['type', 'ASC'], ['name', 'ASC']],
+    });
+    const today = toDateOnly(new Date());
+    const rows = sources
+      .map(src => ({ ...src.toJSON(), overdue: isOverdue(src, today) }))
+      .filter(src => !only_overdue || src.overdue);
+    return { content: [{ type: 'text', text: JSON.stringify(rows, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_list_threat_advisories',
+  'List external threat advisories with their assessment and what they turned into (risk, task, incident).',
+  {
+    search: z.string().optional().describe('Search in title, summary, external id or CVE'),
+    status: z.enum(['new', 'in_assessment', 'action_required', 'mitigated', 'closed', 'all']).default('all'),
+    relevance: z.enum(['not_assessed', 'not_relevant', 'monitor', 'relevant', 'critical', 'all']).default('all'),
+    severity: z.enum(['critical', 'high', 'medium', 'low', 'info', 'all']).default('all'),
+    limit: z.number().int().min(1).max(500).default(100),
+  },
+  async ({ search, status, relevance, severity, limit }) => {
+    const { ThreatAdvisory, ThreatSource, User, Risk, Task } = getModels();
+    const where = {};
+    if (status !== 'all') where.status = status;
+    if (relevance !== 'all') where.relevance = relevance;
+    if (severity !== 'all') where.severity = severity;
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.iLike]: `%${search}%` } },
+        { summary: { [Op.iLike]: `%${search}%` } },
+        { external_id: { [Op.iLike]: `%${search}%` } },
+        { cve_ids: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+    const items = await ThreatAdvisory.findAll({
+      where,
+      include: [
+        { model: ThreatSource, as: 'source', attributes: ['id', 'name', 'type'] },
+        { model: User, as: 'assessedBy', attributes: ['id', 'name'] },
+        { model: Risk, as: 'risk', attributes: ['id', 'ref', 'title'] },
+        { model: Task, as: 'task', attributes: ['id', 'title', 'status'] },
+      ],
+      order: [['published_at', 'DESC NULLS LAST'], ['created_at', 'DESC']],
+      limit,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_get_threat_intel_stats',
+  'Evidence figures for NIS2 Art. 21(2)(a): how the threat landscape is monitored (sources, cadence, overdue reviews, national CSIRT coverage) and how advisories are fed into risk management (assessment and handover rates).',
+  {},
+  async () => {
+    const { ThreatSource, ThreatAdvisory } = getModels();
+    const { isOverdue, toDateOnly } = require('../services/threatIntelService');
+    const today = toDateOnly(new Date());
+    const sources = await ThreatSource.findAll();
+    const active = sources.filter(s => s.active);
+    const total = await ThreatAdvisory.count();
+    const unassessed = await ThreatAdvisory.count({ where: { relevance: 'not_assessed' } });
+    const needsHandling = await ThreatAdvisory.count({ where: { relevance: { [Op.in]: ['relevant', 'critical'] } } });
+    const handled = await ThreatAdvisory.count({
+      where: {
+        relevance: { [Op.in]: ['relevant', 'critical'] },
+        [Op.or]: [{ risk_id: { [Op.ne]: null } }, { task_id: { [Op.ne]: null } }, { incident_id: { [Op.ne]: null } }],
+      },
+    });
+    const stats = {
+      monitoring: {
+        sources_total: sources.length,
+        sources_active: active.length,
+        sources_overdue: active.filter(s => isOverdue(s, today)).length,
+        national_csirt_covered: active.some(s => s.type === 'national_csirt'),
+      },
+      handling: {
+        advisories_total: total,
+        unassessed,
+        assessment_rate: total ? Math.round(((total - unassessed) / total) * 100) : 0,
+        needs_handling: needsHandling,
+        handled,
+        handling_rate: needsHandling ? Math.round((handled / needsHandling) * 100) : 0,
+      },
+    };
+    return { content: [{ type: 'text', text: JSON.stringify(stats, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_threat_advisory',
+  'Record an external threat advisory (authority warning, vendor advisory, security news) in the threat register.',
+  {
+    title: z.string().describe('Advisory title'),
+    source_id: z.number().int().optional().describe('ID of the source it came from'),
+    external_id: z.string().optional().describe('Identifier at the source, e.g. WID-SEC-2026-0001'),
+    summary: z.string().optional(),
+    url: z.string().optional(),
+    severity: z.enum(['critical', 'high', 'medium', 'low', 'info']).default('medium'),
+    cve_ids: z.string().optional().describe('Comma-separated CVE identifiers'),
+    published_at: z.string().optional().describe('ISO date the advisory was published'),
+  },
+  async (args, { mcpUser }) => {
+    const { ThreatAdvisory } = getModels();
+    const advisory = await ThreatAdvisory.create({ ...args, relevance: 'not_assessed', status: 'new', ingested_via: 'manual' });
+    await logAudit('create', 'threat_advisory', advisory.id, advisory.title, { severity: advisory.severity }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(advisory, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_assess_threat_advisory',
+  'Assess an advisory: is it relevant to this organisation, and what follows from it. Records who assessed it and when — this is the evidence NIS2 Art. 21(2)(a) asks for.',
+  {
+    id: z.number().int().describe('Advisory ID'),
+    relevance: z.enum(['not_relevant', 'monitor', 'relevant', 'critical']),
+    status: z.enum(['new', 'in_assessment', 'action_required', 'mitigated', 'closed']).optional(),
+    assessment_notes: z.string().optional().describe('Why is it relevant, or not? Which systems are affected?'),
+  },
+  async ({ id, relevance, status, assessment_notes }, { mcpUser }) => {
+    const { ThreatAdvisory } = getModels();
+    const advisory = await ThreatAdvisory.findByPk(id);
+    if (!advisory) return { content: [{ type: 'text', text: 'Advisory not found' }], isError: true };
+    const nextStatus = status || (relevance === 'not_relevant' ? 'closed' : 'in_assessment');
+    await advisory.update({
+      relevance,
+      status: nextStatus,
+      assessment_notes: assessment_notes ?? advisory.assessment_notes,
+      // Der Bewerter kommt aus der Sitzung, nie aus den Argumenten — sonst
+      // liesse sich eine Bewertung jemandem zuschreiben, der sie nie getroffen hat.
+      assessed_by_id: mcpUser?.id || null,
+      assessed_at: new Date(),
+    });
+    await logAudit('assess', 'threat_advisory', advisory.id, advisory.title, { relevance, status: nextStatus }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(advisory, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_record_threat_source_review',
+  'Record that a threat source was reviewed today and schedule the next review from its cadence.',
+  {
+    id: z.number().int().describe('Threat source ID'),
+    note: z.string().optional().describe('What was there? Any relevant advisories, and what came of them?'),
+  },
+  async ({ id, note }, { mcpUser }) => {
+    const { ThreatSource } = getModels();
+    const { nextReviewDate, toDateOnly } = require('../services/threatIntelService');
+    const source = await ThreatSource.findByPk(id);
+    if (!source) return { content: [{ type: 'text', text: 'Threat source not found' }], isError: true };
+    const today = toDateOnly(new Date());
+    await source.update({ last_reviewed_at: today, next_review_at: nextReviewDate(source.review_frequency), last_review_note: note ?? null });
+    await logAudit('review', 'threat_source', source.id, source.name, { reviewed_at: today, next_review_at: source.next_review_at, note }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify(source, null, 2) }] };
   }
 );
 

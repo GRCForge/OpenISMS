@@ -14,6 +14,7 @@ const NAMESPACES = [
   'subjectrequests', 'myarea', 'aiact', 'bcm', 'dora',
   'networkdiscovery', 'tisax', 'policylibrary', 'managementreport',
   'pentests', 'vvt', 'documentanalysis', 'graph',
+  'threatintel',
 ];
 
 i18n

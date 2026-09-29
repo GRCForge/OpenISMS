@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenISMS API",
     "description": "REST API für das Information Security Management System (OpenISMS).\n\n## Authentifizierung\nAlle geschützten Endpunkte erfordern einen **Bearer JWT-Token** im `Authorization`-Header:\n```\nAuthorization: Bearer <token>\n```\nDen Token erhalten Sie über `POST /api/auth/login`.\n\n## Rollen\n- `admin` – Vollzugriff\n- `assessor` – Risikobewerter / Auditor\n- `it-staff` – IT-Mitarbeiter (Security-Daten)\n- `dpo` – Datenschutzbeauftragter\n- `owner` – Asset-Verantwortlicher\n- `management` – Nur-Lesen (Management-Ebene)\n- `employee` – Schulungs-Tab, eigene Trainingsübersicht\n- `viewer` – Nur Lesezugriff\n\n**Custom Roles**: Eigene Rollennamen mit Basisrolle über `/api/admin/custom-roles` verwalten.",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "contact": {
       "name": "ISMS Support"
     }
@@ -9753,6 +9753,39 @@
           }
         },
         "description": "Erfordert die Berechtigung `nis2.view` und das aktivierte Modul `nis2`."
+      },
+      "post": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "nis2 anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.create` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
       }
     },
     "/nis2/seed": {
@@ -10844,6 +10877,899 @@
           }
         }
       }
+    },
+    "/threat-intel/sources": {
+      "get": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "sources abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.view` und das aktivierte Modul `threat_intel`."
+      },
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "sources anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.create` und das aktivierte Modul `threat_intel`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/sources/seed": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "seed anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.seed` und das aktivierte Modul `threat_intel`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/sources/{id}": {
+      "put": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "sources aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.edit` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "sources löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.delete` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/threat-intel/sources/{id}/review": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "review anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.review` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/sources/{id}/fetch": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "fetch anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.fetch` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/fetch-all": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "fetch all anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.fetch` und das aktivierte Modul `threat_intel`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/advisories": {
+      "get": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "advisories abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.view` und das aktivierte Modul `threat_intel`."
+      },
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "advisories anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.create` und das aktivierte Modul `threat_intel`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/advisories/{id}": {
+      "get": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "advisories abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.view` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "advisories aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.edit` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "advisories löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.delete` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/threat-intel/advisories/{id}/assess": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "assess anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.assess` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/advisories/{id}/assets": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "assets anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.edit` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/advisories/{id}/assets/{assetId}": {
+      "delete": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "assets löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.edit` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (assetId)"
+          }
+        ]
+      }
+    },
+    "/threat-intel/advisories/{id}/match-assets": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "match assets anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.edit` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/advisories/{id}/to-risk": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "to risk anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.assess` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/advisories/{id}/to-task": {
+      "post": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "to task anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.assess` und das aktivierte Modul `threat_intel`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threat-intel/stats": {
+      "get": {
+        "tags": [
+          "Bedrohungslage"
+        ],
+        "summary": "stats abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `threat_intel.view` und das aktivierte Modul `threat_intel`."
+      }
+    },
+    "/nis2/profile": {
+      "get": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "profile abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.view` und das aktivierte Modul `nis2`."
+      },
+      "put": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "profile aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.edit` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nis2/stats": {
+      "get": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "stats abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.view` und das aktivierte Modul `nis2`."
+      }
+    },
+    "/nis2/sync-catalog": {
+      "post": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "sync catalog anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.seed` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -10887,6 +11813,9 @@
     },
     {
       "name": "Bedrohungen"
+    },
+    {
+      "name": "Bedrohungslage"
     },
     {
       "name": "Benachrichtigungen",
