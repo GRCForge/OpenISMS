@@ -276,5 +276,36 @@
       "save": "The answer could not be saved.",
       "task": "The task could not be created."
     }
+  },
+  "scoring": {
+    "title": "Scoring model",
+    "summary": "Implementation {{impl}} % · Evidence {{evid}} % · Partly {{partly}} %",
+    "intro": "There is no generally agreed way to turn \"partly implemented\" into a percentage. These settings fix one — for the criteria catalogue and the questionnaire alike. Every change is written to the audit log, so a rate stays explainable afterwards.",
+    "weight": "Weighting: implementation {{impl}} % / evidence {{evid}} %",
+    "weightHint": "Without the measure there is nothing to document — but it still has to be documented (Art. 21(1)).",
+    "partly": "Value of \"partly\": {{value}} %",
+    "partlyHint": "Applies on both axes, and to \"in progress\" in the criteria catalogue.",
+    "gate": "Not implemented scores 0, even with evidence",
+    "gateHint": "Evidence for something that does not exist is a contradiction. Switchable, in case a framework sees it differently.",
+    "maturity": "Maturity from",
+    "maturityHint": "Lower bounds. Values out of order are sorted descending on save — otherwise a higher rate would yield a lower maturity.",
+    "level": {
+      "l5": "Level 5",
+      "l4": "Level 4",
+      "l3": "Level 3",
+      "l2": "Level 2"
+    },
+    "preview": "Worked examples",
+    "example": {
+      "yesYes": "Yes / Yes",
+      "yesPartly": "Yes / Partly",
+      "yesNo": "Yes / No",
+      "partlyPartly": "Partly / Partly",
+      "noYes": "No / Yes"
+    },
+    "saved": "Scoring model saved.",
+    "reset": "Scoring model reset.",
+    "resetButton": "Defaults",
+    "error": "The scoring model could not be saved."
   }
 }

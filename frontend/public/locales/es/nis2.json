@@ -276,5 +276,36 @@
       "save": "No se ha podido guardar la respuesta.",
       "task": "No se ha podido crear la tarea."
     }
+  },
+  "scoring": {
+    "title": "Modelo de puntuación",
+    "summary": "Implantación {{impl}} % · Evidencia {{evid}} % · Parcial {{partly}} %",
+    "intro": "No hay una forma universalmente aceptada de convertir «parcialmente implantado» en un porcentaje. Estos ajustes fijan una, para el catálogo de criterios y el cuestionario a la vez. Cada cambio queda en el registro de auditoría, para que la tasa siga siendo explicable después.",
+    "weight": "Ponderación: implantación {{impl}} % / evidencia {{evid}} %",
+    "weightHint": "Sin la medida no hay nada que documentar, pero aun así hay que documentarla (art. 21(1)).",
+    "partly": "Valor de «parcialmente»: {{value}} %",
+    "partlyHint": "Se aplica en ambos ejes y también a «en curso» en el catálogo de criterios.",
+    "gate": "No implantado puntúa 0, incluso con evidencia",
+    "gateHint": "Una evidencia de algo que no existe es una contradicción. Desactivable por si un marco de referencia lo ve de otro modo.",
+    "maturity": "Madurez a partir de",
+    "maturityHint": "Límites inferiores. Los valores desordenados se ordenan de forma descendente al guardar; de lo contrario, una tasa más alta daría una madurez menor.",
+    "level": {
+      "l5": "Nivel 5",
+      "l4": "Nivel 4",
+      "l3": "Nivel 3",
+      "l2": "Nivel 2"
+    },
+    "preview": "Ejemplos calculados",
+    "example": {
+      "yesYes": "Sí / Sí",
+      "yesPartly": "Sí / Parcialmente",
+      "yesNo": "Sí / No",
+      "partlyPartly": "Parcialmente / Parcialmente",
+      "noYes": "No / Sí"
+    },
+    "saved": "Modelo de puntuación guardado.",
+    "reset": "Modelo de puntuación restablecido.",
+    "resetButton": "Valores por defecto",
+    "error": "No se ha podido guardar el modelo de puntuación."
   }
 }

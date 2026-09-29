@@ -12081,6 +12081,79 @@
           }
         }
       }
+    },
+    "/nis2/scoring": {
+      "get": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "scoring abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.view` und das aktivierte Modul `nis2`."
+      },
+      "put": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "scoring aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.edit` und das aktivierte Modul `nis2`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "NIS-2"
+        ],
+        "summary": "scoring löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `nis2.edit` und das aktivierte Modul `nis2`."
+      }
     }
   },
   "tags": [

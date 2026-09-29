@@ -92,6 +92,32 @@ with yes = 1, partly = 0.5, no = 0.
 Per topic and overall, the result is a rate, a **maturity level 1–5** and a
 status (good ≥ 80 %, improvable ≥ 50 %, critical below).
 
+### The model is configurable
+
+The weights above are defaults, not constants. There is no generally agreed way
+to turn "partly implemented" into a percentage, so *Self-check → Scoring model*
+exposes the whole thing:
+
+| Setting | Default | Effect |
+|---|---|---|
+| Implementation weight | 2/3 | evidence takes the remainder |
+| Value of "partly" | 50 % | on both axes, and for "in progress" in the criteria catalogue |
+| Not implemented scores 0 | on | switchable, in case a framework counts evidence regardless |
+| Maturity thresholds | 95 / 75 / 50 / 25 % | lower bounds for levels 5 to 2 |
+| Status thresholds | 80 / 50 % | good / improvable |
+
+One scale serves both the criteria catalogue and the questionnaire — two
+notions of "half done" in one module would be a trap for anyone reading the
+figures side by side. The editor recomputes worked examples as the sliders
+move, and every change goes to the audit log, so a rate stays explainable after
+the fact.
+
+Values out of order are sorted descending on save. Without that, a threshold
+for level 3 above the one for level 4 would make a higher rate produce a lower
+maturity — a number nobody can explain.
+
+### It will still not reproduce another tool's number
+
 ### It will not reproduce another tool's number
 
 The maturity scale is five steps because external self-checks present their
@@ -102,10 +128,17 @@ landed on the same maturity level for 12 of 16 topics and for the overall
 result; the deviations all went upward, because "partly" is treated more
 leniently here.
 
-Reproducing a number whose derivation is unknown would be guessing. What this
-scale offers instead is that its derivation is written out in
-`nis2SelfCheckScoring.js` and can be explained in an audit — for a GRC tool the
-more useful property.
+Tuning helps but does not close it. Fitting a two-parameter weighted mean
+(implementation weight, value of "partly") against those 16 category figures
+brings the mean deviation down from about 9 to about 5 percentage points — the
+best fit puts "partly" at 0.29 rather than 0.5 — but the worst single category
+still misses by 14 points. Whatever that tool does, it is not a weighted mean.
+
+So: the settings let you move towards an external benchmark, and the defaults
+stay the derived ones. Reproducing a number whose derivation is unknown would
+be guessing. What this model offers instead is that its derivation is written
+out in `nis2ScoringModel.js`, visible in the UI, and can be explained in an
+audit — for a GRC tool the more useful property.
 
 ---
 
@@ -166,6 +199,9 @@ CSV export produces the same shape, so the round trip works.
 | `POST` | `/api/nis2/self-check/bulk-answer` | Import an answer set (transactional) |
 | `POST` | `/api/nis2/self-check/:id/to-task` | Create a remediation task from a gap |
 | `POST` | `/api/nis2/self-check` | Add an own question |
+| `GET` | `/api/nis2/scoring` | Read the scoring model (with the defaults alongside) |
+| `PUT` | `/api/nis2/scoring` | Change weights and thresholds |
+| `DELETE` | `/api/nis2/scoring` | Back to the derived defaults |
 | `DELETE` | `/api/nis2/self-check/:id` | Delete an own question |
 
 No new permissions: the existing `nis2` actions (`view`, `create`, `edit`,
@@ -228,8 +264,15 @@ Applied by `sequelize.sync({ alter })` on start.
 
 ## 10. Tests
 
-**`scripts/test-nis2-self-check.js`**, wired into
-`.github/workflows/security.yml`. It covers the three ways the rate could lie —
+**`scripts/test-nis2-scoring-model.js`** covers the settings as foreign input:
+that the defaults are frozen and unchanged, that one unusable value does not
+take the rest of the model with it, that out-of-order thresholds are forced
+descending and maturity stays monotonic in the rate, and that both the
+catalogue and the questionnaire actually honour a tuned model while an
+omitted one still means the default.
+
+**`scripts/test-nis2-self-check.js`**, also wired into
+`.github/workflows/security.yml`, covers the three ways the rate could lie —
 counting an unanswered question as 0, reading a missing evidence answer as "no
 evidence", crediting "not implemented but evidenced" — plus catalogue
 integrity, that every question maps to a criterion that exists, gap

@@ -4700,16 +4700,23 @@ server.tool(
   async () => {
     const { Nis2SelfCheckItem, Nis2Measure, Setting } = getModels();
     const { summarise } = require('../services/nis2SelfCheckScoring');
-    // Das Betroffenheitsprofil entscheidet, was ueberhaupt zaehlt.
-    let entityType = 'unknown';
-    try {
-      const row = await Setting.findByPk('nis2_profile');
-      const value = typeof row?.value === 'string' ? JSON.parse(row.value) : row?.value;
-      if (value?.entity_type) entityType = value.entity_type;
-    } catch { /* ohne Profil wird wie fuer eine wesentliche Einrichtung gerechnet */ }
+    const { DEFAULT_SCORING, normaliseScoring } = require('../services/nis2ScoringModel');
+    const readSetting = async (key) => {
+      try {
+        const row = await Setting.findByPk(key);
+        return typeof row?.value === 'string' ? JSON.parse(row.value) : row?.value;
+      } catch { return null; }
+    };
+    // Das Betroffenheitsprofil entscheidet, was ueberhaupt zaehlt; das
+    // Bewertungsmodell, wie daraus Prozente werden. Beides muss hier dasselbe
+    // sein wie in der Oberflaeche — sonst nennt ein Assistent andere Zahlen
+    // als das Dashboard, und beide sehen richtig aus.
+    const profile = await readSetting('nis2_profile');
+    const entityType = profile?.entity_type || 'unknown';
+    const scoring = normaliseScoring(await readSetting('nis2_scoring') ?? DEFAULT_SCORING);
     const [items, measures] = await Promise.all([Nis2SelfCheckItem.findAll(), Nis2Measure.findAll()]);
-    const stats = summarise(items, entityType, measures);
-    return { content: [{ type: 'text', text: JSON.stringify({ entity_type: entityType, ...stats }, null, 2) }] };
+    const stats = summarise(items, entityType, measures, scoring);
+    return { content: [{ type: 'text', text: JSON.stringify({ entity_type: entityType, scoring, ...stats }, null, 2) }] };
   }
 );
 

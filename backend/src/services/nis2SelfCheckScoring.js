@@ -3,13 +3,19 @@
 /**
  * Auswertung des NIS-2-Fragebogens.
  *
- * Zwei Antworten je Frage, unterschiedlich gewichtet:
+ * Zwei Antworten je Frage, unterschiedlich gewichtet — voreingestellt:
  *
  *   Umsetzung  zwei Drittel — ohne die Massnahme gibt es nichts zu belegen.
  *   Nachweis   ein Drittel  — belegen muss man sie trotzdem. Art. 21(1)
  *              verlangt ausdruecklich, die Angemessenheit der Massnahmen
  *              nachweisen zu koennen, und ein Auditor sieht nur, was
  *              dokumentiert ist.
+ *
+ * Die Gewichte, der Wert von "teilweise" und die Schwellwerte sind
+ * einstellbar (services/nis2ScoringModel.js). Wer sein Ergebnis gegen einen
+ * externen Bericht halten will, braucht Stellschrauben; wer es in einem Audit
+ * vertreten muss, braucht die Angabe, welche eingestellt waren. Beides steht
+ * dort.
  *
  * Eine Regel ausserhalb dieser Gewichtung: Ist die Umsetzung 'no', ist die
  * Frage 0 — egal, was in der Nachweisspalte steht. Ein Nachweis fuer eine
@@ -21,20 +27,20 @@
  * ausgewiesen: Eine Erfuellungsquote von 90 % bei 20 % beantworteten Fragen
  * ist keine gute Nachricht, und das muss man sehen koennen.
  *
- * Die Erfuellungsquote wird bewusst NICHT so gerechnet, dass sie die Zahl
- * eines bestimmten externen Werkzeugs reproduziert. Deren Gewichtung ist nicht
- * veroeffentlicht; sie nachzubauen hiesse raten. Was hier steht, ist
- * vollstaendig hergeleitet und laesst sich in einem Audit erklaeren — das ist
- * fuer ein GRC-Werkzeug die wichtigere Eigenschaft.
+ * Die Voreinstellung reproduziert bewusst nicht die Zahl eines bestimmten
+ * externen Werkzeugs. Deren Gewichtung ist nicht veroeffentlicht, und der
+ * Versuch, sie aus 16 Kategoriewerten zurueckzurechnen, zeigte: Es ist kein
+ * gewichtetes Mittel. Das beste erreichbare Modell dieser Form lag im Mittel
+ * noch 5 Prozentpunkte daneben, im schlechtesten Fall 14. Naeher herankommen
+ * kann man ueber die Einstellungen; exakt treffen nicht. Was hier steht, ist
+ * dafuer vollstaendig hergeleitet und laesst sich erklaeren — fuer ein
+ * GRC-Werkzeug die wichtigere Eigenschaft.
  */
 
-const { obligationFor, maturityFromRate, statusLabel } = require('./nis2Applicability');
+const { obligationFor } = require('./nis2Applicability');
+const { DEFAULT_SCORING, maturityFromRate, statusLabel, scoreAnswers } = require('./nis2ScoringModel');
 
 const ANSWERS = ['not_assessed', 'yes', 'partly', 'no'];
-const ANSWER_VALUE = { yes: 1, partly: 0.5, no: 0 };
-
-const IMPLEMENTATION_WEIGHT = 2 / 3;
-const EVIDENCE_WEIGHT = 1 / 3;
 
 const isAnswered = (item) => item.answer_implementation !== 'not_assessed';
 
@@ -42,18 +48,8 @@ const isAnswered = (item) => item.answer_implementation !== 'not_assessed';
  * Punktwert einer beantworteten Frage, 0 bis 1.
  * Gibt null zurueck, solange die Umsetzung nicht beantwortet ist.
  */
-const scoreItem = (item) => {
-  if (!isAnswered(item)) return null;
-  const impl = ANSWER_VALUE[item.answer_implementation] ?? 0;
-  if (impl === 0) return 0;
-  // Fehlt die Nachweisangabe, waere es falsch, sie als "kein Nachweis" zu
-  // werten — gefragt wurde nur noch nicht. Die Frage zaehlt dann allein ueber
-  // die Umsetzung.
-  const evidenceGiven = item.answer_evidence && item.answer_evidence !== 'not_assessed';
-  if (!evidenceGiven) return impl;
-  const evidence = ANSWER_VALUE[item.answer_evidence] ?? 0;
-  return impl * IMPLEMENTATION_WEIGHT + evidence * EVIDENCE_WEIGHT;
-};
+const scoreItem = (item, model = DEFAULT_SCORING) =>
+  scoreAnswers(item.answer_implementation, item.answer_evidence, model);
 
 /**
  * Ist diese Frage fuer eine Luecke verantwortlich?
@@ -82,8 +78,9 @@ const GAP_SEVERITY = { open: 3, partial: 2, undocumented: 1, unanswered: 0 };
  * @param {Array} items         Fragen samt Antworten
  * @param {string} entityType   Betroffenheitsprofil
  * @param {Array} [measures]    Kriterienkatalog, fuer die Sicht je NIS-2-Element
+ * @param {object} [model]      Bewertungsmodell (Gewichte und Schwellwerte)
  */
-const summarise = (items, entityType, measures = []) => {
+const summarise = (items, entityType, measures = [], model = DEFAULT_SCORING) => {
   const rows = (items || []).map((i) => (i.toJSON ? i.toJSON() : i));
   const measureRows = (measures || []).map((m) => (m.toJSON ? m.toJSON() : m));
 
@@ -107,7 +104,7 @@ const summarise = (items, entityType, measures = []) => {
   }
 
   const answered = applicable.filter(isAnswered);
-  const scored = answered.map((item) => ({ item, score: scoreItem(item) }));
+  const scored = answered.map((item) => ({ item, score: scoreItem(item, model) }));
   const rate = scored.length ? scored.reduce((sum, s) => sum + s.score, 0) / scored.length : 0;
 
   // ── Kategorien ────────────────────────────────────────────────────────────
@@ -118,15 +115,15 @@ const summarise = (items, entityType, measures = []) => {
     const entry = byCategory[key];
     entry.total++;
     entry.questions.push(item.question_ref);
-    const score = scoreItem(item);
+    const score = scoreItem(item, model);
     if (score !== null) { entry.answered++; entry.sum += score; }
     if (gapKind(item) && gapKind(item) !== 'unanswered') entry.gaps++;
   }
   for (const entry of Object.values(byCategory)) {
     const catRate = entry.answered ? entry.sum / entry.answered : 0;
     entry.rate = Math.round(catRate * 100);
-    entry.maturity = entry.answered ? maturityFromRate(catRate) : null;
-    entry.status = entry.answered ? statusLabel(catRate) : 'unanswered';
+    entry.maturity = entry.answered ? maturityFromRate(catRate, model) : null;
+    entry.status = entry.answered ? statusLabel(catRate, model) : 'unanswered';
     entry.unanswered = entry.total - entry.answered;
     delete entry.sum;
   }
@@ -150,7 +147,7 @@ const summarise = (items, entityType, measures = []) => {
     };
     const entry = byArticle[key];
     entry.questions++;
-    const score = scoreItem(item);
+    const score = scoreItem(item, model);
     if (score !== null) { entry.answered++; entry.sum += score; }
     const kind = gapKind(item);
     if (kind) entry.gaps.push({ question_ref: item.question_ref, kind });
@@ -208,8 +205,8 @@ const summarise = (items, entityType, measures = []) => {
     unanswered: applicable.length - answered.length,
     completion: applicable.length ? Math.round((answered.length / applicable.length) * 100) : 0,
     rate: Math.round(rate * 100),
-    maturity: answered.length ? maturityFromRate(rate) : null,
-    status: answered.length ? statusLabel(rate) : 'unanswered',
+    maturity: answered.length ? maturityFromRate(rate, model) : null,
+    status: answered.length ? statusLabel(rate, model) : 'unanswered',
     gap_counts: counts,
     by_category: byCategory,
     by_article: byArticle,
@@ -218,6 +215,5 @@ const summarise = (items, entityType, measures = []) => {
 };
 
 module.exports = {
-  ANSWERS, ANSWER_VALUE, IMPLEMENTATION_WEIGHT, EVIDENCE_WEIGHT,
-  scoreItem, gapKind, summarise, isAnswered,
+  ANSWERS, scoreItem, gapKind, summarise, isAnswered,
 };

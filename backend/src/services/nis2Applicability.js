@@ -60,34 +60,13 @@ const obligationFor = (applicability, entityType) => {
  * Der Reifegrad bildet die uebliche fuenfstufige Skala ab, damit sich das
  * Ergebnis gegen einen externen Self-Check halten laesst.
  */
-// Eine Skala fuer das ganze NIS-2-Modul — Kriterienkatalog wie Fragebogen.
-// Fuenf Stufen, weil externe Self-Checks ihr Ergebnis ueblicherweise so
-// darstellen und die Werte damit nebeneinander lesbar bleiben.
-//
-// Nebeneinander lesbar heisst nicht gleich: Die Quote eines fremden Werkzeugs
-// wird abweichen, und zwar auch dann, wenn dieselben Antworten eingehen. Wie
-// es gewichtet, ist nicht veroeffentlicht; eine Zahl nachzubauen, deren
-// Herleitung man nicht kennt, waere geraten. Gegen einen konkret vorliegenden
-// Bericht lag diese Skala bei 12 von 16 Kategorien auf derselben Stufe und
-// beim Gesamtergebnis ebenfalls — die Abweichungen gingen durchweg nach oben,
-// weil 'teilweise' hier milder gewertet wird. Was diese Skala dafuer leistet:
-// Ihre Herleitung steht vollstaendig in nis2SelfCheckScoring.js und laesst
-// sich in einem Audit erklaeren.
-const maturityFromRate = (rate) => {
-  if (rate >= 0.95) return 5;
-  if (rate >= 0.75) return 4;
-  if (rate >= 0.50) return 3;
-  if (rate >= 0.25) return 2;
-  return 1;
-};
+// Reifegrad und Status kommen aus dem einstellbaren Bewertungsmodell — eine
+// Skala fuer das ganze NIS-2-Modul, Kriterienkatalog wie Fragebogen. Zwei
+// Skalen in einem Modul waeren eine Falle fuer jeden, der die Zahlen
+// nebeneinander liest.
+const { DEFAULT_SCORING, maturityFromRate, statusLabel } = require('./nis2ScoringModel');
 
-const statusLabel = (rate) => {
-  if (rate >= 0.80) return 'good';
-  if (rate >= 0.50) return 'improvable';
-  return 'critical';
-};
-
-const summarise = (measures, entityType) => {
+const summarise = (measures, entityType, model = DEFAULT_SCORING) => {
   const rows = (measures || []).map((m) => (m.toJSON ? m.toJSON() : m));
 
   const applicable = [];
@@ -104,9 +83,12 @@ const summarise = (measures, entityType) => {
   const inProgress = applicable.filter((m) => m.implementation_status === 'in_progress').length;
   const open = applicable.filter((m) => m.implementation_status === 'not_started').length;
 
-  // Angefangenes zaehlt halb. Es als "nicht erfuellt" zu fuehren macht jede
-  // Zwischenmessung wertlos, es voll zu zaehlen waere geschoent.
-  const score = applicable.length ? (implemented + inProgress * 0.5) / applicable.length : 0;
+  // Angefangenes zaehlt anteilig. Es als "nicht erfuellt" zu fuehren macht jede
+  // Zwischenmessung wertlos, es voll zu zaehlen waere geschoent. Der Anteil ist
+  // derselbe Parameter, der im Fragebogen ueber "teilweise" entscheidet — sonst
+  // haetten Katalog und Fragebogen zwei Begriffe von "halb fertig".
+  const partly = model.partly_value;
+  const score = applicable.length ? (implemented + inProgress * partly) / applicable.length : 0;
 
   const byCategory = {};
   for (const m of applicable) {
@@ -118,10 +100,10 @@ const summarise = (measures, entityType) => {
     else byCategory[key].open++;
   }
   for (const entry of Object.values(byCategory)) {
-    const rate = entry.total ? (entry.implemented + entry.in_progress * 0.5) / entry.total : 0;
+    const rate = entry.total ? (entry.implemented + entry.in_progress * partly) / entry.total : 0;
     entry.rate = Math.round(rate * 100);
-    entry.maturity = maturityFromRate(rate);
-    entry.status = statusLabel(rate);
+    entry.maturity = maturityFromRate(rate, model);
+    entry.status = statusLabel(rate, model);
   }
 
   return {
@@ -135,8 +117,8 @@ const summarise = (measures, entityType) => {
     in_progress: inProgress,
     open,
     rate: Math.round(score * 100),
-    maturity: maturityFromRate(score),
-    status: statusLabel(score),
+    maturity: maturityFromRate(score, model),
+    status: statusLabel(score, model),
     by_category: byCategory,
   };
 };

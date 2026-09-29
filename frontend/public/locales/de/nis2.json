@@ -276,5 +276,36 @@
       "save": "Antwort konnte nicht gespeichert werden.",
       "task": "Aufgabe konnte nicht angelegt werden."
     }
+  },
+  "scoring": {
+    "title": "Bewertungsmodell",
+    "summary": "Umsetzung {{impl}} % · Nachweis {{evid}} % · Teilweise {{partly}} %",
+    "intro": "Es gibt keinen allgemein anerkannten Rechenweg dafür, was „teilweise umgesetzt\" wert ist. Diese Einstellungen legen ihn fest — für den Kriterienkatalog und den Fragebogen gemeinsam. Jede Änderung wird im Audit-Log festgehalten, damit eine Quote im Nachhinein erklärbar bleibt.",
+    "weight": "Gewichtung: Umsetzung {{impl}} % / Nachweis {{evid}} %",
+    "weightHint": "Ohne die Maßnahme gibt es nichts zu belegen — belegen muss man sie trotzdem (Art. 21(1)).",
+    "partly": "Wert von „Teilweise\": {{value}} %",
+    "partlyHint": "Gilt auf beiden Achsen und zugleich für „In Bearbeitung\" im Kriterienkatalog.",
+    "gate": "Nicht umgesetzt ergibt 0, auch mit Nachweis",
+    "gateHint": "Ein Nachweis für etwas, das es nicht gibt, ist ein Widerspruch. Abschaltbar, falls ein Bezugsrahmen das anders sieht.",
+    "maturity": "Reifegrad ab",
+    "maturityHint": "Untergrenzen. Verdrehte Werte werden beim Speichern absteigend sortiert — sonst ergäbe eine höhere Quote einen niedrigeren Reifegrad.",
+    "level": {
+      "l5": "Stufe 5",
+      "l4": "Stufe 4",
+      "l3": "Stufe 3",
+      "l2": "Stufe 2"
+    },
+    "preview": "Beispielwerte",
+    "example": {
+      "yesYes": "Ja / Ja",
+      "yesPartly": "Ja / Teilweise",
+      "yesNo": "Ja / Nein",
+      "partlyPartly": "Teilweise / Teilweise",
+      "noYes": "Nein / Ja"
+    },
+    "saved": "Bewertungsmodell gespeichert.",
+    "reset": "Bewertungsmodell zurückgesetzt.",
+    "resetButton": "Voreinstellung",
+    "error": "Bewertungsmodell konnte nicht gespeichert werden."
   }
 }

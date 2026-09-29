@@ -918,7 +918,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 |---|---|---|
 | `dsgvo` | GDPR | Processing register (Art. 30), DPIA, data subject rights (Art. 15–22), data breaches |
 | `iso27001` | ISO 27001:2022 | Controls Annex A, SoA, assessments, conformance status |
-| `nis2` | NIS-2 | Criteria catalogue for Art. 20, 21 and 23 with per-profile applicability (essential / important / indirectly affected), plus a 37-question self-check answered on two axes (implemented / evidenced) with maturity per topic, coverage per article and a ranked gap list |
+| `nis2` | NIS-2 | Criteria catalogue for Art. 20, 21 and 23 with per-profile applicability (essential / important / indirectly affected), plus a 37-question self-check answered on two axes (implemented / evidenced) with maturity per topic, coverage per article and a ranked gap list. The scoring model behind the rates — weights, the value of "partly", maturity thresholds — is editable and audit-logged |
 | `bsi_grundschutz` | BSI IT-Grundschutz | Grundschutz controls catalogue, implementation status |
 | `c5` | BSI C5:2026 | Cloud criteria catalogue for cloud service providers |
 | `tisax` | TISAX (VDA ISA 6) | Requirements catalogue, assessments, maturity level measurement |

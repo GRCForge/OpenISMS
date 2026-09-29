@@ -9,6 +9,7 @@ import { Card, CardBody } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { useToast } from '../../contexts/ToastContext';
+import { ScoringModelEditor } from './ScoringModel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -331,6 +332,8 @@ export const SelfCheck: React.FC<Props> = ({ canEdit, canManage, onAnswered }) =
           <p className="text-[11px] text-gray-600 dark:text-slate-400">{t('selfCheck.gap.undocumentedHint')}</p>
         </CardBody></Card>
       </div>
+
+      <ScoringModelEditor canEdit={canManage} onChanged={load} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-1 border-b border-gray-200 dark:border-slate-800" role="tablist">

@@ -9,6 +9,7 @@ const { getSetting, setSetting } = require('../services/settingsService');
 const catalog = require('../services/nis2Catalog');
 const selfCheckCatalog = require('../services/nis2SelfCheckCatalog');
 const selfCheck = require('../services/nis2SelfCheckScoring');
+const { DEFAULT_SCORING, normaliseScoring } = require('../services/nis2ScoringModel');
 const {
   PROFILES, OBLIGATIONS, normaliseApplicability, obligationFor, summarise,
 } = require('../services/nis2Applicability');
@@ -38,6 +39,58 @@ const readProfile = async () => {
     return { ...DEFAULT_PROFILE };
   }
 };
+
+const SCORING_KEY = 'nis2_scoring';
+
+const readScoring = async () => {
+  const raw = await getSetting(SCORING_KEY);
+  if (!raw) return { ...DEFAULT_SCORING };
+  try {
+    return normaliseScoring(typeof raw === 'string' ? JSON.parse(raw) : raw);
+  } catch {
+    // Ein unlesbarer Eintrag darf die Auswertung nicht abschalten — dann eben
+    // mit der Voreinstellung, die in der Antwort ohnehin mitgeliefert wird.
+    return { ...DEFAULT_SCORING };
+  }
+};
+
+// ── Bewertungsmodell ─────────────────────────────────────────────────────────
+
+/**
+ * Wie aus Antworten Prozente werden, ist eine Festlegung, keine Naturkonstante.
+ *
+ * Es gibt keinen allgemein anerkannten Rechenweg dafuer, was "teilweise
+ * umgesetzt" wert ist. Wer sein Ergebnis gegen einen externen Bericht halten
+ * will, braucht Stellschrauben; wer es in einem Audit vertreten muss, braucht
+ * die Angabe, welche eingestellt waren. Deshalb ist das Modell sichtbar,
+ * aenderbar und wird bei jeder Aenderung ins Audit-Log geschrieben.
+ */
+router.get('/scoring', authenticate, requirePermission('nis2', 'view', ...VIEW_ROLES), async (req, res) => {
+  try {
+    res.json({ ...(await readScoring()), defaults: DEFAULT_SCORING });
+  } catch (e) { serverError(res, e, 'nis2'); }
+});
+
+router.put('/scoring', authenticate, requirePermission('nis2', 'edit', 'admin', 'assessor', 'dpo'), async (req, res) => {
+  try {
+    // normaliseScoring faengt jeden unbrauchbaren Einzelwert ab und erzwingt
+    // absteigende Reifegradgrenzen — sonst waere eine hoehere Quote plotzlich
+    // ein niedrigerer Reifegrad.
+    const model = normaliseScoring(req.body);
+    await setSetting(SCORING_KEY, model);
+    await auditFromReq(req, 'update', 'settings', null, 'NIS-2-Bewertungsmodell', model);
+    res.json({ ...model, defaults: DEFAULT_SCORING });
+  } catch (e) { serverError(res, e, 'nis2'); }
+});
+
+/** Zurueck auf die hergeleitete Voreinstellung. */
+router.delete('/scoring', authenticate, requirePermission('nis2', 'edit', 'admin', 'assessor', 'dpo'), async (req, res) => {
+  try {
+    await setSetting(SCORING_KEY, { ...DEFAULT_SCORING });
+    await auditFromReq(req, 'update', 'settings', null, 'NIS-2-Bewertungsmodell zurueckgesetzt', {});
+    res.json({ ...DEFAULT_SCORING, defaults: DEFAULT_SCORING });
+  } catch (e) { serverError(res, e, 'nis2'); }
+});
 
 // ── Betroffenheitsprofil ─────────────────────────────────────────────────────
 
@@ -108,9 +161,9 @@ router.get('/', authenticate, requirePermission('nis2', 'view', ...VIEW_ROLES), 
  */
 router.get('/stats', authenticate, requirePermission('nis2', 'view', ...VIEW_ROLES), async (req, res) => {
   try {
-    const profile = await readProfile();
+    const [profile, scoring] = await Promise.all([readProfile(), readScoring()]);
     const items = await Nis2Measure.findAll();
-    res.json({ profile, ...summarise(items, profile.entity_type) });
+    res.json({ profile, scoring, ...summarise(items, profile.entity_type, scoring) });
   } catch (e) { serverError(res, e, 'nis2'); }
 });
 
@@ -248,12 +301,12 @@ router.get('/self-check', authenticate, requirePermission('nis2', 'view', ...VIE
 /** Auswertung: Quoten je Kategorie, Sicht je NIS-2-Element, Lueckenliste. */
 router.get('/self-check/stats', authenticate, requirePermission('nis2', 'view', ...VIEW_ROLES), async (req, res) => {
   try {
-    const profile = await readProfile();
+    const [profile, scoring] = await Promise.all([readProfile(), readScoring()]);
     const [items, measures] = await Promise.all([
       Nis2SelfCheckItem.findAll(),
       Nis2Measure.findAll(),
     ]);
-    res.json({ profile, ...selfCheck.summarise(items, profile.entity_type, measures) });
+    res.json({ profile, scoring, ...selfCheck.summarise(items, profile.entity_type, measures, scoring) });
   } catch (e) { serverError(res, e, 'nis2'); }
 });
 
