@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2, Link2 } from 'lucide-react';
+import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';

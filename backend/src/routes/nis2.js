@@ -8,8 +8,7 @@ const { auditFromReq } = require('../services/auditService');
 const { getSetting, setSetting } = require('../services/settingsService');
 const catalog = require('../services/nis2Catalog');
 const {
-  PROFILES, OBLIGATIONS, DEFAULT_APPLICABILITY,
-  normaliseApplicability, obligationFor, summarise,
+  PROFILES, OBLIGATIONS, normaliseApplicability, obligationFor, summarise,
 } = require('../services/nis2Applicability');
 
 const VIEW_ROLES = ['admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'];
