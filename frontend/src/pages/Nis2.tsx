@@ -56,6 +56,10 @@ interface Nis2Measure {
   applicability: Applicability;
   obligation: Obligation;
   custom?: boolean;
+  /** Fundstelle im deutschen Umsetzungsgesetz, wo belegt. */
+  bsig_ref?: string | null;
+  /** Artikelreferenz des Oberkriteriums, null auf der obersten Ebene. */
+  parent_ref?: string | null;
 }
 
 const statusColors: Record<ImplStatus, string> = {
@@ -278,7 +282,12 @@ export const Nis2: React.FC = () => {
    * "nicht anwendbar" gesetztes Kriterium faellt ebenfalls heraus.
    */
   const stats = useMemo(() => {
-    const applicable = measures.filter(m => m.obligation !== 'not_applicable' && m.implementation_status !== 'not_applicable');
+    // Ein Kriterium mit Unterkriterien ist eine Klammer und zaehlt nicht
+    // selbst — sonst ginge dieselbe Anforderung zweimal in die Quote ein.
+    const containers = new Set(measures.map(m => m.parent_ref).filter(Boolean));
+    const applicable = measures.filter(m => m.obligation !== 'not_applicable'
+      && m.implementation_status !== 'not_applicable'
+      && !containers.has(m.article_ref));
     const implemented = applicable.filter(m => m.implementation_status === 'implemented').length;
     const inProgress = applicable.filter(m => m.implementation_status === 'in_progress').length;
     const open = applicable.filter(m => m.implementation_status === 'not_started').length;
@@ -304,11 +313,45 @@ export const Nis2: React.FC = () => {
     return true;
   }), [measures, statusFilter, categoryFilter, search, onlyApplicable]);
 
+  /**
+   * Kategorien, darin Oberkriterien mit ihren Unterkriterien direkt darunter.
+   *
+   * Ein Oberkriterium bleibt sichtbar, sobald eines seiner Kinder den Filter
+   * passiert — sonst haengen die Unterpunkte ohne den Gesetzesbezug in der
+   * Liste, zu dem sie gehoeren. Es wird dann als Klammer gezeigt, nicht als
+   * Treffer.
+   */
   const grouped = useMemo(() => {
+    const byRef = new Map(measures.map(m => [m.article_ref, m]));
+    const visible = new Set(filtered.map(m => m.article_ref));
+    const shown: Nis2Measure[] = [];
+    const seen = new Set<string>();
+    for (const m of filtered) {
+      const parentRef = m.parent_ref;
+      if (parentRef && !visible.has(parentRef)) {
+        const parent = byRef.get(parentRef);
+        if (parent && !seen.has(parent.article_ref)) { shown.push(parent); seen.add(parent.article_ref); }
+      }
+      if (!seen.has(m.article_ref)) { shown.push(m); seen.add(m.article_ref); }
+    }
+
+    const tops = shown.filter(m => !m.parent_ref);
+    const childrenOf = (ref: string) => shown.filter(m => m.parent_ref === ref);
+    const ordered: Nis2Measure[] = [];
+    for (const top of tops) { ordered.push(top); ordered.push(...childrenOf(top.article_ref)); }
+    // Unterkriterien, deren Elternteil ausgefiltert wurde, gehen nicht verloren.
+    for (const m of shown) if (m.parent_ref && !tops.some(t => t.article_ref === m.parent_ref) && !ordered.includes(m)) ordered.push(m);
+
     const map = new Map<string, Nis2Measure[]>();
-    for (const m of filtered) { if (!map.has(m.category)) map.set(m.category, []); map.get(m.category)!.push(m); }
+    for (const m of ordered) { if (!map.has(m.category)) map.set(m.category, []); map.get(m.category)!.push(m); }
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
+  }, [filtered, measures]);
+
+  /** Referenzen, unter denen Unterkriterien haengen. */
+  const containerRefs = useMemo(
+    () => new Set(measures.map(m => m.parent_ref).filter(Boolean) as string[]),
+    [measures],
+  );
 
   const activeFilterCount = [statusFilter, categoryFilter].filter(Boolean).length;
 
@@ -464,15 +507,27 @@ export const Nis2: React.FC = () => {
                     {items.map(m => {
                       const expanded = expandedIds.has(m.id);
                       const overdue = isOverdue(m);
+                      // Ein Kriterium mit Unterkriterien ist eine Klammer: Es
+                      // traegt den Gesetzesbezug, aber keinen eigenen Status.
+                      const isContainer = containerRefs.has(m.article_ref);
+                      const children = isContainer ? measures.filter(x => x.parent_ref === m.article_ref) : [];
+                      const counted = children.filter(c => c.obligation !== 'not_applicable' && c.implementation_status !== 'not_applicable');
+                      const doneCount = counted.filter(c => c.implementation_status === 'implemented').length;
+                      const childPct = counted.length ? Math.round((doneCount / counted.length) * 100) : 0;
                       return (
                         <React.Fragment key={m.id}>
-                          <tr className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                            <Td><span className="font-mono text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">{m.article_ref}</span></Td>
-                            <Td>
+                          <tr className={`hover:bg-gray-50 dark:hover:bg-slate-800/50 ${isContainer ? 'bg-gray-50/60 dark:bg-slate-800/30' : ''}`}>
+                            <Td className={m.parent_ref ? 'pl-8 sm:pl-10' : ''}>
+                              <span className={`font-mono text-xs whitespace-nowrap ${isContainer ? 'font-semibold text-gray-700 dark:text-slate-300' : 'text-gray-600 dark:text-slate-400'}`}>{m.article_ref}</span>
+                              {m.bsig_ref && !m.parent_ref && (
+                                <span className="block font-mono text-[10px] text-gray-600 dark:text-slate-400 whitespace-nowrap">{m.bsig_ref}</span>
+                              )}
+                            </Td>
+                            <Td className={m.parent_ref ? 'pl-4' : ''}>
                               <div className="flex items-start gap-2">
                                 {m.description && <button type="button" onClick={() => toggleExpanded(m.id)} className="mt-0.5 p-0.5 rounded text-gray-500 hover:text-blue-600 transition-colors shrink-0 dark:text-gray-400" title={expanded ? t('description.hide') : t('description.show')}>{expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button>}
                                 <div>
-                                  <p className="font-medium text-sm dark:text-slate-200">{t('measures.' + m.article_ref + '.title', { defaultValue: m.title })}</p>
+                                  <p className={`text-sm dark:text-slate-200 ${isContainer ? 'font-semibold' : 'font-medium'}`}>{t('measures.' + m.article_ref + '.title', { defaultValue: m.title })}</p>
                                   {m.responsible && <p className="text-xs text-gray-600 dark:text-slate-400 mt-0.5">{m.responsible.name}</p>}
                                   {THREAT_INTEL_REFS.has(m.article_ref) && (
                                     <Link to="/threat-intel" className="inline-flex items-center gap-1 text-xs text-blue-700 dark:text-blue-400 hover:underline mt-0.5">
@@ -483,7 +538,20 @@ export const Nis2: React.FC = () => {
                               </div>
                             </Td>
                             <Td><span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${OBLIGATION_COLORS[m.obligation] ?? OBLIGATION_COLORS.required}`}>{t(`obligation.${m.obligation ?? 'required'}`)}</span></Td>
-                            <Td><span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusColors[m.implementation_status]}`}>{statusLabels[m.implementation_status]}</span></Td>
+                            <Td>
+                              {isContainer ? (
+                                // Abgeleitet statt gesetzt: Die Klammer ist
+                                // erfuellt, wenn ihre Bestandteile es sind.
+                                <span className="flex items-center gap-2" title={t('subCriteria.progressHint')}>
+                                  <span className="w-14 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 shrink-0">
+                                    <span className="bg-blue-500 h-1.5 rounded-full block transition-all" style={{ width: `${childPct}%` }} />
+                                  </span>
+                                  <span className="text-[11px] text-gray-700 dark:text-slate-300 whitespace-nowrap">{t('subCriteria.progress', { done: doneCount, total: counted.length })}</span>
+                                </span>
+                              ) : (
+                                <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusColors[m.implementation_status]}`}>{statusLabels[m.implementation_status]}</span>
+                              )}
+                            </Td>
                             <Td>{m.deadline ? <span className={`text-xs font-medium ${overdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'}`}>{format(new Date(m.deadline), 'dd.MM.yyyy')}{overdue && ' ⚠'}</span> : <span className="text-gray-300 dark:text-slate-600">–</span>}</Td>
                             <Td className="text-gray-500 dark:text-slate-400 text-xs">{m.last_review_date ? format(new Date(m.last_review_date), 'dd.MM.yyyy') : '–'}</Td>
                             <Td>{canWrite && <IconButton label={t('modal.edit')} onClick={() => openEdit(m)}><Pencil size={14} /></IconButton>}</Td>

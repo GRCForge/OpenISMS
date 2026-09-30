@@ -307,5 +307,9 @@
     "reset": "Modelo de puntuación restablecido.",
     "resetButton": "Valores por defecto",
     "error": "No se ha podido guardar el modelo de puntuación."
+  },
+  "subCriteria": {
+    "progress": "{{done}}/{{total}} cumplidos",
+    "progressHint": "Derivado de los subcriterios. El criterio superior lleva la referencia legal; lo que se cuenta son los subpuntos."
   }
 }

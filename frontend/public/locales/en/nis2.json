@@ -307,5 +307,9 @@
     "reset": "Scoring model reset.",
     "resetButton": "Defaults",
     "error": "The scoring model could not be saved."
+  },
+  "subCriteria": {
+    "progress": "{{done}}/{{total}} fulfilled",
+    "progressHint": "Derived from the sub-criteria. The parent carries the legal reference; the sub-items are what gets counted."
   }
 }

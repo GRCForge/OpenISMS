@@ -4,6 +4,26 @@ const sequelize = require('../config/database');
 const Nis2Measure = sequelize.define('Nis2Measure', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   article_ref: { type: DataTypes.STRING(30), allowNull: false },
+
+  // Verweis auf das deutsche Umsetzungsgesetz.
+  //
+  // Geprueft wird eine deutsche Einrichtung nicht an der Richtlinie, sondern am
+  // BSIG. Die zehn Massnahmen aus Art. 21(2)(a)-(j) stehen dort als
+  // § 30 Abs. 2 Nr. 1-10 und werden von Aufsicht und Beratern auch so zitiert.
+  // Leer, wo die Zuordnung nicht belegt ist — eine geratene Paragraphenangabe
+  // waere in einem Compliance-Werkzeug schlimmer als gar keine.
+  bsig_ref: { type: DataTypes.STRING(60) },
+
+  // Artikelreferenz des uebergeordneten Kriteriums, oder null fuer die oberste
+  // Ebene.
+  //
+  // Eine Massnahme wie "Aufrechterhaltung des Betriebs" ist als eine Zeile
+  // nicht pruefbar — sie zerfaellt in Auswirkungsanalyse, Backup-Konzept,
+  // Wiederherstellungstests, Notfallplaene und Krisenkommunikation, und jedes
+  // davon ist einzeln umgesetzt oder eben nicht. Die Oberkriterien bleiben als
+  // gesetzlicher Anker stehen; gezaehlt werden die Blaetter.
+  parent_ref: { type: DataTypes.STRING(30) },
+
   category: { type: DataTypes.STRING(100) },
   title: { type: DataTypes.STRING(255), allowNull: false },
   description: { type: DataTypes.TEXT },
@@ -40,6 +60,7 @@ const Nis2Measure = sequelize.define('Nis2Measure', {
 }, {
   tableName: 'nis2_measures',
   timestamps: true,
+  indexes: [{ fields: ['parent_ref'] }],
   createdAt: 'created_at',
   updatedAt: 'updated_at',
 });

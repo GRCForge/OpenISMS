@@ -119,6 +119,58 @@ const handAusgenommen = summarise(
 eq('manuell ausgenommenes Kriterium zaehlt nicht mit', handAusgenommen.excluded_manually, 1);
 eq('und senkt die Quote nicht', handAusgenommen.rate, 100);
 
+console.log('Ober- und Unterkriterien:');
+const tops = catalog.filter(c => !c.parent_ref);
+const subs = catalog.filter(c => c.parent_ref);
+ok('der Katalog hat Unterkriterien', subs.length > 50);
+eq('jedes Unterkriterium zeigt auf ein vorhandenes Oberkriterium',
+  subs.filter(c => !refs.has(c.parent_ref)).map(c => c.article_ref), []);
+// Eine Artikelreferenz ist der Schluessel fuer den Katalogabgleich und fuer
+// die Zuordnung der Fragebogenantworten. Doppelt vergeben waere beides kaputt.
+eq('Artikelreferenzen bleiben eindeutig', new Set(catalog.map(c => c.article_ref)).size, catalog.length);
+eq('keine Referenz laenger als die Spalte', catalog.filter(c => c.article_ref.length > 30).map(c => c.article_ref), []);
+// Ein Unterkriterium darf nicht fuer ein Profil gelten, fuer das sein
+// Oberkriterium nicht gilt — sonst zaehlt ein Bestandteil einer Pflicht mit,
+// die es gar nicht gibt.
+const byRef = new Map(catalog.map(c => [c.article_ref, c]));
+const widerThanParent = subs.filter((c) => {
+  const parent = byRef.get(c.parent_ref);
+  return PROFILES.filter(p => p !== 'unknown').some(p =>
+    obligationFor(parent.applicability, p) === 'not_applicable'
+    && obligationFor(c.applicability, p) !== 'not_applicable');
+});
+eq('kein Unterkriterium gilt weiter als sein Oberkriterium', widerThanParent.map(c => c.article_ref), []);
+
+console.log('Die Klammern zaehlen nicht mit:');
+const allDone = catalog.map(c => ({ ...c, implementation_status: 'implemented' }));
+const summary = summarise(allDone, 'essential');
+// Ohne diese Regel ginge dieselbe Anforderung zweimal ein — einmal als
+// Massnahme, einmal ueber ihre Bestandteile — und eine Massnahme mit acht
+// Unterpunkten waere neunmal so wichtig wie eine ohne.
+eq('gezaehlt werden nur Blaetter', summary.counted, catalog.length - summary.containers);
+eq('und das sind nicht alle Kriterien', summary.counted < catalog.length, true);
+eq('die Zahl der Klammern wird ausgewiesen', summary.containers, tops.filter(t => subs.some(c => c.parent_ref === t.article_ref)).length);
+eq('alles umgesetzt bleibt 100 %', summary.rate, 100);
+// Ein Oberkriterium, dessen Kinder offen sind, darf die Quote nicht
+// beschoenigen, indem es selbst auf "umgesetzt" steht. Nur echte Klammern
+// werden dafuer gesetzt: Ein Oberkriterium ohne Kinder ist selbst ein Blatt
+// und zaehlt zu Recht mit.
+const containerRefs = new Set(subs.map(c => c.parent_ref));
+const parentLies = catalog.map(c => ({
+  ...c,
+  implementation_status: containerRefs.has(c.article_ref) ? 'implemented' : 'not_started',
+}));
+eq('ein erfuelltes Oberkriterium rettet offene Unterkriterien nicht',
+  summarise(parentLies, 'essential').rate, 0);
+// Die Gegenprobe: Erfuellte Blaetter zaehlen auch dann, wenn die Klammer
+// darueber auf "nicht begonnen" steht.
+const childrenDone = catalog.map(c => ({
+  ...c,
+  implementation_status: containerRefs.has(c.article_ref) ? 'not_started' : 'implemented',
+}));
+eq('erfuellte Unterkriterien zaehlen ohne Zutun der Klammer',
+  summarise(childrenDone, 'essential').rate, 100);
+
 console.log('Reifegrad-Stufen:');
 eq('0 % → 1', maturityFromRate(0), 1);
 eq('34 % → 2 (wie im Self-Check fuer Bedrohungsanalyse)', maturityFromRate(0.34), 2);

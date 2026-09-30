@@ -69,6 +69,13 @@ const { DEFAULT_SCORING, maturityFromRate, statusLabel } = require('./nis2Scorin
 const summarise = (measures, entityType, model = DEFAULT_SCORING) => {
   const rows = (measures || []).map((m) => (m.toJSON ? m.toJSON() : m));
 
+  // Ein Kriterium, unter dem Unterkriterien haengen, ist eine Klammer. Es
+  // zaehlt nicht selbst in die Quote — sonst ginge dieselbe Anforderung zweimal
+  // ein, einmal als Massnahme und einmal ueber ihre Bestandteile, und eine
+  // Massnahme mit acht Unterpunkten waere neunmal so wichtig wie eine ohne.
+  const containers = new Set(rows.map((m) => m.parent_ref).filter(Boolean));
+  const isContainer = (m) => containers.has(m.article_ref);
+
   const applicable = [];
   let excludedByProfile = 0;
   let excludedManually = 0;
@@ -76,6 +83,7 @@ const summarise = (measures, entityType, model = DEFAULT_SCORING) => {
   for (const m of rows) {
     if (obligationFor(m.applicability, entityType) === 'not_applicable') { excludedByProfile++; continue; }
     if (m.implementation_status === 'not_applicable') { excludedManually++; continue; }
+    if (isContainer(m)) continue;
     applicable.push(m);
   }
 
@@ -108,6 +116,9 @@ const summarise = (measures, entityType, model = DEFAULT_SCORING) => {
 
   return {
     total: rows.length,
+    // Die Zahl, die zaehlt: pruefbare Kriterien ohne die Klammern darueber.
+    counted: applicable.length,
+    containers: rows.filter(isContainer).length,
     applicable: applicable.length,
     excluded_by_profile: excludedByProfile,
     excluded_manually: excludedManually,
