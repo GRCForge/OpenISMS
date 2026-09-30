@@ -4449,7 +4449,7 @@ server.tool(
 
 server.tool(
   'isms_list_nis2_measures',
-  'List NIS-2 cybersecurity measures according to Art. 21 NIS-2 / § 30 BSIG.',
+  'List NIS-2 criteria: the measures of Art. 20, 21 and 23 NIS-2 (§ 30 Abs. 2 Nr. 1-10 BSIG) with their sub-requirements, plus the BSIG duties without a counterpart in the directive (§§ 31, 33, 34, 35, 39). A row with children is a bracket: parent_ref links them, and only the leaves count towards the rate.',
   {
     search: z.string().optional().describe('Search in article_ref or title'),
     status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable', 'all']).default('all'),
@@ -4477,7 +4477,7 @@ server.tool(
 
 server.tool(
   'isms_update_nis2_measure',
-  'Update implementation status, responsible person, deadline, or evidence of a NIS-2 measure.',
+  'Update implementation status, responsible person, deadline, or evidence of a NIS-2 criterion. Set a conditional duty (see scope_note, e.g. the criteria for operators of critical facilities) to not_applicable to drop it from the rate.',
   {
     id: z.number().int().describe('NIS-2 measure ID'),
     implementation_status: z.enum(['not_started', 'in_progress', 'implemented', 'not_applicable']).optional(),

@@ -173,3 +173,32 @@ Two sources confirm the modelling chosen in section 6: operators of critical
 facilities are a subset of especially important entities (§ 28 Abs. 2 BSIG),
 and management training is owed under § 38 Abs. 3 BSIG. Both references are now
 in the catalogue.
+
+## 8. GHCR image path corrected
+
+`docker-compose.ghcr.single.yml` and `install.sh` still pointed at
+`ghcr.io/p3rf3ction/isms-app`, while the release pipeline and the README use
+`ghcr.io/grcforge/openisms-app` — which is where v3.2.0 was actually pushed.
+Anyone following the install instructions pulled an image that is not there.
+The divergence goes back to commit `6db1544` (2026-08-18).
+
+Both files now use **`ghcr.io/grcforge/openisms-app`**, the official path.
+
+Existing installations that were pinned to the old path need their
+`docker-compose.ghcr.single.yml` replaced (or the `image:` line edited) before
+the next `docker compose pull`.
+
+## 9. Documentation
+
+The README's NIS-2 entries were rewritten for the two-level catalogue: the
+module table now states the 23 anchors over 103 sub-requirements and the
+bracket rule, and the coverage table names the BSIG sections behind each
+duty, including the five German additions and the TR-02102 figures behind the
+cryptography criteria.
+
+Two gaps were closed along the way: `isms_list_nis2_measures` and
+`isms_update_nis2_measure` existed but were missing from the MCP tool table,
+and the `nis2_measures` table was missing from the schema list. Both MCP tool
+descriptions were widened — they still said "Art. 21 NIS-2 / § 30 BSIG" and so
+did not mention the BSIG duties or the parent/child structure an agent needs to
+read the catalogue correctly.

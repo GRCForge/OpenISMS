@@ -555,7 +555,7 @@ if [[ "$MODE" == "1" ]]; then
     read -rp "ISMS version tag [latest]: " ISMS_VERSION
     ISMS_VERSION="${ISMS_VERSION:-latest}"
     export ISMS_VERSION
-    info "Pulling ghcr.io/p3rf3ction/isms-app:${ISMS_VERSION} from GHCR..."
+    info "Pulling ghcr.io/grcforge/openisms-app:${ISMS_VERSION} from GHCR..."
     docker compose -f docker-compose.ghcr.single.yml pull
     docker compose -f docker-compose.ghcr.single.yml up -d
   fi
