@@ -24,6 +24,23 @@ const Nis2Measure = sequelize.define('Nis2Measure', {
   // gesetzlicher Anker stehen; gezaehlt werden die Blaetter.
   parent_ref: { type: DataTypes.STRING(30) },
 
+  // Bedingung, unter der dieses Kriterium ueberhaupt gilt.
+  //
+  // Zwei Pflichten des BSIG treffen nicht jede betroffene Einrichtung, sondern
+  // nur Betreiber kritischer Anlagen: die Systeme zur Angriffserkennung nach
+  // § 31 und der Nachweis alle drei Jahre nach § 39. Fuer wen sie gelten, ist
+  // eine harte Rechtspflicht — fuer alle anderen gar kein Kriterium. Das
+  // Betroffenheitsprofil kann das nicht abbilden, weil ein KRITIS-Betreiber
+  // immer zugleich eine besonders wichtige Einrichtung ist.
+  //
+  // Deshalb steht die Bedingung hier als Text und wird in der Oberflaeche
+  // angezeigt. Wen sie nicht betrifft, setzt das Kriterium auf
+  // implementation_status 'not_applicable'; die Quote laesst es dann fallen.
+  // Eine vorweggenommene Annahme waere schlechter: Sie wuerde entweder einem
+  // KRITIS-Betreiber eine Pflicht verschweigen oder allen anderen eine
+  // erfinden.
+  scope_note: { type: DataTypes.STRING(200) },
+
   category: { type: DataTypes.STRING(100) },
   title: { type: DataTypes.STRING(255), allowNull: false },
   description: { type: DataTypes.TEXT },

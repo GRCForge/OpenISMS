@@ -87,6 +87,8 @@
     "reportingObligations": "Reporting Obligations",
     "governance": "Governance & management liability",
     "correctiveActions": "Corrective measures",
+    "registration": "Registration & regulatory duties",
+    "criticalFacilities": "Critical facilities",
     "ownCriteria": "Own criteria"
   },
   "measures": {

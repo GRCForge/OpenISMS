@@ -189,6 +189,66 @@ const leer = summarise([], 'essential');
 eq('keine Division durch null', leer.rate, 0);
 eq('Reifegrad 1 statt NaN', leer.maturity, 1);
 
+console.log('BSIG-Pflichten ohne Entsprechung in der Richtlinie:');
+// Wer nur Art. 20, 21 und 23 abarbeitet, kennt die Registrierungsfrist des
+// § 33 BSIG nicht — und versaeumt sie. Diese Pflichten muessen im Katalog
+// stehen, sonst ist er fuer eine deutsche Einrichtung unvollstaendig.
+for (const ref of ['§ 33 BSIG', '§ 34 BSIG', '§ 35 BSIG', '§ 31 BSIG', '§ 39 BSIG']) {
+  const eintrag = catalog.find(c => c.article_ref === ref);
+  ok(`${ref} ist im Katalog`, Boolean(eintrag));
+  ok(`${ref} traegt seine Fundstelle`, eintrag?.bsig_ref === ref);
+  ok(`${ref} hat Unterkriterien`, catalog.some(c => c.parent_ref === ref));
+}
+
+console.log('Katalog-Invarianten:');
+const alleArtikelRefs = catalog.map(c => c.article_ref);
+eq('Artikelreferenzen sind eindeutig', alleArtikelRefs.length - new Set(alleArtikelRefs).size, 0);
+// article_ref ist in der Datenbank STRING(30). Eine laengere Referenz wuerde
+// beim Seeding abgeschnitten und die Eltern-Kind-Verknuepfung zerreissen.
+eq('keine Referenz laenger als 30 Zeichen', alleArtikelRefs.filter(r => r.length > 30), []);
+const alleRefs = new Set(alleArtikelRefs);
+eq('kein Unterkriterium ohne Oberkriterium',
+  catalog.filter(c => c.parent_ref && !alleRefs.has(c.parent_ref)).map(c => c.article_ref), []);
+ok('jedes Kriterium traegt eine Kategorie', catalog.every(c => Boolean(c.category)));
+ok('jedes Kriterium traegt eine Anwendbarkeit', catalog.every(c => Boolean(c.applicability)));
+
+console.log('Bedingt geltende Pflichten:');
+// § 31 und § 39 BSIG treffen nur Betreiber kritischer Anlagen. Das
+// Betroffenheitsprofil kann das nicht abbilden, weil ein KRITIS-Betreiber
+// immer zugleich eine besonders wichtige Einrichtung ist. Also muss die
+// Bedingung am Kriterium stehen und sichtbar sein.
+const kritis = catalog.filter(c => c.article_ref.startsWith('§ 31 BSIG') || c.article_ref.startsWith('§ 39 BSIG'));
+ok('KRITIS-Kriterien sind vorhanden', kritis.length >= 10);
+ok('jedes KRITIS-Kriterium traegt eine scope_note', kritis.every(c => Boolean(c.scope_note)));
+ok('eine wichtige Einrichtung schuldet sie nicht',
+  kritis.every(c => obligationFor(c.applicability, 'important') === 'not_applicable'));
+ok('eine besonders wichtige Einrichtung bekommt sie zu sehen',
+  kritis.every(c => obligationFor(c.applicability, 'essential') === 'required'));
+// Und der Ausweg muss wirken: Wer nicht KRITIS ist, setzt sie auf
+// 'not_applicable' und sie fallen aus der Quote — sonst stuende jede
+// besonders wichtige Einrichtung ohne kritische Anlage dauerhaft zu tief.
+const ohneKritis = catalog.map(c => ({
+  ...c,
+  implementation_status: kritis.includes(c) ? 'not_applicable' : 'implemented',
+}));
+const abgewaehlt = summarise(ohneKritis, 'essential');
+eq('abgewaehlte KRITIS-Pflichten druecken die Quote nicht', abgewaehlt.rate, 100);
+ok('sie werden als manuell ausgenommen ausgewiesen', abgewaehlt.excluded_manually >= 9);
+// Die Gegenprobe: Stehen sie offen, muss die Quote sinken. Ein Kriterium, das
+// sich weder auswirkt noch abwaehlen laesst, waere Dekoration.
+const mitKritis = catalog.map(c => ({
+  ...c,
+  implementation_status: kritis.includes(c) ? 'not_started' : 'implemented',
+}));
+ok('offene KRITIS-Pflichten senken die Quote', summarise(mitKritis, 'essential').rate < 100);
+
+console.log('Registrierung ist nichts fuer indirekt Betroffene:');
+// Ein Zulieferer ausserhalb des Anwendungsbereichs registriert sich nicht beim
+// Bundesamt. Zaehlte die Pflicht bei ihm mit, stuende er dauerhaft zu tief.
+const registrierung = catalog.filter(c => c.article_ref.startsWith('§ 33 BSIG') || c.article_ref.startsWith('§ 34 BSIG'));
+ok('indirekt Betroffene schulden keine Registrierung',
+  registrierung.every(c => obligationFor(c.applicability, 'indirect') === 'not_applicable'));
+
 eq('Profile sind vollstaendig', PROFILES, ['essential', 'important', 'indirect', 'unknown']);
 
 console.log(failures ? `\n${failures} Pruefung(en) fehlgeschlagen.` : '\nAlle Pruefungen bestanden.');

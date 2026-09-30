@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2, ClipboardList } from 'lucide-react';
+import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2, ClipboardList, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -58,6 +58,7 @@ interface Nis2Measure {
   custom?: boolean;
   /** Fundstelle im deutschen Umsetzungsgesetz, wo belegt. */
   bsig_ref?: string | null;
+  scope_note?: string | null;
   /** Artikelreferenz des Oberkriteriums, null auf der obersten Ebene. */
   parent_ref?: string | null;
 }
@@ -95,6 +96,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Personalsicherheit & Zugangssteuerung':  'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400',
   'Multi-Faktor-Authentifizierung':         'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
   'Meldepflichten':                         'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400',
+  'Registrierung & behoerdliche Pflichten': 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400',
+  'Kritische Anlagen':                      'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
 };
 
 const CATEGORY_KEY_MAP: Record<string, string> = {
@@ -111,6 +114,8 @@ const CATEGORY_KEY_MAP: Record<string, string> = {
   'Meldepflichten':                         'reportingObligations',
   'Governance & Managementhaftung':         'governance',
   'Korrekturmassnahmen':                    'correctiveActions',
+  'Registrierung & behoerdliche Pflichten': 'registration',
+  'Kritische Anlagen':                      'criticalFacilities',
   'Eigene Kriterien':                       'ownCriteria',
 };
 
@@ -529,6 +534,17 @@ export const Nis2: React.FC = () => {
                                 <div>
                                   <p className={`text-sm dark:text-slate-200 ${isContainer ? 'font-semibold' : 'font-medium'}`}>{t('measures.' + m.article_ref + '.title', { defaultValue: m.title })}</p>
                                   {m.responsible && <p className="text-xs text-gray-600 dark:text-slate-400 mt-0.5">{m.responsible.name}</p>}
+                                  {m.scope_note && !m.parent_ref && (
+                                    // Bedingt geltende Pflicht: Sie steht im
+                                    // Katalog, weil sie fuer Betroffene sonst
+                                    // fehlte. Wen sie nicht betrifft, sieht
+                                    // hier, warum, und setzt sie auf "nicht
+                                    // anwendbar".
+                                    <p className="inline-flex items-start gap-1 text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded px-1.5 py-0.5 mt-1">
+                                      <Info size={11} aria-hidden="true" className="mt-px shrink-0" />
+                                      <span>{m.scope_note}</span>
+                                    </p>
+                                  )}
                                   {THREAT_INTEL_REFS.has(m.article_ref) && (
                                     <Link to="/threat-intel" className="inline-flex items-center gap-1 text-xs text-blue-700 dark:text-blue-400 hover:underline mt-0.5">
                                       <Radio size={11} aria-hidden="true" />{t('threatIntelLink')}
