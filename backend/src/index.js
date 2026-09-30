@@ -514,6 +514,17 @@ const cleanupDuplicateIndexes = async (tableName) => {
 
 const start = async () => {
   try {
+    // Dokumente von alten Ablageorten nach UPLOAD_DIR umziehen — vor allem
+    // anderen und vor app.listen, damit keine Anfrage eine Richtlinie am neuen
+    // Ort sucht, die noch am alten liegt. Braucht keine Datenbank. Scheitert der
+    // Umzug, startet der Dienst trotzdem: Die Dateien bleiben dann, wo sie
+    // waren, und nichts geht verloren; der Grund steht im Log.
+    try {
+      require('./services/uploadStorage').altlastenUmziehen();
+    } catch (e) {
+      console.error('[Uploads] Umzug von alten Ablageorten gescheitert, Dateien bleiben am alten Ort:', e.message);
+    }
+
     await connectWithRetry();
 
     // Doppelte Indexe vor dem Sync abraeumen (siehe cleanupDuplicateIndexes).
@@ -728,7 +739,11 @@ const start = async () => {
         // only the file path, never the secret.
         const fsMod = require('fs');
         const pathMod = require('path');
-        const pwFile = pathMod.join(process.env.UPLOAD_DIR || pathMod.join(__dirname, '../uploads'), 'INITIAL_ADMIN_PASSWORD.txt');
+        // Ueber uploadStorage, damit der Ort nur an einer Stelle berechnet
+        // wird. Aus Sicherungen ist die Datei ausgenommen
+        // (uploadStorage.NICHT_SICHERN), sonst stuende das Passwort im
+        // Klartext in jedem Backup-ZIP.
+        const pwFile = pathMod.join(require('./services/uploadStorage').uploadRoot(), 'INITIAL_ADMIN_PASSWORD.txt');
         let notice;
         try {
           fsMod.writeFileSync(pwFile, `email: admin@isms.local\npassword: ${initialPassword}\n`, { mode: 0o600 });
@@ -743,6 +758,21 @@ const start = async () => {
 
     await seedCatalog();
     startReminderService();
+
+    // Verweist die Datenbank auf Dokumente, die nicht auf der Platte liegen?
+    // Bis 3.3.2 blieb genau das unsichtbar, bis jemand eine Richtlinie
+    // herunterladen wollte. Nur Protokoll, der Start haengt nicht davon ab.
+    try {
+      const { verweisePruefen } = require('./services/uploadStorage');
+      const { Document, Template, Policy, PolicyVersion } = require('./models');
+      const v = await verweisePruefen({ Document, Template, Policy, PolicyVersion });
+      if (v.fehlend) {
+        console.warn(`[Uploads] ${v.fehlend} von ${v.geprueft} Dokumentverweisen zeigen auf fehlende Dateien:`,
+          Object.entries(v.je_art).filter(([, z]) => z.fehlend).map(([a, z]) => `${a} ${z.fehlend}`).join(', '));
+      }
+    } catch (e) {
+      console.error('[Uploads] Pruefung der Dokumentverweise gescheitert:', e.message);
+    }
 
     // Fail any vendor-triage runs left mid-flight by a previous crash/restart.
     try {

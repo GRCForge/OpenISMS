@@ -14,12 +14,17 @@ const { PassThrough } = require('stream');
 const AdmZip = require('adm-zip');
 const multer = require('multer');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { sequelize } = require('../models');
+const { sequelize, Document, Template, Policy, PolicyVersion } = require('../models');
 const { auditFromReq } = require('../services/auditService');
 const pg = require('../utils/pgSchema');
 const { rebuild: graphRebuild, istVerfuegbar: graphVerfuegbar } = require('../services/graphService');
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads');
+const {
+  uploadRoot, sicherungsDateien, dateienEinspielen, verweisePruefen,
+} = require('../services/uploadStorage');
+
+const UPLOAD_DIR = uploadRoot();
+const DATEI_MODELLE = { Document, Template, Policy, PolicyVersion };
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024 * 1024 } }); // 1 GB
 
 // Read app version once at startup. The VERSION file sits at the repo root in dev
@@ -127,10 +132,28 @@ router.get('/export', requirePermission('backup','export','admin'), async (req, 
       counts[tbl] = Number(cnt);
     }
 
+    // Die Dateien vorab auflisten statt archive.directory(): So geht nichts
+    // mit, was nicht in eine Sicherung gehoert (das einmalige Admin-Passwort),
+    // und die Metadaten koennen sagen, was drin ist. Dazu die Gegenprobe, ob
+    // jede Datei, auf die die Datenbank verweist, auch da ist — sonst ist eine
+    // Sicherung unvollstaendig, ohne dass es irgendwo stuende.
+    const dateien = sicherungsDateien();
+    const dateiBytes = dateien.reduce((summe, d) => {
+      try { return summe + fs.statSync(d.abs).size; } catch { return summe; }
+    }, 0);
+    const verweise = await verweisePruefen(DATEI_MODELLE);
+
     const meta = {
       isms_version: ISMS_VERSION,
       exported_at: new Date().toISOString(),
       tables: counts,
+      files: {
+        count: dateien.length,
+        bytes: dateiBytes,
+        referenced: verweise.geprueft,
+        missing: verweise.fehlend,
+        missing_by_type: verweise.je_art,
+      },
     };
 
     archive.append(JSON.stringify(meta, null, 2), { name: 'backup-meta.json' });
@@ -143,9 +166,7 @@ router.get('/export', requirePermission('backup','export','admin'), async (req, 
     const dbStream = new PassThrough();
     archive.append(dbStream, { name: 'database.json' });
 
-    if (fs.existsSync(UPLOAD_DIR)) {
-      archive.directory(UPLOAD_DIR, 'uploads');
-    }
+    for (const d of dateien) archive.file(d.abs, { name: `uploads/${d.rel}` });
 
     await Promise.all([
       streamDatabaseJson(dbStream, tableNames, counts),
@@ -154,7 +175,12 @@ router.get('/export', requirePermission('backup','export','admin'), async (req, 
     await auditFromReq(req, 'create', 'settings', null, 'Backup-Export', {
       tables: tableNames.length,
       rows: Object.values(counts).reduce((a, b) => a + b, 0),
+      files: dateien.length,
+      files_missing: verweise.fehlend,
     });
+    if (verweise.fehlend) {
+      console.warn(`[Backup export] ${verweise.fehlend} Datenbankeintrag/-eintraege verweisen auf Dateien, die fehlen — die Sicherung ist insoweit unvollstaendig.`);
+    }
   } catch (e) {
     console.error('[Backup export]', e);
     if (!res.headersSent) {
@@ -375,45 +401,56 @@ router.post('/restore', requirePermission('backup','restore','admin'), upload.si
       }
     }
 
-    // Restore uploaded files — ZIP Slip protection: ensure path stays within UPLOAD_DIR
-    const resolvedUploadDir = path.resolve(UPLOAD_DIR);
-    const fileEntries = zip.getEntries().filter(e => e.entryName.startsWith('uploads/') && !e.isDirectory);
-    if (fs.existsSync(UPLOAD_DIR)) fs.rmSync(UPLOAD_DIR, { recursive: true, force: true });
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-    for (const entry of fileEntries) {
-      const rel = entry.entryName.slice('uploads/'.length);
-      if (!rel) continue;
-      const dest = path.resolve(path.join(UPLOAD_DIR, rel));
-      if (!dest.startsWith(resolvedUploadDir + path.sep)) {
-        console.warn('[Backup restore] Skipping path traversal attempt:', entry.entryName);
-        continue;
-      }
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.writeFileSync(dest, entry.getData());
+    // Dateien ueberlagernd einspielen — UPLOAD_DIR wird NICHT mehr geleert.
+    // Eine Sicherung von vor 3.3.2 enthaelt keine Richtlinien; das fruehere
+    // Leeren haette sie nach deren Umzug nach UPLOAD_DIR geloescht, waehrend
+    // die Datenbank sie weiter fuehrt. Begruendung und Schutz gegen Pfad- und
+    // Link-Ausbrueche: uploadStorage.dateienEinspielen.
+    const eintraege = zip.getEntries()
+      .filter(e => e.entryName.startsWith('uploads/') && !e.isDirectory)
+      .map(e => ({ name: e.entryName, lesen: () => e.getData() }));
+    const eingespielt = dateienEinspielen(eintraege);
+    const verweise = await verweisePruefen(DATEI_MODELLE);
+    if (verweise.fehlend) {
+      console.warn(`[Backup restore] ${verweise.fehlend} Datenbankeintrag/-eintraege verweisen nach der Wiederherstellung auf fehlende Dateien.`);
     }
 
     await auditFromReq(req, 'update', 'settings', null, 'Backup-Restore', {
       source_version: meta.isms_version,
       exported_at: meta.exported_at,
       tables_restored: Object.keys(dbDump).length,
-      files_restored: fileEntries.length,
+      files_restored: eingespielt.geschrieben,
+      files_rejected: eingespielt.abgewiesen,
+      files_missing: verweise.fehlend,
       tables_untouched: Object.keys(untouchedTables),
     });
+
+    const warnungen = [];
+    if (Object.keys(untouchedTables).length) {
+      warnungen.push(`Das Backup enthält ${Object.keys(untouchedTables).length} Tabelle(n) nicht, die in dieser Datenbank Daten haben: `
+        + `${Object.entries(untouchedTables).map(([t, c]) => `${t} (${c})`).join(', ')}. `
+        + 'Deren Inhalt blieb unverändert — vermutlich stammt das Backup aus einer älteren Version.');
+    }
+    if (verweise.fehlend) {
+      warnungen.push(`${verweise.fehlend} Datensatz/Datensätze verweisen auf ein Dokument, das weder in der Sicherung `
+        + 'noch auf dem Server liegt. Die Einträge sind wiederhergestellt, die Dateien nicht — '
+        + 'bitte aus einer anderen Quelle nachliefern.');
+    }
 
     res.json({
       success: true,
       tables_restored: Object.keys(dbDump).length,
-      files_restored: fileEntries.length,
+      files_restored: eingespielt.geschrieben,
+      files_rejected: eingespielt.abgewiesen,
+      // Datenbankeintraege, deren Datei weder in der Sicherung noch auf dem
+      // Server liegt. Vor 3.3.2 blieb genau das unsichtbar.
+      files_missing: verweise.fehlend,
+      files_missing_examples: verweise.beispiele,
       // Non-empty means the database now holds a mix: everything from the backup,
       // plus whatever these tables had before. Usually a backup from a version
       // that did not have them yet.
       tables_untouched: untouchedTables,
-      warning: Object.keys(untouchedTables).length
-        ? `Das Backup enthält ${Object.keys(untouchedTables).length} Tabelle(n) nicht, die in dieser Datenbank Daten haben: `
-          + `${Object.entries(untouchedTables).map(([t, c]) => `${t} (${c})`).join(', ')}. `
-          + 'Deren Inhalt blieb unverändert — vermutlich stammt das Backup aus einer älteren Version.'
-        : undefined,
+      warning: warnungen.length ? warnungen.join(' ') : undefined,
       meta,
     });
   } catch (e) {

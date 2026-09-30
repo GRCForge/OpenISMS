@@ -5919,7 +5919,7 @@ server.tool(
     if (!doc) return { content: [{ type: 'text', text: 'Document not found' }], isError: true };
     const fs = require('fs');
     const path = require('path');
-    const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+    const UPLOAD_DIR = require('../services/uploadStorage').uploadRoot();
     if (doc.filename) {
       const filePath = path.join(UPLOAD_DIR, path.basename(doc.filename));
       try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) { console.warn('Could not delete file:', e.message); }

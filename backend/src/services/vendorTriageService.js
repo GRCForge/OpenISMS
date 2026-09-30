@@ -3,7 +3,7 @@ const path = require('path');
 const { callLlm } = require('./llmService');
 const { extractText } = require('./textExtraction');
 
-const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+const UPLOAD_DIR = require('./uploadStorage').uploadRoot();
 
 const MAX_DOC_CHARS = Number(process.env.TRIAGE_MAX_CHARS || 40000);
 const MAX_REF_CHARS = Number(process.env.TRIAGE_MAX_REF_CHARS || 15000);

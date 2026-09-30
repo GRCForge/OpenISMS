@@ -8,7 +8,7 @@ const { authenticate, requireWriteAccess, requirePermission } = require('../midd
 const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
-const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+const UPLOAD_DIR = require('../services/uploadStorage').uploadRoot();
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const getSafePath = (filename) => {

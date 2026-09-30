@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, PolicyAcknowledgment, sequelize } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
+const { uploadSubdir, POLICIES_SUBDIR } = require('../services/uploadStorage');
 
 // Rate limiting for policy downloads to mitigate DoS (CWE-770)
 const downloadLimiter = rateLimit({
@@ -20,7 +21,17 @@ const downloadLimiter = rateLimit({
   message: { error: 'Zu viele Download-Anfragen. Bitte warten Sie 5 Minuten.' }
 });
 
-const POLICIES_DIR = path.resolve('uploads/policies');
+// Unter UPLOAD_DIR, nicht relativ zum Arbeitsverzeichnis. Bis 3.3.1 stand hier
+// path.resolve('uploads/policies') — auf einer Bare-Installation lagen die
+// Richtlinien dadurch ausserhalb von UPLOAD_DIR und fehlten in jeder Sicherung.
+// Den Umzug der vorhandenen Dateien erledigt uploadStorage beim Start.
+const POLICIES_DIR = uploadSubdir(POLICIES_SUBDIR);
+
+// Was in file_url gespeichert wird: die bisherige relative Form. Gelesen wird
+// ohnehin nur der Dateiname (safePolicyPath), und so stehen alte und neue
+// Zeilen gleich da — ohne dass ein absoluter Serverpfad in Datenbank,
+// API-Antworten und Sicherungen wandert.
+const storedPolicyPath = (filename) => path.posix.join('uploads', POLICIES_SUBDIR, filename);
 const ALLOWED_MIME_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
 const MAX_UPLOAD_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -74,7 +85,7 @@ const safePolicyPath = (filePath) => {
 const stripFileMeta = ({ file_url: _u, original_filename: _n, file_hash: _h, ...rest }) => rest;
 
 const storage = multer.diskStorage({
-  destination: 'uploads/policies/',
+  destination: (req, file, cb) => cb(null, POLICIES_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const safeName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -133,7 +144,7 @@ router.post('/', authenticate, requirePermission('policies','create','admin','as
         fs.unlink(filePath, () => {});
         return res.status(400).json({ error: 'Dateiinhalt stimmt nicht mit dem deklarierten Dateityp überein.' });
       }
-      data.file_url = req.file.path;
+      data.file_url = storedPolicyPath(req.file.filename);
       data.original_filename = req.file.originalname;
       data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
     }
@@ -189,7 +200,7 @@ router.put('/:id', authenticate, requirePermission('policies','edit','admin','as
         });
       }
 
-      data.file_url = req.file.path;
+      data.file_url = storedPolicyPath(req.file.filename);
       data.original_filename = req.file.originalname;
       data.file_hash = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
     }
