@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const rootDir = path.join(__dirname, '..');
 const versionPath = path.join(rootDir, 'VERSION');
@@ -71,14 +70,44 @@ for (const file of filesToUpdate) {
   }
 }
 
+/**
+ * Die Versionsnummer im Lockfile nachziehen — und sonst nichts.
+ *
+ * Hier stand frueher `npm install --package-lock-only`. Das loest den
+ * gesamten Abhaengigkeitsbaum neu auf, mit der npm-Version, die gerade
+ * lokal installiert ist. Weicht die von der in der CI ab, schreibt sie das
+ * Lockfile um: Beim Bump auf 3.3.1 verschwanden so die libc-Felder der
+ * plattformabhaengigen Pakete aus frontend/package-lock.json, weil npm 10
+ * sie nicht kennt und npm 11 sie setzt. Ein Versionsbump darf keine
+ * Abhaengigkeiten anfassen.
+ *
+ * Betroffen sind genau zwei Felder: die Wurzel und packages[""]. Ein
+ * JSON-Round-Trip mit zwei Leerzeichen Einrueckung und abschliessendem
+ * Zeilenumbruch gibt exakt das aus, was npm selbst schreibt — geprueft,
+ * byte-identisch. Wer das hier wieder auf npm umstellt, holt sich den
+ * Lockfile-Schaden zurueck.
+ */
+const syncLockfile = (dir) => {
+  const lockPath = path.join(rootDir, dir, 'package-lock.json');
+  if (!fs.existsSync(lockPath)) return false;
+  const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+  if (lock.version === version && lock.packages?.['']?.version === version) return false;
+  lock.version = version;
+  if (lock.packages?.['']) lock.packages[''].version = version;
+  fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
+  return true;
+};
+
 if (changed) {
   console.log('[Version Sync] Updating package-lock.json files...');
   try {
-    execSync('npm install --package-lock-only', { cwd: path.join(rootDir, 'frontend'), stdio: 'inherit' });
-    execSync('npm install --package-lock-only', { cwd: path.join(rootDir, 'backend'), stdio: 'inherit' });
+    for (const dir of ['frontend', 'backend']) {
+      console.log(`[Version Sync]   ${dir}/package-lock.json: ${syncLockfile(dir) ? 'updated' : 'already current'}`);
+    }
     console.log('[Version Sync] Synchronizing complete!');
   } catch (err) {
     console.error('[Version Sync] Error updating package-lock.json files:', err.message);
+    process.exitCode = 1;
   }
 } else {
   console.log('[Version Sync] All version numbers are already synchronized.');

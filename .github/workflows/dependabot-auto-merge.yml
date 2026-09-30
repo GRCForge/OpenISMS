@@ -1,0 +1,92 @@
+name: Dependabot auto-merge
+
+# Enables GitHub's native auto-merge on a Dependabot pull request once its
+# checks pass — for minor and patch bumps only.
+#
+# WHAT MAKES THIS SAFE, AND WHAT DOES NOT
+#
+# "Auto-merge" does not mean "merge now". GitHub holds the pull request until
+# every REQUIRED status check has passed. That requirement lives in the branch
+# protection ruleset, not in this file. If no checks are required there, auto-
+# merge degrades into "merge immediately" and this workflow becomes a way to
+# push untested dependency bumps straight to main — which, in this repository,
+# also means straight into a release image.
+#
+# So this file is only half of the mechanism. The other half, once:
+#
+#   Settings → General → Pull Requests → Allow auto-merge          [on]
+#   Settings → Rules → the ruleset for main → Require status checks
+#       · Backend — Install & Smoke Test
+#       · Frontend — TypeScript & Build
+#       · npm audit — Dependency Vulnerabilities
+#
+# Those three are what security.yml now runs for a Dependabot pull request.
+# Do not add Snyk or SonarQube to the required set: GitHub withholds Actions
+# secrets from Dependabot pull requests, so they cannot run there and a
+# required check that never reports blocks the merge forever.
+#
+# Major bumps are deliberately left alone. They are the ones that break an
+# API, and a human should look at them.
+
+on: pull_request_target
+
+# pull_request_target runs against the BASE of the pull request, so this file
+# is the version on main, not the one in the branch. That is what allows the
+# write permissions below without letting a pull request edit the workflow
+# that merges it. Nothing here checks out or executes the branch's code.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Enable auto-merge for minor and patch bumps
+    if: github.actor == 'dependabot[bot]'
+    runs-on: self-hosted
+    steps:
+      - name: Read Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v3
+
+      - name: Enable auto-merge
+        if: |
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            // A conflicted pull request is left for a human. Dependabot
+            // rebases its own branches, so this usually resolves itself on
+            // the next run; forcing it here would only produce a merge
+            // nobody reviewed.
+            if (pr.mergeable_state === 'dirty') {
+              core.warning(`PR #${pr.number} has conflicts — not enabling auto-merge.`);
+              return;
+            }
+
+            await github.graphql(
+              `mutation($id: ID!) {
+                 enablePullRequestAutoMerge(input: {
+                   pullRequestId: $id,
+                   mergeMethod: SQUASH
+                 }) { clientMutationId }
+               }`,
+              { id: pr.node_id },
+            );
+            core.info(`Auto-merge enabled for #${pr.number}.`);
+
+      - name: Leave a note on a major bump
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            core.notice(
+              'Major version bump — auto-merge not enabled. ' +
+              'Review the changelog and merge by hand.',
+            );

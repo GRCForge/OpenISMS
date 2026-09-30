@@ -52,10 +52,23 @@ permissions:
 
 jobs:
   # ── Gate: decide which sections run for this trigger ─────────────────────
-  # Dependabot PR: skip everything here (branch protection bypass lets these
-  #   merge without waiting; the push-to-main re-run below still scans them).
+  # Dependabot PR: build, smoke-test and npm audit — and nothing else.
+  #   A dependency bump can only really fail in two ways: it stops the app
+  #   building or starting, or it drags in a new advisory. Those three jobs
+  #   catch both, need no secrets and finish in a couple of minutes. The
+  #   scanners that do need secrets (Snyk, SonarQube) would fail anyway,
+  #   because GitHub withholds Actions secrets from Dependabot pull requests,
+  #   and CodeQL/Gitleaks/Trivy have nothing to say about a lockfile bump —
+  #   the push-to-main run covers those.
+  #
+  #   These jobs ran nowhere before: Dependabot PRs skipped the whole
+  #   workflow and were vetted only after the merge, by which point a broken
+  #   bump was already on main and already going into a release image.
+  #   Checking before the merge is what makes auto-merge defensible
+  #   (see dependabot-auto-merge.yml).
+  #
   # Human PR: security/scanning jobs only — build & smoke-test are deferred
-  #   to the push-to-main run right after merge, same as for Dependabot.
+  #   to the push-to-main run right after merge.
   # push to main (post-merge, from any source): run everything.
   gate:
     name: Determine which sections run
@@ -63,18 +76,22 @@ jobs:
     outputs:
       run_security: ${{ steps.decide.outputs.run_security }}
       run_build: ${{ steps.decide.outputs.run_build }}
+      run_audit: ${{ steps.decide.outputs.run_audit }}
     steps:
       - id: decide
         run: |
           if [[ "${{ github.event_name }}" == "push" ]]; then
             echo "run_security=true" >> "$GITHUB_OUTPUT"
             echo "run_build=true" >> "$GITHUB_OUTPUT"
+            echo "run_audit=true" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.head_ref }}" == dependabot/* ]]; then
             echo "run_security=false" >> "$GITHUB_OUTPUT"
-            echo "run_build=false" >> "$GITHUB_OUTPUT"
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+            echo "run_audit=true" >> "$GITHUB_OUTPUT"
           else
             echo "run_security=true" >> "$GITHUB_OUTPUT"
             echo "run_build=false" >> "$GITHUB_OUTPUT"
+            echo "run_audit=true" >> "$GITHUB_OUTPUT"
           fi
 
   # ── CodeQL: GitHub-native SAST ────────────────────────────────────────────
@@ -238,7 +255,9 @@ jobs:
   npm-audit:
     name: npm audit — Dependency Vulnerabilities
     needs: gate
-    if: needs.gate.outputs.run_security == 'true'
+    # Runs for Dependabot too: a bump that pulls in a new advisory is exactly
+    # what this job is for, and it needs no secret to say so.
+    if: needs.gate.outputs.run_audit == 'true'
     runs-on: self-hosted
     permissions:
       contents: read
