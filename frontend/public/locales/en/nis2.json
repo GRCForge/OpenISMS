@@ -44,7 +44,8 @@
   "description": {
     "show": "Show description",
     "hide": "Hide description",
-    "evidence": "Evidence: "
+    "evidence": "Evidence: ",
+    "references": "Sources"
   },
   "empty": {
     "title": "No NIS-2 measures yet",
@@ -87,6 +88,8 @@
     "reportingObligations": "Reporting Obligations",
     "governance": "Governance & management liability",
     "correctiveActions": "Corrective measures",
+    "registration": "Registration & regulatory duties",
+    "criticalFacilities": "Critical facilities",
     "ownCriteria": "Own criteria"
   },
   "measures": {
@@ -307,5 +310,9 @@
     "reset": "Scoring model reset.",
     "resetButton": "Defaults",
     "error": "The scoring model could not be saved."
+  },
+  "subCriteria": {
+    "progress": "{{done}}/{{total}} fulfilled",
+    "progressHint": "Derived from the sub-criteria. The parent carries the legal reference; the sub-items are what gets counted."
   }
 }

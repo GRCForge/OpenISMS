@@ -688,6 +688,8 @@ The server returns the JSON-RPC list of all **78 available tools**.
 | | `isms_create_ai_system` | Register an AI system in the AI Act inventory |
 | | `isms_update_ai_system` | Update AI system details, conformity, or approval status |
 | | `isms_delete_ai_system` | Delete an AI system and cancel related open tasks |
+| **NIS-2 catalogue** | `isms_list_nis2_measures` | The criteria catalogue: Art. 20/21/23 and the BSIG duties §§ 31–39, with sub-requirements, BSIG citation and scope note |
+| | `isms_update_nis2_measure` | Set status, responsible person, deadline or evidence on a criterion |
 | **NIS-2 self-check** | `isms_list_nis2_self_check` | The 37 questions with both answers, article mapping and recommendation |
 | | `isms_get_nis2_gaps` | Maturity per topic, coverage per article, ranked gaps with recommendations |
 | | `isms_answer_nis2_self_check` | Answer a question on both axes (implemented / evidenced) |
@@ -811,6 +813,7 @@ The MCP tools stay CheckMK-specific by name; the REST layer is generic (`/api/in
 | `risk_controls` | N:M link risks ↔ controls (with effectiveness) |
 | `controls` | Controls catalogue (ISO 27001, NIS-2, BSI, custom) with status and SoA |
 | `threats` | Threat catalogue (BSI elementary hazards, common, custom) |
+| `nis2_measures` | NIS-2 criteria catalogue: two levels via `parent_ref` (a row with children is a bracket and does not count itself), BSIG citation, per-profile applicability, scope note for conditional duties and links to the matching BSI source |
 | `nis2_self_check` | NIS-2 self-check: 37 questions with implementation and evidence answer, evidence source, recommendation, per-profile applicability and the remediation task created from a gap |
 | `threat_sources` | Register of monitored threat sources (national CSIRT, CERT, vendor, news) with review cadence and fetch status |
 | `threat_advisories` | External advisories with severity, relevance assessment, assessor and links into risk / task / incident |
@@ -918,7 +921,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 |---|---|---|
 | `dsgvo` | GDPR | Processing register (Art. 30), DPIA, data subject rights (Art. 15–22), data breaches |
 | `iso27001` | ISO 27001:2022 | Controls Annex A, SoA, assessments, conformance status |
-| `nis2` | NIS-2 | Criteria catalogue for Art. 20, 21 and 23 with per-profile applicability (essential / important / indirectly affected), plus a 37-question self-check answered on two axes (implemented / evidenced) with maturity per topic, coverage per article and a ranked gap list. The scoring model behind the rates — weights, the value of "partly", maturity thresholds — is editable and audit-logged |
+| `nis2` | NIS-2 | Two-level criteria catalogue — 23 legal anchors (Art. 20, 21, 23 and the BSIG duties §§ 31, 33, 34, 35, 39) over 103 checkable sub-requirements, of which 104 rows count towards the rate; a parent with children is a bracket and derives its progress instead of carrying a status. Each criterion carries its BSIG citation, its applicability per profile (essential / important / indirectly affected), a scope note where a duty is conditional (operators of critical facilities, DORA precedence) and links to the matching BSI source. Plus a 37-question self-check answered on two axes (implemented / evidenced) with maturity per topic, coverage per article and a ranked gap list. The scoring model behind the rates — weights, the value of "partly", maturity thresholds — is editable and audit-logged |
 | `bsi_grundschutz` | BSI IT-Grundschutz | Grundschutz controls catalogue, implementation status |
 | `c5` | BSI C5:2026 | Cloud criteria catalogue for cloud service providers |
 | `tisax` | TISAX (VDA ISA 6) | Requirements catalogue, assessments, maturity level measurement |
@@ -936,7 +939,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 | Framework | Covered requirements |
 |---|---|
 | **ISO 27001:2022** | Asset register (A.8), CIA assessment & risk register (ISO 27005), Statement of Applicability (SoA), controls catalogue (Annex A), threat intelligence (A.5.7), annual reviews, classification, document management, policy library, audit log, cross-framework control mapping |
-| **NIS-2** | Risk management (Art. 21), reporting obligations (Art. 23, 24h/72h deadlines), threat monitoring with source register and advisory assessment (Art. 21(2)(a)), supply chain security via vendor module, incident documentation with reference numbers, management liability (Art. 20) and corrective measures (Art. 21(4)), criteria catalogue adjustable by affectedness profile (essential / important / indirectly affected), NIS-2 asset tagging |
+| **NIS-2** | Risk management (Art. 21 · § 30 Abs. 2 Nr. 1–10 BSIG) broken into checkable sub-requirements, reporting obligations (Art. 23 · § 32 BSIG, 24h/72h/1-month deadlines incl. progress report), threat monitoring with source register and advisory assessment (Art. 21(2)(a)), supply chain security via vendor module, incident documentation with reference numbers, management liability and training (Art. 20 · §§ 38, 38 Abs. 3 BSIG), corrective measures (Art. 21(4)), criteria catalogue adjustable by affectedness profile (essential / important / indirectly affected), NIS-2 asset tagging. German additions with no counterpart in the directive: registration with the BSI (§ 33) and the additional registration for certain entity types (§ 34), informing the recipients of the service (§ 35), attack detection (§ 31) and three-yearly evidence (§ 39) for operators of critical facilities. Cryptography criteria carry the concrete figures from BSI TR-02102 |
 | **GDPR** | Processing register (Art. 30), DPIA workflow (Art. 35), data subject rights tracker (Art. 15–22) with deadline calculation, data category (Art. 9), DPA documents (Art. 28), data breach documentation with authority reference numbers |
 | **EU AI Act** | Asset types "AI Application" and "AI Agent"; risk classification (prohibited/high/low/minimal), governance fields, technical documentation, conformity assessment workflow |
 | **TISAX** | VDA ISA 6 requirements catalogue, assessments with maturity level (0–3), remediation tracking |

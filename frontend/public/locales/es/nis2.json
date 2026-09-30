@@ -44,7 +44,8 @@
   "description": {
     "show": "Show description",
     "hide": "Hide description",
-    "evidence": "Evidence: "
+    "evidence": "Evidence: ",
+    "references": "Fuentes"
   },
   "empty": {
     "title": "No NIS-2 measures yet",
@@ -87,6 +88,8 @@
     "reportingObligations": "Obligaciones de Notificación",
     "governance": "Gobernanza y responsabilidad de la dirección",
     "correctiveActions": "Medidas correctoras",
+    "registration": "Registro y obligaciones ante la autoridad",
+    "criticalFacilities": "Instalaciones críticas",
     "ownCriteria": "Criterios propios"
   },
   "measures": {
@@ -307,5 +310,9 @@
     "reset": "Modelo de puntuación restablecido.",
     "resetButton": "Valores por defecto",
     "error": "No se ha podido guardar el modelo de puntuación."
+  },
+  "subCriteria": {
+    "progress": "{{done}}/{{total}} cumplidos",
+    "progressHint": "Derivado de los subcriterios. El criterio superior lleva la referencia legal; lo que se cuenta son los subpuntos."
   }
 }

@@ -25,7 +25,7 @@
 # nicht erlaubt, und ohne geladene Bibliothek scheitert jede Cypher-Abfrage.
 services:
   isms:
-    image: ghcr.io/p3rf3ction/isms-app:${ISMS_VERSION:-latest}
+    image: ghcr.io/grcforge/openisms-app:${ISMS_VERSION:-latest}
     container_name: isms
     restart: unless-stopped
     environment:

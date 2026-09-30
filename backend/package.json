@@ -1,6 +1,6 @@
 {
   "name": "openisms-backend",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "engines": {
     "node": ">=26.3.0"
   },
@@ -53,6 +53,7 @@
     "uuid": "^11.1.1",
     "fast-uri": "^3.1.7",
     "qs": "^6.16.0",
-    "@xmldom/xmldom": "^0.8.15"
+    "@xmldom/xmldom": "^0.8.15",
+    "brace-expansion": "^5.0.12"
   }
 }

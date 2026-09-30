@@ -44,7 +44,8 @@
   "description": {
     "show": "Beschreibung anzeigen",
     "hide": "Beschreibung ausblenden",
-    "evidence": "Beweise: "
+    "evidence": "Beweise: ",
+    "references": "Quellen"
   },
   "empty": {
     "title": "Noch keine NIS-2-Maßnahmen",
@@ -87,6 +88,8 @@
     "reportingObligations": "Meldepflichten",
     "governance": "Governance & Managementhaftung",
     "correctiveActions": "Korrekturmaßnahmen",
+    "registration": "Registrierung & behördliche Pflichten",
+    "criticalFacilities": "Kritische Anlagen",
     "ownCriteria": "Eigene Kriterien"
   },
   "measures": {
@@ -307,5 +310,9 @@
     "reset": "Bewertungsmodell zurückgesetzt.",
     "resetButton": "Voreinstellung",
     "error": "Bewertungsmodell konnte nicht gespeichert werden."
+  },
+  "subCriteria": {
+    "progress": "{{done}}/{{total}} erfüllt",
+    "progressHint": "Abgeleitet aus den Unterkriterien. Das Oberkriterium trägt den Gesetzesbezug, gezählt werden die Unterpunkte."
   }
 }
