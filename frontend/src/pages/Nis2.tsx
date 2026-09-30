@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2, ClipboardList, Info } from 'lucide-react';
+import { AlertOctagon, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronUp, ChevronRight, Radio, RefreshCw, Building2, ClipboardList, Info, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -59,6 +59,7 @@ interface Nis2Measure {
   /** Fundstelle im deutschen Umsetzungsgesetz, wo belegt. */
   bsig_ref?: string | null;
   scope_note?: string | null;
+  references?: { label: string; url?: string | null }[] | null;
   /** Artikelreferenz des Oberkriteriums, null auf der obersten Ebene. */
   parent_ref?: string | null;
 }
@@ -578,6 +579,26 @@ export const Nis2: React.FC = () => {
                               <td colSpan={6} className="px-4 py-3">
                                 <p className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">{t('measures.' + m.article_ref + '.description', { defaultValue: m.description })}</p>
                                 {m.evidence && <div className="mt-2"><span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">{t('description.evidence')}</span><span className="text-xs text-gray-600 dark:text-slate-400">{m.evidence}</span></div>}
+                                {!!m.references?.length && (
+                                  // Der Katalog sagt, was geschuldet ist; die
+                                  // Quelle sagt, wie. Sie gehoert an das
+                                  // Kriterium und nicht in eine Linksammlung,
+                                  // die niemand oeffnet.
+                                  <div className="mt-2">
+                                    <span className="block text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">{t('description.references')}</span>
+                                    <ul className="mt-0.5 space-y-0.5">
+                                      {m.references.map((ref, i) => (
+                                        <li key={i} className="text-xs text-gray-600 dark:text-slate-400">
+                                          {ref.url ? (
+                                            <a href={ref.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-700 dark:text-blue-400 hover:underline">
+                                              <ExternalLink size={11} aria-hidden="true" />{ref.label}
+                                            </a>
+                                          ) : ref.label}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           )}

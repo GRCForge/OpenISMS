@@ -72,6 +72,16 @@ const Nis2Measure = sequelize.define('Nis2Measure', {
     defaultValue: { essential: 'required', important: 'required', indirect: 'recommended' },
   },
 
+  // Weiterfuehrende Quellen zu diesem Kriterium.
+  //
+  // Der Katalog sagt, was geschuldet ist. Wie es umzusetzen ist, steht im
+  // #nis2know-Infopaket des BSI, in den BSI-Standards und — fuer Kryptografie
+  // — in der TR-02102. Wer ein Kriterium bearbeitet, soll die einschlaegige
+  // Quelle an Ort und Stelle finden und nicht erst suchen muessen.
+  //
+  // Format: [{ label, url }]. Leer, wo es keine belastbare Quelle gibt.
+  references: { type: DataTypes.JSONB, defaultValue: [] },
+
   // Selbst angelegte Kriterien werden beim Katalogabgleich nicht angefasst.
   custom: { type: DataTypes.BOOLEAN, defaultValue: false },
 }, {

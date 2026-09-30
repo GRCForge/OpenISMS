@@ -44,7 +44,8 @@
   "description": {
     "show": "Show description",
     "hide": "Hide description",
-    "evidence": "Evidence: "
+    "evidence": "Evidence: ",
+    "references": "Sources"
   },
   "empty": {
     "title": "No NIS-2 measures yet",

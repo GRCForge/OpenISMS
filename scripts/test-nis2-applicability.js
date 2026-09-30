@@ -249,6 +249,23 @@ const registrierung = catalog.filter(c => c.article_ref.startsWith('§ 33 BSIG')
 ok('indirekt Betroffene schulden keine Registrierung',
   registrierung.every(c => obligationFor(c.applicability, 'indirect') === 'not_applicable'));
 
+console.log('Quellenangaben:');
+// Der Katalog sagt, was geschuldet ist. Wie es umzusetzen ist, steht beim BSI.
+// Eine Quelle, die auf die falsche Stelle zeigt, ist schlimmer als keine.
+const mitQuellen = catalog.filter(c => Array.isArray(c.references) && c.references.length);
+ok('die zehn Massnahmen tragen Quellen',
+  ['a','b','c','d','f','g','h','i','j'].every(x =>
+    catalog.find(c => c.article_ref === `Art. 21(2)(${x})`)?.references?.length));
+ok('jede Quelle traegt eine Beschriftung',
+  mitQuellen.every(c => c.references.every(r => typeof r.label === 'string' && r.label.length > 3)));
+ok('jede angegebene URL ist absolut und https',
+  mitQuellen.every(c => c.references.every(r => !r.url || /^https:\/\/[a-z0-9.-]+\//.test(r.url))));
+// Eine Quelle ohne URL ist zulaessig — eine BSI-Richtlinie findet man auch ohne
+// Link, und ein geratener Link fuehrt ins Leere.
+ok('Quellen haengen nur an Oberkriterien', mitQuellen.every(c => !c.parent_ref));
+ok('Kryptografie verweist auf die TR-02102',
+  catalog.find(c => c.article_ref === 'Art. 21(2)(h)').references.some(r => /TR-02102/.test(r.label)));
+
 eq('Profile sind vollstaendig', PROFILES, ['essential', 'important', 'indirect', 'unknown']);
 
 console.log(failures ? `\n${failures} Pruefung(en) fehlgeschlagen.` : '\nAlle Pruefungen bestanden.');

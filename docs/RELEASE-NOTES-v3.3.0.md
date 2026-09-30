@@ -7,9 +7,10 @@ contents, not something anyone can tick off. It was also incomplete for a
 German entity: the directive's articles are not the whole of what the BSIG
 demands.
 
-This release breaks the measures into **94 checkable sub-requirements**, adds
-the reference a German entity is actually audited against, and adds the five
-duties from BSIG chapter 2 that have no counterpart in Art. 20, 21 or 23.
+This release breaks the measures into **103 checkable sub-requirements**, adds
+the reference a German entity is actually audited against, adds the five duties
+from BSIG chapter 2 that have no counterpart in Art. 20, 21 or 23, and works in
+the BSI's own #nis2know material and TR-02102.
 
 ---
 
@@ -18,7 +19,7 @@ duties from BSIG chapter 2 that have no counterpart in Art. 20, 21 or 23.
 | | |
 |---|---|
 | **Top level** (23) | the legal anchors, worded close to the statute |
-| **Sub-requirements** (94) | what an auditor actually asks to see |
+| **Sub-requirements** (103) | what an auditor actually asks to see |
 
 "Maintain operations" (Art. 21(2)(c) / § 30 Abs. 2 Nr. 3 BSIG) is now six rows:
 impact analysis, backup concept, restore tests, recovery plans, crisis
@@ -54,7 +55,7 @@ the same requirement enters the rate twice — once as a measure, once through
 its parts — and a measure with eight sub-items would weigh nine times as much
 as one without.
 
-So 117 rows, of which **95 are counted** (94 sub-requirements plus the one
+So 126 rows, of which **104 are counted** (103 sub-requirements plus the one
 top-level criterion that has no children) and 22 are brackets. A bracket shows
 a derived progress bar instead of a status, and the API reports `counted` and
 `containers` alongside the rate.
@@ -83,12 +84,12 @@ applies more widely than its parent.
 
 ## 5. Upgrading
 
-`POST /api/nis2/sync-catalog` (button *Sync catalogue*) adds the 99 new rows to
-an existing installation. Status, evidence, responsible persons and adjusted
+`POST /api/nis2/sync-catalog` (button *Sync catalogue*) adds the 108 new rows
+to an existing installation. Status, evidence, responsible persons and adjusted
 applicability on the existing 18 are untouched.
 
-The three new columns on `nis2_measures` (`parent_ref`, `bsig_ref`,
-`scope_note`) are added by `sequelize.sync({ alter })` on start.
+The four new columns on `nis2_measures` (`parent_ref`, `bsig_ref`,
+`scope_note`, `references`) are added by `sequelize.sync({ alter })` on start.
 
 **The NIS-2 module is off by default.** If the menu entry is missing, switch it
 on under *Administration → Modules → NIS-2*; the self-check is the second tab
@@ -124,10 +125,51 @@ deliberately: showing a duty that turns out not to apply costs a click, while
 hiding one that does apply costs a deadline. It matches how the module already
 treats an unclassified entity as *essential*.
 
-### Not included
+### Provenance
 
-The BSI's #nis2know download page remained unreachable from the build
-environment (the egress proxy answers 403 for `bsi.bund.de`), so no material
-from it has been incorporated. The statutory references above come from the
-BSIG text itself and each was verified before being written into the catalogue;
-where a reference is not established, the field stays empty.
+`bsi.bund.de` is not reachable from the build environment (the egress proxy
+answers 403), so the #nis2know package and the TR-02102 documents were supplied
+directly as files; section 7 covers what came out of them. The statutory
+references were verified individually against the BSIG text before being
+written into the catalogue. Where a reference is not established, the field
+stays empty — a guessed paragraph number in a compliance tool is worse than
+none.
+
+## 7. BSI material worked in
+
+The BSI's #nis2know package and the TR-02102 cryptography guidance are now
+reflected in the catalogue. Two things came out of it.
+
+**Sources on the criterion.** The catalogue says what is owed; how to do it is
+in the BSI material. Nineteen top-level criteria now carry a `references` list
+— the matching #nis2know page, the relevant BSI standard, and for cryptography
+all four parts of TR-02102 — shown when the criterion is expanded. Where no
+dependable link exists the entry carries the title alone; a guessed URL leads
+nowhere.
+
+**Nine more sub-requirements**, each from a statement in that material rather
+than from a general reading of the directive:
+
+| | |
+|---|---|
+| Cryptography (4) | inventory of procedures, keys and certificates; assessment of critical systems and long-lived protected data; migration roadmap to quantum-safe procedures; conformance to TR-02102 |
+| MFA (2) | factors from different categories (knowledge, possession, biometrics); lifecycle of the authentication means from issue to revocation |
+| Reporting (1) | progress report while an incident is still running |
+| Critical facilities (2) | annual notification of supply level and critical components; reports go through the MIP, not additionally through the BSI portal |
+
+The cryptography rows carry the concrete figures from TR-02102-1 (version
+2026-01) instead of the statute's word "cryptography": a security level of at
+least 120 bits, TLS 1.3 preferred with TLS 1.2 recommended only to the end of
+2031, an RSA modulus from 3000 bits, and quantum-safe key agreement used
+hybrid with classical procedures.
+
+**DORA precedence** is now noted where it removes a duty: entities in scope of
+DORA file no § 39 Abs. 1 evidence and report no disruptions to the BSI under
+§ 32 BSIG.
+
+The catalogue now holds **126 rows, 104 of them counted**.
+
+Two sources confirm the modelling chosen in section 6: operators of critical
+facilities are a subset of especially important entities (§ 28 Abs. 2 BSIG),
+and management training is owed under § 38 Abs. 3 BSIG. Both references are now
+in the catalogue.

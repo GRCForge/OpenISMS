@@ -22,6 +22,11 @@ const catalog = [
     category: 'Risikoanalyse & Sicherheitsrichtlinien',
     title: 'Konzepte für Risikoanalyse und Sicherheit für Informationssysteme',
     description: 'Einrichtung und Umsetzung von Konzepten zur Risikoanalyse und zur Sicherheit von Informationssystemen (Informationssicherheitsmanagementsystem — ISMS).',
+    references: [
+      { label: 'BSI: NIS-2-Risikoanalyse', url: 'https://www.bsi.bund.de/dok/nis-2-risikoanalyse' },
+      { label: 'BSI: NIS-2-Risikomanagementmassnahmen', url: 'https://www.bsi.bund.de/dok/nis-2-risikomanagement' },
+      { label: 'BSI-Standard 200-3 (Risikoanalyse)' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'required' },
   },
   {
@@ -30,6 +35,9 @@ const catalog = [
     category: 'Vorfallbewältigung',
     title: 'Bewältigung von Sicherheitsvorfällen',
     description: 'Konzepte und Verfahren zur Bewältigung von Sicherheitsvorfällen, einschließlich Erkennung, Eskalation, Reaktion und Wiederherstellung.',
+    references: [
+      { label: 'BSI: NIS-2-Incident-Response', url: 'https://www.bsi.bund.de/dok/nis-2-incident-response' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'required' },
   },
   {
@@ -38,6 +46,11 @@ const catalog = [
     category: 'Business Continuity',
     title: 'Aufrechterhaltung des Betriebs, Backup-Management und Disaster Recovery',
     description: 'Maßnahmen zur Aufrechterhaltung des Betriebs, inkl. Backup-Management, Wiederherstellung im Katastrophenfall und Krisenmanagement.',
+    references: [
+      { label: 'BSI: NIS-2-Business-Continuity-Management', url: 'https://www.bsi.bund.de/dok/nis-2-bcm' },
+      { label: 'BSI-Standard 200-4 (BCM)' },
+      { label: 'BSI: Einstieg in das BCM fuer KMU', url: 'https://www.bsi.bund.de/dok/bcm-kmu' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
   },
   {
@@ -46,6 +59,9 @@ const catalog = [
     category: 'Lieferkettensicherheit',
     title: 'Sicherheit der Lieferkette',
     description: 'Sicherheit der Lieferkette einschließlich sicherheitsbezogener Aspekte der Beziehungen zwischen den einzelnen Einrichtungen und ihren unmittelbaren Anbietern oder Diensteanbietern.',
+    references: [
+      { label: 'BSI: NIS-2 — Sichere Lieferkette', url: 'https://www.bsi.bund.de/dok/nis-2-sichere-lieferkette' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'required' },
   },
   {
@@ -62,6 +78,9 @@ const catalog = [
     category: 'Wirksamkeit von Maßnahmen',
     title: 'Bewertung der Wirksamkeit von Risikomanagementmaßnahmen',
     description: 'Konzepte und Verfahren zur Bewertung der Wirksamkeit der Maßnahmen zur Cybersicherheits-Risikomanagement, einschließlich interner Audits und Review-Prozesse.',
+    references: [
+      { label: 'BSI: Bewertung der Wirksamkeit von Risikomanagementmassnahmen', url: 'https://www.bsi.bund.de/dok/nis-2-wirksamkeit' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
   },
   {
@@ -70,6 +89,9 @@ const catalog = [
     category: 'Cyberhygiene & Schulungen',
     title: 'Grundlegende Verfahren zur Cyberhygiene und Schulungen',
     description: 'Grundlegende Verfahren im Bereich Cyberhygiene sowie Cybersicherheitsschulungen für Mitarbeitende und Führungskräfte.',
+    references: [
+      { label: 'BSI: Grundlegende Schulungen und Sensibilisierungsmassnahmen', url: 'https://www.bsi.bund.de/dok/nis-2-schulung-sensibilisierung' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'required' },
   },
   {
@@ -78,6 +100,13 @@ const catalog = [
     category: 'Kryptografie',
     title: 'Konzepte und Verfahren für den Einsatz von Kryptografie',
     description: 'Konzepte und Verfahren für den Einsatz von Kryptografie und gegebenenfalls Verschlüsselung.',
+    references: [
+      { label: 'BSI: NIS-2 — Kryptografische Verfahren', url: 'https://www.bsi.bund.de/dok/nis-2-krypto' },
+      { label: 'BSI TR-02102-1 — Kryptographische Verfahren: Empfehlungen und Schluessellaengen' },
+      { label: 'BSI TR-02102-2 — Verwendung von Transport Layer Security (TLS)' },
+      { label: 'BSI TR-02102-3 — Verwendung von IPsec und IKEv2' },
+      { label: 'BSI TR-02102-4 — Verwendung von Secure Shell (SSH)' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'required' },
   },
   {
@@ -86,6 +115,9 @@ const catalog = [
     category: 'Personalsicherheit & Zugangssteuerung',
     title: 'Sicherheit des Personals, Konzepte für die Zugangssteuerung und Asset Management',
     description: 'Maßnahmen zur Sicherheit des Personals, Konzepte für die Zugangssteuerung und das Asset Management, einschließlich Need-to-Know-Prinzip und Zero-Trust-Ansätze.',
+    references: [
+      { label: 'BSI: Personalsicherheit, Zugriffskontrolle und Assetmanagement', url: 'https://www.bsi.bund.de/dok/nis-2-personalsicherheit-zugriff-asset' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'required' },
   },
   {
@@ -94,41 +126,66 @@ const catalog = [
     category: 'Multi-Faktor-Authentifizierung',
     title: 'Verwendung von Multi-Faktor-Authentifizierung oder kontinuierlicher Authentifizierung',
     description: 'Verwendung von Multi-Faktor-Authentifizierungslösungen oder kontinuierlichen Authentifizierungslösungen sowie gesicherter Sprach-, Video- und Textkommunikation und gesicherter Notfallkommunikation.',
+    references: [
+      { label: 'BSI: NIS-2 — Multi-Faktor-Authentisierung', url: 'https://www.bsi.bund.de/dok/nis-2-mfa' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'required' },
   },
   {
     article_ref: 'Art. 23(1)',
+    bsig_ref: '§ 32 BSIG',
     category: 'Meldepflichten',
     title: 'Meldung erheblicher Sicherheitsvorfälle (Frühwarnung innerhalb 24h)',
     description: 'Erhebliche Sicherheitsvorfälle müssen der zuständigen Behörde unverzüglich, spätestens 24 Stunden nach Kenntnisnahme, als Frühwarnung gemeldet werden. Fuer nicht direkt betroffene Einrichtungen entfaellt diese Pflicht gegenueber der Behoerde; an ihre Stelle tritt in der Regel eine vertragliche Meldepflicht gegenueber dem betroffenen Auftraggeber.',
+    references: [
+      { label: 'BSI: NIS-2-Meldepflicht', url: 'https://www.bsi.bund.de/dok/nis-2-meldepflicht' },
+      { label: 'BSI: DORA und NIS-2', url: 'https://www.bsi.bund.de/dok/dora-und-nis-2' },
+    ],
+    scope_note: 'Unternehmen im Anwendungsbereich der DORA melden Stoerungen nicht nach § 32 BSIG ans BSI; DORA geht als sektorspezifischer Rechtsakt vor und die Aufsicht liegt bei der BaFin.',
     applicability: { essential: 'required', important: 'required', indirect: 'not_applicable' },
   },
   {
     article_ref: 'Art. 23(2)',
+    bsig_ref: '§ 32 BSIG',
     category: 'Meldepflichten',
     title: 'Aktualisierte Meldung innerhalb 72 Stunden',
     description: 'Unverzüglich, spätestens 72 Stunden nach Kenntnisnahme, muss eine aktualisierte Meldung mit erster Einschätzung des Vorfalls, Schweregrad und Indikatoren für Kompromittierung übermittelt werden. Fuer nicht direkt betroffene Einrichtungen entfaellt diese Pflicht gegenueber der Behoerde; an ihre Stelle tritt in der Regel eine vertragliche Meldepflicht gegenueber dem betroffenen Auftraggeber.',
+    references: [
+      { label: 'BSI: NIS-2-Meldepflicht', url: 'https://www.bsi.bund.de/dok/nis-2-meldepflicht' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'not_applicable' },
   },
   {
     article_ref: 'Art. 23(4)',
+    bsig_ref: '§ 32 BSIG',
     category: 'Meldepflichten',
     title: 'Abschlussbericht spätestens einen Monat nach Vorfall',
     description: 'Spätestens einen Monat nach Übermittlung der Meldung gemäß Art. 23(2) ist ein Abschlussbericht mit Beschreibung des Vorfalls, Angabe der Ursachen und getroffenen Abhilfemaßnahmen zu übermitteln. Fuer nicht direkt betroffene Einrichtungen entfaellt diese Pflicht gegenueber der Behoerde; an ihre Stelle tritt in der Regel eine vertragliche Meldepflicht gegenueber dem betroffenen Auftraggeber.',
+    references: [
+      { label: 'BSI: NIS-2-Meldepflicht', url: 'https://www.bsi.bund.de/dok/nis-2-meldepflicht' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'not_applicable' },
   },
   {
     article_ref: 'Art. 20(1)',
+    bsig_ref: '§ 38 BSIG',
     category: 'Governance & Managementhaftung',
     title: 'Billigung und Ueberwachung der Risikomanagementmassnahmen durch die Leitung',
     description: 'Die Leitungsorgane billigen die Massnahmen zum Management von Cybersicherheitsrisiken, ueberwachen ihre Umsetzung und haften fuer Verstoesse. Nachweis sind dokumentierte Entscheidungen — Budget, Freigaben, Managementbewertung.',
+    references: [
+      { label: 'BSI: Geschaeftsleitungsschulung (#nis2know)' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
   },
   {
     article_ref: 'Art. 20(2)',
+    bsig_ref: '§ 38 Abs. 3 BSIG',
     category: 'Governance & Managementhaftung',
     title: 'Schulung der Leitungsorgane',
     description: 'Mitglieder der Leitungsorgane nehmen an Schulungen teil, um Risiken und Managementpraktiken im Bereich der Cybersicherheit bewerten zu koennen. Vergleichbare Schulungen sind den Beschaeftigten regelmaessig anzubieten.',
+    references: [
+      { label: 'BSI: Geschaeftsleitungsschulung (#nis2know)' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
   },
   {
@@ -136,6 +193,9 @@ const catalog = [
     category: 'Lieferkettensicherheit',
     title: 'Bewertung der Sicherheitspraktiken unmittelbarer Anbieter',
     description: 'Bei der Bewertung der Lieferkette sind die spezifischen Schwachstellen der einzelnen Anbieter, die Qualitaet ihrer Produkte und ihrer Cybersicherheitspraxis sowie die Ergebnisse koordinierter Risikobewertungen zu beruecksichtigen.',
+    references: [
+      { label: 'BSI: NIS-2 — Sichere Lieferkette', url: 'https://www.bsi.bund.de/dok/nis-2-sichere-lieferkette' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
   },
   {
@@ -816,6 +876,9 @@ const catalog = [
     category: 'Registrierung & behoerdliche Pflichten',
     title: 'Registrierung beim Bundesamt binnen drei Monaten',
     description: 'Besonders wichtige und wichtige Einrichtungen sowie Anbieter von Domain-Name-Registry-Diensten uebermitteln dem Bundesamt binnen drei Monaten, nachdem sie erstmals oder erneut zu einer solchen Einrichtung geworden sind, die vorgeschriebenen Angaben ueber eine gemeinsame Registrierungsmoeglichkeit von BSI und BBK. Die Pflicht entsteht von selbst — es gibt keinen Bescheid, der sie ausloest.',
+    references: [
+      { label: 'BSI: Betreiber kritischer Anlagen (KRITIS)', url: 'https://www.bsi.bund.de/dok/kritis' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'not_applicable' },
   },
   {
@@ -870,6 +933,9 @@ const catalog = [
     title: 'Besondere Registrierungspflicht fuer bestimmte Einrichtungsarten',
     description: 'Fuer einzelne Einrichtungsarten — unter anderem DNS-Diensteanbieter, Top-Level-Domain-Registries, Cloud-Computing-Dienste, Rechenzentrumsdienste, Content-Delivery-Netzwerke, Anbieter verwalteter Dienste und verwalteter Sicherheitsdienste sowie Anbieter von Online-Marktplaetzen, Online-Suchmaschinen und Plattformen sozialer Netzwerke — gelten zusaetzliche Registrierungsangaben. Wer hierunter faellt, erfuellt mit der allgemeinen Registrierung nach § 33 BSIG noch nicht alles.',
     scope_note: 'Gilt nur fuer die in § 34 BSIG aufgezaehlten Einrichtungsarten. Wen das nicht betrifft, setzt das Kriterium auf "nicht anwendbar".',
+    references: [
+      { label: 'BSI: Betreiber kritischer Anlagen (KRITIS)', url: 'https://www.bsi.bund.de/dok/kritis' },
+    ],
     applicability: { essential: 'required', important: 'required', indirect: 'not_applicable' },
   },
   {
@@ -953,6 +1019,9 @@ const catalog = [
     title: 'Systeme zur Angriffserkennung fuer Betreiber kritischer Anlagen',
     description: 'Betreiber kritischer Anlagen setzen fuer die informationstechnischen Systeme, Komponenten und Prozesse, die fuer die Funktionsfaehigkeit der von ihnen betriebenen kritischen Anlagen massgeblich sind, Systeme zur Angriffserkennung ein. Diese Systeme muessen geeignete Parameter und Merkmale aus dem laufenden Betrieb kontinuierlich und automatisch erfassen und auswerten; sie sollen fortwaehrend Bedrohungen identifizieren und vermeiden sowie fuer eingetretene Stoerungen geeignete Beseitigungsmassnahmen vorsehen. Das ist eine deutsche Anforderung, die ueber Art. 21 der Richtlinie hinausgeht.',
     scope_note: 'Gilt nur fuer Betreiber kritischer Anlagen. Wen das nicht betrifft, setzt das Kriterium auf "nicht anwendbar".',
+    references: [
+      { label: 'BSI: Betreiber kritischer Anlagen (KRITIS)', url: 'https://www.bsi.bund.de/dok/kritis' },
+    ],
     applicability: { essential: 'required', important: 'not_applicable', indirect: 'not_applicable' },
   },
   {
@@ -1011,7 +1080,11 @@ const catalog = [
     category: 'Kritische Anlagen',
     title: 'Nachweis der Umsetzung alle drei Jahre',
     description: 'Betreiber kritischer Anlagen weisen dem Bundesamt turnusmaessig alle drei Jahre nach, dass die Anforderungen an ihre Risikomanagementmassnahmen erfuellt sind. Diese Nachweispflicht trifft ausschliesslich Betreiber kritischer Anlagen; fuer die uebrigen besonders wichtigen und wichtigen Einrichtungen sieht das Gesetz keinen turnusmaessigen Nachweis vor.',
-    scope_note: 'Gilt nur fuer Betreiber kritischer Anlagen. Wen das nicht betrifft, setzt das Kriterium auf "nicht anwendbar".',
+    scope_note: 'Gilt nur fuer Betreiber kritischer Anlagen. Unternehmen im Anwendungsbereich der DORA erbringen keinen Nachweis nach § 39 Abs. 1 BSIG — DORA geht als sektorspezifischer Rechtsakt vor.',
+    references: [
+      { label: 'BSI: Betreiber kritischer Anlagen (KRITIS)', url: 'https://www.bsi.bund.de/dok/kritis' },
+      { label: 'BSI: DORA und NIS-2', url: 'https://www.bsi.bund.de/dok/dora-und-nis-2' },
+    ],
     applicability: { essential: 'required', important: 'not_applicable', indirect: 'not_applicable' },
   },
   {
@@ -1051,6 +1124,96 @@ const catalog = [
     category: 'Kritische Anlagen',
     title: 'Nachweisunterlagen vorgehalten',
     description: 'Die dem Nachweis zugrunde liegenden Unterlagen — Geltungsbereich, Pruefgrundlage, Ergebnisse, Maengelliste — sind vollstaendig abgelegt und auffindbar.',
+    scope_note: 'Gilt nur fuer Betreiber kritischer Anlagen. Wen das nicht betrifft, setzt das Kriterium auf "nicht anwendbar".',
+    applicability: { essential: 'required', important: 'not_applicable', indirect: 'not_applicable' },
+  },
+
+  // ------------------------------------------------------------------
+  // Konkretisierungen aus dem #nis2know-Infopaket des BSI und der
+  // TR-02102. Das Gesetz sagt "Kryptografie"; welches Sicherheitsniveau
+  // und welche Fristen damit gemeint sind, steht erst in der Richtlinie
+  // des BSI. Diese Kriterien tragen das nach.
+  // ------------------------------------------------------------------
+  {
+    article_ref: 'Art. 21(2)(h).5',
+    parent_ref: 'Art. 21(2)(h)',
+    bsig_ref: '§ 30 Abs. 2 Nr. 8 BSIG',
+    category: 'Kryptografie',
+    title: 'Inventar kryptografischer Verfahren, Schluessel und Zertifikate',
+    description: 'Welche Verfahren, Schluessel und Zertifikate wo im Einsatz sind, ist systematisch erfasst. Ohne dieses Inventar laesst sich weder ein Ablaufdatum ueberwachen noch eine Migration planen — das BSI nennt es den ersten der drei Umsetzungsschritte.',
+    applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
+  },
+  {
+    article_ref: 'Art. 21(2)(h).6',
+    parent_ref: 'Art. 21(2)(h)',
+    bsig_ref: '§ 30 Abs. 2 Nr. 8 BSIG',
+    category: 'Kryptografie',
+    title: 'Kritische Systeme und langlebig schuetzenswerte Daten bewertet',
+    description: 'Bewertet ist, welche Systeme kritisch sind und welche Daten ueber Jahre hinweg vertraulich bleiben muessen. Daten mit langer Schutzdauer sind heute schon von "harvest now, decrypt later" betroffen und bestimmen die Dringlichkeit der Migration.',
+    applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
+  },
+  {
+    article_ref: 'Art. 21(2)(h).7',
+    parent_ref: 'Art. 21(2)(h)',
+    bsig_ref: '§ 30 Abs. 2 Nr. 8 BSIG',
+    category: 'Kryptografie',
+    title: 'Migrationsfahrplan auf quantensichere Verfahren',
+    description: 'Aus der Bewertung ist ein Fahrplan abgeleitet. Die TR-02102-1 empfiehlt den alleinigen Einsatz klassischer Schluesseleinigungsverfahren nur noch bis Ende 2031 und quantensichere Verfahren (etwa ML-KEM) hybrid in Kombination mit klassischen; bei hohem Schutzbedarf soll die Umstellung bis Ende 2030 erfolgen.',
+    applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
+  },
+  {
+    article_ref: 'Art. 21(2)(h).8',
+    parent_ref: 'Art. 21(2)(h)',
+    bsig_ref: '§ 30 Abs. 2 Nr. 8 BSIG',
+    category: 'Kryptografie',
+    title: 'Konformitaet zur BSI TR-02102 belegt',
+    description: 'Die eingesetzten Verfahren und Schluessellaengen sind gegen die TR-02102 geprueft und das Ergebnis ist dokumentiert: Sicherheitsniveau von mindestens 120 Bit, TLS 1.3 bevorzugt und TLS 1.2 nur noch bis Ende 2031, RSA-Modulus ab 3000 Bit. Fuer TLS, IPsec/IKEv2 und SSH gelten die Teile 2 bis 4.',
+    applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
+  },
+  {
+    article_ref: 'Art. 21(2)(j).5',
+    parent_ref: 'Art. 21(2)(j)',
+    bsig_ref: '§ 30 Abs. 2 Nr. 10 BSIG',
+    category: 'Multi-Faktor-Authentifizierung',
+    title: 'Faktoren aus verschiedenen Kategorien kombiniert',
+    description: 'Die eingesetzten Faktoren stammen aus unterschiedlichen Kategorien — Wissen, Besitz, Biometrie. Zwei Faktoren derselben Kategorie erschweren einem Angreifer den Zugriff kaum. Der Schutzbedarf ist anhand des Schadenspotentials bei Kompromittierung festgelegt; die Vertrauensniveaus normal, substanziell und hoch dienen als Orientierung.',
+    applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
+  },
+  {
+    article_ref: 'Art. 21(2)(j).6',
+    parent_ref: 'Art. 21(2)(j)',
+    bsig_ref: '§ 30 Abs. 2 Nr. 10 BSIG',
+    category: 'Multi-Faktor-Authentifizierung',
+    title: 'Lebenszyklus der Authentisierungsmittel geregelt',
+    description: 'Nicht nur die Sicherheit des Mittels selbst, sondern sein ganzer Lebenszyklus ist geregelt: Ausgabe, Ersatz bei Verlust, Sperrung und Rueckruf. Ein Token, das nach dem Austritt weiter gilt, hebt die Massnahme auf.',
+    applicability: { essential: 'required', important: 'required', indirect: 'recommended' },
+  },
+  {
+    article_ref: 'Art. 23(4).2',
+    parent_ref: 'Art. 23(4)',
+    bsig_ref: '§ 32 BSIG',
+    category: 'Meldepflichten',
+    title: 'Fortschrittsmeldung bei andauerndem Vorfall',
+    description: 'Dauert der Vorfall nach einem Monat noch an, tritt an die Stelle des Abschlussberichts eine Fortschrittsmeldung, der Abschlussbericht folgt nach Abschluss der Bearbeitung. Wer das erst im Ernstfall liest, meldet zu spaet oder das Falsche.',
+    applicability: { essential: 'required', important: 'required', indirect: 'not_applicable' },
+  },
+  {
+    article_ref: '§ 33 BSIG.6',
+    parent_ref: '§ 33 BSIG',
+    bsig_ref: '§ 33 BSIG',
+    category: 'Registrierung & behoerdliche Pflichten',
+    title: 'Jaehrliche Mitteilung von Versorgungsgrad und kritischen Komponenten',
+    description: 'Betreiber kritischer Anlagen teilen dem Bundesamt Aenderungen des Versorgungsgrades und der eingesetzten kritischen Komponenten einmal jaehrlich mit. Das ist ein eigener Turnus neben der Zwei-Wochen-Frist fuer Aenderungen der Registrierungsdaten.',
+    scope_note: 'Gilt nur fuer Betreiber kritischer Anlagen. Wen das nicht betrifft, setzt das Kriterium auf "nicht anwendbar".',
+    applicability: { essential: 'required', important: 'not_applicable', indirect: 'not_applicable' },
+  },
+  {
+    article_ref: '§ 31 BSIG.6',
+    parent_ref: '§ 31 BSIG',
+    bsig_ref: '§ 31 BSIG',
+    category: 'Kritische Anlagen',
+    title: 'Meldeweg ueber das Melde- und Informationsportal',
+    description: 'Fuer die Meldung erheblicher Sicherheitsvorfaelle nutzen Betreiber kritischer Anlagen prioritaer weiterhin das Melde- und Informationsportal (MIP); eine zusaetzliche Meldung im BSI-Portal entfaellt. Der interne Meldeweg benennt das richtige Portal.',
     scope_note: 'Gilt nur fuer Betreiber kritischer Anlagen. Wen das nicht betrifft, setzt das Kriterium auf "nicht anwendbar".',
     applicability: { essential: 'required', important: 'not_applicable', indirect: 'not_applicable' },
   },
