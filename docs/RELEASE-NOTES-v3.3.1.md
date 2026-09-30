@@ -73,6 +73,22 @@ push-to-main run still covers all of them.
 auto-merge for a Dependabot pull request, for **minor and patch bumps only**.
 Major bumps are left for a human: they are the ones that break an API.
 
+It uses no third-party action. The job holds write permissions, so the fewer
+things run inside it the better — and CodeQL flags an unpinned third-party
+action in exactly this position. Dependabot's own metadata is read straight
+from its commit message, which also covers a case `dependabot/fetch-metadata`
+does not: **a security update carries no `update-type` at all**, only
+`dependency-name`, `dependency-version` and `dependency-type`. Verified
+against the `ip-address` bump in this repository. Treating that as "unknown,
+leave it" would park exactly the updates that close an open alert, so the job
+falls back to the versions Dependabot names in prose and allows the bump when
+every one of them keeps its major — with the minor required to match as well
+below 1.0.0, where semver permits a breaking minor.
+
+Both directions are covered: a `semver-major` update-type, a 1.x → 2.x
+security bump and a 0.1.x → 0.2.x security bump are all declined; a grouped
+minor/patch pull request and a 0.1.2 → 0.1.9 security bump are allowed.
+
 **Auto-merge does not mean "merge now".** GitHub holds the pull request until
 every *required* status check has passed, and that requirement lives in the
 branch protection ruleset, not in the workflow file. Two settings have to be

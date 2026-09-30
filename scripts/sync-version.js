@@ -89,8 +89,18 @@ for (const file of filesToUpdate) {
  */
 const syncLockfile = (dir) => {
   const lockPath = path.join(rootDir, dir, 'package-lock.json');
-  if (!fs.existsSync(lockPath)) return false;
-  const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+  // Direkt lesen statt vorher auf Existenz zu pruefen: Zwischen einem
+  // existsSync und dem Lesen kann die Datei verschwinden, und der Fehler
+  // faellt dann an der unerwarteten Stelle an. Das Fehlen ist hier kein
+  // Fehler, sondern der Normalfall fuer ein Verzeichnis ohne Lockfile.
+  let raw;
+  try {
+    raw = fs.readFileSync(lockPath, 'utf8');
+  } catch (err) {
+    if (err.code === 'ENOENT') return false;
+    throw err;
+  }
+  const lock = JSON.parse(raw);
   if (lock.version === version && lock.packages?.['']?.version === version) return false;
   lock.version = version;
   if (lock.packages?.['']) lock.packages[''].version = version;
