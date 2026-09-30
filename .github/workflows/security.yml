@@ -212,6 +212,7 @@ jobs:
           node scripts/openapi-sync.js --check
           node scripts/test-mcp-gate.js
           node scripts/test-backup-export.js
+          node scripts/test-upload-storage.js
           node scripts/test-graph-projection.js
           node scripts/test-query-filters.js
           node scripts/test-job-lock.js
@@ -241,6 +242,10 @@ jobs:
             require('./src/routes/passkey');
             require('./src/routes/authOidc');
             require('./src/routes/discovery');
+            require('./src/services/uploadStorage');
+            require('./src/routes/backup');
+            require('./src/routes/policies');
+            require('./src/routes/documents');
             require('./src/middleware/auth');
             require('helmet'); require('express-rate-limit'); require('express-session');
             console.log('Backend modules loaded successfully');

@@ -28,7 +28,7 @@ const deleteLimiter = rateLimit({
   message: { error: 'Zu viele Lösch-Anfragen. Bitte warten Sie 5 Minuten.' }
 });
 
-const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+const UPLOAD_DIR = require('../services/uploadStorage').uploadRoot();
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const getSafePath = (filename) => {

@@ -396,8 +396,8 @@ docker run -d --name isms --restart unless-stopped \
 | `HSTS_INCLUDE_SUBDOMAINS` | – | `false` drops the `includeSubDomains` directive (default: on) |
 | `HSTS_PRELOAD` | – | `true` adds `preload`. Only set this if the domain **and all its subdomains** are permanently served over HTTPS |
 | `PORT` | – | Default: `3001` |
-| `UPLOAD_DIR` | – | Default: `/app/uploads` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Seed administrator credentials. **If `ADMIN_PASSWORD` is unset, a random one-time password is generated and printed to the logs on first start** (no known default) |
+| `UPLOAD_DIR` | – | Where **every** uploaded document lives — policies, contracts, DPAs, certificates, risk reports, templates. The in-app backup covers exactly this directory. The Docker setups set `/app/uploads`; without the variable it is `backend/uploads` |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | – | Seed administrator credentials. **If `ADMIN_PASSWORD` is unset, a random one-time password is generated on first start and written to `INITIAL_ADMIN_PASSWORD.txt` in `UPLOAD_DIR`** (mode 0600; the log shows only the path, never the password). No known default |
 | `DB_POOL_MIN` / `DB_POOL_MAX` | – | Sequelize connection pool (default `2` / `10`) |
 | `DB_CONNECT_TIMEOUT_MS` | – | Connect timeout, fail fast on a dead DB (default `10000`) |
 | `DB_SSL` | – | `require` encrypts without validating the certificate, `verify` validates it (with `DB_SSL_CA`) |
@@ -1016,8 +1016,8 @@ Siehe auch die Sicherheitsanweisungen in [SECURITY.md](SECURITY.md) für verantw
 - Set `ENCRYPTION_KEY` (AES-256-GCM) — used for OIDC/SMTP/LLM secrets **and** TOTP secrets at rest; if changed, those secrets must be re-entered
 - Change all database passwords in `.env`. The bundled `docker-compose.yml` binds PostgreSQL to `127.0.0.1` only — do not expose the DB port to the network
 - Put HTTPS via a reverse proxy in front (nginx, Traefik, Caddy). Set `SECURE_COOKIES=true` only once the proxy forwards `X-Forwarded-Proto: https` — otherwise the Secure flag prevents the session cookie from being set (breaks passkey/OIDC login)
-- Include the Docker volume `uploads` in your backup strategy
-- **Initial admin password:** if `ADMIN_PASSWORD` is not set, a random one-time password is generated and printed to the logs on first start — retrieve it there (or set `ADMIN_PASSWORD`) and change it after first login
+- Include `UPLOAD_DIR` (the Docker volume `uploads`) in your backup strategy — it holds every uploaded document. The in-app backup includes it, records in `backup-meta.json` how many files it contains, and reports database entries whose document is missing
+- **Initial admin password:** if `ADMIN_PASSWORD` is not set, a random one-time password is written to `INITIAL_ADMIN_PASSWORD.txt` in `UPLOAD_DIR` on first start. Read it, log in, change the password, **then delete the file**. Since v3.3.2 it is excluded from the in-app backup; backups made earlier contain it if the file was still there
 - Set up regular PostgreSQL backups of the `isms` database. `pg_dump` also captures the AGE graph; the in-app backup deliberately does not, because the graph is rebuilt from the tables on restore
 
 **Built-in hardening (already active):**
