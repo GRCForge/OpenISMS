@@ -1,0 +1,158 @@
+name: Dependabot auto-merge
+
+# Enables GitHub's native auto-merge on a Dependabot pull request once its
+# checks pass — for minor and patch bumps only.
+#
+# WHAT MAKES THIS SAFE, AND WHAT DOES NOT
+#
+# "Auto-merge" does not mean "merge now". GitHub holds the pull request until
+# every REQUIRED status check has passed. That requirement lives in the branch
+# protection ruleset, not in this file. If no checks are required there, auto-
+# merge degrades into "merge immediately" and this workflow becomes a way to
+# push untested dependency bumps straight to main — which, in this repository,
+# also means straight into a release image.
+#
+# So this file is only half of the mechanism. The other half, once:
+#
+#   Settings → General → Pull Requests → Allow auto-merge          [on]
+#   Settings → Rules → the ruleset for main → Require status checks
+#       · Backend — Install & Smoke Test
+#       · Frontend — TypeScript & Build
+#       · npm audit — Dependency Vulnerabilities
+#
+# Those three are what security.yml now runs for a Dependabot pull request.
+# Do not add Snyk or SonarQube to the required set: GitHub withholds Actions
+# secrets from Dependabot pull requests, so they cannot run there and a
+# required check that never reports blocks the merge forever.
+#
+# Major bumps are deliberately left alone. They are the ones that break an
+# API, and a human should look at them.
+#
+# No third-party action is used here. The job holds write permissions, so the
+# fewer things run inside it, the better — and CodeQL flags an unpinned
+# third-party action in exactly this position. Dependabot's own metadata is
+# read straight from its commit message instead, which also covers a case
+# dependabot/fetch-metadata does not: a security update carries no
+# update-type at all.
+
+on: pull_request_target
+
+# pull_request_target runs against the BASE of the pull request, so this file
+# is the version on main, not the one in the branch. That is what allows the
+# write permissions below without letting a pull request edit the workflow
+# that merges it. Nothing here checks out or executes the branch's code.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Enable auto-merge for minor and patch bumps
+    if: github.actor == 'dependabot[bot]'
+    runs-on: self-hosted
+    steps:
+      - name: Decide and enable auto-merge
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+
+            // Dependabot writes a machine-readable block into its own commit
+            // message — the same one `dependabot/fetch-metadata` parses:
+            //
+            //   updated-dependencies:
+            //   - dependency-name: openai
+            //     update-type: version-update:semver-minor
+            //
+            // Reading it directly keeps a third-party action out of a job
+            // that holds write permissions, and it handles grouped pull
+            // requests better: fetch-metadata reports one update-type, while
+            // a group can mix a patch with a major. Every entry has to be
+            // minor or patch here, not just the first.
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number,
+              per_page: 100,
+            });
+            const messages = commits.map((c) => c.commit.message).join('\n');
+            const types = [...messages.matchAll(/^\s*update-type:\s*(\S+)/gm)].map((m) => m[1]);
+
+            const allowed = new Set([
+              'version-update:semver-patch',
+              'version-update:semver-minor',
+            ]);
+
+            let blocking;
+            let reason;
+
+            if (types.length > 0) {
+              blocking = [...new Set(types.filter((t) => !allowed.has(t)))];
+              reason = [...new Set(types)].join(', ');
+            } else {
+              // A Dependabot SECURITY update carries no update-type at all —
+              // only dependency-name, dependency-version and dependency-type.
+              // Verified against the commit message of the ip-address bump in
+              // this repository. Treating that as "unknown, leave it" would
+              // park exactly the updates that close an open alert, and
+              // fetch-metadata would have reported nothing here either.
+              //
+              // So fall back to the versions Dependabot names in prose:
+              // "Bumps [x] from A to B" and, in a grouped pull request,
+              // "Updates `x` from A to B".
+              // Prerelease und Build-Metadaten beginnen mit - oder +; so faellt
+              // der Satzpunkt am Zeilenende nicht mit in die Version.
+              const SEMVER = String.raw`(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)`;
+              const re = new RegExp(String.raw`\bfrom ${SEMVER} to ${SEMVER}`, 'g');
+              const pairs = [...new Map(
+                [...messages.matchAll(re)].map((m) => [`${m[1]}->${m[2]}`, m]),
+              ).values()];
+              if (pairs.length === 0) {
+                core.warning(`No version metadata on #${pull_number} — not enabling auto-merge.`);
+                return;
+              }
+              // Same major is a minor or patch bump — except below 1.0.0,
+              // where semver lets a minor bump break the API, so there the
+              // minor has to match too.
+              const isMajorBump = ([, a, b]) => {
+                const [aMaj, aMin] = a.split('.').map(Number);
+                const [bMaj, bMin] = b.split('.').map(Number);
+                return aMaj !== bMaj || (aMaj === 0 && aMin !== bMin);
+              };
+              blocking = pairs.filter(isMajorBump).map(([, a, b]) => `${a} -> ${b}`);
+              reason = `security update, ${pairs.length} version change(s)`;
+            }
+
+            if (blocking.length > 0) {
+              core.notice(
+                `#${pull_number} contains ${blocking.join(', ')} — auto-merge not enabled. ` +
+                'Review the changelog and merge by hand.',
+              );
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number,
+            });
+
+            // A conflicted pull request is left for a human. Dependabot
+            // rebases its own branches, so this usually resolves itself on
+            // the next run; forcing it would only produce a merge nobody
+            // reviewed.
+            if (pr.mergeable_state === 'dirty') {
+              core.warning(`#${pull_number} has conflicts — not enabling auto-merge.`);
+              return;
+            }
+
+            await github.graphql(
+              `mutation($id: ID!) {
+                 enablePullRequestAutoMerge(input: {
+                   pullRequestId: $id,
+                   mergeMethod: SQUASH
+                 }) { clientMutationId }
+               }`,
+              { id: pr.node_id },
+            );
+            core.info(`Auto-merge enabled for #${pull_number} (${reason}).`);
