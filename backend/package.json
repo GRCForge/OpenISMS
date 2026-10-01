@@ -12,9 +12,9 @@
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.128.0",
+    "@anthropic-ai/sdk": "^0.129.0",
     "@google/generative-ai": "^0.24.1",
-    "@modelcontextprotocol/sdk": "^1.30.1",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "@simplewebauthn/server": "^14.0.3",
     "adm-zip": "^0.6.1",
     "archiver": "^8.0.0",
@@ -30,7 +30,7 @@
     "mammoth": "^1.13.0",
     "multer": "^2.4.0",
     "node-cron": "^4.6.0",
-    "nodemailer": "^10.0.11",
+    "nodemailer": "^10.0.12",
     "openai": "^7.23.0",
     "openid-client": "^6.8.8",
     "otplib": "^13.5.0",
