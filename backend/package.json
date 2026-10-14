@@ -44,7 +44,7 @@
     "sequelize": "^6.37.8",
     "swagger-ui-dist": "^5.33.1",
     "web-push": "^3.6.7",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
