@@ -5968,8 +5968,10 @@ function createMcpRouter() {
   // origin requests. This router never reads cookies for auth (see getTokenFromHeaders
   // above -- Authorization header, X-API-Key/X-MCP-Key headers, or a GET-only query
   // token), so `credentials: true` served no purpose here and is removed.
+  // Origin '*' instead of reflecting the request origin (origin: true): same effect
+  // without credentials, but no per-request reflection (CodeQL js/cors-permissive-configuration).
   router.use(cors({
-    origin: true,
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: [
       'Content-Type',

@@ -288,9 +288,9 @@ jobs:
       - name: npm audit — Backend
         # Fail only on high/critical vulnerabilities that have a CLEAN (non-breaking) fix
         # available and not yet applied (npm audit --json -> fixAvailable === true).
-        # Unfixable transitive advisories — no patched version published upstream, e.g.
-        # braces<=3.0.3 reached only via the nodemon devDependency (not in the production
-        # image) — must not block merges forever; Snyk, Socket and Trivy track those.
+        # Unfixable transitive advisories — no patched version published upstream (e.g.
+        # braces<=3.0.3, formerly via nodemon; replaced by node --watch in v3.3.4) — must
+        # not block merges forever; Snyk, Socket and Trivy track those.
         # This matches the gate's intent: block what we can actually fix.
         working-directory: backend
         run: |
