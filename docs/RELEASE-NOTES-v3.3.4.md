@@ -28,8 +28,8 @@ usual.
 | `openai` | ^7.25.0 | **^7.32.0** |
 | `pg` | ^8.16.3 | **^8.23.1** |
 | `read-excel-file` | ^9.3.10 | **^9.3.12** |
-| `swagger-ui-dist` | ^5.33.0 | **^5.33.1** |
-| `zod` | ^4.6.5 | **^4.6.6** |
+| `swagger-ui-dist` | ^5.33.0 | **^5.33.2** |
+| `zod` | ^4.6.5 | **^4.6.7** |
 
 `proxy-addr` (critical, transitive) was resolved in #226.
 
@@ -37,14 +37,14 @@ usual.
 
 | Package | v3.3.3 | v3.3.4 |
 |---|---|---|
-| `i18next` | ^26.4.2 | **^26.4.3** |
+| `i18next` | ^26.4.2 | **^26.4.4** |
 | `lucide-react` | ^1.48.0 | **^1.55.0** |
 | `mermaid` | ^12.0.0 | **^12.2.0** |
 | `katex` (transitive) | | updated |
 | `react-i18next` | ^17.0.15 | **^17.0.16** |
 | `vite`, `@vitejs/plugin-react`, `postcss` (dev) | | patch updates |
 
-Backend and frontend updates come from the Dependabot pull requests #228–#232, #234 and #235.
+Backend and frontend updates come from the Dependabot pull requests #228–#232 and #234–#237.
 
 ## CI
 
