@@ -12,6 +12,7 @@ usual.
 | Finding | Change |
 |---|---|
 | Dependabot GHSA-hp3w-g68c-fv3c / CVE-2026-97058 (`sprintf-js` <= 1.1.3, medium, no patched version) | Reached only via `mammoth` → `argparse@1` → `sprintf-js`. `argparse` is used solely by mammoth's command-line wrapper (`bin/mammoth`), which OpenISMS does not call; the library entry point (`lib/index.js`) does not load it. An npm override pins `mammoth` → `argparse@^2.0.1`, which has no `sprintf-js` dependency. |
+| npm audit (dev only) GHSA-vfj7-8cjw-p6xm / CVE-2026-93687 (`braces` <= 3.0.3, high, no patched version) | Reached only via the `nodemon` devDependency → `chokidar@3`. `nodemon` is removed; `npm run dev` now uses Node's built-in `node --watch src/index.js`. The production image was never affected. |
 | Code scanning #256 `js/cors-permissive-configuration` (medium), `backend/src/mcp/server.js` | The MCP router now answers with `Access-Control-Allow-Origin: *` instead of reflecting the request `Origin`. Without `credentials` both are equivalent for clients; the reflection itself is gone. Which MCP clients can connect does not change. |
 
 ## Backend

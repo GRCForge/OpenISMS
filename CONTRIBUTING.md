@@ -79,8 +79,8 @@ PORT=3001
 ### 3. Start the development servers
 
 ```bash
-# Terminal 1 — backend (auto-restarts on change with nodemon if installed)
-cd backend && node src/index.js
+# Terminal 1 — backend (auto-restarts on change via node --watch)
+cd backend && npm run dev
 
 # Terminal 2 — frontend (Vite dev server with HMR)
 cd frontend && npm run dev
