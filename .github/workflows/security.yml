@@ -218,6 +218,7 @@ jobs:
           node scripts/test-job-lock.js
           node scripts/test-oidc-audience.js
           node scripts/test-rate-limit-once.js
+          node scripts/test-mcp-cors.js
           node scripts/test-discovery-sync.js
           node scripts/test-threat-intel.js
           node scripts/test-nis2-applicability.js

@@ -73,6 +73,10 @@ services:
       # Passkeys/WebAuthn: in Produktion auf die Domain setzen
       WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
       WEBAUTHN_ORIGIN: ${WEBAUTHN_ORIGIN:-}
+      # MCP-Server (/mcp, /sse): statischer Schluessel und erlaubte Browser-Origins.
+      # MCP_CORS_ORIGINS leer = nur APP_URL; "*" = jede Origin (siehe .env.example).
+      MCP_SECRET: ${MCP_SECRET:-}
+      MCP_CORS_ORIGINS: ${MCP_CORS_ORIGINS:-}
     ports:
       - "8080:3001"
     volumes:
