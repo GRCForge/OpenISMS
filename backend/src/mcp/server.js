@@ -7,7 +7,7 @@ const { randomUUID, timingSafeEqual } = require('crypto');
 const { z } = require('zod');
 const { Op } = require('sequelize');
 const express = require('express');
-const cors = require('cors');
+const { createMcpCors } = require('./cors');
 const jwt = require('jsonwebtoken');
 const { hashToken } = require('../services/cryptoService');
 
@@ -5959,37 +5959,15 @@ function createMcpRouter() {
   const { apiLimiter } = require('../middleware/rateLimiter');
   const router = express.Router();
 
-  // CORS for MCP endpoints: external MCP clients (Claude Desktop, claude.ai, other
-  // third-party MCP hosts) can call this from any origin, so we deliberately don't
-  // restrict Origin the way the main frontend API does (index.js, APP_URL allowlist).
-  // `credentials: true` was previously combined with a reflect-any-origin policy,
-  // which CodeQL correctly flags as a permissive-CORS misconfiguration (alert #251):
-  // that combination lets any web page make credentialed (cookie-bearing) cross-
-  // origin requests. This router never reads cookies for auth (see getTokenFromHeaders
-  // above -- Authorization header, X-API-Key/X-MCP-Key headers, or a GET-only query
-  // token), so `credentials: true` served no purpose here and is removed.
-  // Origin '*' instead of reflecting the request origin (origin: true): same effect
-  // without credentials, but no per-request reflection (CodeQL js/cors-permissive-configuration).
-  router.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-API-Key',
-      'x-api-key',
-      'x-mcp-key',
-      'mcp-session-id',
-      'MCP-Session-Id',
-      'last-event-id',
-      'Last-Event-ID',
-      'mcp-protocol-version',
-      'MCP-Protocol-Version',
-      'Accept',
-      'Origin',
-    ],
-    exposedHeaders: ['mcp-session-id', 'MCP-Session-Id', 'WWW-Authenticate'],
-  }));
+  // CORS and Origin check for MCP endpoints, configurable via MCP_CORS_ORIGINS
+  // (see ./cors.js and .env.example). Non-browser MCP clients send no Origin and
+  // are unaffected; a browser page on an origin that is not allowed gets 403
+  // before it reaches the transport (MCP spec: validate Origin against DNS
+  // rebinding). Default allow-list is APP_URL; "*" is an explicit opt-in.
+  // No credentials: this router authenticates by header/token, never by cookie.
+  const mcpCors = createMcpCors();
+  console.log(`[MCP] CORS/Origin policy: ${mcpCors.policy.any ? 'any origin (*)' : mcpCors.policy.origins.join(', ')} (${mcpCors.policy.source})`);
+  router.use(mcpCors);
 
   router.use(apiLimiter);
   router.use(express.json({ limit: '10mb' }));

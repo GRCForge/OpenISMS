@@ -391,6 +391,8 @@ docker run -d --name isms --restart unless-stopped \
 | `ENCRYPTION_KEY` | recommended | AES-256 key for encrypting stored secrets (OIDC/SMTP/LLM secrets, TOTP secrets) |
 | `SESSION_SECRET` | recommended | Express session (OIDC flow) |
 | `APP_URL` | ✓² | Public URL (for OIDC callback and CORS) |
+| `MCP_SECRET` | – | Static admin key for the MCP endpoints (`Authorization: Bearer <MCP_SECRET>`). Unset: API tokens / JWT only |
+| `MCP_CORS_ORIGINS` | – | Browser origins allowed on `/mcp` and `/sse`, comma-separated. Unset: only `APP_URL`; `*`: any origin (explicit opt-in, never with credentials). A disallowed `Origin` gets 403 before the MCP transport. Native MCP clients send no `Origin` and are not affected |
 | `SECURE_COOKIES` | – | `true` marks the session cookie Secure. Only enable behind HTTPS **with** `X-Forwarded-Proto` forwarded by the proxy, otherwise the session cookie is not set |
 | `HSTS_MAX_AGE` | – | `Strict-Transport-Security` max-age in seconds (default `31536000` = 1 year). `0` disables the header. Browsers ignore it on plain HTTP, so the default is safe for HTTP-only setups |
 | `HSTS_INCLUDE_SUBDOMAINS` | – | `false` drops the `includeSubDomains` directive (default: on) |
