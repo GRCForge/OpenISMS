@@ -73,6 +73,7 @@ jobs:
   gate:
     name: Determine which sections run
     runs-on: self-hosted
+    timeout-minutes: 45
     outputs:
       run_security: ${{ steps.decide.outputs.run_security }}
       run_build: ${{ steps.decide.outputs.run_build }}
@@ -102,6 +103,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_security == 'true'
     runs-on: self-hosted
+    timeout-minutes: 45
     permissions:
       contents: read
       security-events: write
@@ -150,6 +152,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_build == 'true'
     runs-on: self-hosted
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -183,6 +186,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_build == 'true'
     runs-on: self-hosted
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -265,6 +269,7 @@ jobs:
     # what this job is for, and it needs no secret to say so.
     if: needs.gate.outputs.run_audit == 'true'
     runs-on: self-hosted
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -332,6 +337,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_security == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: self-hosted
+    timeout-minutes: 45
     continue-on-error: true
     permissions:
       contents: read
@@ -374,6 +380,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_security == 'true'
     runs-on: self-hosted
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -405,6 +412,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_security == 'true'
     runs-on: self-hosted
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -436,6 +444,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_security == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: self-hosted
+    timeout-minutes: 45
     continue-on-error: true
     permissions:
       contents: read

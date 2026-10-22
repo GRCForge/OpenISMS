@@ -50,6 +50,7 @@ jobs:
     name: Enable auto-merge for minor and patch bumps
     if: github.actor == 'dependabot[bot]'
     runs-on: self-hosted
+    timeout-minutes: 10
     steps:
       - name: Decide and enable auto-merge
         uses: actions/github-script@v9
