@@ -24,20 +24,23 @@ After the update `npm audit` reports no findings in `backend/` and `frontend/`.
 |---|---|---|
 | `@anthropic-ai/sdk` | ^0.133.0 | **^0.135.0** |
 | `dotenv` | ^18.0.7 | **^18.0.8** |
-| `nodemailer` | ^10.1.0 | **^10.1.2** |
-| `openai` | ^7.32.0 | **^7.35.0** |
-| `swagger-ui-dist` | ^5.33.2 | **^5.33.3** |
+| `nodemailer` | ^10.1.0 | **^10.1.7** |
+| `openai` | ^7.32.0 | **^7.39.0** |
+| `swagger-ui-dist` | ^5.33.2 | **^5.34.0** |
 
 ## Frontend
 
 | Package | v3.3.5 | v3.3.6 |
 |---|---|---|
-| `i18next` | ^26.4.4 | **^26.4.7** |
-| `i18next-http-backend` | ^4.0.2 | **^4.0.3** |
-| `lucide-react` | ^1.55.0 | **^1.58.0** |
+| `i18next` | ^26.4.4 | **^26.5.3** |
+| `i18next-http-backend` | ^4.0.2 | **^4.0.4** |
+| `lucide-react` | ^1.55.0 | **^1.59.0** |
 | `react` / `react-dom` | ^19.3.0 | **^19.3.1** |
-| `react-i18next` | ^17.0.16 | **^17.0.20** |
+| `react-i18next` | ^17.0.16 | **^17.1.0** |
+| `react-router` | ^8.4.0 | **^8.5.0** |
+| `postcss` (dev) | ^8.5.30 | **^8.5.31** |
 
 ## CI
 
 - GitHub Actions updates (Dependabot group).
+- Every job on the self-hosted runner now has a `timeout-minutes` limit (#253), so a hanging image build can no longer block the runner for hours.
