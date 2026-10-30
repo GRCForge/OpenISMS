@@ -71,7 +71,7 @@ This repository uses an automated security pipeline on every pull request:
 
 ## Verifikation von Abhängigkeiten
 
-Bei einem Upgrade der Node.js-Laufzeit (z. B. auf Node.js 26.3.0) ist eine sorgfältige Verifikation der Abhängigkeiten erforderlich, um Regressions- oder Kompatibilitätsprobleme zu vermeiden. Empfohlene Schritte zum lokalen Testen:
+Bei einem Upgrade der Node.js-Laufzeit (z. B. auf Node.js 26.13.0) ist eine sorgfältige Verifikation der Abhängigkeiten erforderlich, um Regressions- oder Kompatibilitätsprobleme zu vermeiden. Empfohlene Schritte zum lokalen Testen:
 
 ```bash
 # Backend
@@ -91,7 +91,7 @@ npx npm-check-updates -u   # nur zum Vorschlagen von Upgrades; immer testen
 
 Zusätzlich zu `npm audit` empfehlen wir die Nutzung von Snyk, Trivy und CodeQL (bereits in den CI-Workflows eingebunden). Wenn kritische Fixes verfügbar sind, testen Sie diese in einer isolierten Branch/Umgebung und erstellen Sie einen PR mit dem Upgrade + Testbericht.
 
-Hinweis: Um Builds und Tests reproduzierbar zu machen, verwenden Sie dieselbe Node-Version lokal wie in CI (Node.js `26.3.0`). Siehe [README.md](README.md) für lokale Entwicklungsanforderungen.
+Hinweis: Um Builds und Tests reproduzierbar zu machen, verwenden Sie dieselbe Node-Version lokal wie in CI (Node.js `26.13.0`). Siehe [README.md](README.md) für lokale Entwicklungsanforderungen.
 
 ## Scope
 

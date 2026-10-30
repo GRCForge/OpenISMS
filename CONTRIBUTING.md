@@ -39,7 +39,7 @@ behavior to **maximilian@herz.dev**.
 
 ### Prerequisites
 
-- **Node.js** ≥ 26.3.0 (enforced by the `engines` field and the Docker base image)
+- **Node.js** ≥ 26.12.1 (enforced by the `engines` field and the Docker base image)
 - **PostgreSQL** 15 or newer (since v3.0.0 — MySQL is no longer supported)
 - **Apache AGE** matching your PostgreSQL major version — optional. It powers
   the relationship analysis; without it everything else still works. The
