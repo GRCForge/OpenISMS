@@ -3,7 +3,7 @@
 # Network is available during this build and removed afterwards, so every
 # dependency the offline audit might need is fetched here. devDependencies are
 # installed on purpose (test drivers, linters and tooling must be present).
-FROM node:26.8.1-bookworm
+FROM node:26.13.0-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     NODE_ENV=development \

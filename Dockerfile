@@ -4,7 +4,7 @@
 #   docker build -t isms:latest .
 
 # --- Stage 1: Frontend bauen ---
-FROM node:26.8.1-alpine AS frontend-build
+FROM node:26.13.0-alpine AS frontend-build
 RUN apk add --no-cache git && npm install -g npm@11 --loglevel=error
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
@@ -15,7 +15,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # --- Stage 2: Backend + statisches Frontend ---
-FROM node:26.8.1-alpine
+FROM node:26.13.0-alpine
 # OS-Pakete auf den Stand der Alpine-Repos heben, bevor irgendetwas anderes
 # passiert. Das Base-Image wird nur bei jedem Node-Release neu gebaut; CVEs, die
 # danach in Alpine gepatcht werden, sitzen bis dahin im Image fest. Konkreter

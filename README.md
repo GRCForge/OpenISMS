@@ -4,7 +4,7 @@
 ![Security & Quality](https://github.com/grcforge/openisms/actions/workflows/security.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/release/grcforge/openisms?label=version&color=blue)
 ![License](https://img.shields.io/badge/license-Source--Available-red)
-![Node.js](https://img.shields.io/badge/node-%3E%3D26.3.0-brightgreen)
+![Node.js](https://img.shields.io/badge/node-%3E%3D26.12.1-brightgreen)
 ![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)
 ![API](https://img.shields.io/badge/API-available-green)
 ![MCP](https://img.shields.io/badge/MCP-available-blue%3Flogo%3Dmcp)
@@ -974,7 +974,7 @@ Modules are enabled/disabled in the admin area under *Administration → Modules
 
 ## Local Development
 
-Requirements: Node.js >=26.3.0, PostgreSQL 15+ (Apache AGE optional, for the relationship analysis)
+Requirements: Node.js >=26.12.1, PostgreSQL 15+ (Apache AGE optional, for the relationship analysis)
 
 ```bash
 # Backend
@@ -990,7 +990,7 @@ npm install && npm run dev    # Vite dev server: http://localhost:5173
 
 ### Node.js Upgrade — Verifikation der Abhängigkeiten
 
-Für die Migration auf Node.js `26.3.0` empfehlen wir, die Abhängigkeiten lokal zu prüfen und Sicherheitswarnungen zu bewerten. Empfohlene Schritte:
+Für die Migration auf Node.js `26.13.0` empfehlen wir, die Abhängigkeiten lokal zu prüfen und Sicherheitswarnungen zu bewerten. Empfohlene Schritte:
 
 ```bash
 # Backend
