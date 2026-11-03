@@ -55,6 +55,9 @@
     "moment": "^2.31.0",
     "mammoth": {
       "argparse": "^2.0.1"
+    },
+    "readdir-glob": {
+      "minimatch": "^11.0.4"
     }
   }
 }
