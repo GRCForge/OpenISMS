@@ -48,16 +48,16 @@ const eq = (label, actual, expected) => {
 
 // ── Mass Assignment ──────────────────────────────────────────────────────────
 {
-  const { pick, omit } = src('utils', 'massAssignment');
+  const { pick } = src('utils', 'massAssignment');
   console.log('\nMass Assignment:');
   const body = { title: 't', status: 'done', completed_by_id: 7, created_by_id: 9 };
   eq('pick behaelt nur erlaubte Felder', pick(body, ['title', 'status']), { title: 't', status: 'done' });
-  eq('omit entfernt gesperrte Felder', omit({ name: 'a', external_id: 'x', cve_ids: [] }, ['external_id', 'cve_ids']), { name: 'a' });
+  const assetFields = ['name', 'cve_critical'];
+  eq('Asset: Serverfelder fallen weg', pick({ name: 'a', cve_critical: 2, external_id: 'x', cve_ids: ['CVE-1'] }, assetFields), { name: 'a', cve_critical: 2 });
   eq('pick mit null-Body', pick(null, ['a']), {});
   eq('pick uebernimmt keine Prototyp-Schluessel', pick(JSON.parse('{"__proto__":{"x":1}}'), ['x']), {});
-  const polluted = omit(JSON.parse('{"name":"a","__proto__":{"isAdmin":true},"constructor":{"x":1}}'), []);
-  eq('omit verwirft __proto__/constructor', Object.keys(polluted), ['name']);
-  eq('omit setzt keinen fremden Prototyp', Object.getPrototypeOf(polluted) === Object.prototype && polluted.isAdmin === undefined, true);
+  const polluted = pick(JSON.parse('{"name":"a","__proto__":{"isAdmin":true}}'), ['name', 'isAdmin']);
+  eq('kein fremder Prototyp', Object.getPrototypeOf(polluted) === Object.prototype && polluted.isAdmin === undefined, true);
 }
 
 // ── SSRF-Schutz: gesperrte Adressen ─────────────────────────────────────────

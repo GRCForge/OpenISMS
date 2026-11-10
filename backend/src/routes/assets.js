@@ -28,12 +28,17 @@ router.use(apiLimiter);
 // Asset-Owner — ohne im Audit-Diff der Route aufzutauchen (Mass Assignment).
 // Die CVE-Zaehler bleiben schreibbar (manuelle Pflege im Formular), stehen aber
 // jetzt im Audit-Diff.
-const { omit } = require('../utils/massAssignment');
+const { pick } = require('../utils/massAssignment');
 const ASSET_SERVER_MANAGED = [
   'id', 'created_at', 'updated_at', 'createdAt', 'updatedAt',
   'cve_ids', 'cve_last_checked', 'cpe_resolved_at',
   'external_source', 'external_id', 'external_last_seen_at', 'external_status',
 ];
+// Schreibbar ist, was das Modell kennt, abzueglich der Serverfelder. Die Liste
+// kommt aus dem Modell, nicht aus dem Request — unbekannte Schluessel (auch
+// __proto__) werden damit gar nicht erst kopiert.
+const assetWritableFields = () =>
+  Object.keys(Asset.rawAttributes).filter((k) => !ASSET_SERVER_MANAGED.includes(k));
 
 // Inform active DPOs about DPIA requirements
 const notifyDpos = async (asset, actorId) => {
@@ -187,7 +192,7 @@ router.get('/:id', authenticate, requirePermission('assets','view','admin','owne
 
 router.post('/', authenticate, requirePermission('assets','create','admin','assessor','it-staff','dpo'), async (req, res) => {
   try {
-    const data = omit(req.body, ASSET_SERVER_MANAGED);
+    const data = pick(req.body, assetWritableFields());
     ['owner_id', 'assessor_id', 'vendor_id', 'parent_id'].forEach(f => {
       if (data[f] === '') data[f] = null;
     });
@@ -230,7 +235,7 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
     // Das Frontend schickt das ganze Asset-Objekt zurueck; serverseitig gepflegte
     // Felder werden still verworfen statt abgewiesen, damit das Formular weiter
     // funktioniert.
-    const data = omit(req.body, ASSET_SERVER_MANAGED);
+    const data = pick(req.body, assetWritableFields());
     ['owner_id', 'assessor_id', 'vendor_id', 'parent_id'].forEach(f => {
       if (data[f] === '') data[f] = null;
     });
