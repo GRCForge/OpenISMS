@@ -48,7 +48,7 @@ const USERS = [
   { id: 1, name: 'Alice', email: 'alice@example.test', role: 'assessor', custom_role_id: null, active: true },
   { id: 2, name: 'Bob', email: 'bob@example.test', role: 'viewer', custom_role_id: null, active: false },
 ];
-const API_TOKEN = `isms_api_${'a'.repeat(64)}`;
+const SAMPLE_ISMS_VALUE = `isms_api_${'a'.repeat(64)}`;
 // Echte Hash-Funktion der Anwendung (braucht nur JWT_SECRET/ENCRYPTION_KEY).
 const { hashToken } = require(path.join(SRC, 'services', 'cryptoService'));
 let created = 0;
@@ -66,7 +66,7 @@ mock('models', {
     hashPassword: async () => 'x',
   },
   ApiToken: {
-    findOne: async ({ where }) => (where.token_hash === hashToken(API_TOKEN) ? { user_id: 1, name: 't', expires_at: null } : null),
+    findOne: async ({ where }) => (where.token_hash === hashToken(SAMPLE_ISMS_VALUE) ? { user_id: 1, name: 't', expires_at: null } : null),
   },
 });
 mock('services/settingsService', {
@@ -207,7 +207,7 @@ test('MCP auth', async (t) => {
   });
 
   await t.test('API token (isms_api_) is accepted', async () => {
-    const r = await run(mcpAuth, bearer(API_TOKEN));
+    const r = await run(mcpAuth, bearer(SAMPLE_ISMS_VALUE));
     assert.equal(r.passed, true);
     assert.equal(r.req.mcpUser.id, 1);
   });
