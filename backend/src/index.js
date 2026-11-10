@@ -290,24 +290,17 @@ const handleOAuthDiscovery = async (req, res) => {
 
   if (isProtectedResource) {
     try {
+      // Eine Quelle fuer die Metadaten (auch /mcp/.well-known im MCP-Router).
       const { getOidcConfig } = require('./services/settingsService');
-      const cfg = await getOidcConfig();
-      if (cfg.enabled && cfg.issuer) {
-        const appUrl = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
-        return res.type('application/json').json({
-          resource: `${appUrl}/mcp`,
-          authorization_servers: [cfg.issuer.replace(/\/$/, '')],
-          scopes_supported: (cfg.scopes || 'openid profile email').split(' ').filter(Boolean),
-          resource_name: 'OpenISMS MCP Server',
-          resource_documentation: `${appUrl}/api/docs`,
-        });
-      }
+      const { buildProtectedResourceMetadata } = require('./mcp/oauthResource');
+      const meta = buildProtectedResourceMetadata(await getOidcConfig());
+      if (meta) return res.type('application/json').json(meta);
     } catch { /* OIDC not active */ }
   }
 
   res.status(404).type('application/json').json({
     error: 'not_found',
-    message: 'OAuth 2.0 metadata discovery is not implemented on this endpoint. Use static Bearer token authentication.'
+    message: 'OAuth metadata is served by the authorization server. Without SSO, use an API token (Authorization: Bearer isms_api_...).'
   });
 };
 app.use('/.well-known', handleOAuthDiscovery);
@@ -322,7 +315,7 @@ app.post('/register', (req, res) => {
 });
 
 // MCP (Model Context Protocol) server — HTTP/SSE transport
-// Auth: Authorization: Bearer <MCP_SECRET> | Bearer isms_api_... | Bearer <JWT> | x-api-key: ... | ?token=...
+// Auth: see mcp/auth.js — Bearer isms_api_... | session JWT | OIDC access token (aud = <APP_URL>/mcp) | MCP_SECRET
 const mcpRouter = require('./mcp/server').createMcpRouter();
 app.use('/mcp', mcpRouter);
 app.use('/sse', mcpRouter);
