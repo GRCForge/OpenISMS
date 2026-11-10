@@ -203,8 +203,12 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // Reset failed attempts upon successful login
-    if (user.failed_login_attempts > 0 || user.lockout_until) {
+    // Reset failed attempts upon successful login. Mit TOTP ist das Passwort nur
+    // der erste Faktor: Der Zaehler bleibt stehen, bis auch der Code stimmt
+    // (/login/totp setzt ihn dann zurueck). Sonst setzte jeder erneute
+    // Passwort-Login den Zaehler auf 0, und die TOTP-Fehlversuche fuehrten nie
+    // zur Kontosperre.
+    if (!user.totp_enabled && (user.failed_login_attempts > 0 || user.lockout_until)) {
       user.failed_login_attempts = 0;
       user.lockout_until = null;
       await user.save();
@@ -262,11 +266,32 @@ router.post('/login/totp', async (req, res) => {
       return res.status(401).json({ error: 'Ungültige Anfrage' });
     }
 
+    // Dieselben Sperren wie beim Passwort-Login. Vorher pruefte dieser Schritt
+    // weder die IP-Sperre noch die Kontosperre und zaehlte Fehlversuche nicht
+    // am Konto — mit dem Passwort liess sich der sechsstellige Code ueber
+    // wechselnde IPs unbegrenzt durchprobieren.
+    const ip = getClientIp(req);
+    if (ip && await isIpBlocked(ip)) return res.status(403).json(genericLockoutError);
+    if (user.lockout_until && new Date() < new Date(user.lockout_until)) {
+      return res.status(403).json(genericLockoutError);
+    }
+
     const cleanToken = String(token).replace(/\s+/g, '');
     const result = await authenticator.verify(cleanToken, { secret: user.totp_secret });
     if (!result.valid) {
       await auditFromReq(req, 'login', 'auth', user.id, user.name, { success: false, email: user.email, reason: 'Ungültiger TOTP-Code' });
       await handleFailedLoginForIp(req, user.email);
+      user.failed_login_attempts += 1;
+      const { getGeneral } = require('../services/settingsService');
+      const policy = (await getGeneral()).bruteForcePolicy || { maxAttempts: 5, lockoutMinutes: 15 };
+      if (user.failed_login_attempts >= policy.maxAttempts) {
+        const lockoutUntil = new Date();
+        lockoutUntil.setMinutes(lockoutUntil.getMinutes() + (policy.lockoutMinutes || 15));
+        user.lockout_until = lockoutUntil;
+        await user.save();
+        return res.status(403).json(genericLockoutError);
+      }
+      await user.save();
       return res.status(401).json({ error: 'Ungültiger TOTP-Code' });
     }
 
@@ -281,6 +306,9 @@ router.post('/login/totp', async (req, res) => {
       return res.status(401).json({ error: 'TOTP-Code bereits verwendet' });
     }
     user.totp_last_used = String(result.timeStep);
+    // Beide Faktoren stimmen: erst jetzt den Fehlversuchszaehler zuruecksetzen.
+    user.failed_login_attempts = 0;
+    user.lockout_until = null;
     await user.save();
 
     const sessionToken = jwt.sign(
@@ -332,6 +360,10 @@ router.get('/2fa/setup', authenticate, async (req, res) => {
   if (req.user.sso_user) return res.status(403).json({ error: 'MFA (2FA) kann für SSO-Benutzer nicht konfiguriert werden.' });
   try {
     const user = await User.findByPk(req.user.id);
+    // Ein aktives TOTP wird nicht still ueberschrieben: Wer nur eine Sitzung
+    // (z. B. einen abgegriffenen Token) hat, koennte sonst den zweiten Faktor
+    // auf ein eigenes Geraet umhaengen. Erst mit gueltigem Code deaktivieren.
+    if (user.totp_enabled) return res.status(409).json({ error: '2FA ist bereits aktiv. Bitte zuerst mit einem gültigen Code deaktivieren.' });
     const secret = authenticator.generateSecret();
     const otpauth_url = authenticator.toURI({ label: user.email, issuer: 'OpenISMS', secret });
     const qr_data_url = await qrcode.toDataURL(otpauth_url);
@@ -361,6 +393,7 @@ router.post('/2fa/verify', authenticate, async (req, res) => {
     if (!valid) return res.status(400).json({ error: 'Ungültiger TOTP-Code' });
 
     const user = await User.findByPk(req.user.id);
+    if (user.totp_enabled) return res.status(409).json({ error: '2FA ist bereits aktiv. Bitte zuerst mit einem gültigen Code deaktivieren.' });
     user.totp_secret = activeSecret;
     user.totp_enabled = true;
     await user.save();
@@ -420,7 +453,7 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
 
     if (user.sso_user) {
       // Send OIDC reminder email instead of reset token
-      const html = `<p>Hallo ${user.name},</p>
+      const html = `<p>Hallo ${escapeHtml(user.name)},</p>
                     <p>Sie haben ein Zurücksetzen Ihres Passworts angefordert.</p>
                     <p>Ihr Account ist jedoch für Single Sign-On (SSO) konfiguriert. Bitte melden Sie sich stattdessen direkt über Ihren Identity Provider an.</p>
                     <p>Ihr ISMS Team</p>`;
@@ -442,7 +475,7 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
-    const html = `<p>Hallo ${user.name},</p>
+    const html = `<p>Hallo ${escapeHtml(user.name)},</p>
                   <p>Sie haben ein Zurücksetzen Ihres Passworts angefordert.</p>
                   <p>Bitte klicken Sie auf den folgenden Link, um ein neues Passwort zu vergeben:</p>
                   <p><a href="${resetUrl}">${resetUrl}</a></p>

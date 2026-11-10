@@ -116,7 +116,11 @@ router.put('/:id', authenticate, requirePermission('users','edit','admin'), asyn
       name, email, department, active,
       ...(resolvedRole !== undefined ? { role: resolvedRole } : {}),
       ...(resolvedCustomId !== undefined ? { custom_role_id: resolvedCustomId } : {}),
-      ...(password ? { password_hash: req.body.password_hash } : {}),
+      // Ein vom Admin gesetztes Passwort beendet wie jede andere Passwortaenderung
+      // alle bestehenden Sitzungen des Kontos (middleware/auth.js vergleicht iat
+      // mit password_changed_at). Vorher blieben sie bis zu 24 h gueltig — gerade
+      // dann, wenn der Reset wegen eines kompromittierten Kontos erfolgt.
+      ...(password ? { password_hash: req.body.password_hash, password_changed_at: new Date() } : {}),
     });
 
     const action = active === false ? 'deactivate' : 'update';

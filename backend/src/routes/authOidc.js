@@ -46,6 +46,7 @@ const { auditFromReq } = require('../services/auditService');
 const { getOidcRaw, getGeneral, isOidcUsable } = require('../services/settingsService');
 const { geltendeMappings } = require('../services/oidcMappings');
 const { buildConfig, getCallbackUrl, client } = require('../services/oidcService');
+const { isExplicitlyUnverified, emailDomainAllowed, mayLinkExistingAccount } = require('../services/oidcIdentity');
 
 const frontendBase = (req) => {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, '');
@@ -171,7 +172,7 @@ router.get('/callback', async (req, res) => {
     // unverified address must not be able to match/take over an existing account.
     // (Undefined is allowed — many IdPs omit the claim — only an explicit false blocks.)
     const emailVerified = info.email_verified ?? claims.email_verified;
-    if (emailVerified === false || emailVerified === 'false') {
+    if (isExplicitlyUnverified(emailVerified)) {
       throw new Error('E-Mail-Adresse ist beim Identity-Provider nicht verifiziert');
     }
     const name = info.name || claims.name || email;
@@ -212,13 +213,22 @@ router.get('/callback', async (req, res) => {
     const general = await getGeneral();
 
     // Domain allowlist: if ssoAllowedDomains is set, reject emails from unlisted domains.
-    if (general.ssoAllowedDomains) {
-      const allowed = general.ssoAllowedDomains.split(',').map(d => d.trim()).filter(Boolean);
+    if (!emailDomainAllowed(email, general.ssoAllowedDomains)) {
       const domain = email.split('@')[1] || '';
-      if (!allowed.includes(domain)) throw new Error(`E-Mail-Domain @${domain} ist nicht für SSO zugelassen`);
+      throw new Error(`E-Mail-Domain @${domain} ist nicht für SSO zugelassen`);
     }
 
     let user = await User.findOne({ where: { email } });
+    // Ein lokales Konto (Passwort, ggf. TOTP/Passkey) nur mit ausdruecklich
+    // verifizierter Adresse uebernehmen — siehe services/oidcIdentity.js. Vorher
+    // genuegte ein fehlender email_verified-Claim, und die Uebernahme schaltete
+    // zugleich TOTP ab und loeschte die Passkeys des Kontos.
+    if (user && !mayLinkExistingAccount(user, emailVerified)) {
+      throw new Error('Lokales Konto wird nur mit verifizierter E-Mail-Adresse per SSO übernommen '
+        + '(email_verified fehlt; ggf. OIDC_LINK_UNVERIFIED_EMAIL=true setzen)');
+    }
+    // Deaktivierte Konten vor jeder Aenderung abweisen, nicht erst danach.
+    if (user && !user.active) throw new Error('Account ist deaktiviert');
     if (!user) {
       if (!general.ssoAutoProvision) throw new Error('Auto-Provisioning ist deaktiviert');
       user = await User.create({
