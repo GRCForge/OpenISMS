@@ -55,6 +55,9 @@ const eq = (label, actual, expected) => {
   eq('omit entfernt gesperrte Felder', omit({ name: 'a', external_id: 'x', cve_ids: [] }, ['external_id', 'cve_ids']), { name: 'a' });
   eq('pick mit null-Body', pick(null, ['a']), {});
   eq('pick uebernimmt keine Prototyp-Schluessel', pick(JSON.parse('{"__proto__":{"x":1}}'), ['x']), {});
+  const polluted = omit(JSON.parse('{"name":"a","__proto__":{"isAdmin":true},"constructor":{"x":1}}'), []);
+  eq('omit verwirft __proto__/constructor', Object.keys(polluted), ['name']);
+  eq('omit setzt keinen fremden Prototyp', Object.getPrototypeOf(polluted) === Object.prototype && polluted.isAdmin === undefined, true);
 }
 
 // ── SSRF-Schutz: gesperrte Adressen ─────────────────────────────────────────

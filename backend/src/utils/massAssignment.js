@@ -20,12 +20,19 @@ const pick = (body, allowed) => {
   return out;
 };
 
+// JSON.parse legt "__proto__" als eigenen Schluessel an; eine Zuweisung
+// out['__proto__'] = … setzte dann den Prototyp des Ergebnisobjekts.
+// (CodeQL js/remote-property-injection, PR #295)
+
 /** Alle Schluessel ausser den gesperrten uebernehmen (fuer grosse Formulare). */
 const omit = (body, denied) => {
   const out = {};
   if (!body || typeof body !== 'object') return out;
   const blocked = new Set(denied);
-  for (const k of Object.keys(body)) if (!blocked.has(k)) out[k] = body[k];
+  for (const k of Object.keys(body)) {
+    if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+    if (!blocked.has(k)) out[k] = body[k];
+  }
   return out;
 };
 
