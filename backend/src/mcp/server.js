@@ -3,237 +3,16 @@
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const { SSEServerTransport } = require('@modelcontextprotocol/sdk/server/sse.js');
-const { randomUUID, timingSafeEqual } = require('crypto');
+const { randomUUID } = require('crypto');
 const { z } = require('zod');
 const { Op } = require('sequelize');
 const express = require('express');
 const { createMcpCors } = require('./cors');
-const jwt = require('jsonwebtoken');
 const { hashToken } = require('../services/cryptoService');
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
-
-const getTokenFromHeaders = (req) => {
-  // 1. Authorization header (Bearer <token> or raw isms_api_... token)
-  const authHeader = String(req.headers['authorization'] || '').trim();
-  if (authHeader) {
-    // Bounded prefix-match + slice instead of /^Bearer\s+(.+)$/i: the old regex had
-    // two adjacent quantifiers (\s+ and .+) that overlap on whitespace, allowing
-    // polynomial-time backtracking on a crafted Authorization header (CodeQL
-    // js/polynomial-redos, alert #254). This form is equivalent and linear-time.
-    const bearerPrefix = /^Bearer\s+/i.exec(authHeader);
-    if (bearerPrefix) return authHeader.slice(bearerPrefix[0].length).trim();
-    if (authHeader.startsWith('isms_api_') || !authHeader.includes(' ')) {
-      return authHeader;
-    }
-  }
-
-  // 2. Custom API key headers
-  const apiKeyHeader = String(
-    req.headers['x-api-key'] ||
-    req.headers['x-mcp-key'] ||
-    req.headers['api-key'] ||
-    ''
-  ).trim();
-  if (apiKeyHeader) return apiKeyHeader;
-
-  // 3. Query string parameter (essential for standard SSE / EventSource in browsers/clients)
-  // Query-string token fallback is a deliberate, scoped tradeoff (same reasoning as
-  // middleware/auth.js): browser EventSource (SSE) clients cannot set custom headers,
-  // so a short-lived session token has to travel in the URL for that one transport.
-  // Scoped to GET only -- POST-based Streamable-HTTP clients always authenticate via
-  // the Authorization header above. Mitigation: helmet's default `Referrer-Policy:
-  // no-referrer` (see index.js) keeps the token out of any Referer header.
-  if (req.method === 'GET') {
-    const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
-    if (typeof queryToken === 'string' && queryToken.trim()) {
-      return queryToken.trim();
-    }
-  }
-
-  return null;
-};
-
-const getWwwAuthHeader = async () => {
-  try {
-    const { getOidcConfig } = require('../services/settingsService');
-    const cfg = await getOidcConfig();
-    if (cfg.enabled && cfg.issuer) {
-      const appUrl = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
-      return `Bearer resource_metadata="${appUrl}/.well-known/oauth-protected-resource"`;
-    }
-  } catch { /* fallback */ }
-  return 'Bearer realm="OpenISMS MCP"';
-};
-
-async function mcpAuth(req, res, next) {
-  // Allow preflight OPTIONS requests without requiring authentication
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
-  // OAuth 2.0 Protected Resource Metadata (RFC 9728) & Discovery
-  if (req.path.includes('oauth-protected-resource') || String(req.originalUrl || '').includes('oauth-protected-resource')) {
-    try {
-      const { getOidcConfig } = require('../services/settingsService');
-      const cfg = await getOidcConfig();
-      if (cfg.enabled && cfg.issuer) {
-        const appUrl = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
-        return res.type('application/json').json({
-          resource: `${appUrl}/mcp`,
-          authorization_servers: [cfg.issuer.replace(/\/$/, '')],
-          scopes_supported: (cfg.scopes || 'openid profile email').split(' ').filter(Boolean),
-          resource_name: 'OpenISMS MCP Server',
-          resource_documentation: `${appUrl}/api/docs`,
-        });
-      }
-    } catch { /* OIDC not active */ }
-    return res.status(404).type('application/json').json({
-      error: 'not_found',
-      message: 'OAuth 2.0 metadata discovery is not implemented on this endpoint. Use static Bearer token authentication.'
-    });
-  }
-
-  if (req.path.includes('/.well-known') || String(req.originalUrl || '').includes('/.well-known')) {
-    return res.status(404).type('application/json').json({
-      error: 'not_found',
-      message: 'OAuth 2.0 metadata discovery is not implemented on this endpoint. Use static Bearer token authentication.'
-    });
-  }
-
-  const token = getTokenFromHeaders(req);
-
-  if (!token) {
-    const wwwAuth = await getWwwAuthHeader();
-    res.setHeader('WWW-Authenticate', wwwAuth);
-    return res.status(401).json({ error: 'MCP: Authorization header or token required' });
-  }
-
-  // Option A: static MCP_SECRET (timing-safe comparison to prevent timing attacks)
-  const secret = process.env.MCP_SECRET;
-  if (secret) {
-    const tokenBuf  = Buffer.from(token,  'utf8');
-    const secretBuf = Buffer.from(secret, 'utf8');
-    if (tokenBuf.length === secretBuf.length && timingSafeEqual(tokenBuf, secretBuf)) {
-      req.mcpUser = { id: 0, name: 'MCP Client', role: 'admin', custom_role_id: null };
-      req.auth = req.mcpUser;
-      req._mcpUser = req.mcpUser;
-      return next();
-    }
-  }
-
-  // Option B: regular API Token (isms_api_...)
-  // Validate format before DB lookup: prefix + 64 lowercase hex chars
-  if (token.startsWith('isms_api_')) {
-    if (!/^isms_api_[0-9a-f]{64}$/.test(token)) {
-      const wwwAuth = await getWwwAuthHeader();
-      res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Invalid token format"`);
-      return res.status(401).json({ error: 'MCP: Invalid token' });
-    }
-    try {
-      const { ApiToken, User } = getModels();
-      const dbToken = await ApiToken.findOne({ where: { token_hash: hashToken(token) } });
-      if (!dbToken) {
-        const wwwAuth = await getWwwAuthHeader();
-        res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Token not found"`);
-        return res.status(401).json({ error: 'MCP: Invalid token' });
-      }
-
-      // Check for expiration
-      if (dbToken.expires_at && new Date(dbToken.expires_at) < new Date()) {
-        const { notify } = require('../services/notifyService');
-        const userId = dbToken.user_id;
-        const tokenName = dbToken.name;
-        await dbToken.destroy();
-        await notify({
-          userId: userId,
-          title: 'API-Token abgelaufen (MCP)',
-          content: `Ihr API-Token "${tokenName}" für den MCP-Server ist abgelaufen und wurde gelöscht.`,
-          type: 'system'
-        });
-        const wwwAuth = await getWwwAuthHeader();
-        res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Token expired"`);
-        return res.status(401).json({ error: 'MCP: Token expired' });
-      }
-
-      const user = await User.findByPk(dbToken.user_id);
-      if (!user || !user.active) {
-        const wwwAuth = await getWwwAuthHeader();
-        res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="User inactive"`);
-        return res.status(401).json({ error: 'MCP: User not found or inactive' });
-      }
-
-      req.mcpUser = { id: user.id, name: user.name, role: user.role, custom_role_id: user.custom_role_id };
-      req.auth = req.mcpUser;
-      req._mcpUser = req.mcpUser;
-      return next();
-    } catch (e) {
-      return res.status(500).json({ error: `MCP: Auth error: ${e.message}` });
-    }
-  }
-
-  // Option C: regular JWT issued by /api/auth/login or OIDC flow
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
-    // Reject pre-2FA temporary tokens — they must not grant full access.
-    if (payload.totp_pending) {
-      const wwwAuth = await getWwwAuthHeader();
-      res.setHeader('WWW-Authenticate', `${wwwAuth}, error="insufficient_scope", error_description="MFA required"`);
-      return res.status(401).json({ error: 'MCP: Two-factor authentication required' });
-    }
-    // Re-validate the user against the DB so deactivated/role-changed accounts
-    // lose access immediately instead of until token expiry.
-    const { User } = getModels();
-    const user = await User.findByPk(payload.id);
-    if (!user || !user.active) {
-      const wwwAuth = await getWwwAuthHeader();
-      res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="User inactive"`);
-      return res.status(401).json({ error: 'MCP: User not found or inactive' });
-    }
-    req.mcpUser = { id: user.id, name: user.name, role: user.role, custom_role_id: user.custom_role_id };
-    req.auth = req.mcpUser;
-    req._mcpUser = req.mcpUser;
-    return next();
-  } catch (jwtErr) {
-    // Option D: If OIDC is configured, attempt validation with upstream IdP userinfo endpoint
-    try {
-      const { buildConfig, client } = require('../services/oidcService');
-      const { config } = await buildConfig();
-      const info = await client.fetchUserInfo(config, token, client.skipSubjectCheck);
-      const email = String(info.email || info.preferred_username || '').toLowerCase();
-      if (email) {
-        const { User } = getModels();
-        let user = await User.findOne({ where: { email } });
-        if (!user) {
-          const { getGeneral } = require('../services/settingsService');
-          const general = await getGeneral();
-          if (general.ssoAutoProvision) {
-            user = await User.create({
-              name: info.name || email,
-              email,
-              password_hash: await User.hashPassword(require('crypto').randomBytes(24).toString('hex')),
-              role: general.ssoDefaultRole || 'viewer',
-              active: true,
-              sso_user: true,
-            });
-          }
-        }
-        if (user && user.active) {
-          req.mcpUser = { id: user.id, name: user.name, role: user.role, custom_role_id: user.custom_role_id };
-          req.auth = req.mcpUser;
-          req._mcpUser = req.mcpUser;
-          return next();
-        }
-      }
-    } catch {
-      // OIDC validation skipped or failed
-    }
-
-    const wwwAuth = await getWwwAuthHeader();
-    res.setHeader('WWW-Authenticate', `${wwwAuth}, error="invalid_token", error_description="Invalid or expired token"`);
-    return res.status(401).json({ error: 'MCP: Invalid or expired token' });
-  }
-}
+// See ./auth.js (token types) and ./oauthResource.js (OAuth 2.1 resource server).
+const { mcpAuth, describeAuthModes } = require('./auth');
 
 // ─── Models (loaded lazily so DB is ready) ───────────────────────────────────
 
@@ -5968,6 +5747,15 @@ function createMcpRouter() {
   const mcpCors = createMcpCors();
   console.log(`[MCP] CORS/Origin policy: ${mcpCors.policy.any ? 'any origin (*)' : mcpCors.policy.origins.join(', ')} (${mcpCors.policy.source})`);
   router.use(mcpCors);
+
+  // Startmeldung der aktiven Anmeldewege (ohne Werte). Asynchron, weil die
+  // OIDC-Konfiguration aus der Datenbank kommen kann; ein Fehler hier darf
+  // den Start nicht aufhalten.
+  setTimeout(() => {
+    describeAuthModes()
+      .then((modes) => console.log(`[MCP] Auth modes: ${modes}`))
+      .catch(() => {});
+  }, 5000).unref();
 
   router.use(apiLimiter);
   router.use(express.json({ limit: '10mb' }));
