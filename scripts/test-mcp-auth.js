@@ -19,6 +19,9 @@
  *  - ohne Token                              -> 401 mit resource_metadata, ohne error
  *  - fehlender Pflicht-Scope                 -> 403 insufficient_scope
  *  - unbekannter Benutzer                    -> 401, kein Auto-Provisioning
+ *  - lokales Konto ohne email_verified=true  -> 401 (Kontobindung wie Web-SSO)
+ *  - SSO-verknuepftes Konto                  -> angemeldet
+ *  - MCP_SECRET ohne MCP_SECRET_ROLE         -> viewer (seit 3.3.9)
  *
  * Run: node scripts/test-mcp-auth.js
  */
@@ -41,12 +44,18 @@ delete process.env.MCP_OAUTH_ALLOWED_CLIENTS;
 delete process.env.MCP_OAUTH_REQUIRED_SCOPE;
 delete process.env.MCP_OAUTH_AUTO_PROVISION;
 delete process.env.MCP_OAUTH_SCOPES;
+delete process.env.MCP_SECRET_ROLE;
+delete process.env.OIDC_LINK_UNVERIFIED_EMAIL;
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
 const USERS = [
   { id: 1, name: 'Alice', email: 'alice@example.test', role: 'assessor', custom_role_id: null, active: true },
   { id: 2, name: 'Bob', email: 'bob@example.test', role: 'viewer', custom_role_id: null, active: false },
+  // Lokales Konto (Passwort), nie per SSO angemeldet
+  { id: 3, name: 'Carol', email: 'carol@example.test', role: 'admin', custom_role_id: null, active: true, sso_user: false },
+  // Bereits per SSO verknuepftes Konto
+  { id: 4, name: 'Dave', email: 'dave@example.test', role: 'viewer', custom_role_id: null, active: true, sso_user: true },
 ];
 const SAMPLE_ISMS_VALUE = `isms_api_${'a'.repeat(64)}`;
 // Echte Hash-Funktion der Anwendung (braucht nur JWT_SECRET/ENCRYPTION_KEY).
@@ -206,6 +215,42 @@ test('MCP auth', async (t) => {
     assert.equal(created, 0);
   });
 
+  await t.test('local account: only with email_verified=true (account binding as in web SSO)', async () => {
+    const missing = await run(mcpAuth, bearer(await sign({ aud: RESOURCE, email: 'carol@example.test', email_verified: undefined })));
+    assert.equal(missing.passed, false);
+    assert.equal(missing.res.statusCode, 401);
+    const verified = await run(mcpAuth, bearer(await sign({ aud: RESOURCE, email: 'carol@example.test', email_verified: true })));
+    assert.equal(verified.passed, true);
+    assert.equal(verified.req.mcpUser.id, 3);
+  });
+
+  await t.test('OIDC_LINK_UNVERIFIED_EMAIL=true allows binding a local account without the claim', async () => {
+    process.env.OIDC_LINK_UNVERIFIED_EMAIL = 'true';
+    try {
+      const r = await run(mcpAuth, bearer(await sign({ aud: RESOURCE, email: 'carol@example.test', email_verified: undefined })));
+      assert.equal(r.passed, true);
+    } finally { delete process.env.OIDC_LINK_UNVERIFIED_EMAIL; }
+  });
+
+  await t.test('SSO-linked account is accepted without email_verified claim', async () => {
+    const r = await run(mcpAuth, bearer(await sign({ aud: RESOURCE, email: 'dave@example.test', email_verified: undefined })));
+    assert.equal(r.passed, true);
+    assert.equal(r.req.mcpUser.id, 4);
+  });
+
+  await t.test('auto-provisioning (opt-in) requires email_verified=true', async () => {
+    process.env.MCP_OAUTH_AUTO_PROVISION = 'true';
+    try {
+      const before = created;
+      const unverified = await run(mcpAuth, bearer(await sign({ aud: RESOURCE, email: 'eve@example.test', email_verified: undefined })));
+      assert.equal(unverified.res.statusCode, 401);
+      assert.equal(created, before);
+      const ok = await run(mcpAuth, bearer(await sign({ aud: RESOURCE, email: 'eve@example.test', email_verified: true })));
+      assert.equal(ok.passed, true);
+      assert.equal(created, before + 1);
+    } finally { delete process.env.MCP_OAUTH_AUTO_PROVISION; }
+  });
+
   await t.test('API token (isms_api_) is accepted', async () => {
     const r = await run(mcpAuth, bearer(SAMPLE_ISMS_VALUE));
     assert.equal(r.passed, true);
@@ -239,14 +284,16 @@ test('MCP auth', async (t) => {
     assert.doesNotMatch(h, /error=/);
   });
 
-  await t.test('MCP_SECRET keeps admin by default, MCP_SECRET_ROLE lowers it', async () => {
+  await t.test('MCP_SECRET defaults to viewer, MCP_SECRET_ROLE sets the role explicitly', async () => {
     process.env.MCP_SECRET = 'static-secret-value-for-test';
     try {
       let r = await run(mcpAuth, bearer('static-secret-value-for-test'));
-      assert.equal(r.req.mcpUser.role, 'admin');
-      process.env.MCP_SECRET_ROLE = 'viewer';
-      r = await run(mcpAuth, bearer('static-secret-value-for-test'));
       assert.equal(r.req.mcpUser.role, 'viewer');
+      process.env.MCP_SECRET_ROLE = 'admin';
+      r = await run(mcpAuth, bearer('static-secret-value-for-test'));
+      assert.equal(r.req.mcpUser.role, 'admin');
+      r = await run(mcpAuth, bearer('static-secret-value-for-tesX'));
+      assert.equal(r.passed, false, 'a different value of the same length is rejected');
       process.env.MCP_SECRET_ROLE = 'superuser';
       r = await run(mcpAuth, bearer('static-secret-value-for-test'));
       assert.equal(r.req.mcpUser.role, 'viewer', 'unknown role falls back to viewer');
