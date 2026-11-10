@@ -6,7 +6,9 @@
  * Reihenfolge der akzeptierten Bearer-Werte:
  *
  *   A  MCP_SECRET (statisch, aus der Umgebung). Rolle ueber MCP_SECRET_ROLE,
- *      Vorgabe "admin" wie bisher. Ungesetzt = abgeschaltet.
+ *      Vorgabe seit 3.3.9 "viewer" (vorher "admin"). Wer den Schluessel fuer
+ *      Schreibzugriffe braucht, setzt die Rolle ausdruecklich. Veraltet -
+ *      persoenliche API-Tokens sind der empfohlene Weg. Ungesetzt = aus.
  *   B  API-Token isms_api_<64 hex> aus der Datenbank (Benutzerprofil ->
  *      API-Tokens). Der empfohlene Weg fuer lokale Konten.
  *   C  OpenISMS-Sitzungstoken (HS256, /api/auth/login bzw. SSO-Login).
@@ -76,7 +78,9 @@ const loadOidcConfig = async () => {
 };
 
 const getMcpSecretRole = () => {
-  const role = String(process.env.MCP_SECRET_ROLE || 'admin').trim();
+  // Vorgabe "viewer" (3.3.9): Ein statischer, nie ablaufender Schluessel ohne
+  // Person dahinter soll nicht stillschweigend Administratorrechte tragen.
+  const role = String(process.env.MCP_SECRET_ROLE || 'viewer').trim();
   return USER_ROLES.includes(role) ? role : 'viewer';
 };
 
@@ -87,30 +91,47 @@ const setUser = (req, user) => {
 };
 
 /**
- * Benutzer zu verifizierten IdP-Claims. Gleiche Regeln wie der SSO-Login der
- * Oberflaeche (routes/authOidc.js): E-Mail-Claim, email_verified darf nicht
- * false sein, Domain-Allowlist. Neue Benutzer nur mit MCP_OAUTH_AUTO_PROVISION.
+ * Benutzer zu verifizierten IdP-Claims. Dieselben Regeln wie der SSO-Login der
+ * Oberflaeche (routes/authOidc.js, services/oidcIdentity.js):
+ *
+ *  - E-Mail-Claim Pflicht, email_verified=false wird abgewiesen.
+ *  - Domain-Allowlist (ssoAllowedDomains).
+ *  - Ein bereits per SSO verknuepftes Konto (sso_user) wird angenommen.
+ *  - Ein LOKALES Konto (Passwort, ggf. TOTP/Passkey) nur bei ausdruecklich
+ *    verifizierter Adresse (email_verified=true) oder mit
+ *    OIDC_LINK_UNVERIFIED_EMAIL=true. Sonst koennte eine IdP-Identitaet mit der
+ *    Adresse eines lokalen Administrators ueber MCP in dessen Konto - genau die
+ *    Luecke, die PR #295 fuer den Web-Login geschlossen hat.
+ *  - Neue Benutzer nur mit MCP_OAUTH_AUTO_PROVISION=true, SSO-Auto-Provisioning
+ *    UND ausdruecklich verifizierter Adresse.
+ *
+ * Ueber MCP wird das Konto nicht veraendert (kein sso_user setzen, kein TOTP-
+ * oder Passkey-Abbau); das bleibt dem interaktiven SSO-Login vorbehalten.
  */
 const userFromClaims = async (claims) => {
+  const { isExplicitlyUnverified, isExplicitlyVerified, emailDomainAllowed, mayLinkExistingAccount } =
+    require('../services/oidcIdentity');
   const email = String(claims.email || '').trim().toLowerCase();
   if (!email || !email.includes('@')) {
     throw new oauth.TokenError('invalid_token', 'Token carries no email claim', 401, 'no_email');
   }
-  if (claims.email_verified === false || claims.email_verified === 'false') {
+  if (isExplicitlyUnverified(claims.email_verified)) {
     throw new oauth.TokenError('invalid_token', 'Email not verified at identity provider', 401, 'email_unverified');
   }
   const { getGeneral } = require('../services/settingsService');
   const general = await getGeneral();
-  if (general.ssoAllowedDomains) {
-    const allowed = general.ssoAllowedDomains.split(',').map((d) => d.trim()).filter(Boolean);
-    if (!allowed.includes(email.split('@')[1] || '')) {
-      throw new oauth.TokenError('invalid_token', 'Email domain not allowed', 401, 'domain');
-    }
+  if (!emailDomainAllowed(email, general.ssoAllowedDomains)) {
+    throw new oauth.TokenError('invalid_token', 'Email domain not allowed', 401, 'domain');
   }
 
   const { User } = getModels();
   let user = await User.findOne({ where: { email } });
-  if (!user && oauth.isAutoProvisionEnabled() && general.ssoAutoProvision) {
+  if (user && !mayLinkExistingAccount(user, claims.email_verified)) {
+    throw new oauth.TokenError('invalid_token',
+      'Local account requires a verified email at the identity provider', 401, 'email_unverified');
+  }
+  if (!user && oauth.isAutoProvisionEnabled() && general.ssoAutoProvision
+      && isExplicitlyVerified(claims.email_verified)) {
     user = await User.create({
       name: claims.name || email,
       email,
@@ -259,7 +280,7 @@ const describeAuthModes = async () => {
   const cfg = await loadOidcConfig();
   const modes = ['API token (isms_api_)', 'session JWT'];
   if (process.env.MCP_SECRET) {
-    modes.unshift(getMcpSecretRole() === 'admin' ? 'static MCP_SECRET (role admin)' : 'static MCP_SECRET (reduced role)');
+    modes.unshift(`static MCP_SECRET (role ${getMcpSecretRole()}, deprecated - prefer API tokens)`);
   }
   if (cfg) {
     const extraAud = oauth.getAllowedAudiences().length - 1;

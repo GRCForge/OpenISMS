@@ -391,7 +391,7 @@ docker run -d --name isms --restart unless-stopped \
 | `ENCRYPTION_KEY` | recommended | AES-256 key for encrypting stored secrets (OIDC/SMTP/LLM secrets, TOTP secrets) |
 | `SESSION_SECRET` | recommended | Express session (OIDC flow) |
 | `APP_URL` | ✓² | Public URL (for OIDC callback and CORS) |
-| `MCP_SECRET` | – | Static key for the MCP endpoints (`Authorization: Bearer <MCP_SECRET>`), role from `MCP_SECRET_ROLE` (default `admin`). Unset: disabled |
+| `MCP_SECRET` | – | Static key for the MCP endpoints (`Authorization: Bearer <MCP_SECRET>`), role from `MCP_SECRET_ROLE` (default `viewer` since 3.3.9, before `admin`). Deprecated, prefer API tokens. Unset: disabled |
 | `MCP_OAUTH_SCOPES` / `MCP_OAUTH_AUDIENCES` / `MCP_OAUTH_REQUIRED_SCOPE` | – | OAuth 2.1 resource-server settings for IdP tokens on `/mcp` (see MCP section and `.env.example`) |
 | `MCP_CORS_ORIGINS` | – | Browser origins allowed on `/mcp` and `/sse`, comma-separated. Unset: only `APP_URL`; `*`: any origin (explicit opt-in, never with credentials). A disallowed `Origin` gets 403 before the MCP transport. Native MCP clients send no `Origin` and are not affected |
 | `SECURE_COOKIES` | – | `true` marks the session cookie Secure. Only enable behind HTTPS **with** `X-Forwarded-Proto` forwarded by the proxy, otherwise the session cookie is not set |
@@ -561,7 +561,7 @@ The MCP endpoint is an **OAuth 2.1 resource server** as defined by the MCP autho
 |---|---|---|---|
 | **API Token** ⭐ | Profile → "API Tokens" | `isms_api_<64 hex>`, bound to the user and their role, optional expiry, revocable. Works for local and SSO accounts. | Recommended for local accounts, Claude Desktop via `mcp-remote`, Claude Code, scripts |
 | **SSO / OIDC (OAuth 2.1)** ⭐ | Settings → Single Sign-On, plus an audience mapper at the IdP (below) | RFC 9728 metadata points the client to the IdP; the client registers (RFC 7591) and logs in with PKCE. OpenISMS verifies the IdP access token locally: signature (JWKS), `iss`, `exp`/`nbf` and **audience** (`aud` must contain `<APP_URL>/mcp`). | Claude custom connectors, `mcp-remote` without a token, teams with SSO |
-| **MCP_SECRET** | `MCP_SECRET=<secret>` in `.env` | Static key for a technical user with role `MCP_SECRET_ROLE` (default `admin`). No expiry, no person behind it. | Automation only; prefer API tokens |
+| **MCP_SECRET** | `MCP_SECRET=<secret>` in `.env` | Static key for a technical user with role `MCP_SECRET_ROLE` (default `viewer` since 3.3.9; set `admin` explicitly if needed). No expiry, no person behind it. Deprecated. | Automation only; prefer API tokens |
 | **Session JWT** | Token from `POST /api/auth/login` | Short-lived OpenISMS session token. | Development & testing |
 
 **What changed in 3.3.8 (security):** IdP tokens used to be accepted whenever the IdP's userinfo endpoint answered for them — regardless of which application the token had been issued to. Any access token from any client in the same realm therefore logged in to MCP (token passthrough / confused deputy), and with SSO auto-provisioning it even created a user. Tokens are now verified as JWTs and must name this server as audience; userinfo is no longer consulted. Creating users on an MCP login requires `MCP_OAUTH_AUTO_PROVISION=true` in addition to SSO auto-provisioning.
@@ -577,7 +577,7 @@ The IdP has to put the resource URL into the access token's `aud`. Keycloak does
 3. Announce the scope to MCP clients: `MCP_OAUTH_SCOPES=openid profile email isms-mcp`.
 4. **Clients → Client registration** (dynamic client registration, used by Claude and `mcp-remote`): in the anonymous *Trusted Hosts* policy, switch *Host sending client registration request must match* off, keep *Client URIs must match* on and list `localhost`, `127.0.0.1` and `claude.ai`. In *Allowed Client Scopes*, keep *Allow default scopes* on (the realm's optional scope `isms-mcp` is then allowed).
 
-Users are matched by the verified `email` claim (`email_verified` must not be `false`, the SSO domain allow-list applies). Accounts must exist in OpenISMS unless auto-provisioning is enabled as described above.
+Users are matched by the `email` claim with the same account-binding rules as the web SSO login: `email_verified=false` is rejected and the SSO domain allow-list applies; an account already linked by SSO (`sso_user`) is accepted; a **local** account (password login) is only used when the IdP marks the address as verified (`email_verified=true`) or `OIDC_LINK_UNVERIFIED_EMAIL=true` is set. An MCP login never changes the account. Accounts must exist in OpenISMS unless auto-provisioning is enabled as described above (which additionally requires `email_verified=true`). For Keycloak, the `email` client scope puts `email_verified` into the access token; the user's e-mail must be marked verified there.
 
 Optional settings: `MCP_OAUTH_AUDIENCES` (further accepted `aud` values), `MCP_OAUTH_ALLOWED_CLIENTS` (client ids accepted via `azp` without a matching `aud`, for transitions), `MCP_OAUTH_REQUIRED_SCOPE`. See `.env.example`.
 
