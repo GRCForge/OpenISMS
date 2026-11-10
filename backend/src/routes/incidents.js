@@ -175,3 +175,6 @@ router.delete('/:id', authenticate, requirePermission('incidents','delete','admi
 });
 
 module.exports = router;
+// Fuer routes/documents.js: Belege eines Vorfalls folgen derselben Sichtbarkeit
+// wie der Vorfall selbst.
+module.exports.canAccessIncident = canAccessIncident;

@@ -5,8 +5,8 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
-const { Document, User } = require('../models');
-const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
+const { Document, User, Asset, Incident, Vendor } = require('../models');
+const { authenticate, requireWriteAccess, requirePermission, canViewAsset } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
@@ -56,6 +56,85 @@ const INLINE_MIME = {
 
 // it-staff and viewer roles must not access contract documents (mirrors the list filter).
 const canAccessContract = (user) => user.role !== 'it-staff' && user.role !== 'viewer';
+
+// Rollen, die Lieferanten-Details sehen (GET /api/vendors/:id, vendors.view_details).
+const VENDOR_DETAIL_FALLBACK = ['admin', 'assessor', 'it-staff', 'dpo'];
+
+const toId = (v) => {
+  const n = Number.parseInt(String(v), 10);
+  return Number.isInteger(n) && n > 0 && String(n) === String(v).trim() ? n : null;
+};
+
+/**
+ * Darf der Aufrufer das Objekt sehen, an dem das Dokument haengt?
+ *
+ * Dokumente erben die Sichtbarkeit ihres Objekts. Bis hierher prueften die
+ * Dokument-Routen nur die Modul-Berechtigung: Ein Benutzer, dem
+ * GET /api/assets/:id mit 403 antwortet (fremdes Asset), konnte dessen Dokumente
+ * trotzdem auflisten und herunterladen, die Rolle owner sie sogar loeschen; dpo
+ * und it-staff kamen an Belege von Vorfaellen ausserhalb ihres Bereichs, jede
+ * Rolle an Lieferanten-Dokumente ohne vendors.view_details. Die Kommentare am
+ * Asset (routes/comments.js) hatten die Pruefung bereits.
+ *
+ * @returns {Promise<true|400|403|404>}
+ */
+const parentAccess = async (req, { assetId, vendorId, incidentId }) => {
+  if (assetId != null) {
+    const id = toId(assetId);
+    if (!id) return 400;
+    const asset = await Asset.findByPk(id, { attributes: ['id', 'owner_id', 'assessor_id'] });
+    if (!asset) return 404;
+    return canViewAsset(req, asset) ? true : 403;
+  }
+  if (incidentId != null) {
+    const id = toId(incidentId);
+    if (!id) return 400;
+    const incident = await Incident.findByPk(id, { attributes: ['id', 'deleted', 'is_security_incident', 'is_gdpr_incident'] });
+    if (!incident || incident.deleted) return 404;
+    const { canAccessIncident } = require('./incidents');
+    return canAccessIncident(req.user, incident) ? true : 403;
+  }
+  if (vendorId != null) {
+    const id = toId(vendorId);
+    if (!id) return 400;
+    const vendor = await Vendor.findByPk(id, { attributes: ['id'] });
+    if (!vendor) return 404;
+    const { can } = require('../services/permissionService');
+    const verdict = await can(req.user, 'vendors', 'view_details');
+    const ok = verdict === true || (verdict !== false && VENDOR_DETAIL_FALLBACK.includes(req.user.role));
+    return ok ? true : 403;
+  }
+  return 400;
+};
+
+const PARENT_ERRORS = {
+  400: 'Asset ID, Vendor ID oder Incident ID erforderlich',
+  403: 'Verboten',
+  404: 'Nicht gefunden',
+};
+
+// Vor multer eingehaengt, damit ein abgewiesener Upload gar nicht erst auf die Platte kommt.
+const requireParentAccess = async (req, res, next) => {
+  try {
+    const verdict = await parentAccess(req, {
+      assetId: req.params.assetId,
+      vendorId: req.params.vendorId,
+      incidentId: req.params.incidentId,
+    });
+    if (verdict === true) return next();
+    return res.status(verdict).json({ error: PARENT_ERRORS[verdict] });
+  } catch (e) { serverError(res, e, 'documents'); }
+};
+
+/** Fuer die Dokumentanalyse: Sichtbarkeit anhand des gespeicherten Dokuments. */
+const canAccessDocumentParent = async (req, doc) => {
+  const ref = doc.asset_id ? { assetId: doc.asset_id }
+    : doc.incident_id ? { incidentId: doc.incident_id }
+      : doc.vendor_id ? { vendorId: doc.vendor_id }
+        : null;
+  if (!ref) return true; // Dokument ohne Objektbezug: nur die Modul-Berechtigung gilt
+  return (await parentAccess(req, ref)) === true;
+};
 
 const MAGIC_BYTES = {
   '.pdf':  [0x25, 0x50, 0x44, 0x46],
@@ -108,7 +187,7 @@ const router = express.Router({ mergeParams: true });
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-router.get('/', authenticate, requirePermission('documents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+router.get('/', authenticate, requirePermission('documents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), requireParentAccess, async (req, res) => {
   try {
     const isRestricted = req.user.role === 'it-staff' || req.user.role === 'viewer';
     const where = {};
@@ -135,7 +214,7 @@ router.get('/', authenticate, requirePermission('documents','view','admin','owne
   } catch (e) { serverError(res, e, 'documents'); }
 });
 
-router.post('/', authenticate, requirePermission('documents','upload','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), upload.single('file'), async (req, res) => {
+router.post('/', authenticate, requirePermission('documents','upload','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), requireParentAccess, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Keine Datei hochgeladen' });
 
@@ -196,7 +275,7 @@ router.post('/', authenticate, requirePermission('documents','upload','admin','o
   }
 });
 
-router.get('/:docId/download', authenticate, requirePermission('documents','download','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), downloadLimiter, async (req, res) => {
+router.get('/:docId/download', authenticate, requirePermission('documents','download','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), downloadLimiter, requireParentAccess, async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.docId);
     if (!doc) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -249,7 +328,7 @@ router.get('/:docId/download', authenticate, requirePermission('documents','down
   } catch (e) { serverError(res, e, 'documents'); }
 });
 
-router.delete('/:docId', authenticate, requirePermission('documents','delete','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), deleteLimiter, async (req, res) => {
+router.delete('/:docId', authenticate, requirePermission('documents','delete','admin','owner','assessor','it-staff','dpo'), requireWriteAccess(), deleteLimiter, requireParentAccess, async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.docId);
     if (!doc) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -280,3 +359,4 @@ module.exports = router;
 // analysis engine) can resolve a Document's on-disk path without a second,
 // potentially drifting copy of this security-sensitive confinement logic.
 module.exports.getSafePath = getSafePath;
+module.exports.canAccessDocumentParent = canAccessDocumentParent;
