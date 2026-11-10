@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import api from '../lib/api';
+import { csvCell } from '../lib/csv';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
@@ -362,7 +363,7 @@ export const ThreatIntel: React.FC = () => {
 
   const exportCsv = () => {
     const head = ['Ref', 'Quelle', 'Kennung', 'Titel', 'Schwere', 'Relevanz', 'Status', 'Veroeffentlicht', 'Bewertet am', 'Bewertet von', 'Risiko', 'Aufgabe', 'CVE'];
-    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const esc = csvCell; // formel-neutralisiert (lib/csv.ts)
     const rows = advisories.map(a => [
       a.ref, a.source?.name, a.external_id, a.title, a.severity, a.relevance, a.status,
       a.published_at ?? '', a.assessed_at ?? '', a.assessedBy?.name ?? '',

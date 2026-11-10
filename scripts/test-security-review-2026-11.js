@@ -104,7 +104,6 @@ const eq = (label, actual, expected) => {
   eq('harmlose Parameter bleiben', redactUrlSecrets('/api/tasks?status=open&all=true'), '/api/tasks?status=open&all=true');
 }
 
-// @@WEITERE_TESTS@@
 
 // ── Dokumente erben die Sichtbarkeit ihres Objekts (mit gemockten Models) ────
 const documentTests = async () => {
@@ -144,8 +143,27 @@ const documentTests = async () => {
   eq('employee', await canAccessDocumentParent(req(7, 'employee'), { vendor_id: 30 }), false);
 };
 
-documentTests()
-  .catch((e) => { failures++; console.log('  FAIL  Dokument-Tests abgebrochen:', e.message); })
+// ── CSV-Export: Formel-Neutralisierung (frontend/src/lib/csv.ts) ─────────────
+// Node >= 23.6 entfernt TypeScript-Typen beim Import selbst; lib/csv.ts hat
+// keine Abhaengigkeiten, der Test braucht also kein frontend/node_modules.
+const csvTests = async () => {
+  const { pathToFileURL } = require('url');
+  const { csvCell } = await import(pathToFileURL(path.join(__dirname, '..', 'frontend', 'src', 'lib', 'csv.ts')).href);
+  console.log('\nCSV — Formula Injection:');
+  eq('=HYPERLINK neutralisiert', csvCell('=HYPERLINK("http://x")'), '"\'=HYPERLINK(""http://x"")"');
+  eq('@SUM neutralisiert', csvCell('@SUM(A1)'), '"\'@SUM(A1)"');
+  eq('+ neutralisiert', csvCell('+1+2'), '"\'+1+2"');
+  eq('Tab am Anfang neutralisiert', csvCell('\tcmd'), '"\'\tcmd"');
+  eq('-abc neutralisiert', csvCell('-abc'), '"\'-abc"');
+  eq('negative Zahl bleibt', csvCell('-5'), '"-5"');
+  eq('Dezimalzahl mit Komma bleibt', csvCell('-3,5'), '"-3,5"');
+  eq('normaler Text bleibt', csvCell('Phishing-Welle'), '"Phishing-Welle"');
+  eq('null wird leer', csvCell(null), '""');
+};
+
+csvTests()
+  .then(documentTests)
+  .catch((e) => { failures++; console.log('  FAIL  Tests abgebrochen:', e.message); })
   .finally(() => {
     console.log(failures ? `\n${failures} Pruefung(en) fehlgeschlagen.` : '\nAlle Pruefungen bestanden.');
     process.exit(failures ? 1 : 0);

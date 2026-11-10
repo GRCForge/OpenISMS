@@ -5,6 +5,7 @@ import {
   CircleHelp, ChevronDown, ChevronRight, Plus, CheckCircle2,
 } from 'lucide-react';
 import api from '../../lib/api';
+import { csvCell } from '../../lib/csv';
 import { Card, CardBody } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
@@ -237,7 +238,7 @@ export const SelfCheck: React.FC<Props> = ({ canEdit, canManage, onAnswered }) =
 
   const exportCsv = () => {
     const head = ['question_ref', 'category', 'article_ref', 'question', 'answer_implementation', 'answer_evidence', 'evidence_source', 'notes'];
-    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const esc = csvCell; // formel-neutralisiert (lib/csv.ts)
     const rows = items.map(i => [
       i.question_ref, i.category, i.article_ref, i.question,
       i.answer_implementation, i.answer_evidence, i.evidence_source ?? '', i.notes ?? '',
