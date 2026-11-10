@@ -5762,9 +5762,21 @@ function createMcpRouter() {
   router.use(mcpAuth);
 
   // POST / (and /mcp) — Streamable HTTP client -> server messages (also initializes session)
+  // Unknown or expired Streamable HTTP session (e.g. after a server restart):
+  // the MCP spec (transports, "Session Management") requires HTTP 404 so the
+  // client starts a new session. Answering via a fresh, uninitialized
+  // transport returned 400 "Server not initialized" and clients stayed stuck.
+  const sessionNotFound = (res) => res.status(404).json({
+    jsonrpc: '2.0',
+    error: { code: -32001, message: 'Session not found' },
+    id: null,
+  });
+
   router.post('/', async (req, res) => {
     const existingId = req.headers['mcp-session-id'];
     let transport = existingId ? sessions.get(existingId) : null;
+
+    if (existingId && !transport) return sessionNotFound(res);
 
     if (!transport) {
       transport = new StreamableHTTPServerTransport({
@@ -5793,6 +5805,7 @@ function createMcpRouter() {
       req._mcpUser = req.mcpUser;
       return await transport.handleRequest(req, res);
     }
+    if (id) return sessionNotFound(res);
 
     // Standard SSE client initialization (e.g. mcp-remote, Claude Desktop)
     const sseTransport = new SSEServerTransport('/mcp/messages', res);
@@ -5832,10 +5845,9 @@ function createMcpRouter() {
   // DELETE / (and /mcp) — terminate Streamable HTTP session
   router.delete('/', async (req, res) => {
     const id = req.headers['mcp-session-id'];
-    if (id && sessions.has(id)) {
-      await sessions.get(id).close();
-      sessions.delete(id);
-    }
+    if (!id || !sessions.has(id)) return sessionNotFound(res);
+    await sessions.get(id).close();
+    sessions.delete(id);
     res.status(200).end();
   });
 
