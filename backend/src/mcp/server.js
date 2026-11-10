@@ -3061,7 +3061,7 @@ server.tool(
       Task.findAll({ where: { [Op.or]: taskOr, status: { [Op.notIn]: ['done', 'cancelled'] } }, order: [['due_date', 'ASC']] }),
       Notification.findAll({ where: { user_id: userId, read: false }, limit: 10 }),
       UserTraining.findAll({ where: { user_id: userId }, order: [['created_at', 'DESC']] }),
-      Policy.findAll({ where: { status: 'published' }, attributes: ['id', 'title', 'version'] }),
+      Policy.findAll({ where: { status: 'active' }, attributes: ['id', 'title', 'version'] }),
       PolicyAcknowledgment.findAll({ where: { user_id: userId } }),
     ]);
 
