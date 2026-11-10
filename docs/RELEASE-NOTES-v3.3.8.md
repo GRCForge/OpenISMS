@@ -43,7 +43,7 @@ OAuth flow. New settings in `.env.example` and both compose files.
 
 ## Tests
 
-`scripts/test-mcp-auth.js` (part of the backend check in CI): locally signed
+`scripts/test-mcp-auth.js` (part of the backend check in CI, 22 cases): locally signed
 RS256 tokens against a mocked issuer — right audience accepted; foreign
 audience, missing audience, expired, wrong issuer, foreign key, HS256 alg
 confusion and ID tokens rejected; API token accepted; scope, e-mail and

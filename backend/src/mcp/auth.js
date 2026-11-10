@@ -94,17 +94,17 @@ const setUser = (req, user) => {
 const userFromClaims = async (claims) => {
   const email = String(claims.email || '').trim().toLowerCase();
   if (!email || !email.includes('@')) {
-    throw new oauth.TokenError('invalid_token', 'Token carries no email claim');
+    throw new oauth.TokenError('invalid_token', 'Token carries no email claim', 401, 'no_email');
   }
   if (claims.email_verified === false || claims.email_verified === 'false') {
-    throw new oauth.TokenError('invalid_token', 'Email not verified at identity provider');
+    throw new oauth.TokenError('invalid_token', 'Email not verified at identity provider', 401, 'email_unverified');
   }
   const { getGeneral } = require('../services/settingsService');
   const general = await getGeneral();
   if (general.ssoAllowedDomains) {
     const allowed = general.ssoAllowedDomains.split(',').map((d) => d.trim()).filter(Boolean);
     if (!allowed.includes(email.split('@')[1] || '')) {
-      throw new oauth.TokenError('invalid_token', 'Email domain not allowed');
+      throw new oauth.TokenError('invalid_token', 'Email domain not allowed', 401, 'domain');
     }
   }
 
@@ -120,8 +120,8 @@ const userFromClaims = async (claims) => {
       sso_user: true,
     });
   }
-  if (!user) throw new oauth.TokenError('invalid_token', 'No OpenISMS account for this identity');
-  if (!user.active) throw new oauth.TokenError('invalid_token', 'User inactive');
+  if (!user) throw new oauth.TokenError('invalid_token', 'No OpenISMS account for this identity', 401, 'no_account');
+  if (!user.active) throw new oauth.TokenError('invalid_token', 'User inactive', 401, 'inactive');
   return user;
 };
 
@@ -204,20 +204,23 @@ async function mcpAuth(req, res, next) {
 
   if (!oauth.looksLikeJwt(token)) return invalid('Unknown token type');
 
-  // Option C: OpenISMS session JWT (HS256, own secret)
-  const header = oauth.peekHeader(token);
-  if (header && header.alg === 'HS256') {
-    let payload;
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
-    } catch {
-      return invalid('Invalid or expired token');
-    }
+  // Option C: OpenISMS session JWT (HS256, own secret). Ob ein Token hierher
+  // gehoert, entscheidet allein die Signaturpruefung, nicht der (vom Client
+  // gelieferte) Header. Schlaegt sie fehl, geht es mit Option D weiter; dort
+  // sind nur asymmetrische Algorithmen zugelassen, HS256 kann also nicht
+  // gegen die JWKS des Issuers "verifiziert" werden.
+  let session = null;
+  try {
+    session = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+  } catch {
+    session = null;
+  }
+  if (session) {
     // Pre-2FA temporary tokens must not grant access.
-    if (payload.totp_pending) return invalid('Two-factor authentication required', 'MCP: Two-factor authentication required');
+    if (session.totp_pending) return invalid('Two-factor authentication required', 'MCP: Two-factor authentication required');
     try {
       const { User } = getModels();
-      const user = await User.findByPk(payload.id);
+      const user = await User.findByPk(session.id);
       if (!user || !user.active) return invalid('User inactive', 'MCP: User not found or inactive');
       setUser(req, user);
       return next();
@@ -236,8 +239,9 @@ async function mcpAuth(req, res, next) {
     return next();
   } catch (e) {
     if (e instanceof oauth.TokenError) {
-      // Keine Token-Inhalte ins Log, nur der Grund.
-      console.warn(`[MCP] OIDC access token rejected: ${e.description}`);
+      // Keine Token-Inhalte und keine Konfigurationswerte ins Log, nur der
+      // feste Grundschluessel.
+      console.warn(`[MCP] OIDC access token rejected: ${oauth.reasonKey(e)}`);
       if (e.code === 'insufficient_scope') {
         return deny(403, { error: 'MCP: Insufficient scope' }, {
           error: 'insufficient_scope', description: e.description, scope: oauth.getRequiredScope(),
@@ -254,10 +258,14 @@ async function mcpAuth(req, res, next) {
 const describeAuthModes = async () => {
   const cfg = await loadOidcConfig();
   const modes = ['API token (isms_api_)', 'session JWT'];
-  if (process.env.MCP_SECRET) modes.unshift(`MCP_SECRET (role ${getMcpSecretRole()})`);
+  if (process.env.MCP_SECRET) {
+    modes.unshift(getMcpSecretRole() === 'admin' ? 'static MCP_SECRET (role admin)' : 'static MCP_SECRET (reduced role)');
+  }
   if (cfg) {
-    modes.push(`OIDC access token (issuer ${String(cfg.issuer).replace(/\/$/, '')}, audience ${oauth.getAllowedAudiences().join(' | ')}` +
-      `${oauth.getAllowedClients().length ? `, azp ${oauth.getAllowedClients().join(' | ')}` : ''})`);
+    const extraAud = oauth.getAllowedAudiences().length - 1;
+    const clients = oauth.getAllowedClients().length;
+    modes.push(`OIDC access token (audience ${oauth.getResourceUrl()}` +
+      `${extraAud > 0 ? ` + ${extraAud} more` : ''}${clients > 0 ? `, ${clients} azp exception(s)` : ''})`);
   }
   return modes.join('; ');
 };

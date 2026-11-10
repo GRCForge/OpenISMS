@@ -102,14 +102,6 @@ const buildWwwAuthenticate = ({ oidc, error, description, scope } = {}) => {
 /** Sieht der Wert wie ein JWS in Compact-Serialisierung aus? */
 const looksLikeJwt = (token) => /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(String(token || ''));
 
-/** Unverifizierten JWS-Header lesen (nur zur Weiche HS256 vs. IdP). */
-const peekHeader = (token) => {
-  try {
-    const h = JSON.parse(Buffer.from(String(token).split('.')[0], 'base64url').toString('utf8'));
-    return h && typeof h === 'object' && !Array.isArray(h) ? h : null;
-  } catch { return null; }
-};
-
 // ─── JWKS ────────────────────────────────────────────────────────────────────
 
 let joseModule = null;
@@ -155,13 +147,19 @@ const getIssuerJwks = async (issuer) => {
 const resetJwksCache = () => jwksCache.clear();
 
 class TokenError extends Error {
-  constructor(code, description, status = 401) {
+  constructor(code, description, status = 401, reason = 'rejected') {
     super(description);
     this.code = code;          // 'invalid_token' | 'insufficient_scope'
     this.description = description;
     this.status = status;
+    this.reason = reason;      // fester Schluessel fuers Log
   }
 }
+
+const REASONS = ['rejected', 'not_jwt', 'no_keys', 'expired', 'invalid', 'not_access_token', 'audience', 'scope',
+  'no_email', 'email_unverified', 'domain', 'no_account', 'inactive', 'no_oidc'];
+/** Fester Log-Schluessel einer Ablehnung (keine Werte aus Token oder Konfiguration). */
+const reasonKey = (e) => REASONS.find((r) => e && r === e.reason) || 'rejected';
 
 /**
  * IdP-Access-Token pruefen.
@@ -177,8 +175,8 @@ class TokenError extends Error {
  * @throws {TokenError}
  */
 const verifyAccessToken = async (token, opts = {}) => {
-  if (!opts.issuer) throw new TokenError('invalid_token', 'OIDC not configured');
-  if (!looksLikeJwt(token)) throw new TokenError('invalid_token', 'Token is not a JWT');
+  if (!opts.issuer) throw new TokenError('invalid_token', 'OIDC not configured', 401, 'no_oidc');
+  if (!looksLikeJwt(token)) throw new TokenError('invalid_token', 'Token is not a JWT', 401, 'not_jwt');
 
   const issuer = String(opts.issuer).replace(/\/$/, '');
   const audiences = opts.audiences || getAllowedAudiences();
@@ -190,7 +188,7 @@ const verifyAccessToken = async (token, opts = {}) => {
   try {
     jwks = opts.jwks || await getIssuerJwks(issuer);
   } catch {
-    throw new TokenError('invalid_token', 'Issuer keys unavailable');
+    throw new TokenError('invalid_token', 'Issuer keys unavailable', 401, 'no_keys');
   }
 
   let payload;
@@ -206,26 +204,28 @@ const verifyAccessToken = async (token, opts = {}) => {
     }));
   } catch (e) {
     const expired = e && e.code === 'ERR_JWT_EXPIRED';
-    throw new TokenError('invalid_token', expired ? 'Token expired' : 'Token signature or claims invalid');
+    throw expired
+      ? new TokenError('invalid_token', 'Token expired', 401, 'expired')
+      : new TokenError('invalid_token', 'Token signature or claims invalid', 401, 'invalid');
   }
 
   // Keycloak kennzeichnet Token-Arten im Claim "typ". ID- und Refresh-Tokens
   // sind keine Zugriffstokens, auch wenn ihre aud zufaellig passt.
   if (payload.typ && !['bearer', 'at+jwt'].includes(String(payload.typ).toLowerCase())) {
-    throw new TokenError('invalid_token', 'Not an access token');
+    throw new TokenError('invalid_token', 'Not an access token', 401, 'not_access_token');
   }
 
   const aud = Array.isArray(payload.aud) ? payload.aud.map(String) : (payload.aud ? [String(payload.aud)] : []);
   const audOk = aud.some((a) => audiences.includes(a));
   const azpOk = !!payload.azp && clients.includes(String(payload.azp));
   if (!audOk && !azpOk) {
-    throw new TokenError('invalid_token', 'Token audience does not include this resource');
+    throw new TokenError('invalid_token', 'Token audience does not include this resource', 401, 'audience');
   }
 
   if (requiredScope) {
     const scopes = String(payload.scope || payload.scp || '').split(' ').filter(Boolean);
     if (!scopes.includes(requiredScope)) {
-      throw new TokenError('insufficient_scope', `Scope "${requiredScope}" required`, 403);
+      throw new TokenError('insufficient_scope', 'Required scope missing', 403, 'scope');
     }
   }
 
@@ -246,7 +246,7 @@ module.exports = {
   getScopesSupported,
   isAutoProvisionEnabled,
   looksLikeJwt,
-  peekHeader,
+  reasonKey,
   resetJwksCache,
   verifyAccessToken,
 };

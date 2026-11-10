@@ -24,7 +24,6 @@
  */
 
 const path = require('path');
-const crypto = require('crypto');
 const Module = require('module');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -50,7 +49,8 @@ const USERS = [
   { id: 2, name: 'Bob', email: 'bob@example.test', role: 'viewer', custom_role_id: null, active: false },
 ];
 const API_TOKEN = `isms_api_${'a'.repeat(64)}`;
-const sha = (v) => crypto.createHash('sha256').update(v).digest('hex');
+// Echte Hash-Funktion der Anwendung (braucht nur JWT_SECRET/ENCRYPTION_KEY).
+const { hashToken } = require(path.join(SRC, 'services', 'cryptoService'));
 let created = 0;
 let general = { ssoAutoProvision: true, ssoDefaultRole: 'viewer', ssoAllowedDomains: '' };
 let oidcCfg = { enabled: true, issuer: ISSUER, clientId: 'openisms', scopes: 'openid profile email' };
@@ -66,10 +66,9 @@ mock('models', {
     hashPassword: async () => 'x',
   },
   ApiToken: {
-    findOne: async ({ where }) => (where.token_hash === sha(API_TOKEN) ? { user_id: 1, name: 't', expires_at: null } : null),
+    findOne: async ({ where }) => (where.token_hash === hashToken(API_TOKEN) ? { user_id: 1, name: 't', expires_at: null } : null),
   },
 });
-mock('services/cryptoService', { hashToken: sha });
 mock('services/settingsService', {
   getOidcConfig: async () => oidcCfg,
   getGeneral: async () => general,
@@ -147,7 +146,7 @@ test('MCP auth', async (t) => {
   await t.test('expired token is rejected', async () => {
     const r = await run(mcpAuth, bearer(await sign({ aud: RESOURCE }, { exp: Math.floor(Date.now() / 1000) - 120 })));
     assert.equal(r.res.statusCode, 401);
-    assert.match(r.res.headers['www-authenticate'], /Token expired/);
+    assert.match(r.res.headers['www-authenticate'], /error_description="Token expired"/);
   });
 
   await t.test('wrong issuer is rejected', async () => {
@@ -211,6 +210,14 @@ test('MCP auth', async (t) => {
     const r = await run(mcpAuth, bearer(API_TOKEN));
     assert.equal(r.passed, true);
     assert.equal(r.req.mcpUser.id, 1);
+  });
+
+  await t.test('OpenISMS session JWT is accepted, pre-2FA token is not', async () => {
+    const jwt = require(require.resolve('jsonwebtoken', { paths: [path.join(SRC, '..')] }));
+    const ok = await run(mcpAuth, bearer(jwt.sign({ id: 1 }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' })));
+    assert.equal(ok.passed, true);
+    const pending = await run(mcpAuth, bearer(jwt.sign({ id: 1, totp_pending: true }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' })));
+    assert.equal(pending.res.statusCode, 401);
   });
 
   await t.test('unknown API token is rejected', async () => {
