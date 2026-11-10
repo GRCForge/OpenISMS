@@ -141,12 +141,14 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 
 // Request Logger
+const { redactUrlSecrets } = require('./utils/redact');
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
     // Sanitize URL to prevent log injection via newline characters in user-controlled input
-    const safeUrl = String(req.originalUrl).replace(/[\r\n]/g, '');
+    // and strip credentials carried in the query string (utils/redact.js).
+    const safeUrl = redactUrlSecrets(String(req.originalUrl).replace(/[\r\n]/g, ''));
     const safeMethod = String(req.method).replace(/[\r\n]/g, '');
     console.log(`[API] ${safeMethod} ${safeUrl} - ${res.statusCode} (${duration}ms)`);
   });

@@ -7,6 +7,7 @@ const { authenticate } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 const { PushSubscription } = require('../models');
 const { getSetting, setSetting } = require('../services/settingsService');
+const { isAllowedPushEndpoint } = require('../utils/pushEndpoint');
 
 let vapidKeysPromise = null;
 function getOrCreateVapidKeys() {
@@ -36,6 +37,11 @@ router.get('/vapid-public-key', authenticate, async (req, res) => {
 router.post('/subscribe', authenticate, async (req, res) => {
   const { endpoint, p256dh, auth, userAgent } = req.body;
   if (!endpoint || !p256dh || !auth) return res.status(400).json({ error: 'Missing fields' });
+  // Nur Push-Dienste der Browser-Hersteller (SSRF-Schutz, utils/pushEndpoint.js).
+  if (!isAllowedPushEndpoint(endpoint)) return res.status(400).json({ error: 'Push-Endpunkt nicht zulässig' });
+  if (typeof p256dh !== 'string' || typeof auth !== 'string' || p256dh.length > 255 || auth.length > 255) {
+    return res.status(400).json({ error: 'Ungültige Schlüssel' });
+  }
   try {
     const [sub, created] = await PushSubscription.findOrCreate({
       where: { user_id: req.user.id, endpoint },

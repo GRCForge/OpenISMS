@@ -57,6 +57,53 @@ const eq = (label, actual, expected) => {
   eq('pick uebernimmt keine Prototyp-Schluessel', pick(JSON.parse('{"__proto__":{"x":1}}'), ['x']), {});
 }
 
+// ── SSRF-Schutz: gesperrte Adressen ─────────────────────────────────────────
+{
+  const { isBlockedAddress } = src('utils', 'safeFetch');
+  console.log('\nSSRF — gesperrte Adressen:');
+  for (const ip of ['127.0.0.1', '10.1.2.3', '169.254.169.254', '192.168.10.103', '::1', '::', '::ffff:127.0.0.1',
+    '::ffff:7f00:1', '::ffff:a9fe:a9fe', '64:ff9b::a9fe:a9fe', '2002:7f00:1::1', '2001:0:4136:e378::1',
+    'fe80::1', 'fd00::1', 'ff02::1', '::127.0.0.1', '198.18.0.1', 'kaputt', ':::1']) {
+    eq(`${ip} gesperrt`, isBlockedAddress(ip), true);
+  }
+  for (const ip of ['1.1.1.1', '140.82.112.3', '2606:4700:4700::1111', '::ffff:1.1.1.1', '2a00:1450:4001:82a::200e']) {
+    eq(`${ip} erlaubt`, isBlockedAddress(ip), false);
+  }
+}
+
+// ── Web-Push-Endpunkte ──────────────────────────────────────────────────────
+{
+  const { isAllowedPushEndpoint } = src('utils', 'pushEndpoint');
+  console.log('\nWeb-Push — Endpunkt-Allowlist:');
+  eq('FCM', isAllowedPushEndpoint('https://fcm.googleapis.com/fcm/send/abc'), true);
+  eq('Mozilla', isAllowedPushEndpoint('https://updates.push.services.mozilla.com/wpush/v2/abc'), true);
+  eq('Apple', isAllowedPushEndpoint('https://web.push.apple.com/abc'), true);
+  eq('WNS', isAllowedPushEndpoint('https://wns2-par02p.notify.windows.com/w/?token=abc'), true);
+  eq('Cloud-Metadaten', isAllowedPushEndpoint('http://169.254.169.254/latest/meta-data/'), false);
+  eq('interner Dienst', isAllowedPushEndpoint('https://grafana.herz.dev/api/admin'), false);
+  eq('http statt https', isAllowedPushEndpoint('http://fcm.googleapis.com/fcm/send/abc'), false);
+  eq('fremder Port', isAllowedPushEndpoint('https://fcm.googleapis.com:8443/x'), false);
+  eq('Host-Suffix-Trick', isAllowedPushEndpoint('https://fcm.googleapis.com.evil.example/x'), false);
+  eq('Benutzerinfo', isAllowedPushEndpoint('https://a@fcm.googleapis.com/x'), false);
+  eq('kein String', isAllowedPushEndpoint({ href: 'https://fcm.googleapis.com' }), false);
+  process.env.PUSH_ENDPOINT_HOSTS = 'push.example.org';
+  eq('PUSH_ENDPOINT_HOSTS', isAllowedPushEndpoint('https://relay.push.example.org/x'), true);
+  delete process.env.PUSH_ENDPOINT_HOSTS;
+}
+
+// ── Log-Redaktion ───────────────────────────────────────────────────────────
+{
+  const { redactUrlSecrets } = src('utils', 'redact');
+  console.log('\nLog — Geheimnisse in der URL:');
+  eq('Query-Token', redactUrlSecrets('/api/assets?token=eyJabc.def&x=1'), '/api/assets?token=[REDACTED]&x=1');
+  eq('Reset-Link', redactUrlSecrets('/reset-password?token=deadbeef'), '/reset-password?token=[REDACTED]');
+  eq('api_key + access_token', redactUrlSecrets('/sse?api_key=isms_api_1&access_token=a'), '/sse?api_key=[REDACTED]&access_token=[REDACTED]');
+  eq('OIDC-Code', redactUrlSecrets('/api/auth/oidc/callback?code=abc&state=s'), '/api/auth/oidc/callback?code=[REDACTED]&state=s');
+  eq('Gross-/Kleinschreibung', redactUrlSecrets('/x?Token=a'), '/x?Token=[REDACTED]');
+  eq('ohne Query unveraendert', redactUrlSecrets('/api/health'), '/api/health');
+  eq('harmlose Parameter bleiben', redactUrlSecrets('/api/tasks?status=open&all=true'), '/api/tasks?status=open&all=true');
+}
+
 // @@WEITERE_TESTS@@
 
 // ── Dokumente erben die Sichtbarkeit ihres Objekts (mit gemockten Models) ────
