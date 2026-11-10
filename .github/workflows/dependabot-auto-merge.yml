@@ -48,7 +48,14 @@ permissions:
 jobs:
   auto-merge:
     name: Enable auto-merge for minor and patch bumps
-    if: github.actor == 'dependabot[bot]'
+    # github.actor is whoever caused the LATEST event on the pull request, not
+    # who opened it — a fork owner can get a pull_request_target event whose
+    # actor is dependabot[bot] (Dependabot updating the fork's own branch).
+    # The pull request's author and head repository are fixed facts and are
+    # what actually identifies a Dependabot PR in this repository.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: self-hosted
     timeout-minutes: 10
     steps:

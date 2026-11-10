@@ -1,4 +1,8 @@
 import writeXlsxFile, { type Cell, type SheetData } from 'write-excel-file/browser';
+// Formel-Neutralisierung fuer CSV-Exporte (CWE-1236) — siehe lib/csv.ts.
+import { neutralizeFormula } from './csv';
+
+export { neutralizeFormula, csvCell } from './csv';
 
 type Row = Record<string, unknown>;
 
@@ -16,8 +20,8 @@ export const exportToCSV = (data: Row[], filename: string) => {
   const headers = Object.keys(data[0]);
   const escape = (v: unknown) => {
     if (v === null || v === undefined) return '';
-    const s = String(v);
-    return s.includes(';') || s.includes('"') || s.includes('\n')
+    const s = neutralizeFormula(v);
+    return s.includes(';') || s.includes('"') || s.includes('\n') || s.includes('\r')
       ? `"${s.replace(/"/g, '""')}"`
       : s;
   };

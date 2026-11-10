@@ -23,7 +23,10 @@ const sendPush = async (userId, title, body, link, notificationId) => {
     const subs = await PushSubscription.findAll({ where: { user_id: userId } });
     if (!subs.length) return;
     const payload = JSON.stringify({ title, body: body || title, link: link || '/', tag: `openisms-notif-${notificationId || userId}` });
+    const { isAllowedPushEndpoint } = require('../utils/pushEndpoint');
     await Promise.all(subs.map(async sub => {
+      // Abos von vor der Endpunkt-Pruefung (routes/push.js) nicht mehr bedienen.
+      if (!isAllowedPushEndpoint(sub.endpoint)) return;
       try {
         await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
       } catch (err) {

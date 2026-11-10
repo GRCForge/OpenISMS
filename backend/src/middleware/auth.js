@@ -3,6 +3,7 @@ const { User, ApiToken } = require('../models');
 const { notify } = require('../services/notifyService');
 const { hashToken } = require('../services/cryptoService');
 const { tokenAudienceMatches } = require('../utils/oidcAudience');
+const { isExplicitlyUnverified, emailDomainAllowed } = require('../services/oidcIdentity');
 
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
@@ -89,12 +90,18 @@ const authenticate = async (req, res, next) => {
         if (tokenAudienceMatches(token, cfg.clientId)) {
           const info = await client.fetchUserInfo(config, token, client.skipSubjectCheck);
           const email = String(info.email || info.preferred_username || '').toLowerCase();
-          if (email) {
+          // Dieselben Regeln wie im interaktiven Callback (services/oidcIdentity.js),
+          // plus: nur Konten, die schon per SSO gebunden sind. Vorher genuegte die
+          // passende Adresse — auch fuer das lokale Admin-Konto, ohne dessen TOTP,
+          // ohne email_verified- und ohne Domain-Pruefung.
+          const { getGeneral } = require('../services/settingsService');
+          const general = email ? await getGeneral() : {};
+          if (email && !isExplicitlyUnverified(info.email_verified) && emailDomainAllowed(email, general.ssoAllowedDomains)) {
             const oidcUser = await User.findOne({
               where: { email },
               attributes: { exclude: ['password_hash', 'totp_secret', 'reset_password_token', 'reset_password_expires'] },
             });
-            if (oidcUser && oidcUser.active) {
+            if (oidcUser && oidcUser.active && oidcUser.sso_user) {
               req.user = oidcUser;
               return next();
             }

@@ -22,6 +22,24 @@ const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
+// Serverseitig gepflegte Asset-Felder: Ergebnis des CVE-Abgleichs (Liste und
+// Zeitstempel), Korrelation zu Drittsystemen (CheckMK u. a.) sowie Schluessel und
+// Zeitstempel. Ueber PUT /:id liessen sie sich bisher mitschreiben — auch vom
+// Asset-Owner — ohne im Audit-Diff der Route aufzutauchen (Mass Assignment).
+// Die CVE-Zaehler bleiben schreibbar (manuelle Pflege im Formular), stehen aber
+// jetzt im Audit-Diff.
+const { pick } = require('../utils/massAssignment');
+const ASSET_SERVER_MANAGED = [
+  'id', 'created_at', 'updated_at', 'createdAt', 'updatedAt',
+  'cve_ids', 'cve_last_checked', 'cpe_resolved_at',
+  'external_source', 'external_id', 'external_last_seen_at', 'external_status',
+];
+// Schreibbar ist, was das Modell kennt, abzueglich der Serverfelder. Die Liste
+// kommt aus dem Modell, nicht aus dem Request — unbekannte Schluessel (auch
+// __proto__) werden damit gar nicht erst kopiert.
+const assetWritableFields = () =>
+  Object.keys(Asset.rawAttributes).filter((k) => !ASSET_SERVER_MANAGED.includes(k));
+
 // Inform active DPOs about DPIA requirements
 const notifyDpos = async (asset, actorId) => {
   const dpos = await User.findAll({ where: { role: 'dpo', active: true }, attributes: ['id'] });
@@ -174,7 +192,7 @@ router.get('/:id', authenticate, requirePermission('assets','view','admin','owne
 
 router.post('/', authenticate, requirePermission('assets','create','admin','assessor','it-staff','dpo'), async (req, res) => {
   try {
-    const data = { ...req.body };
+    const data = pick(req.body, assetWritableFields());
     ['owner_id', 'assessor_id', 'vendor_id', 'parent_id'].forEach(f => {
       if (data[f] === '') data[f] = null;
     });
@@ -214,7 +232,10 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
     const canEdit = isAssessor(req) || isItStaff(req) || isDpo(req) || req.user.id === asset.owner_id || req.user.id === asset.assessor_id || isAdmin(req);
     if (!canEdit) return res.status(403).json({ error: 'Forbidden' });
 
-    const data = { ...req.body };
+    // Das Frontend schickt das ganze Asset-Objekt zurueck; serverseitig gepflegte
+    // Felder werden still verworfen statt abgewiesen, damit das Formular weiter
+    // funktioniert.
+    const data = pick(req.body, assetWritableFields());
     ['owner_id', 'assessor_id', 'vendor_id', 'parent_id'].forEach(f => {
       if (data[f] === '') data[f] = null;
     });
@@ -264,7 +285,8 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
       'owner_id', 'assessor_id', 'vendor_id', 'parent_id', 'version', 'vendor', 
       'description', 'frameworks', 'nis2_relevant', 'rto', 'rpo', 'sdo', 'mto', 'ioa', 'patch_status', 
       'eol_date', 'backup_plan', 'last_restore_test', 'hardening_status', 'dsfa_required',
-      'data_category', 'vvt_status'
+      'data_category', 'vvt_status',
+      'cve_critical', 'cve_high', 'cve_medium', 'cve_low', 'cve_search_query', 'cpe', 'package_name', 'package_ecosystem',
     ];
     
     const before = {};

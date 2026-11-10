@@ -20,6 +20,13 @@ const ORPHAN_CHECKS = {
 
 router.use(authenticate);
 
+// Vom Client schreibbare Felder (Mass-Assignment-Schutz, utils/massAssignment.js).
+const { pick } = require('../utils/massAssignment');
+const TASK_WRITABLE = [
+  'title', 'description', 'status', 'priority', 'due_date',
+  'assigned_to_id', 'assigned_to_group_id', 'assigned_role', 'related_type', 'related_id', 'tags',
+];
+
 const taskInclude = [
   { model: User, as: 'assignee', attributes: ['id', 'name', 'email'] },
   { model: User, as: 'createdBy', attributes: ['id', 'name'] },
@@ -195,7 +202,8 @@ router.get('/:id', authenticate, requirePermission('tasks','view','admin','owner
 // Create task
 router.post('/', requirePermission('tasks','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
-    const payload = { ...req.body, created_by_id: req.user.id };
+    // Nur Formularfelder; created_by_id/completed_* setzt der Server.
+    const payload = { ...pick(req.body, TASK_WRITABLE), created_by_id: req.user.id };
     // Mutually exclusive: group assignment clears user assignment and vice versa
     if (payload.assigned_to_group_id) payload.assigned_to_id = null;
     else if (payload.assigned_to_id) payload.assigned_to_group_id = null;
@@ -237,7 +245,8 @@ router.put('/:id', authenticate, requirePermission('tasks','edit','admin','owner
     const before = {};
     fields.forEach(f => { before[f] = task[f]; });
 
-    const updates = { ...req.body };
+    // Nur Formularfelder; completed_at/completed_by_id/created_by_id setzt der Server.
+    const updates = pick(req.body, TASK_WRITABLE);
 
     // Group task completion: first member to mark done completes it for all
     const isCompletingNow = updates.status === 'done' && task.status !== 'done';

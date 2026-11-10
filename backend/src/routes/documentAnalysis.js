@@ -43,6 +43,14 @@ function createAnalysisRouter(subjectType) {
     if (subjectType === 'document' && subject.category === 'contract' && !canAccessContract(req.user)) {
       res.status(403).json({ error: 'Verboten' }); return null;
     }
+    // Dieselbe Objekt-Sichtbarkeit wie beim Download (routes/documents.js):
+    // eine Analyse gibt den Inhalt des Dokuments in Befunden wieder.
+    if (subjectType === 'document') {
+      const { canAccessDocumentParent } = require('./documents');
+      if (!(await canAccessDocumentParent(req, subject))) {
+        res.status(403).json({ error: 'Verboten' }); return null;
+      }
+    }
     return { subjectId, subject };
   }
 
