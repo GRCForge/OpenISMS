@@ -351,6 +351,55 @@ jobs:
             console.log("OK: no fixable high/critical vulnerabilities in frontend.");
           '
 
+  # ── SBOM: CycloneDX fuer Backend und Frontend ─────────────────────────────
+  # Security-Review 2026-11 (Supply Chain): Es gab keine Stueckliste der
+  # ausgelieferten Abhaengigkeiten. `npm sbom` ist in npm selbst enthalten
+  # (kein zusaetzliches Werkzeug, keine Secrets) und liest nur die Lockfiles —
+  # es wird nichts installiert und kein Code aus dem Branch ausgefuehrt.
+  # --omit dev: nur, was im Image bzw. im gebauten Frontend landet.
+  # Laeuft wie npm audit fuer jeden Trigger; das Artefakt haelt 90 Tage.
+  # Releases bekommen dieselben Dateien als Anhang (release.yml).
+  sbom:
+    name: SBOM — CycloneDX
+    needs: gate
+    if: needs.gate.outputs.run_audit == 'true'
+    runs-on: self-hosted
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26.13.0'
+
+      - name: Generate CycloneDX SBOMs (npm sbom)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sbom"
+          for part in backend frontend; do
+            (cd "$part" && npm sbom --sbom-format cyclonedx --omit dev --package-lock-only) \
+              > "$RUNNER_TEMP/sbom/openisms-${part}.cdx.json"
+          done
+          node -e '
+            const fs = require("fs"), dir = process.env.RUNNER_TEMP + "/sbom";
+            for (const f of fs.readdirSync(dir)) {
+              const b = JSON.parse(fs.readFileSync(dir + "/" + f, "utf8"));
+              const n = (b.components || []).length;
+              if (b.bomFormat !== "CycloneDX" || n === 0) { console.error("::error::Ungueltige SBOM " + f); process.exit(1); }
+              console.log(f + ": CycloneDX " + b.specVersion + ", " + n + " Komponenten");
+            }
+          '
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-cyclonedx-${{ github.sha }}
+          path: ${{ runner.temp }}/sbom/*.cdx.json
+          retention-days: 90
+          if-no-files-found: error
+
   # ── Snyk: Monorepo dependency scan ────────────────────────────────────────
   snyk-dependencies:
     name: Snyk — Dependency Scan
