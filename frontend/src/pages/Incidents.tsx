@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, AlertOctagon, Flame, Trash2, Link2, ShieldAlert, Clock, ShieldCheck, Paperclip, Download, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import i18n from '../i18n';
 import api from '../lib/api';
 import type { Incident, Asset, User as UserType, Risk, IncidentCategory, IncidentSeverity, IncidentStatus } from '../types';
@@ -20,7 +21,10 @@ import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
-type TFunc = (key: string, opts?: Record<string, unknown>) => string;
+// i18next 27 typisiert t() strenger (strictInterpolationChecks); eine eigene
+// Signatur (key, opts?) ist nicht mehr zuweisungskompatibel. Daher den von
+// useTranslation(['incidents', 'common']) gelieferten Typ verwenden.
+type TFunc = TFunction<readonly ['incidents', 'common']>;
 
 const emptyForm = {
   title: '', description: '', category: 'other' as IncidentCategory, severity: 'medium' as IncidentSeverity, status: 'reported' as IncidentStatus, assignee_id: '',
