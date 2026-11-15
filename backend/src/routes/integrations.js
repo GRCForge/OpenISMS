@@ -20,6 +20,7 @@ const { auditFromReq } = require('../services/auditService');
 const settingsService = require('../services/settingsService');
 const registry = require('../services/integrations');
 const { abgleichen } = require('../services/discoverySync');
+const { requestError } = require('../utils/httpError');
 
 router.use(heavyLimiter);
 
@@ -33,7 +34,9 @@ function assertConfigured(adapter, cfg) {
 }
 
 function sendError(res, e) {
-  res.status(e.status || 500).json({ error: e.message });
+  // Meldungen der Adapter (mit e.status) bleiben; Datenbank-, Laufzeit- und
+  // Systemfehler gehen nur ins Log (Security-Review 2026-11, OP-6).
+  requestError(res, e, 'integrations', 500);
 }
 
 // ── Verzeichnis ───────────────────────────────────────────────────────────────
@@ -106,7 +109,7 @@ router.put('/:source', authenticate, requirePermission('integrations', 'configur
     });
 
     res.json(saved);
-  } catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'integrations'); }
 });
 
 // ── Verbindungstest ───────────────────────────────────────────────────────────

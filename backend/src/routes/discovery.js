@@ -12,7 +12,7 @@ const { Asset, User, DiscoveredSoftware, sequelize } = require('../models');
 const registry = require('../services/integrations');
 const datei = require('../services/integrations/datei');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 
 // ── Port → service map ────────────────────────────────────────────────────────
 
@@ -817,8 +817,8 @@ router.post('/network-scan', authenticate, requirePermission('discovery','access
 
     res.json({ hosts: results, scanned: ips.length, found: results.length });
   } catch (e) {
-    res.status(e.message.includes('CIDR') || e.message.includes('Maximal') || e.message.includes('private') ? 400 : 500)
-       .json({ error: e.message });
+    const msg = String(e?.message || '');
+    requestError(res, e, 'discovery', msg.includes('CIDR') || msg.includes('Maximal') || msg.includes('private') ? 400 : 500);
   }
 });
 

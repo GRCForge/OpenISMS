@@ -2,7 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { Risk, Asset, User, Document, Threat, Control, VvtEntry, Incident, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -128,7 +128,7 @@ router.post('/', authenticate, requirePermission('risks','create','admin','owner
     }
     const full = await Risk.findByPk(risk.id, { include: includeAll });
     res.status(201).json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'risks'); }
 });
 
 router.put('/:id', authenticate, requirePermission('risks','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -164,7 +164,7 @@ router.put('/:id', authenticate, requirePermission('risks','edit','admin','owner
     await auditFromReq(req, 'update', 'risk', risk.id, risk.title, { before, after });
     const full = await Risk.findByPk(risk.id, { include: includeAll });
     res.json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'risks'); }
 });
 
 // Risk-Owner Sign-off (NIS-2 Management-Haftung): digitale Freigabe mit Zeitstempel
@@ -182,7 +182,7 @@ router.patch('/:id/signoff', authenticate, requirePermission('risks','sign_off',
     await auditFromReq(req, 'acknowledge', 'risk', risk.id, risk.title, { accepted_until: req.body.valid_until || null });
     const full = await Risk.findByPk(risk.id, { include: includeAll });
     res.json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'risks'); }
 });
 
 // Sign-off zuruecknehmen
@@ -194,7 +194,7 @@ router.patch('/:id/revoke', authenticate, requirePermission('risks','sign_off','
     await risk.update({ status: 'in_treatment', accepted_by_id: null, accepted_at: null, accepted_until: null });
     const full = await Risk.findByPk(risk.id, { include: includeAll });
     res.json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'risks'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('risks','delete','admin'), async (req, res) => {

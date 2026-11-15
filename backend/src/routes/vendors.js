@@ -3,7 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Vendor, VendorContact, User, Incident, VvtEntry } = require('../models');
 const { authenticate, isItStaff, isDpo, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { can } = require('../services/permissionService');
 
@@ -51,7 +51,7 @@ router.post('/', authenticate, requirePermission('vendors','create','admin','ass
     await auditFromReq(req, 'create', 'vendor', vendor.id, vendor.name, { name, type, website, phone, address, notes });
     res.status(201).json(vendor);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'vendors');
   }
 });
 
@@ -96,7 +96,7 @@ router.post('/:id/contacts', authenticate, requirePermission('vendors','contacts
     await auditFromReq(req, 'create', 'vendor', vendor.id, vendor.name, { action: 'add_contact', contact_name: contact.name });
     res.status(201).json(contact);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'vendors');
   }
 });
 
@@ -173,7 +173,7 @@ const handleAssess = async (req, res) => {
     });
     res.json(vendor);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'vendors');
   }
 };
 

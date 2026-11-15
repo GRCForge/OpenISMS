@@ -3,7 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Group, GroupMember, User } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -39,7 +39,7 @@ router.post('/', requirePermission('groups','manage','admin'), async (req, res) 
     await auditFromReq(req, 'create', 'group', group.id, group.name, { description: group.description });
     const full = await Group.findByPk(group.id, { include: groupInclude });
     res.status(201).json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'groups'); }
 });
 
 // Update group (admin only)
@@ -52,7 +52,7 @@ router.put('/:id', authenticate, requirePermission('groups','manage','admin'), a
     await auditFromReq(req, 'update', 'group', group.id, group.name, {});
     const full = await Group.findByPk(group.id, { include: groupInclude });
     res.json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'groups'); }
 });
 
 // Delete group (admin only)
@@ -79,7 +79,7 @@ router.post('/:id/members', requirePermission('groups','manage','admin'), async 
     if (!created) return res.status(409).json({ error: 'Bereits Mitglied' });
     const full = await Group.findByPk(group.id, { include: groupInclude });
     res.status(201).json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'groups'); }
 });
 
 // Remove member from group (admin only)

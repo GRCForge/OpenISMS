@@ -2,7 +2,7 @@ const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Incident, Asset, User, Risk, Vendor, VvtEntry, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
@@ -118,7 +118,7 @@ router.post('/', authenticate, requirePermission('incidents','create','admin','o
     if (incident.assignee_id) await notifyAssignee(incident, req.user.id);
     const full = await Incident.findByPk(incident.id, { include: includeAll });
     res.status(201).json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'incidents'); }
 });
 
 router.put('/:id', authenticate, requirePermission('incidents','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -147,7 +147,7 @@ router.put('/:id', authenticate, requirePermission('incidents','edit','admin','o
     await auditFromReq(req, 'update', 'incident', incident.id, incident.title, { before, after });
     const full = await Incident.findByPk(incident.id, { include: includeAll });
     res.json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'incidents'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('incidents','delete','admin','assessor'), async (req, res) => {

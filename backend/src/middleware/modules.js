@@ -1,4 +1,5 @@
 const { Setting } = require('../models');
+const { serverError } = require('../utils/httpError');
 
 // Modul-Status wird pro Request gebraucht — kurzer In-Memory-Cache,
 // damit nicht jeder API-Call die settings-Tabelle trifft.
@@ -44,7 +45,7 @@ const requireModule = (key) => async (req, res, next) => {
     if (!modules[key]) return res.status(403).json({ error: `Modul '${key}' ist nicht aktiviert.` });
     next();
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e, 'modules');
   }
 };
 

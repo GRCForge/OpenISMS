@@ -17,7 +17,7 @@
 
 const router = require('express').Router();
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { boundedInt } = require('../utils/queryFilters');
 const graph = require('../services/graphService');
 const spec = require('../services/graphProjection');
@@ -82,7 +82,7 @@ router.get('/impact/:type/:id', requireGraph, requirePermission('graph', 'view',
     try {
       label = graph.labelFuerEntitaet(req.params.type);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return requestError(res, e, 'graph');
     }
 
     // Obergrenze 4: Bei einem dicht verknuepften ISMS waechst die Zahl der
@@ -281,7 +281,7 @@ router.get('/path/:fromType/:fromId/:toType/:toId', requireGraph, requirePermiss
       vonLabel = graph.labelFuerEntitaet(req.params.fromType);
       nachLabel = graph.labelFuerEntitaet(req.params.toType);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return requestError(res, e, 'graph');
     }
 
     const rows = await graph.cypher(

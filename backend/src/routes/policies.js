@@ -11,6 +11,7 @@ const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, Pol
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
 const { uploadSubdir, POLICIES_SUBDIR } = require('../services/uploadStorage');
+const { requestError } = require('../utils/httpError');
 
 // Rate limiting for policy downloads to mitigate DoS (CWE-770)
 const downloadLimiter = rateLimit({
@@ -161,7 +162,7 @@ router.post('/', authenticate, requirePermission('policies','create','admin','as
     
     await auditFromReq(req, 'create', 'document', policy.id, policy.title, { version: policy.version });
     res.status(201).json(policy);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'policies'); }
 });
 
 // Update policy (PUT) - Supports version updates and file replacement
@@ -255,7 +256,7 @@ router.put('/:id', authenticate, requirePermission('policies','edit','admin','as
 
     await auditFromReq(req, 'update', 'document', policy.id, policy.title, { before, after: { title: policy.title, version: policy.version, status: policy.status } });
     res.json(policy);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'policies'); }
 });
 
 const verifyFileHash = async (filePath, storedHash) => {

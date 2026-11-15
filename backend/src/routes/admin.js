@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const client = require('openid-client');
 const rateLimit = require('express-rate-limit');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const oidcEnv = require('../services/oidcEnv');
 const { geltendeMappings } = require('../services/oidcMappings');
 const { getGeneral, setGeneral, getOidcRaw, setOidc, getOidcEnvStatus, getPermissions, setPermissions, DEFAULT_PERMISSIONS, getSetting, setSetting } = require('../services/settingsService');
@@ -56,7 +56,7 @@ router.put('/settings', requirePermission('admin','settings','admin'), async (re
     const saved = await setGeneral(patch);
     await auditFromReq(req, 'update', 'settings', null, 'Allgemeine Einstellungen', { before, after: saved });
     res.json(saved);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 // Manual audit log purge (also returns count of deleted entries)
@@ -97,7 +97,7 @@ router.put('/permissions', requirePermission('admin','permissions','admin'), asy
     invalidatePermissionCache();
     await auditFromReq(req, 'update', 'settings', null, 'Rollen & Rechte', { before, after: saved });
     res.json({ permissions: saved });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 router.post('/permissions/reset', requirePermission('admin','permissions','admin'), async (req, res) => {
@@ -139,7 +139,7 @@ router.post('/custom-roles', requirePermission('admin','roles','admin'), async (
     invalidatePermissionCache();
     await auditFromReq(req, 'create', 'custom_role', role.id, role.name, { permissions: role.permissions });
     res.status(201).json(role);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 router.put('/custom-roles/:id', requirePermission('admin','roles','admin'), async (req, res) => {
@@ -162,7 +162,7 @@ router.put('/custom-roles/:id', requirePermission('admin','roles','admin'), asyn
     const after = { name: role.name, description: role.description, base_role: role.base_role, permissions: role.permissions };
     await auditFromReq(req, 'update', 'custom_role', role.id, role.name, { before, after });
     res.json(role);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 router.delete('/custom-roles/:id', requirePermission('admin','roles','admin'), async (req, res) => {
@@ -221,7 +221,7 @@ router.post('/oidc-mappings', requirePermission('admin','sso','admin'), async (r
     });
     await auditFromReq(req, 'create', 'oidc_mapping', mapping.id, `${claim_path}=${claim_value}`, {});
     res.status(201).json(mapping);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 router.delete('/oidc-mappings/:id', requirePermission('admin','sso','admin'), async (req, res) => {
@@ -314,7 +314,7 @@ router.put('/oidc', requirePermission('admin','sso','admin'), async (req, res) =
     
     await auditFromReq(req, 'update', 'settings', null, 'OIDC-Konfiguration', { before: auditBefore, after: auditAfter });
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 // Verbindungstest: Discovery-Dokument des Issuers laden
@@ -389,7 +389,7 @@ router.put('/smtp', requirePermission('admin','smtp','admin'), async (req, res) 
     if (masked.password) masked.password = '*****';
     res.json(masked);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'admin');
   }
 });
 
@@ -476,14 +476,14 @@ router.put('/llm', requirePermission('admin','llm','admin'), async (req, res) =>
     await saveLlmConfig(patch);
     await auditFromReq(req, 'update', 'settings', null, 'LLM-Konfiguration', { provider: patch.provider });
     res.json(await getLlmConfigPublic());
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 router.post('/llm/test', requirePermission('admin','llm','admin'), async (req, res) => {
   try {
     const result = await testConnection();
     res.json({ ok: true, provider: result.provider, model: result.model, response: result.text });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'admin'); }
 });
 
 module.exports = router;

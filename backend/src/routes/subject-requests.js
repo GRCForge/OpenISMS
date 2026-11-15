@@ -5,7 +5,7 @@ router.use(apiLimiter);
 const { SubjectRequest, User, Task } = require('../models');
 const { Op } = require('sequelize');
 const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -46,7 +46,7 @@ router.post('/', requirePermission('subject_requests','create','admin','dpo'), a
     const created = await SubjectRequest.findByPk(request.id, { include });
     res.status(201).json(created);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'subject-requests');
   }
 });
 
@@ -81,7 +81,7 @@ router.put('/:id', requirePermission('subject_requests','edit','admin','dpo'), a
     const updated = await SubjectRequest.findByPk(request.id, { include });
     res.json(updated);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'subject-requests');
   }
 });
 

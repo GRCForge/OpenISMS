@@ -3,7 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { VvtEntry, User, Vendor, Asset, Dsfa } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -61,7 +61,7 @@ router.post('/', authenticate, requirePermission('vvt','create','admin','assesso
     const full = await VvtEntry.findByPk(entry.id, { include: includeAll });
     res.status(201).json(full);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'vvt');
   }
 });
 
@@ -91,7 +91,7 @@ router.put('/:id', requirePermission('vvt','edit','admin','assessor','dpo'), asy
     const full = await VvtEntry.findByPk(entry.id, { include: includeAll });
     res.json(full);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'vvt');
   }
 });
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const { User, PasskeyCredential, CustomRole } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { validate: validatePassword } = require('../services/passwordPolicy');
 
@@ -71,7 +71,7 @@ router.post('/', authenticate, requirePermission('users','create','admin'), asyn
     const userData = stripSensitive(user.toJSON());
     await auditFromReq(req, 'create', 'user', user.id, user.name, { role: user.role, custom_role_id: customRoleId, email: user.email });
     res.status(201).json(userData);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'users'); }
 });
 
 router.put('/:id', authenticate, requirePermission('users','edit','admin'), async (req, res) => {
@@ -130,7 +130,7 @@ router.put('/:id', authenticate, requirePermission('users','edit','admin'), asyn
     });
     const userData = stripSensitive(user.toJSON());
     res.json(userData);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'users'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('users','delete','admin'), async (req, res) => {
