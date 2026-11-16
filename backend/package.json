@@ -41,7 +41,7 @@
     "pg-hstore": "^2.3.4",
     "qrcode": "^1.5.4",
     "read-excel-file": "^9.3.17",
-    "rotating-file-stream": "^3.2.10",
+    "rotating-file-stream": "^4.0.0",
     "sequelize": "^6.37.8",
     "swagger-ui-dist": "^5.35.0",
     "web-push": "^4.0.0",
