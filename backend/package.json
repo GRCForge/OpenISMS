@@ -31,7 +31,7 @@
     "mammoth": "^1.13.0",
     "multer": "^2.4.0",
     "node-cron": "^4.6.0",
-    "nodemailer": "^10.5.0",
+    "nodemailer": "^10.6.0",
     "openai": "^7.57.0",
     "openid-client": "^6.9.0",
     "otplib": "^13.6.0",
