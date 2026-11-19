@@ -41,7 +41,10 @@ function resolveCatalogSourceUrl(raw, env = process.env) {
   const requested = parsed.hostname.toLowerCase();
   const host = allowedCatalogHosts(env).find((h) => h === requested);
   if (!host) return null;
-  return new URL(`${parsed.pathname}${parsed.search}`, `https://${host}`).toString();
+  // Fester Praefix bis einschliesslich des ersten '/': Ein Pfad wie '//evil.example/x'
+  // bleibt damit Pfad und kann den Host nicht ersetzen (anders als bei new URL(pfad, basis)).
+  const base = 'https://' + host + '/';
+  return base + parsed.pathname.slice(1) + parsed.search;
 }
 
 module.exports = { DEFAULT_CATALOG_HOSTS, allowedCatalogHosts, resolveCatalogSourceUrl };

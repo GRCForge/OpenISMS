@@ -31,6 +31,7 @@ check('keine URL abgelehnt', resolveCatalogSourceUrl('kein url', {}) === null);
 const env = { BSI_CATALOG_URL_HOSTS: 'mirror.example.org, ungueltig_host ,' };
 check('Zusatz-Host aus Umgebung erlaubt', resolveCatalogSourceUrl('https://mirror.example.org/k.xml', env) === 'https://mirror.example.org/k.xml');
 check('ungueltiger Zusatz-Host ignoriert', !allowedCatalogHosts(env).includes('ungueltig_host'));
+check('Doppel-Slash-Pfad ersetzt den Host nicht', new URL(resolveCatalogSourceUrl('https://www.bsi.bund.de//evil.example/x.xml', {})).hostname === 'www.bsi.bund.de');
 check('Fragment wird verworfen', resolveCatalogSourceUrl('https://www.bsi.bund.de/a.xml#x', {}) === 'https://www.bsi.bund.de/a.xml');
 
 console.log('OSCAL-Platzhalter');
@@ -43,10 +44,10 @@ const catalog = {
   },
 };
 const t0 = Date.now();
-let ok = true;
-try { parseCatalog(Buffer.from(JSON.stringify(catalog)), 'oscal_catalog'); } catch { ok = true; }
+// Ob der Parser den Katalog annimmt oder ablehnt, ist hier egal: es zaehlt nur die Laufzeit.
+try { parseCatalog(Buffer.from(JSON.stringify(catalog)), 'oscal_catalog'); } catch { /* Ablehnung ist zulaessig */ }
 const ms = Date.now() - t0;
-check(`boesartiger Platzhalter in ${ms} ms verarbeitet`, ok && ms < 2000);
+check(`boesartiger Platzhalter in ${ms} ms verarbeitet`, ms < 2000);
 
 if (failed) { console.error(`\n${failed} Pruefung(en) fehlgeschlagen.`); process.exit(1); }
 console.log('\nAlle Pruefungen bestanden.');
