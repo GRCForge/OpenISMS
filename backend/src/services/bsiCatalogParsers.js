@@ -207,7 +207,7 @@ const GSPP_LEVELS = { 'normal-sdt': 'normal_sdt', 'erhöht': 'erhoeht', 'erhoeht
 /** Ersetzt OSCAL-Parameter-Platzhalter {{ insert: param, id }} durch Wert oder Label. */
 function renderProse(prose, params) {
   if (typeof prose !== 'string') return '';
-  return prose.replace(/\{\{\s*insert:\s*param,\s*([^\s}]+)\s*\}\}/g, (_, id) => {
+  return prose.replace(/\{\{\s{0,4}insert:\s{0,4}param,\s{0,4}([\w.-]{1,128})\s{0,4}\}\}/g, (_, id) => {
     const p = params.get(id);
     if (!p) return `[${id}]`;
     if (Array.isArray(p.values) && p.values.length) return p.values.join(', ');

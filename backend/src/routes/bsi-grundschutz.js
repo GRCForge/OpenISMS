@@ -8,6 +8,7 @@ const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { fetchPublicText } = require('../utils/safeFetch');
+const { allowedCatalogHosts, resolveCatalogSourceUrl } = require('../services/bsiCatalogSource');
 const { MAX_CATALOG_BYTES, CatalogParseError, parseCatalog } = require('../services/bsiCatalogParsers');
 const catalogs = require('../services/bsiCatalogService');
 
@@ -148,17 +149,22 @@ router.post('/catalogs/import-url', heavyLimiter, authenticate, requirePermissio
   try {
     const url = typeof req.body?.url === 'string' ? req.body.url.trim() : '';
     if (!url || url.length > 2048) return res.status(400).json({ error: 'URL fehlt oder ist zu lang' });
+    // Nur https von erlaubten Quellen; die Ziel-URL wird aus dem Host der Liste neu gebaut.
+    const target = resolveCatalogSourceUrl(url);
+    if (!target) {
+      return res.status(400).json({ error: `Nur https-URLs von erlaubten Quellen: ${allowedCatalogHosts().join(', ')}` });
+    }
     let fetched;
     try {
       // SSRF-Schutz: nur oeffentliche Ziele, keine Weiterleitungen, Groessen- und Zeitlimit.
-      fetched = await fetchPublicText(url, {
+      fetched = await fetchPublicText(target, {
         maxBytes: MAX_CATALOG_BYTES, timeoutMs: 60_000,
         accept: 'application/json, application/xml, text/xml, */*', userAgent: 'OpenISMS-Catalog-Import/1.0',
       });
     } catch (e) {
       return res.status(422).json({ error: `Abruf fehlgeschlagen: ${String(e.message).slice(0, 200)}` });
     }
-    await importParsed(req, res, Buffer.from(fetched.text, 'utf8'), 'url', { source_url: url });
+    await importParsed(req, res, Buffer.from(fetched.text, 'utf8'), 'url', { source_url: target });
   } catch (e) { serverError(res, e, 'bsi-grundschutz'); }
 });
 

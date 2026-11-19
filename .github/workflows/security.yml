@@ -250,6 +250,7 @@ jobs:
           node scripts/test-security-review-2026-11.js
           node scripts/test-bsi-layers.js
           node scripts/test-bsi-catalog-import.js
+          node scripts/test-bsi-catalog-source.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only
