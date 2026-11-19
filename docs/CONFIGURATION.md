@@ -174,6 +174,7 @@ Copy `.env.example` to `.env`; it documents every variable in detail.
 | `RATE_LIMIT_API_MAX` | `5000` | API requests per 15 minutes per token or IP |
 | `RATE_LIMIT_HEAVY_MAX` | `300` | Backup, import, report and discovery requests per 15 minutes |
 | `ADMIN_PASSWORD` | random | Password of the initial administrator `admin@isms.local`, only used while the user table is empty |
+| `BSI_CATALOG_URL_HOSTS` | – | Additional hosts (comma-separated) from which IT-Grundschutz catalogues may be imported by URL. Always allowed: `www.bsi.bund.de`, `bsi.bund.de`, `raw.githubusercontent.com`; https only |
 
 ### Database
 

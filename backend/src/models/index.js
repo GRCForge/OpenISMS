@@ -43,6 +43,9 @@ const BcmExercise = require('./BcmExercise');
 const Dsfa = require('./Dsfa');
 const Iso27001Control = require('./Iso27001Control');
 const BsiRequirement = require('./BsiRequirement');
+const BsiCatalog = require('./BsiCatalog');
+const BsiCatalogModule = require('./BsiCatalogModule');
+const BsiCatalogRequirement = require('./BsiCatalogRequirement');
 const Nis2Measure = require('./Nis2Measure');
 const Nis2SelfCheckItem = require('./Nis2SelfCheckItem');
 const C5Criterion = require('./C5Criterion');
@@ -247,6 +250,15 @@ Dsfa.belongsTo(User, { as: 'approver', foreignKey: 'approver_id' });
 // ISO 27001 / BSI / NIS-2 / C5 associations
 Iso27001Control.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });
 BsiRequirement.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
+// Versionierte Grundschutz-Kataloge: Module und Anforderungen gehoeren genau
+// einem Katalog und gehen mit ihm (nur Vorschau-Kataloge werden je geloescht).
+BsiCatalog.hasMany(BsiCatalogModule, { as: 'modules', foreignKey: 'catalog_id', onDelete: 'CASCADE' });
+BsiCatalog.hasMany(BsiCatalogRequirement, { as: 'requirements', foreignKey: 'catalog_id', onDelete: 'CASCADE' });
+BsiCatalogModule.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id' });
+BsiCatalogRequirement.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id' });
+BsiCatalog.belongsTo(User, { as: 'importedBy', foreignKey: 'imported_by_id' });
+BsiCatalog.belongsTo(User, { as: 'activatedBy', foreignKey: 'activated_by_id' });
+BsiRequirement.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
 Nis2Measure.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'answeredBy', foreignKey: 'answered_by_id' });
@@ -318,7 +330,7 @@ module.exports = {
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
-  Iso27001Control, BsiRequirement, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
+  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,

@@ -10,7 +10,9 @@
   "level": {
     "basis": "Basic",
     "standard": "Standard",
-    "erhoehter_schutzbedarf": "High protection"
+    "erhoehter_schutzbedarf": "High protection",
+    "normal_sdt": "Normal (SotA)",
+    "erhoeht": "Elevated"
   },
   "stats": {
     "total": "Total",
@@ -54,5 +56,62 @@
   "toast": {
     "loadError": "Error loading catalogue",
     "saveError": "Error saving"
+  },
+  "catalogs": {
+    "open": "Catalogues",
+    "title": "Grundschutz catalogues",
+    "intro": "Catalogues are imported and stored as a preview first. Requirements are only taken over on activation; status, owners and notes of existing requirements are kept, requirements no longer contained are marked as retired, not deleted.",
+    "table": {
+      "name": "Catalogue",
+      "format": "Format",
+      "requirements": "Requirements",
+      "status": "Status",
+      "imported": "Imported"
+    },
+    "format": {
+      "auto": "Detect automatically",
+      "seed": "Bundled excerpt",
+      "kompendium_xml": "Kompendium (XML)",
+      "oscal_catalog": "OSCAL catalogue (JSON)"
+    },
+    "status": {
+      "preview": "Preview",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "compare": "Compare",
+    "activate": "Activate",
+    "activateConfirm": "Activate catalogue \"{{name}}\"? Its requirements will be reconciled with the implementation status.",
+    "discardConfirm": "Discard preview \"{{name}}\"?",
+    "diff": {
+      "title": "{{name}} compared to: {{against}}",
+      "none": "no active catalogue",
+      "added": "New",
+      "changed": "Changed",
+      "removed": "Removed",
+      "unchanged": "Unchanged",
+      "more": "… and {{count}} more",
+      "hint": "The preview changes nothing. Changes are applied only with \"Activate\"."
+    },
+    "import": {
+      "title": "Import catalogue",
+      "file": "Upload file",
+      "url": "Load from URL",
+      "urlLabel": "URL (public, http/https)",
+      "format": "Format",
+      "name": "Name (optional)",
+      "edition": "Edition (optional)",
+      "hint": "Supported: IT-Grundschutz-Kompendium as XML (DocBook) and OSCAL catalogues in JSON, such as the Grundschutz++ user catalogue. Max. 25 MB.",
+      "submit": "Import",
+      "running": "Importing…"
+    },
+    "toast": {
+      "imported": "Catalogue with {{count}} requirements imported as preview",
+      "importError": "Import failed",
+      "activated": "Catalogue activated: {{created}} new, {{updated}} updated, {{retired}} retired",
+      "activateError": "Activation failed",
+      "diffError": "Comparison could not be loaded",
+      "discardError": "Discarding failed"
+    }
   }
 }

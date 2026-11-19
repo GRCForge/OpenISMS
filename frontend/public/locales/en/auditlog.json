@@ -13,6 +13,7 @@
   },
   "actions": {
     "create": "Created", "update": "Updated", "delete": "Deleted",
+    "import": "Imported", "activate": "Activated",
     "assess": "Assessed", "login": "Login", "acknowledge": "Acknowledged",
     "deactivate": "Deactivated", "change_password": "Password Changed", "execute": "Executed",
     "seed": "Catalog Loaded", "reseed": "Catalog Reloaded"
@@ -27,6 +28,7 @@
     "audit": "Audit / Review", "audit_finding": "Audit Finding",
     "custom_role": "Custom Role", "oidc_mapping": "OIDC Role Mapping",
     "iso27001_control": "ISO 27001 Control", "bsi_requirement": "BSI Requirement",
+    "bsi_catalog": "BSI Catalogue",
     "tisax_requirement": "TISAX Requirement", "tisax_assessment": "TISAX Assessment",
     "nis2_measure": "NIS-2 Measure", "c5_criterion": "C5 Criterion",
     "ai_system": "AI System (AI Act)",

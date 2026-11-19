@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { BookOpen, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronRight } from 'lucide-react';
+import { BookOpen, Download, CheckCircle2, Pencil, ListChecks, ChevronDown, ChevronRight, Library } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
@@ -17,9 +17,11 @@ import { useToast } from '../contexts/ToastContext';
 import { ControlMappings } from '../components/ControlMappings';
 import { hasWriteAccess } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
+import { BsiCatalogManager } from '../components/bsi/BsiCatalogManager';
 
 type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable';
-type RequirementLevel = 'basis' | 'standard' | 'erhoehter_schutzbedarf';
+// basis/standard/erhoehter_schutzbedarf: Kompendium 2023; normal_sdt/erhoeht: Grundschutz++
+type RequirementLevel = 'basis' | 'standard' | 'erhoehter_schutzbedarf' | 'normal_sdt' | 'erhoeht';
 
 interface BsiRequirement {
   id: number;
@@ -28,7 +30,7 @@ interface BsiRequirement {
   layer: string;
   req_id: string;
   title: string;
-  requirement_level: RequirementLevel;
+  requirement_level: RequirementLevel | null;
   implementation_status: ImplStatus;
   responsible?: { id: number; name: string };
   responsible_id?: number | null;
@@ -63,6 +65,8 @@ const levelColors: Record<RequirementLevel, string> = {
   basis: 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400',
   standard: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   erhoehter_schutzbedarf: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  normal_sdt: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  erhoeht: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
 };
 
 const emptyEditForm = {
@@ -79,6 +83,8 @@ export const BsiGrundschutz: React.FC = () => {
   const toast = useToast();
   const canWrite = can('bsi_grundschutz', 'create', hasWriteAccess(user?.role));
   const canManage = can('bsi_grundschutz', 'edit', user?.role === 'admin' || user?.role === 'assessor');
+  const canManageCatalog = can('bsi_grundschutz', 'manage_catalog', user?.role === 'admin' || user?.role === 'assessor');
+  const [catalogsOpen, setCatalogsOpen] = useState(false);
 
   const statusLabels: Record<ImplStatus, string> = {
     not_started: t('status.not_started'),
@@ -91,7 +97,12 @@ export const BsiGrundschutz: React.FC = () => {
     basis: t('level.basis'),
     standard: t('level.standard'),
     erhoehter_schutzbedarf: t('level.erhoehter_schutzbedarf'),
+    normal_sdt: t('level.normal_sdt'),
+    erhoeht: t('level.erhoeht'),
   };
+  const levelBadge = (level: RequirementLevel | null) => level
+    ? <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${levelColors[level]}`}>{levelLabels[level]}</span>
+    : <span className="text-xs text-gray-400 dark:text-slate-500">–</span>;
 
   const [requirements, setRequirements] = useState<BsiRequirement[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -170,8 +181,10 @@ export const BsiGrundschutz: React.FC = () => {
   }, [requirements]);
 
   const availableLayers = useMemo(() => {
+    // Kompendium-Schichten in fester Reihenfolge, danach weitere Kuerzel (z. B.
+    // Grundschutz++-Praktiken GC, STM, ...) in der Reihenfolge ihres Auftretens.
     const layers = new Set(requirements.map(r => r.layer));
-    return LAYER_ORDER.filter(l => layers.has(l));
+    return [...LAYER_ORDER.filter(l => layers.has(l)), ...[...layers].filter(l => !LAYER_ORDER.includes(l))];
   }, [requirements]);
 
   const filtered = useMemo(() => requirements.filter(r => {
@@ -207,8 +220,12 @@ export const BsiGrundschutz: React.FC = () => {
         <ListChecks size={40} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" />
         <p className="text-gray-500 dark:text-slate-400 font-medium">{t('empty.title')}</p>
         <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{t('empty.description')}</p>
-        {canManage && <Button onClick={seed} disabled={seeding} className="mt-4"><Download size={16} />{seeding ? t('empty.loading') : t('empty.loadButton')}</Button>}
+        <div className="flex gap-2 justify-center mt-4">
+          {canManage && <Button onClick={seed} disabled={seeding}><Download size={16} />{seeding ? t('empty.loading') : t('empty.loadButton')}</Button>}
+          <Button variant="secondary" onClick={() => setCatalogsOpen(true)}><Library size={16} />{t('catalogs.open')}</Button>
+        </div>
       </div>
+      <BsiCatalogManager open={catalogsOpen} onClose={() => setCatalogsOpen(false)} canManage={canManageCatalog} onActivated={load} />
     </CardBody></Card>
   );
 
@@ -219,7 +236,9 @@ export const BsiGrundschutz: React.FC = () => {
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2"><BookOpen size={24} className="text-blue-600" />{t('title')}</h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">{t('subtitle', { count: requirements.length })}</p>
         </div>
+        <Button variant="secondary" onClick={() => setCatalogsOpen(true)}><Library size={16} />{t('catalogs.open')}</Button>
       </div>
+      <BsiCatalogManager open={catalogsOpen} onClose={() => setCatalogsOpen(false)} canManage={canManageCatalog} onActivated={load} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
@@ -276,7 +295,7 @@ export const BsiGrundschutz: React.FC = () => {
                             <tr key={req.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
                               <Td><span className="font-mono text-xs text-gray-600 dark:text-slate-400">{req.req_id}</span></Td>
                               <Td><p className="font-medium text-sm dark:text-slate-200">{req.title}</p>{req.responsible && <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{req.responsible.name}</p>}</Td>
-                              <Td><span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${levelColors[req.requirement_level]}`}>{levelLabels[req.requirement_level]}</span></Td>
+                              <Td>{levelBadge(req.requirement_level)}</Td>
                               <Td><span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusColors[req.implementation_status]}`}>{statusLabels[req.implementation_status]}</span></Td>
                               <Td className="text-gray-500 dark:text-slate-400 text-xs">{req.last_review_date ? format(new Date(req.last_review_date), 'dd.MM.yyyy') : '–'}</Td>
                               <Td>{canWrite && <IconButton label={t('editTitle')} onClick={() => openEdit(req)}><Pencil size={14} /></IconButton>}</Td>
@@ -301,7 +320,7 @@ export const BsiGrundschutz: React.FC = () => {
         <form onSubmit={saveEdit} className="space-y-4">
           {editReq && (
             <div className="flex gap-2 flex-wrap">
-              <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${levelColors[editReq.requirement_level]}`}>{levelLabels[editReq.requirement_level]}</span>
+              {levelBadge(editReq.requirement_level)}
               <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400">{editReq.baustein_id} · {editReq.baustein_name}</span>
             </div>
           )}

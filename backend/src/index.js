@@ -641,6 +641,16 @@ const start = async () => {
     // AI systems: the compliance scan and list filter by risk category.
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_ai_systems_risk ON ai_systems(risk_category)').catch(() => {});
 
+    // Versionierte Grundschutz-Kataloge (idempotent): Den mitgelieferten Auszug
+    // als Katalog "IT-Grundschutz-Kompendium 2023 (Auszug)" anlegen. Bestehende
+    // BSI-Anforderungen werden ihm zugeordnet, ihr Umsetzungsstand bleibt.
+    try {
+      const created = await require('./services/bsiCatalogService').ensureSeedCatalog();
+      if (created) console.log(`[DB] BSI-Katalog "${created.name}" angelegt (${created.status})`);
+    } catch (e) {
+      console.warn('[DB] Could not create BSI seed catalog:', e.message);
+    }
+
     // Backfill ISO 27001 control descriptions from catalog (idempotent)
     try {
       const iso27001Catalog = require('./services/iso27001Catalog');

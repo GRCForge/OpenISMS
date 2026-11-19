@@ -10,7 +10,9 @@
   "level": {
     "basis": "Einfache",
     "standard": "Standard",
-    "erhoehter_schutzbedarf": "Hoher Schutz"
+    "erhoehter_schutzbedarf": "Hoher Schutz",
+    "normal_sdt": "Normal (SdT)",
+    "erhoeht": "Erhöht"
   },
   "stats": {
     "total": "Gesamt",
@@ -54,5 +56,62 @@
   "toast": {
     "loadError": "Fehler beim Laden des Katalogs",
     "saveError": "Fehler beim Speichern"
+  },
+  "catalogs": {
+    "open": "Kataloge",
+    "title": "Grundschutz-Kataloge",
+    "intro": "Kataloge werden importiert und zuerst als Vorschau gespeichert. Erst beim Aktivieren werden die Anforderungen übernommen; Status, Verantwortliche und Notizen bestehender Anforderungen bleiben erhalten, nicht mehr enthaltene Anforderungen werden als abgelöst markiert, nicht gelöscht.",
+    "table": {
+      "name": "Katalog",
+      "format": "Format",
+      "requirements": "Anforderungen",
+      "status": "Status",
+      "imported": "Importiert"
+    },
+    "format": {
+      "auto": "Automatisch erkennen",
+      "seed": "Mitgelieferter Auszug",
+      "kompendium_xml": "Kompendium (XML)",
+      "oscal_catalog": "OSCAL-Katalog (JSON)"
+    },
+    "status": {
+      "preview": "Vorschau",
+      "active": "Aktiv",
+      "archived": "Archiviert"
+    },
+    "compare": "Vergleichen",
+    "activate": "Aktivieren",
+    "activateConfirm": "Katalog „{{name}}“ aktivieren? Die Anforderungen werden mit dem Umsetzungsstand abgeglichen.",
+    "discardConfirm": "Vorschau „{{name}}“ verwerfen?",
+    "diff": {
+      "title": "{{name}} im Vergleich zu: {{against}}",
+      "none": "keinem aktiven Katalog",
+      "added": "Neu",
+      "changed": "Geändert",
+      "removed": "Entfallen",
+      "unchanged": "Unverändert",
+      "more": "… und {{count}} weitere",
+      "hint": "Die Vorschau ändert nichts. Übernommen wird erst mit „Aktivieren“."
+    },
+    "import": {
+      "title": "Katalog importieren",
+      "file": "Datei hochladen",
+      "url": "Von URL laden",
+      "urlLabel": "URL (öffentlich, http/https)",
+      "format": "Format",
+      "name": "Name (optional)",
+      "edition": "Edition (optional)",
+      "hint": "Unterstützt: IT-Grundschutz-Kompendium als XML (DocBook) und OSCAL-Kataloge im JSON-Format, etwa der Grundschutz++-Anwenderkatalog. Höchstens 25 MB.",
+      "submit": "Importieren",
+      "running": "Wird importiert…"
+    },
+    "toast": {
+      "imported": "Katalog mit {{count}} Anforderungen als Vorschau importiert",
+      "importError": "Import fehlgeschlagen",
+      "activated": "Katalog aktiviert: {{created}} neu, {{updated}} aktualisiert, {{retired}} abgelöst",
+      "activateError": "Aktivieren fehlgeschlagen",
+      "diffError": "Vergleich konnte nicht geladen werden",
+      "discardError": "Verwerfen fehlgeschlagen"
+    }
   }
 }
