@@ -9,6 +9,10 @@ const { Op } = require('sequelize');
 const express = require('express');
 const { createMcpCors } = require('./cors');
 const { hashToken } = require('../services/cryptoService');
+const {
+  BSI_LAYERS, LAYER_ALIASES: BSI_LAYER_ALIASES, normalizeBsiLayer,
+  BSI_STATUSES, STATUS_ALIASES: BSI_STATUS_ALIASES, normalizeBsiStatus,
+} = require('../services/bsiLayers');
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 // See ./auth.js (token types) and ./oauthResource.js (OAuth 2.1 resource server).
@@ -4179,15 +4183,17 @@ server.tool(
   'List BSI IT-Grundschutz requirements and Bausteine with implementation status.',
   {
     search: z.string().optional().describe('Search in req_id, baustein_id, or title'),
-    layer: z.string().optional().describe('Filter by layer (ISMS, ORG, CON, OPS, DER, APP, SYS, IND, INF, NET)'),
-    status: z.enum(['ja', 'teilweise', 'nein', 'entbehrlich', 'all']).default('all').describe('Implementation status'),
+    layer: z.enum([...BSI_LAYERS, ...Object.keys(BSI_LAYER_ALIASES)]).optional()
+      .describe(`Filter by Kompendium layer: ${BSI_LAYERS.join(', ')}. "ORG" is accepted as an alias for ORP.`),
+    status: z.enum([...BSI_STATUSES, ...Object.keys(BSI_STATUS_ALIASES), 'all']).default('all')
+      .describe(`Implementation status: ${BSI_STATUSES.join(', ')} or all. Legacy values ja/teilweise/nein/entbehrlich are mapped to implemented/in_progress/not_started/not_applicable.`),
     limit: z.number().int().min(1).max(500).default(100).describe('Max results'),
   },
   async ({ search, layer, status, limit }) => {
     const { BsiRequirement, User } = getModels();
     const where = {};
-    if (status && status !== 'all') where.implementation_status = status;
-    if (layer) where.layer = layer;
+    if (status && status !== 'all') where.implementation_status = normalizeBsiStatus(status);
+    if (layer) where.layer = normalizeBsiLayer(layer);
     if (search) {
       where[Op.or] = [
         { req_id: { [Op.iLike]: `%${search}%` } },
@@ -4210,7 +4216,8 @@ server.tool(
   'Update implementation status or responsible person of a BSI IT-Grundschutz requirement.',
   {
     id: z.number().int().describe('BSI requirement ID'),
-    implementation_status: z.enum(['ja', 'teilweise', 'nein', 'entbehrlich']).optional(),
+    implementation_status: z.enum([...BSI_STATUSES, ...Object.keys(BSI_STATUS_ALIASES)]).optional()
+      .describe(`${BSI_STATUSES.join(', ')}. Legacy values ja/teilweise/nein/entbehrlich are mapped to implemented/in_progress/not_started/not_applicable.`),
     responsible_id: z.number().int().nullable().optional(),
     notes: z.string().optional(),
     last_review_date: z.string().optional(),
@@ -4220,6 +4227,9 @@ server.tool(
     const item = await BsiRequirement.findByPk(args.id);
     if (!item) return { content: [{ type: 'text', text: 'BSI requirement not found' }], isError: true };
     const { id, ...updates } = args;
+    if (updates.implementation_status !== undefined) {
+      updates.implementation_status = normalizeBsiStatus(updates.implementation_status);
+    }
     await item.update(updates);
     await logAudit('update', 'bsi_requirement', item.id, item.req_id, updates, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };

@@ -36,7 +36,8 @@ interface BsiRequirement {
   last_review_date?: string;
 }
 
-const LAYER_ORDER = ['ISMS', 'ORP', 'CON', 'OPS', 'DER', 'APP', 'SYS', 'NET', 'INF'];
+// Reihenfolge des Kompendiums; entspricht BSI_LAYERS in backend/src/services/bsiLayers.js.
+const LAYER_ORDER = ['ISMS', 'ORP', 'CON', 'OPS', 'DER', 'APP', 'SYS', 'IND', 'NET', 'INF'];
 
 const LAYER_COLORS: Record<string, string> = {
   ISMS: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
@@ -46,6 +47,7 @@ const LAYER_COLORS: Record<string, string> = {
   DER:  'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400',
   APP:  'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400',
   SYS:  'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
+  IND:  'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400',
   NET:  'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400',
   INF:  'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
 };
