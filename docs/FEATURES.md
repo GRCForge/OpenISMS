@@ -211,7 +211,7 @@ REST API, never over MCP.
 |---|---|
 | **Compliance overview** | Coverage per framework (ISO 27001, NIS-2, GDPR) with the assigned and unassigned assets, quick assignment, and **GDPR gap detection**: assets that process personal data (Art. 6/9) without a complete processing record |
 | **ISO 27001:2022** | Statement of Applicability for all 93 Annex A controls in four themes |
-| **BSI IT-Grundschutz** | Compendium requirements with implementation status (seed catalogue: 64 requirements in 25 modules) |
+| **BSI IT-Grundschutz** | Compendium requirements with implementation status (seed catalogue: 64 requirements in 25 modules). Versioned catalogues are imported at runtime — IT-Grundschutz-Kompendium as XML (DocBook) or OSCAL catalogues in JSON such as the Grundschutz++ user catalogue — by upload or from a public URL, previewed with a diff (new/changed/removed) and activated deliberately; existing status data is kept, requirements no longer contained are marked as retired |
 | **BSI C5:2026** | 174 criteria in 18 domains with status and evidence |
 | **TISAX** | Assessments with label and validity, plus a VDA ISA self-assessment of maturity levels 0–3 (38 requirements) |
 | **NIS-2 / BSIG** | See below |

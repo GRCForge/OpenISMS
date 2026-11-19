@@ -4191,7 +4191,8 @@ server.tool(
   },
   async ({ search, layer, status, limit }) => {
     const { BsiRequirement, User } = getModels();
-    const where = {};
+    // Nur Anforderungen des aktiven Katalogs (abgeloeste bleiben in der DB, siehe BsiRequirement.retired).
+    const where = { retired: false };
     if (status && status !== 'all') where.implementation_status = normalizeBsiStatus(status);
     if (layer) where.layer = normalizeBsiLayer(layer);
     if (search) {

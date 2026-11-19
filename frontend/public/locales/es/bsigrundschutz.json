@@ -10,7 +10,9 @@
   "level": {
     "basis": "Basic",
     "standard": "Standard",
-    "erhoehter_schutzbedarf": "High protection"
+    "erhoehter_schutzbedarf": "High protection",
+    "normal_sdt": "Normal (EdT)",
+    "erhoeht": "Elevado"
   },
   "stats": {
     "total": "Total",
@@ -54,5 +56,62 @@
   "toast": {
     "loadError": "Error loading catalogue",
     "saveError": "Error saving"
+  },
+  "catalogs": {
+    "open": "Catálogos",
+    "title": "Catálogos de Grundschutz",
+    "intro": "Los catálogos se importan y se guardan primero como vista previa. Los requisitos solo se adoptan al activarlos; el estado, los responsables y las notas de los requisitos existentes se conservan; los requisitos que ya no figuran se marcan como sustituidos, no se eliminan.",
+    "table": {
+      "name": "Catálogo",
+      "format": "Formato",
+      "requirements": "Requisitos",
+      "status": "Estado",
+      "imported": "Importado"
+    },
+    "format": {
+      "auto": "Detectar automáticamente",
+      "seed": "Extracto incluido",
+      "kompendium_xml": "Kompendium (XML)",
+      "oscal_catalog": "Catálogo OSCAL (JSON)"
+    },
+    "status": {
+      "preview": "Vista previa",
+      "active": "Activo",
+      "archived": "Archivado"
+    },
+    "compare": "Comparar",
+    "activate": "Activar",
+    "activateConfirm": "¿Activar el catálogo «{{name}}»? Sus requisitos se conciliarán con el estado de implementación.",
+    "discardConfirm": "¿Descartar la vista previa «{{name}}»?",
+    "diff": {
+      "title": "{{name}} comparado con: {{against}}",
+      "none": "ningún catálogo activo",
+      "added": "Nuevos",
+      "changed": "Modificados",
+      "removed": "Eliminados",
+      "unchanged": "Sin cambios",
+      "more": "… y {{count}} más",
+      "hint": "La vista previa no cambia nada. Los cambios se aplican solo con «Activar»."
+    },
+    "import": {
+      "title": "Importar catálogo",
+      "file": "Subir archivo",
+      "url": "Cargar desde URL",
+      "urlLabel": "URL (pública, http/https)",
+      "format": "Formato",
+      "name": "Nombre (opcional)",
+      "edition": "Edición (opcional)",
+      "hint": "Compatible: IT-Grundschutz-Kompendium en XML (DocBook) y catálogos OSCAL en JSON, como el catálogo de usuario de Grundschutz++. Máx. 25 MB.",
+      "submit": "Importar",
+      "running": "Importando…"
+    },
+    "toast": {
+      "imported": "Catálogo con {{count}} requisitos importado como vista previa",
+      "importError": "La importación ha fallado",
+      "activated": "Catálogo activado: {{created}} nuevos, {{updated}} actualizados, {{retired}} sustituidos",
+      "activateError": "La activación ha fallado",
+      "diffError": "No se pudo cargar la comparación",
+      "discardError": "No se pudo descartar"
+    }
   }
 }

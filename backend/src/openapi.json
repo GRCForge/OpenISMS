@@ -12154,6 +12154,284 @@
         },
         "description": "Erfordert die Berechtigung `nis2.edit` und das aktivierte Modul `nis2`."
       }
+    },
+    "/bsi-grundschutz/catalogs": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "catalogs abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`."
+      }
+    },
+    "/bsi-grundschutz/catalogs/{id}": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "catalogs abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "catalogs löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.manage_catalog` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/catalogs/{id}/requirements": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "requirements abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/catalogs/{id}/diff": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "diff abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/catalogs/import": {
+      "post": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "import anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.manage_catalog` und das aktivierte Modul `bsi_grundschutz`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bsi-grundschutz/catalogs/import-url": {
+      "post": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "import url anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.manage_catalog` und das aktivierte Modul `bsi_grundschutz`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bsi-grundschutz/catalogs/{id}/activate": {
+      "post": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "activate anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.manage_catalog` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [

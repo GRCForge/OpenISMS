@@ -316,6 +316,7 @@
     "logs": "Server-Logs",
     "maintenance": "Wartung",
     "manage": "Verwalten",
+    "manage_catalog": "Kataloge verwalten",
     "measure": "Messwerte erfassen",
     "permissions": "Berechtigungen",
     "restore": "Wiederherstellen",
