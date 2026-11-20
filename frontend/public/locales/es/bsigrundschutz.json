@@ -113,5 +113,64 @@
       "diffError": "No se pudo cargar la comparación",
       "discardError": "No se pudo descartar"
     }
+  },
+  "tabs": {
+    "requirements": "Requisitos",
+    "domain": "Ámbito de información"
+  },
+  "domain": {
+    "select": "Ámbito de información",
+    "default": "predeterminado",
+    "create": "Crear ámbito",
+    "edit": "Editar ámbito",
+    "name": "Nombre",
+    "description": "Descripción",
+    "scope": "Alcance",
+    "approachLabel": "Variante de protección",
+    "approach": {
+      "basis": "Protección básica",
+      "standard": "Protección estándar",
+      "kern": "Protección esencial"
+    },
+    "approachHint": {
+      "basis": "Nivel inicial: solo los requisitos básicos para todo el ámbito.",
+      "standard": "Enfoque habitual del estándar BSI 200-2: requisitos básicos y estándar.",
+      "kern": "Alcance acotado («joyas de la corona»): todos los requisitos, incluida la protección elevada."
+    },
+    "catalog": "Catálogo",
+    "noCatalog": "Ningún catálogo activo",
+    "domainWide": "Modelado para todo el ámbito",
+    "domainWideHint": "Los módulos de proceso (ISMS, ORP, CON, OPS, DER) y las prácticas sin categoría de objeto se aplican a todo el ámbito.",
+    "targetObjects": "Objetos objetivo ({{count}})",
+    "addTarget": "Asignar objeto objetivo",
+    "noTargets": "Aún no hay objetos objetivo. Asigne activos del registro de activos.",
+    "asset": "Activo",
+    "targetTypeLabel": "Tipo de objeto objetivo",
+    "chooseType": "Elegir tipo …",
+    "targetType": {
+      "business_process": "Proceso de negocio",
+      "application": "Aplicación",
+      "it_system": "Sistema TI",
+      "ics": "Sistema ICS",
+      "room": "Sala",
+      "building": "Edificio",
+      "network": "Red/enlace de comunicación"
+    },
+    "suggestedType": "Sugerido según el tipo de activo: {{type}}",
+    "noTypeSuggestion": "No hay sugerencia para este tipo de activo; elija un tipo.",
+    "modeling": "Modelado",
+    "noModeling": "Aún no hay nada modelado",
+    "module": "Módulo/práctica",
+    "suggest": "Sugerencias",
+    "apply": "Aplicar",
+    "suggestTitleDomain": "Sugerencias para todo el ámbito",
+    "suggestTitleTarget": "Sugerencias para {{name}}",
+    "suggestHint": "Sugerencias del catálogo activo. El módulo solo se asigna al pulsar «Aplicar».",
+    "noSuggestions": "No hay más sugerencias.",
+    "removeTarget": "Quitar objeto objetivo",
+    "removeModeling": "Quitar modelado",
+    "confirmRemoveTarget": "¿Quitar «{{name}}» del ámbito? El activo se conserva.",
+    "confirmRemoveModeling": "¿Quitar el modelado {{module}}? El estado de implementación registrado se conserva.",
+    "notInCatalog": "No incluido en el catálogo activo"
   }
 }

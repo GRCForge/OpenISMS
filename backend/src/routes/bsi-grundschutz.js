@@ -11,6 +11,7 @@ const { fetchPublicText } = require('../utils/safeFetch');
 const { allowedCatalogHosts, resolveCatalogSourceUrl } = require('../services/bsiCatalogSource');
 const { MAX_CATALOG_BYTES, CatalogParseError, parseCatalog } = require('../services/bsiCatalogParsers');
 const catalogs = require('../services/bsiCatalogService');
+const domains = require('../services/bsiDomainService');
 
 const FORMATS = ['auto', 'kompendium_xml', 'oscal_catalog'];
 const ALLOWED_EXT = ['.xml', '.json'];
@@ -39,7 +40,10 @@ const cleanText = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : 
 router.get('/', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     // Abgeloeste Anforderungen (nicht mehr im aktiven Katalog) nur auf Wunsch.
-    const where = req.query.include_retired === '1' ? {} : { retired: false };
+    // Nur der Umsetzungsstand des Standard-Informationsverbunds (die Liste,
+    // wie es sie vor den Verbuenden gab); die Arbeit an weiteren Verbuenden
+    // laeuft ueber /api/bsi-grundschutz/domains.
+    const where = { ...(await domains.baselineWhere()), ...(req.query.include_retired === '1' ? {} : { retired: false }) };
     const items = await BsiRequirement.findAll({
       where,
       include: [{ model: User, as: 'responsible', attributes: ['id', 'name', 'email'] }],

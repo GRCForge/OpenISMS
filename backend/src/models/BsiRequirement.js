@@ -15,6 +15,10 @@ const BsiRequirement = sequelize.define('BsiRequirement', {
   },
   // Katalog, aus dem die Anforderung zuletzt abgeglichen wurde (bsi_catalogs.id).
   catalog_id: { type: DataTypes.INTEGER, allowNull: true },
+  // Informationsverbund, dem der Umsetzungsstand gehoert (bsi_information_domains.id).
+  // Die Startmigration ordnet den Bestand dem Standard-Verbund zu
+  // (bsiDomainService.ensureDefaultDomain); null kommt danach nicht mehr vor.
+  domain_id: { type: DataTypes.INTEGER, allowNull: true },
   // Im aktiven Katalog nicht mehr enthalten oder dort "ENTFALLEN". Die Zeile
   // bleibt mit Status, Verantwortlichem und Notizen erhalten - geloescht wird
   // beim Katalogwechsel nichts.

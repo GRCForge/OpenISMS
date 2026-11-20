@@ -113,5 +113,64 @@
       "diffError": "Comparison could not be loaded",
       "discardError": "Discarding failed"
     }
+  },
+  "tabs": {
+    "requirements": "Requirements",
+    "domain": "Information domain"
+  },
+  "domain": {
+    "select": "Information domain",
+    "default": "default",
+    "create": "Create domain",
+    "edit": "Edit domain",
+    "name": "Name",
+    "description": "Description",
+    "scope": "Scope",
+    "approachLabel": "Protection approach",
+    "approach": {
+      "basis": "Basic protection",
+      "standard": "Standard protection",
+      "kern": "Core protection"
+    },
+    "approachHint": {
+      "basis": "Entry level: basic requirements only, for the whole domain.",
+      "standard": "Default approach of BSI Standard 200-2: basic and standard requirements.",
+      "kern": "Narrow scope (\"crown jewels\"): all requirements including high protection needs."
+    },
+    "catalog": "Catalogue",
+    "noCatalog": "No active catalogue",
+    "domainWide": "Modelling for the whole domain",
+    "domainWideHint": "Process modules (ISMS, ORP, CON, OPS, DER) and practices without a target object category apply to the whole domain.",
+    "targetObjects": "Target objects ({{count}})",
+    "addTarget": "Assign target object",
+    "noTargets": "No target objects yet. Assign assets from the asset register.",
+    "asset": "Asset",
+    "targetTypeLabel": "Target object type",
+    "chooseType": "Choose type …",
+    "targetType": {
+      "business_process": "Business process",
+      "application": "Application",
+      "it_system": "IT system",
+      "ics": "ICS system",
+      "room": "Room",
+      "building": "Building",
+      "network": "Network/communication link"
+    },
+    "suggestedType": "Suggested from asset type: {{type}}",
+    "noTypeSuggestion": "No suggestion for this asset type – please choose a type.",
+    "modeling": "Modelling",
+    "noModeling": "Nothing modelled yet",
+    "module": "Module/practice",
+    "suggest": "Suggestions",
+    "apply": "Apply",
+    "suggestTitleDomain": "Suggestions for the whole domain",
+    "suggestTitleTarget": "Suggestions for {{name}}",
+    "suggestHint": "Suggestions from the active catalogue. A module is only assigned once you click \"Apply\".",
+    "noSuggestions": "No further suggestions.",
+    "removeTarget": "Remove target object",
+    "removeModeling": "Remove modelling",
+    "confirmRemoveTarget": "Remove \"{{name}}\" from the domain? The asset itself is kept.",
+    "confirmRemoveModeling": "Remove modelling {{module}}? The recorded implementation status is kept.",
+    "notInCatalog": "Not contained in the active catalogue"
   }
 }

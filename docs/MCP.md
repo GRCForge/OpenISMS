@@ -23,7 +23,7 @@ REST API. MCP is not a side door.
 8. [Working with the tools](#8-working-with-the-tools)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Configuration reference](#10-configuration-reference)
-11. [Tool reference (208 tools)](#11-tool-reference-208-tools)
+11. [Tool reference (213 tools)](#11-tool-reference-213-tools)
 
 ---
 
@@ -449,7 +449,7 @@ The server log lists the active authentication modes at startup
 
 ---
 
-## 11. Tool reference (208 tools)
+## 11. Tool reference (213 tools)
 
 Type: **R** read · **W** create or change · **D** delete or revoke.
 78 tools read, 95 write, 35 delete. Tools of an optional module only work while
@@ -543,7 +543,7 @@ that module is enabled.
 | `isms_get_framework_mapping_stats` | R | Get statistics on cross-framework control mappings between ISO 27001, NIS-2, BSI IT-Grundschutz, and C5. |
 | `isms_get_framework_mapping_overview` | R | Get a complete overview table matrix of cross-framework control mappings. |
 
-### Framework catalogues (ISO 27001, BSI, NIS-2, C5, TISAX) (17)
+### Framework catalogues (ISO 27001, BSI, NIS-2, C5, TISAX) (22)
 
 | Tool | Type | Description |
 |---|---|---|
@@ -551,6 +551,11 @@ that module is enabled.
 | `isms_update_iso27001_control` | W | Update details, applicability, justification, or implementation status of an ISO 27001 Annex A control. |
 | `isms_list_bsi_requirements` | R | List BSI IT-Grundschutz requirements and Bausteine with implementation status. |
 | `isms_update_bsi_requirement` | W | Update implementation status or responsible person of a BSI IT-Grundschutz requirement. |
+| `isms_list_bsi_domains` | R | List BSI IT-Grundschutz information domains (Informationsverbuende) with protection approach (basis/standard/kern), assigned catalogue and counts of target objects and modelled modules. |
+| `isms_get_bsi_domain` | R | Get one BSI information domain with its target objects and its modelling. Only target objects whose asset the caller may see are returned. |
+| `isms_suggest_bsi_modeling` | R | Suggest modules (Kompendium) or practices (Grundschutz++) for a target object or for the whole domain. Suggestions are not applied automatically. |
+| `isms_assign_bsi_target_object` | W | Assign an asset from the asset register to a BSI information domain as target object; the target type is suggested from the asset type when omitted. |
+| `isms_model_bsi_module` | W | Model a module or practice of the domain's active catalogue on a target object or on the whole domain. |
 | `isms_list_nis2_measures` | R | List NIS-2 criteria: the measures of Art. 20, 21 and 23 NIS-2 (§ 30 Abs. 2 Nr. 1-10 BSIG) with their sub-requirements, plus the BSIG duties without a counterpart in the directive (§§ 31, 33, 34, 35, 39). |
 | `isms_update_nis2_measure` | W | Update implementation status, responsible person, deadline, or evidence of a NIS-2 criterion. |
 | `isms_list_nis2_self_check` | R | List the NIS2 self-check questions with their two answers (implementation and evidence), the article each maps to, and the recommendation attached to it. |
