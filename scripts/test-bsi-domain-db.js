@@ -180,6 +180,96 @@ const status = async (p) => { try { await p; return 'ok'; } catch (e) { if (proc
   const legacy = await m.BsiRequirement.findAll({ where: await svc.baselineWhere(), raw: true });
   eq('nur der Standard-Verbund', [...new Set(legacy.map(r => r.domain_id))], [D1.id]);
 
+  // ── IT-Grundschutz-Check (Branch feat/bsi-grundschutz-check) ──────────────
+  const check = require(path.join(SRC, 'services', 'bsiCheckService'));
+  await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS uq_bsi_requirements_domain_target_req ON bsi_requirements (domain_id, COALESCE(target_object_id, 0), req_id)');
+  // Aktiver Katalog ist jetzt das Test-Kompendium: ISMS.1 (A1 B, A2 entfallen, A3 S), ORP.1 (A1 B, A9 H).
+  await svc.addModeling(D2.id, { module_id: 'ISMS.1' }, admin);
+  await svc.addModeling(D2.id, { module_id: 'ORP.1', target_object_id: t2.targetObject.id }, admin);
+  const group = await m.Group.create({ name: 'ISB-Team' });
+  const itStaff = await mkUser('it', 'it-staff');
+
+  console.log('\nCheck lesen (Kern-Absicherung D2):');
+  let c2 = await check.getCheck(D2.id, admin);
+  eq('Kern: Verbund ISMS.1.A1+A3, Zielobjekt ORP.1.A1+A9 (H)', c2.entries.map(e => `${e.target_object_id ? 'T' : 'V'}:${e.req_id}`), ['V:ISMS.1.A1', 'V:ISMS.1.A3', 'T:ORP.1.A1', 'T:ORP.1.A9']);
+  eq('vorhandene D2-Zeile ISMS.1.A1 (Verbund) wird angezeigt', c2.entries[0].implementation_status, 'in_progress');
+  eq('ohne Zeile: offen', c2.entries[2].check_label, 'offen');
+  await svc.updateDomain(D2.id, { protection_approach: 'standard' });
+  eq('Standard: H faellt weg', (await check.getCheck(D2.id, admin)).entries.map(e => e.req_id), ['ISMS.1.A1', 'ISMS.1.A3', 'ORP.1.A1']);
+  await svc.updateDomain(D2.id, { protection_approach: 'basis' });
+  eq('Basis: nur B', (await check.getCheck(D2.id, admin)).entries.map(e => e.req_id), ['ISMS.1.A1', 'ORP.1.A1']);
+  await svc.updateDomain(D2.id, { protection_approach: 'kern' });
+
+  console.log('\nCheck setzen:');
+  const T2 = t2.targetObject.id;
+  eq('nein ohne Begruendung → 400', await status(check.setCheckEntry(D2.id, { target_object_id: T2, req_id: 'ORP.1.A9', implementation_status: 'not_implemented' }, admin)), 400);
+  eq('keine Zeile angelegt', await m.BsiRequirement.count({ where: { target_object_id: T2 } }), 0);
+  const doc = await m.Document.create({ asset_id: server.id, uploaded_by: admin.id, filename: 'x.pdf', original_name: 'Konzept.pdf' });
+  const docOther = await m.Document.create({ asset_id: app.id, uploaded_by: admin.id, filename: 'y.pdf', original_name: 'ERP.pdf' });
+  const ctrl = await m.Control.create({ framework: 'bsi', code: 'M-1', title: 'Org-Regel' });
+  const set1 = await check.setCheckEntry(D2.id, {
+    target_object_id: T2, req_id: 'ORP.1.A9', implementation_status: 'not_implemented', justification: 'Risiko vom Management uebernommen',
+    responsible_id: itStaff.id, responsible_group_id: group.id, due_date: '2027-03-31', cost_once: '2500,00', cost_recurring: 120,
+    document_ids: [doc.id], control_ids: [ctrl.id], domain_id: 999, catalog_id: 999,
+  }, admin);
+  eq('angelegt am Zielobjekt in D2', [set1.created, set1.row.domain_id, set1.row.target_object_id, set1.row.implementation_status], [true, D2.id, T2, 'not_implemented']);
+  eq('Kosten, Termin, Gruppe gespeichert', [Number(set1.row.cost_once), Number(set1.row.cost_recurring), set1.row.due_date, set1.row.responsible_group_id], [2500, 120, '2027-03-31', group.id]);
+  eq('Nachweis und Massnahme verknuepft', [set1.docsAdded, set1.controlsAdded], [[doc.id], [ctrl.id]]);
+  eq('Massnahme ueber control_requirements (framework bsi)', await m.ControlRequirement.count({ where: { framework: 'bsi', requirement_id: set1.row.id, control_id: ctrl.id } }), 1);
+  eq('nein in alter ENUM-Spalte speicherbar (Typ erweitert)', (await m.BsiRequirement.findByPk(set1.row.id, { raw: true })).implementation_status, 'not_implemented');
+  eq('zweites Setzen aendert dieselbe Zeile', (await check.setCheckEntry(D2.id, { target_object_id: T2, req_id: 'ORP.1.A9', notes: 'Pruefung 2027' }, admin)).created, false);
+  eq('ISMS.1.A1 am Zielobjekt (nicht modelliert) → 409', await status(check.setCheckEntry(D2.id, { target_object_id: T2, req_id: 'ISMS.1.A1', implementation_status: 'implemented' }, admin)), 409);
+  eq('Zielobjekt eines anderen Verbunds → 404', await status(check.setCheckEntry(D1.id, { target_object_id: T2, req_id: 'ORP.1.A1', implementation_status: 'implemented' }, admin)), 404);
+  eq('entfallene Anforderung → 404', await status(check.setCheckEntry(D2.id, { req_id: 'ISMS.1.A2', implementation_status: 'implemented' }, admin)), 404);
+  eq('unbekannte Gruppe → 400', await status(check.setCheckEntry(D2.id, { target_object_id: T2, req_id: 'ORP.1.A1', responsible_group_id: 99999 }, admin)), 400);
+  eq('owner sieht das Asset nicht → 404', await status(check.setCheckEntry(D2.id, { target_object_id: T2, req_id: 'ORP.1.A1', implementation_status: 'implemented' }, owner)), 404);
+  eq('Massnahmen ohne controls.edit (owner, Verbundebene) → 403',
+    await status(check.setCheckEntry(D2.id, { req_id: 'ISMS.1.A3', implementation_status: 'implemented', control_ids: [ctrl.id] }, owner)), 403);
+  eq('fremdes Dokument (owner, Asset nicht sichtbar) → 404',
+    await status(check.setCheckEntry(D2.id, { req_id: 'ISMS.1.A3', implementation_status: 'implemented', document_ids: [doc.id] }, owner)), 404);
+  eq('owner: eigenes Dokument am Verbund ok', (await check.setCheckEntry(D2.id, { req_id: 'ISMS.1.A3', implementation_status: 'implemented', document_ids: [docOther.id] }, owner)).docsAdded, [docOther.id]);
+
+  console.log('\nLesen mit Sichtbarkeit, Auswertung, Export:');
+  c2 = await check.getCheck(D2.id, admin);
+  const e9 = c2.entries.find(e => e.req_id === 'ORP.1.A9');
+  eq('Eintrag mit allen Feldern', [e9.check_label, e9.justification, e9.responsible?.id, e9.responsible_group?.name, e9.documents.map(d => d.original_name), e9.controls.map(x => x.code)],
+    ['nein', 'Risiko vom Management uebernommen', itStaff.id, 'ISB-Team', ['Konzept.pdf'], ['M-1']]);
+  const cOwner = await check.getCheck(D2.id, owner);
+  eq('owner: nur Verbundebene (Zielobjekt-Asset nicht sichtbar)', [...new Set(cOwner.entries.map(e => e.target_object_id))], [null]);
+  eq('blind (assets.view=false): keine Zielobjekt-Eintraege', (await check.getCheck(D2.id, blind)).entries.every(e => e.target_object_id == null), true);
+  eq('nur ein Zielobjekt', (await check.getCheck(D2.id, admin, { targetObjectId: T2 })).entries.map(e => e.req_id), ['ORP.1.A1', 'ORP.1.A9']);
+  eq('nur Verbundebene', (await check.getCheck(D2.id, admin, { targetObjectId: 'domain' })).entries.map(e => e.req_id), ['ISMS.1.A1', 'ISMS.1.A3']);
+  const s2 = check.summarize(c2.entries);
+  const sOrp = s2.by_module.find(b => b.module_id === 'ORP.1');
+  eq('ORP.1: 0 von 2 erfuellt, Kosten 2500 / 120', [sOrp.total, sOrp.fulfillment, sOrp.cost_once, sOrp.cost_recurring], [2, 0, 2500, 120]);
+  eq('Verbundebene: A1 teilweise + A3 ja = 75 %', s2.by_target.find(b => b.target_object_id == null).fulfillment, 75);
+  const a4 = check.buildA4Rows(c2);
+  eq('A.4: eine Zeile je Eintrag', a4.rows.length, c2.entries.length);
+  const docs = await check.linkableDocuments(D2.id, T2, admin);
+  eq('verknuepfbare Dokumente des Zielobjekts', docs.map(d => d.original_name), ['Konzept.pdf']);
+  eq('owner: Dokumente des fremden Zielobjekts → 404', await status(check.linkableDocuments(D2.id, T2, owner)), 404);
+
+  console.log('\nStandard-Verbund: Verbundebene = bisherige Liste:');
+  const baseRow = await m.BsiRequirement.findOne({ where: { domain_id: D1.id, target_object_id: null, req_id: 'ISMS.1.A1' } });
+  const setBase = await check.setCheckEntry(D1.id, { req_id: 'ISMS.1.A1', justification: 'Nachweis im ISMS-Handbuch' }, admin);
+  eq('trifft die bestehende Zeile, legt nichts an', [setBase.created, setBase.row.id], [false, baseRow.id]);
+  eq('Status unveraendert (implemented)', setBase.row.implementation_status, 'implemented');
+  eq('bisherige Liste enthaelt keine Zielobjekt-Zeilen', (await m.BsiRequirement.findAll({ where: await svc.baselineWhere(), raw: true })).some(r => r.target_object_id != null), false);
+
+  console.log('\nNichts implizit verwerfen:');
+  const modOrp = (await svc.listModeling(D2.id, admin)).find(r => r.module_id === 'ORP.1');
+  await svc.removeModeling(D2.id, modOrp.id, admin);
+  eq('Modellierung weg, Checkzeilen bleiben', await m.BsiRequirement.count({ where: { target_object_id: T2 } }), 1);
+  eq('… und erscheinen als "ausserhalb der Modellierung"', (await check.getCheck(D2.id, admin)).unmodeled.map(u => u.req_id), ['ORP.1.A9']);
+  eq('Zielobjekt mit Checkdaten → 409', await status(svc.removeTargetObject(D2.id, T2, admin)), 409);
+  eq('DB-Index verhindert doppelte Checkzeile',
+    await status(m.BsiRequirement.create({ domain_id: D2.id, target_object_id: T2, req_id: 'ORP.1.A9', baustein_id: 'ORP.1', baustein_name: 'x', layer: 'ORP', title: 'x' })), 'SequelizeUniqueConstraintError');
+  await catalogs.activateCatalog(seed.id, admin.id);
+  const t2rows = await m.BsiRequirement.findAll({ where: { target_object_id: T2 }, raw: true });
+  eq('Katalogwechsel: Zielobjekt-Zeile nicht verdoppelt, abgeloest, Status bleibt', t2rows.map(r => [r.req_id, r.retired, r.implementation_status, r.justification]),
+    [['ORP.1.A9', true, 'not_implemented', 'Risiko vom Management uebernommen']]);
+  eq('Katalogwechsel: keine neuen Zeilen in D2', await m.BsiRequirement.count({ where: { domain_id: D2.id } }), 3);
+
   await m.sequelize.close();
   console.log(failures ? `\n${failures} Fehler` : '\nAlle Pruefungen bestanden.');
   process.exit(failures ? 1 : 0);

@@ -10,7 +10,7 @@ Act.** Built on Node.js, React and PostgreSQL — a GRCForge project.
 ![License](https://img.shields.io/badge/license-Source--Available-red)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D26.12.1-brightgreen)
 ![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)
-![MCP](https://img.shields.io/badge/MCP-213%20tools-blue)
+![MCP](https://img.shields.io/badge/MCP-215%20tools-blue)
 
 ![ISO 27001](https://img.shields.io/badge/ISO%2027001%3A2022-supported-4CAF50)
 ![NIS-2](https://img.shields.io/badge/NIS--2%20%2F%20BSIG-supported-orange)
@@ -49,7 +49,7 @@ Act.** Built on Node.js, React and PostgreSQL — a GRCForge project.
 | [Features](docs/FEATURES.md) | Every module and function in detail |
 | [Installation & configuration](docs/CONFIGURATION.md) | Install options, environment variables, SSO, updates, backups |
 | [Security configuration](docs/SECURITY-CONFIGURATION.md) | Hardening guide and production checklist |
-| [MCP integration](docs/MCP.md) | Connecting Claude and other AI assistants; all 213 tools |
+| [MCP integration](docs/MCP.md) | Connecting Claude and other AI assistants; all 215 tools |
 | [Security policy](SECURITY.md) | Supported versions, reporting vulnerabilities |
 | [Contributing](CONTRIBUTING.md) | How to contribute |
 | [Release notes](docs/) | `docs/RELEASE-NOTES-v*.md` |

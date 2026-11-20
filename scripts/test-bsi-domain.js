@@ -91,7 +91,9 @@ eq('Endpunkte gefunden', endpoints.length >= 12, true);
 eq('jeder Endpunkt mit authenticate + requirePermission(bsi_grundschutz)',
   endpoints.filter(e => !/authenticate, requirePermission\('bsi_grundschutz'/.test(e.tail)).map(e => `${e.method} ${e.path}`), []);
 const writes = endpoints.filter(e => e.method !== 'get');
-eq('schreibende Endpunkte: manage_domain', writes.filter(e => !e.tail.includes("'manage_domain'")).map(e => `${e.method} ${e.path}`), []);
+// Verbund/Zielobjekte/Modellierung: manage_domain; Check-Status: edit (wie die bisherige Liste).
+eq('schreibende Endpunkte: manage_domain bzw. edit fuer den Check',
+  writes.filter(e => !e.tail.includes(e.path.endsWith('/check') ? "'edit'" : "'manage_domain'")).map(e => `${e.method} ${e.path}`), []);
 eq('schreibende Endpunkte: requireWriteAccess', writes.filter(e => !e.tail.includes('requireWriteAccess()')).map(e => `${e.method} ${e.path}`), []);
 eq('lesende Endpunkte: view', endpoints.filter(e => e.method === 'get' && !e.tail.includes("'view'")).map(e => e.path), []);
 eq('jede Aenderung schreibt Audit-Log', (routeSrc.match(/auditFromReq\(/g) || []).length, writes.length);

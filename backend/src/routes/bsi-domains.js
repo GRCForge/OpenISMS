@@ -15,11 +15,12 @@ const { authenticate, requirePermission, requireWriteAccess } = require('../midd
 const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const svc = require('../services/bsiDomainService');
+const check = require('../services/bsiCheckService');
 
 router.use(apiLimiter);
 
 function fail(res, e) {
-  if (e instanceof svc.DomainError) return res.status(e.status).json({ error: e.message });
+  if (e instanceof svc.DomainError || e instanceof check.CheckError) return res.status(e.status).json({ error: e.message });
   return serverError(res, e, 'bsi-domains');
 }
 
@@ -126,6 +127,52 @@ router.delete('/:id/modeling/:modelingId', authenticate, requirePermission('bsi_
     const { domain, snapshot, id } = await svc.removeModeling(req.params.id, req.params.modelingId, req.user);
     await auditFromReq(req, 'delete', 'bsi_modeling', id, snapshot.module_id, { domain_id: domain.id, ...snapshot });
     res.json({ ok: true });
+  } catch (e) { fail(res, e); }
+});
+
+// ── IT-Grundschutz-Check ─────────────────────────────────────────────────────
+// Liste, Auswertung, Export und Dokumentauswahl lesen ueber dieselbe Funktion
+// (check.getCheck bzw. linkableDocuments) mit denselben Sichtbarkeitsregeln.
+
+const targetParam = (q) => (typeof q.target_object_id === 'string' ? q.target_object_id : undefined);
+
+router.get('/:id/check', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try { res.json(await check.getCheck(req.params.id, req.user, { targetObjectId: targetParam(req.query) })); } catch (e) { fail(res, e); }
+});
+
+router.get('/:id/check/summary', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try {
+    const c = await check.getCheck(req.params.id, req.user);
+    res.json({ domain: c.domain, levels: c.levels, ...check.summarize(c.entries) });
+  } catch (e) { fail(res, e); }
+});
+
+// Zeilen fuer den Excel-Export im Aufbau des Referenzdokuments A.4; die Datei
+// baut der Browser (wie die uebrigen Exporte). Strings sind formel-neutralisiert.
+router.get('/:id/check/export', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try {
+    const c = await check.getCheck(req.params.id, req.user);
+    res.json({ domain: c.domain, ...check.buildA4Rows(c), summary: check.summarize(c.entries) });
+  } catch (e) { fail(res, e); }
+});
+
+router.get('/:id/check/documents', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try { res.json(await check.linkableDocuments(req.params.id, targetParam(req.query), req.user)); } catch (e) { fail(res, e); }
+});
+
+router.put('/:id/check', authenticate, requirePermission('bsi_grundschutz','edit','admin','assessor','it-staff'), requireWriteAccess(), async (req, res) => {
+  try {
+    const r = await check.setCheckEntry(req.params.id, req.body, req.user);
+    const changed = Object.keys(r.changes).length || r.docsAdded.length || r.docsRemoved.length || r.controlsAdded.length || r.controlsRemoved.length;
+    if (r.created || changed) {
+      await auditFromReq(req, r.created ? 'create' : 'update', 'bsi_requirement', r.row.id, r.row.req_id, {
+        domain_id: r.domain.id, target_object_id: r.row.target_object_id, asset_id: r.target?.asset_id ?? null,
+        before: r.before, after: r.changes,
+        documents_added: r.docsAdded, documents_removed: r.docsRemoved,
+        controls_added: r.controlsAdded, controls_removed: r.controlsRemoved,
+      });
+    }
+    res.json(r.row);
   } catch (e) { fail(res, e); }
 });
 

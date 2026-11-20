@@ -5,7 +5,8 @@
     "not_started": "Open",
     "in_progress": "In progress",
     "implemented": "Implemented",
-    "not_applicable": "Not applicable"
+    "not_applicable": "Not applicable",
+    "not_implemented": "Not implemented"
   },
   "level": {
     "basis": "Basic",
@@ -116,7 +117,8 @@
   },
   "tabs": {
     "requirements": "Requirements",
-    "domain": "Information domain"
+    "domain": "Information domain",
+    "check": "IT-Grundschutz check"
   },
   "domain": {
     "select": "Information domain",
@@ -172,5 +174,48 @@
     "confirmRemoveTarget": "Remove \"{{name}}\" from the domain? The asset itself is kept.",
     "confirmRemoveModeling": "Remove modelling {{module}}? The recorded implementation status is kept.",
     "notInCatalog": "Not contained in the active catalogue"
+  },
+  "check": {
+    "status": {
+      "implemented": "yes",
+      "in_progress": "partially",
+      "not_implemented": "no",
+      "not_applicable": "dispensable",
+      "not_started": "open"
+    },
+    "noDomain": "No information domain available.",
+    "empty": "No requirements yet: assign modules in the \"Information domain\" tab.",
+    "domainLevel": "Whole domain",
+    "filterTarget": "Target object",
+    "allTargets": "All target objects",
+    "fulfillment": "Fulfilment",
+    "moduleFulfillment": "Fulfilment {{value}}",
+    "openCount": "Open/partial",
+    "costOnce": "One-off cost",
+    "costRecurring": "Recurring cost (per year)",
+    "export": "Excel (A.4)",
+    "edit": "Check",
+    "responsible": "Responsible",
+    "responsibleUser": "Responsible person",
+    "responsibleGroup": "Responsible group",
+    "dueDate": "Due date",
+    "justification": "Justification",
+    "justificationRequired": "A justification is mandatory for \"no\" and \"dispensable\".",
+    "evidence": "Evidence",
+    "noDocuments": "No documents on the assets of this target object.",
+    "controls": "Controls",
+    "addControl": "Add control …",
+    "removeControl": "Remove control",
+    "summaryTitle": "Summary by target object and module",
+    "target": "Target object",
+    "requirements": "Requirements",
+    "unmodeledTitle": "Recorded status outside the modelling ({{count}})",
+    "unmodeledHint": "These entries belong to no currently modelled module or to a level outside the protection approach. They remain stored.",
+    "retired": "no longer in catalogue",
+    "approachInfo": {
+      "basis": "Basic protection: the basic requirements (B) of the modelled modules are checked.",
+      "standard": "Standard protection: basic and standard requirements (B, S) are checked.",
+      "kern": "Core protection: basic, standard and high-protection requirements (B, S, H) are checked."
+    }
   }
 }

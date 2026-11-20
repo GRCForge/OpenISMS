@@ -5,7 +5,8 @@
     "not_started": "Open",
     "in_progress": "In progress",
     "implemented": "Implemented",
-    "not_applicable": "Not applicable"
+    "not_applicable": "Not applicable",
+    "not_implemented": "No implementado"
   },
   "level": {
     "basis": "Basic",
@@ -116,7 +117,8 @@
   },
   "tabs": {
     "requirements": "Requisitos",
-    "domain": "Ámbito de información"
+    "domain": "Ámbito de información",
+    "check": "Comprobación IT-Grundschutz"
   },
   "domain": {
     "select": "Ámbito de información",
@@ -172,5 +174,48 @@
     "confirmRemoveTarget": "¿Quitar «{{name}}» del ámbito? El activo se conserva.",
     "confirmRemoveModeling": "¿Quitar el modelado {{module}}? El estado de implementación registrado se conserva.",
     "notInCatalog": "No incluido en el catálogo activo"
+  },
+  "check": {
+    "status": {
+      "implemented": "sí",
+      "in_progress": "parcialmente",
+      "not_implemented": "no",
+      "not_applicable": "prescindible",
+      "not_started": "abierto"
+    },
+    "noDomain": "No hay ningún ámbito de información.",
+    "empty": "Aún no hay requisitos: asigne módulos en la pestaña «Ámbito de información».",
+    "domainLevel": "Todo el ámbito",
+    "filterTarget": "Objeto objetivo",
+    "allTargets": "Todos los objetos objetivo",
+    "fulfillment": "Grado de cumplimiento",
+    "moduleFulfillment": "Cumplimiento {{value}}",
+    "openCount": "Abiertos/parciales",
+    "costOnce": "Coste único",
+    "costRecurring": "Coste recurrente (anual)",
+    "export": "Excel (A.4)",
+    "edit": "Comprobar",
+    "responsible": "Responsable",
+    "responsibleUser": "Persona responsable",
+    "responsibleGroup": "Grupo responsable",
+    "dueDate": "Fecha límite",
+    "justification": "Justificación",
+    "justificationRequired": "La justificación es obligatoria para «no» y «prescindible».",
+    "evidence": "Evidencias",
+    "noDocuments": "No hay documentos en los activos de este objeto objetivo.",
+    "controls": "Medidas",
+    "addControl": "Añadir medida …",
+    "removeControl": "Quitar medida",
+    "summaryTitle": "Resumen por objeto objetivo y módulo",
+    "target": "Objeto objetivo",
+    "requirements": "Requisitos",
+    "unmodeledTitle": "Estado registrado fuera del modelado ({{count}})",
+    "unmodeledHint": "Estas entradas no pertenecen a ningún módulo modelado actualmente o a un nivel fuera de la variante de protección. Se conservan.",
+    "retired": "ya no está en el catálogo",
+    "approachInfo": {
+      "basis": "Protección básica: se comprueban los requisitos básicos (B) de los módulos modelados.",
+      "standard": "Protección estándar: se comprueban los requisitos básicos y estándar (B, S).",
+      "kern": "Protección esencial: se comprueban los requisitos básicos, estándar y de protección elevada (B, S, H)."
+    }
   }
 }

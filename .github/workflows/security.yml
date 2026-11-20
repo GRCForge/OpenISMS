@@ -252,6 +252,7 @@ jobs:
           node scripts/test-bsi-catalog-import.js
           node scripts/test-bsi-catalog-source.js
           node scripts/test-bsi-domain.js
+          node scripts/test-bsi-check.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only
@@ -277,6 +278,7 @@ jobs:
             require('./src/routes/documents');
             require('./src/routes/bsi-grundschutz');
             require('./src/routes/bsi-domains');
+            require('./src/services/bsiCheckService');
             require('./src/middleware/auth');
             require('helmet'); require('express-rate-limit'); require('express-session');
             console.log('Backend modules loaded successfully');

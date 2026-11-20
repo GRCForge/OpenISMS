@@ -670,6 +670,13 @@ const start = async () => {
     await sequelize.query(
       'CREATE UNIQUE INDEX IF NOT EXISTS uq_bsi_modelings_target_module ON bsi_modelings (domain_id, COALESCE(target_object_id, 0), module_id)'
     ).catch(e => console.error('[DB] Eindeutiger Index auf bsi_modelings konnte nicht angelegt werden:', e.message));
+    // Ein Check-Eintrag je (Verbund, Zielobjekt oder Verbund selbst, Anforderung).
+    // Scheitert das, gibt es bereits Dubletten (z. B. aus einer sehr alten
+    // Version) - nicht verschlucken, aber den Start nicht abbrechen; der Dienst
+    // sucht vor dem Anlegen ohnehin in derselben Transaktion.
+    await sequelize.query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS uq_bsi_requirements_domain_target_req ON bsi_requirements (domain_id, COALESCE(target_object_id, 0), req_id)'
+    ).catch(e => console.error('[DB] Eindeutiger Index auf bsi_requirements konnte nicht angelegt werden - vermutlich doppelte Anforderungen:', e.message));
 
     // Backfill ISO 27001 control descriptions from catalog (idempotent)
     try {

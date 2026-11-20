@@ -120,7 +120,8 @@ async function activateCatalog(catalogId, userId) {
     // Arbeit am Verbund; sie bekommen hier nur Titel/Stufe aus dem Katalog und
     // werden abgeloest, wenn der Katalog die Anforderung nicht mehr fuehrt.
     const defaultDomain = await domains.getDefaultDomain(transaction);
-    const isBaseline = (r) => r.domain_id == null || (defaultDomain && r.domain_id === defaultDomain.id);
+    const isBaseline = (r) => r.target_object_id == null
+      && (r.domain_id == null || (defaultDomain && r.domain_id === defaultDomain.id));
     const byReqId = new Map(existing.filter(isBaseline).map(r => [r.req_id, r]));
     const others = existing.filter(r => !isBaseline(r));
     const stats = { created: 0, updated: 0, retired: 0, reactivated: 0 };
