@@ -60,10 +60,12 @@ function loadTool(name) {
   const tools = {};
   const fakeServer = { tool: (n, d, schema, cb) => { tools[n] = { description: d, schema, cb }; } };
   new Function('server', 'z', 'Op', 'getModels', 'logAudit',
-    'BSI_LAYERS', 'BSI_LAYER_ALIASES', 'normalizeBsiLayer', 'BSI_STATUSES', 'BSI_STATUS_ALIASES', 'normalizeBsiStatus',
+    'BSI_LAYERS', 'BSI_LAYER_ALIASES', 'normalizeBsiLayer', 'BSI_STATUSES', 'BSI_STATUS_ALIASES', 'normalizeBsiStatus', 'bsiDomains',
     source.slice(start, end + 3))(
     fakeServer, z, Op, () => models, async () => {},
-    bsi.BSI_LAYERS, bsi.LAYER_ALIASES, bsi.normalizeBsiLayer, bsi.BSI_STATUSES, bsi.STATUS_ALIASES, bsi.normalizeBsiStatus);
+    bsi.BSI_LAYERS, bsi.LAYER_ALIASES, bsi.normalizeBsiLayer, bsi.BSI_STATUSES, bsi.STATUS_ALIASES, bsi.normalizeBsiStatus,
+    // Standard-Verbund ohne Datenbank: Filter auf domain_id = 1.
+    { baselineWhere: async () => ({ domain_id: 1 }) });
   return tools[name];
 }
 
@@ -99,6 +101,7 @@ const models = {
   eq('status=ja filtert auf implemented', lastWhere.implementation_status, 'implemented');
   await list.cb(shape.parse({}), {});
   eq('ohne Filter keine Bedingung', [lastWhere.layer, lastWhere.implementation_status], [undefined, undefined]);
+  eq('nur der Standard-Verbund, nur aktive', [lastWhere.domain_id, lastWhere.retired], [1, false]);
 
   console.log('\nisms_update_bsi_requirement — Status:');
   const upd = loadTool('isms_update_bsi_requirement');

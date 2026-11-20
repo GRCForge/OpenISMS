@@ -18,6 +18,7 @@ import { ControlMappings } from '../components/ControlMappings';
 import { hasWriteAccess } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 import { BsiCatalogManager } from '../components/bsi/BsiCatalogManager';
+import { BsiDomainPanel } from '../components/bsi/BsiDomainPanel';
 
 type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable';
 // basis/standard/erhoehter_schutzbedarf: Kompendium 2023; normal_sdt/erhoeht: Grundschutz++
@@ -84,7 +85,10 @@ export const BsiGrundschutz: React.FC = () => {
   const canWrite = can('bsi_grundschutz', 'create', hasWriteAccess(user?.role));
   const canManage = can('bsi_grundschutz', 'edit', user?.role === 'admin' || user?.role === 'assessor');
   const canManageCatalog = can('bsi_grundschutz', 'manage_catalog', user?.role === 'admin' || user?.role === 'assessor');
+  const canManageDomain = can('bsi_grundschutz', 'manage_domain', user?.role === 'admin' || user?.role === 'assessor');
   const [catalogsOpen, setCatalogsOpen] = useState(false);
+  const [tab, setTab] = useState<'requirements' | 'domain'>('requirements');
+  const [domainId, setDomainId] = useState<number | null>(null);
 
   const statusLabels: Record<ImplStatus, string> = {
     not_started: t('status.not_started'),
@@ -240,6 +244,18 @@ export const BsiGrundschutz: React.FC = () => {
       </div>
       <BsiCatalogManager open={catalogsOpen} onClose={() => setCatalogsOpen(false)} canManage={canManageCatalog} onActivated={load} />
 
+      <div role="tablist" className="flex gap-1 border-b border-gray-200 dark:border-slate-700">
+        {(['requirements', 'domain'] as const).map(k => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${tab === k ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}>
+            {t(`tabs.${k}`)}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'domain' && <BsiDomainPanel canManage={canManageDomain} domainId={domainId} onDomainChange={setDomainId} />}
+
+      {tab === 'requirements' && <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: t('stats.total'), value: stats.total, color: 'bg-blue-500', icon: ListChecks },
@@ -315,6 +331,7 @@ export const BsiGrundschutz: React.FC = () => {
       {grouped.length === 0 && (
         <Card><CardBody><div className="py-12 text-center"><BookOpen size={36} className="mx-auto mb-3 text-gray-300 dark:text-slate-600" /><p className="text-gray-500 dark:text-slate-400">{t('filterEmpty')}</p></div></CardBody></Card>
       )}
+      </>}
 
       <Modal open={!!editReq} onClose={() => setEditReq(null)} title={editReq ? `${editReq.req_id} – ${editReq.title}` : ''} size="lg">
         <form onSubmit={saveEdit} className="space-y-4">

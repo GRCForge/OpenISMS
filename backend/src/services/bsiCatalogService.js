@@ -10,11 +10,14 @@
  *     Status, Verantwortlicher, Notizen und Pruefdatum bleiben unberuehrt,
  *   - Anforderungen, die im neuen Katalog fehlen oder ENTFALLEN sind, werden
  *     "retired" markiert - nicht geloescht.
+ * Neu angelegt wird nur im Standard-Informationsverbund; Zeilen anderer
+ * Verbuende werden aktualisiert bzw. abgeloest, aber nicht vervollstaendigt.
  */
 
 const crypto = require('crypto');
 const seedCatalog = require('./bsiCatalog');
 const { diffRequirements } = require('./bsiCatalogParsers');
+const domains = require('./bsiDomainService');
 
 const SEED_NAME = 'IT-Grundschutz-Kompendium 2023 (Auszug)';
 
@@ -112,7 +115,14 @@ async function activateCatalog(catalogId, userId) {
     const moduleTitle = new Map(modules.map(m => [m.module_id, m.title]));
     const reqs = (await catalogRequirements(catalogId)).filter(r => !r.withdrawn);
     const existing = await BsiRequirement.findAll({ transaction });
-    const byReqId = new Map(existing.map(r => [r.req_id, r]));
+    // Angelegt wird nur der Bestand des Standard-Verbunds (die Liste, wie es sie
+    // vor den Verbuenden gab). Zeilen anderer Verbuende entstehen erst durch die
+    // Arbeit am Verbund; sie bekommen hier nur Titel/Stufe aus dem Katalog und
+    // werden abgeloest, wenn der Katalog die Anforderung nicht mehr fuehrt.
+    const defaultDomain = await domains.getDefaultDomain(transaction);
+    const isBaseline = (r) => r.domain_id == null || (defaultDomain && r.domain_id === defaultDomain.id);
+    const byReqId = new Map(existing.filter(isBaseline).map(r => [r.req_id, r]));
+    const others = existing.filter(r => !isBaseline(r));
     const stats = { created: 0, updated: 0, retired: 0, reactivated: 0 };
 
     const toCreate = [];
@@ -127,7 +137,10 @@ async function activateCatalog(catalogId, userId) {
         retired: false,
       };
       const row = byReqId.get(r.req_id);
-      if (!row) { toCreate.push({ ...values, req_id: r.req_id.slice(0, 30), implementation_status: 'not_started' }); continue; }
+      if (!row) {
+        toCreate.push({ ...values, req_id: r.req_id.slice(0, 30), implementation_status: 'not_started', domain_id: defaultDomain ? defaultDomain.id : null });
+        continue;
+      }
       byReqId.delete(r.req_id);
       if (row.retired) stats.reactivated++;
       const changed = Object.keys(values).some(k => row[k] !== values[k]);
@@ -138,6 +151,23 @@ async function activateCatalog(catalogId, userId) {
     }
     stats.created = toCreate.length;
 
+    // Zeilen der uebrigen Verbuende: gleiche Katalogwerte, kein Anlegen.
+    const catalogByReqId = new Map(reqs.map(r => [r.req_id, r]));
+    for (const row of others) {
+      const r = catalogByReqId.get(row.req_id);
+      if (!r) {
+        if (!row.retired) { await row.update({ retired: true }, { transaction }); stats.retired++; }
+        continue;
+      }
+      const values = {
+        baustein_id: r.module_id.slice(0, 20),
+        baustein_name: (moduleTitle.get(r.module_id) || r.module_id).slice(0, 255),
+        layer: r.layer, title: r.title, requirement_level: r.requirement_level, catalog_id: catalogId, retired: false,
+      };
+      if (row.retired) stats.reactivated++;
+      if (Object.keys(values).some(k => row[k] !== values[k])) { await row.update(values, { transaction }); stats.updated++; }
+    }
+
     const leftover = [...byReqId.values()].filter(r => !r.retired).map(r => r.id);
     if (leftover.length) {
       await BsiRequirement.update({ retired: true }, { where: { id: leftover }, transaction });
@@ -146,6 +176,8 @@ async function activateCatalog(catalogId, userId) {
 
     await BsiCatalog.update({ status: 'archived' }, { where: { status: 'active' }, transaction });
     await catalog.update({ status: 'active', activated_by_id: userId || null, activated_at: new Date() }, { transaction });
+    // Verbuende folgen dem aktiven Katalog (siehe models/BsiInformationDomain.js).
+    await domains.followActiveCatalog(catalogId, transaction);
     return stats;
   });
 }

@@ -46,6 +46,9 @@ const BsiRequirement = require('./BsiRequirement');
 const BsiCatalog = require('./BsiCatalog');
 const BsiCatalogModule = require('./BsiCatalogModule');
 const BsiCatalogRequirement = require('./BsiCatalogRequirement');
+const BsiInformationDomain = require('./BsiInformationDomain');
+const BsiTargetObject = require('./BsiTargetObject');
+const BsiModeling = require('./BsiModeling');
 const Nis2Measure = require('./Nis2Measure');
 const Nis2SelfCheckItem = require('./Nis2SelfCheckItem');
 const C5Criterion = require('./C5Criterion');
@@ -259,6 +262,23 @@ BsiCatalogRequirement.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalo
 BsiCatalog.belongsTo(User, { as: 'importedBy', foreignKey: 'imported_by_id' });
 BsiCatalog.belongsTo(User, { as: 'activatedBy', foreignKey: 'activated_by_id' });
 BsiRequirement.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
+// Informationsverbund, Zielobjekte und Modellierung. RESTRICT statt CASCADE/SET NULL:
+// SET NULL machte aus der Modellierung eines Zielobjekts stillschweigend eine des
+// ganzen Verbunds. Keine CASCADE-Loeschung:
+// Zielobjekte und Modellierungen tragen Pruefhistorie und werden nur einzeln,
+// mit Audit-Eintrag entfernt (routes/bsi-domains.js).
+BsiInformationDomain.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
+BsiInformationDomain.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id', constraints: false });
+BsiInformationDomain.hasMany(BsiTargetObject, { as: 'targetObjects', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiInformationDomain.hasMany(BsiModeling, { as: 'modelings', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.belongsTo(Asset, { as: 'asset', foreignKey: 'asset_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+Asset.hasMany(BsiTargetObject, { as: 'bsiTargetObjects', foreignKey: 'asset_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.hasMany(BsiModeling, { as: 'modelings', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiModeling.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiModeling.belongsTo(BsiTargetObject, { as: 'targetObject', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiModeling.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
+BsiRequirement.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', constraints: false });
 Nis2Measure.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'answeredBy', foreignKey: 'answered_by_id' });
@@ -330,7 +350,7 @@ module.exports = {
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
-  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
+  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, BsiInformationDomain, BsiTargetObject, BsiModeling, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,
