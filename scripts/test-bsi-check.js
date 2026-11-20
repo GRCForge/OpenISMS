@@ -97,10 +97,12 @@ eq('Nachweis neutralisiert', col('Nachweise'), "'+doc.pdf");
 console.log('\nSchreib- und Lesewege:');
 const routes = fs.readFileSync(path.join(SRC, 'routes', 'bsi-domains.js'), 'utf8');
 const line = (re) => (routes.match(re) || [''])[0];
+// Vollstaendiges Regex-Escaping (CodeQL js/incomplete-sanitization).
+const reEscape = (str) => str.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
 const putCheck = line(/router\.put\('\/:id\/check'[^\n]*/);
 eq('PUT /:id/check: bsi_grundschutz.edit + requireWriteAccess', [putCheck.includes("requirePermission('bsi_grundschutz','edit'"), putCheck.includes('requireWriteAccess()')], [true, true]);
 for (const p of ['/:id/check', '/:id/check/summary', '/:id/check/export', '/:id/check/documents']) {
-  eq(`GET ${p}: bsi_grundschutz.view`, line(new RegExp(`router\\.get\\('${p.replace(/\//g, '\\/')}'[^\\n]*`)).includes("requirePermission('bsi_grundschutz','view'"), true);
+  eq(`GET ${p}: bsi_grundschutz.view`, line(new RegExp(`router\\.get\\('${reEscape(p)}'[^\\n]*`)).includes("requirePermission('bsi_grundschutz','view'"), true);
 }
 const routeBody = (p) => { const i = routes.indexOf(`router.get('${p}'`); return routes.slice(i, routes.indexOf('\n});', i)); };
 eq('Liste, Auswertung und Export lesen ueber getCheck mit req.user',
