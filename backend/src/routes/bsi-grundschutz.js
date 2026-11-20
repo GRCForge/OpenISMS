@@ -12,6 +12,8 @@ const { allowedCatalogHosts, resolveCatalogSourceUrl } = require('../services/bs
 const { MAX_CATALOG_BYTES, CatalogParseError, parseCatalog } = require('../services/bsiCatalogParsers');
 const catalogs = require('../services/bsiCatalogService');
 const domains = require('../services/bsiDomainService');
+const check = require('../services/bsiCheckService');
+const { pick } = require('../utils/massAssignment');
 
 const FORMATS = ['auto', 'kompendium_xml', 'oscal_catalog'];
 const ALLOWED_EXT = ['.xml', '.json'];
@@ -205,22 +207,46 @@ router.delete('/catalogs/:id', authenticate, requirePermission('bsi_grundschutz'
 
 // ── Anforderungen (Umsetzungsstand) ──────────────────────────────────────────
 
+// Die bisherige Liste bearbeitet nur den Verbund-Stand des Standard-Verbunds
+// (baselineWhere). Eintraege des Grundschutz-Checks an Zielobjekten und in
+// anderen Verbuenden laufen ueber /api/bsi-grundschutz/domains/:id/check -
+// sonst liessen sie sich hier an Verbund- und Sichtbarkeitspruefung vorbei
+// aendern oder loeschen.
+async function findBaselineRow(id) {
+  const n = idParam(id);
+  if (!n) return null;
+  return BsiRequirement.findOne({ where: { id: n, ...(await domains.baselineWhere()) } });
+}
+
+// Felder der bisherigen Liste; dieselbe Validierung (inkl. Begruendungspflicht
+// bei "nein"/"entbehrlich") wie im Grundschutz-Check.
+const LEGACY_FIELDS = ['implementation_status', 'responsible_id', 'notes', 'last_review_date', 'justification'];
+
 router.put('/:id', authenticate, requirePermission('bsi_grundschutz','edit','admin','assessor','it-staff'), async (req, res) => {
   try {
-    const item = await BsiRequirement.findByPk(req.params.id);
+    const item = await findBaselineRow(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
-    const { implementation_status, responsible_id, notes, last_review_date } = req.body;
-    await item.update({ implementation_status, responsible_id, notes, last_review_date });
-    await auditFromReq(req, 'update', 'bsi_requirement', item.id, item.req_id, {});
+    let values;
+    try {
+      values = check.validateEntryInput(pick(req.body, LEGACY_FIELDS), item);
+      await check.checkReferences(values);
+    } catch (e) {
+      if (e instanceof check.CheckError) return res.status(e.status).json({ error: e.message });
+      throw e;
+    }
+    const { before, changes } = await check.applyEntryValues(item, values);
+    if (Object.keys(changes).length) await auditFromReq(req, 'update', 'bsi_requirement', item.id, item.req_id, { before, after: changes });
     res.json(item);
   } catch (e) { serverError(res, e, 'bsi-grundschutz'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('bsi_grundschutz','delete','admin','assessor'), async (req, res) => {
   try {
-    const item = await BsiRequirement.findByPk(req.params.id);
+    const item = await findBaselineRow(req.params.id);
     if (!item) return res.status(404).json({ error: 'Nicht gefunden' });
-    await auditFromReq(req, 'delete', 'bsi_requirement', item.id, item.req_id, {});
+    await auditFromReq(req, 'delete', 'bsi_requirement', item.id, item.req_id, {
+      implementation_status: item.implementation_status, justification: item.justification, notes: item.notes,
+    });
     await item.destroy();
     res.json({ ok: true });
   } catch (e) { serverError(res, e, 'bsi-grundschutz'); }

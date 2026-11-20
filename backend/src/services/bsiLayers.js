@@ -27,16 +27,23 @@ function normalizeBsiLayer(value) {
 
 // Umsetzungsstatus, wie ihn das Modell BsiRequirement speichert. Die MCP-Tools
 // nannten bis 3.3.12 die Werte des Grundschutz-Checks (ja/teilweise/nein/
-// entbehrlich), die die ENUM-Spalte nicht kennt: ein Schreibversuch scheiterte
-// in Postgres, ein Filter lieferte immer eine leere Liste. Die alten Werte
-// werden auf die naechstliegenden Modellwerte abgebildet.
-const BSI_STATUSES = Object.freeze(['not_started', 'in_progress', 'implemented', 'not_applicable']);
+// entbehrlich), die die ENUM-Spalte nicht kannte: ein Schreibversuch scheiterte
+// in Postgres, ein Filter lieferte immer eine leere Liste. Seit 3.3.12 werden
+// sie auf Modellwerte abgebildet.
+//
+// "nein" landete dabei bis 3.4 naeherungsweise auf not_started (offen) - ein
+// bewusstes "nicht umgesetzt" war von "noch nicht geprueft" nicht zu
+// unterscheiden. Seit es not_implemented gibt, bildet "nein" genau darauf ab.
+// Bestehende not_started-Zeilen bleiben, wie sie sind: Ob dahinter ein "nein"
+// stand, laesst sich nachtraeglich nicht feststellen.
+const BSI_STATUSES = Object.freeze(['not_started', 'in_progress', 'implemented', 'not_applicable', 'not_implemented']);
 
 const STATUS_ALIASES = Object.freeze({
   ja: 'implemented',
   teilweise: 'in_progress',
-  nein: 'not_started',
+  nein: 'not_implemented',
   entbehrlich: 'not_applicable',
+  offen: 'not_started',
 });
 
 function normalizeBsiStatus(value) {

@@ -44,7 +44,9 @@ eq('kein String', bsi.normalizeBsiLayer(undefined), null);
 console.log('\nnormalizeBsiStatus:');
 eq('ja → implemented', bsi.normalizeBsiStatus('ja'), 'implemented');
 eq('teilweise → in_progress', bsi.normalizeBsiStatus('teilweise'), 'in_progress');
-eq('nein → not_started', bsi.normalizeBsiStatus('nein'), 'not_started');
+eq('nein → not_implemented (keine Naeherung mehr)', bsi.normalizeBsiStatus('nein'), 'not_implemented');
+eq('offen → not_started', bsi.normalizeBsiStatus('offen'), 'not_started');
+eq('not_implemented ist Modellwert', bsi.BSI_STATUSES.includes('not_implemented'), true);
 eq('entbehrlich → not_applicable', bsi.normalizeBsiStatus('entbehrlich'), 'not_applicable');
 eq('Modellwert bleibt', bsi.normalizeBsiStatus('implemented'), 'implemented');
 eq('unbekannt', bsi.normalizeBsiStatus('vielleicht'), null);
@@ -60,22 +62,25 @@ function loadTool(name) {
   const tools = {};
   const fakeServer = { tool: (n, d, schema, cb) => { tools[n] = { description: d, schema, cb }; } };
   new Function('server', 'z', 'Op', 'getModels', 'logAudit',
-    'BSI_LAYERS', 'BSI_LAYER_ALIASES', 'normalizeBsiLayer', 'BSI_STATUSES', 'BSI_STATUS_ALIASES', 'normalizeBsiStatus', 'bsiDomains',
+    'BSI_LAYERS', 'BSI_LAYER_ALIASES', 'normalizeBsiLayer', 'BSI_STATUSES', 'BSI_STATUS_ALIASES', 'normalizeBsiStatus', 'bsiDomains', 'bsiCheck',
     source.slice(start, end + 3))(
     fakeServer, z, Op, () => models, async () => {},
     bsi.BSI_LAYERS, bsi.LAYER_ALIASES, bsi.normalizeBsiLayer, bsi.BSI_STATUSES, bsi.STATUS_ALIASES, bsi.normalizeBsiStatus,
     // Standard-Verbund ohne Datenbank: Filter auf domain_id = 1.
-    { baselineWhere: async () => ({ domain_id: 1 }) });
+    { baselineWhere: async () => ({ domain_id: 1 }) },
+    // Echte Validierung (Begruendungspflicht) aus dem Dienst.
+    require(path.join(SRC, 'services', 'bsiCheckService')));
   return tools[name];
 }
 
 let lastWhere = null;
 let lastUpdate = null;
+let lastFindWhere = null;
 const models = {
   User: {},
   BsiRequirement: {
     findAll: async ({ where }) => { lastWhere = where; return []; },
-    findByPk: async (id) => ({ id, req_id: 'ORP.1.A1', update: async (u) => { lastUpdate = u; } }),
+    findOne: async ({ where }) => { lastFindWhere = where; return { id: where.id, req_id: 'ORP.1.A1', implementation_status: 'not_started', justification: null, update: async (u) => { lastUpdate = u; } }; },
   },
 };
 
@@ -108,8 +113,14 @@ const models = {
   const updShape = z.object(upd.schema);
   await upd.cb(updShape.parse({ id: 1, implementation_status: 'teilweise' }), {});
   eq('teilweise wird als in_progress gespeichert', lastUpdate.implementation_status, 'in_progress');
-  await upd.cb(updShape.parse({ id: 1, implementation_status: 'not_applicable' }), {});
-  eq('Modellwert wird unveraendert gespeichert', lastUpdate.implementation_status, 'not_applicable');
+  eq('nur der Standard-Verbund (baselineWhere)', lastFindWhere.domain_id, 1);
+  await upd.cb(updShape.parse({ id: 1, implementation_status: 'not_applicable', justification: 'kein Einsatz' }), {});
+  eq('Modellwert wird unveraendert gespeichert', [lastUpdate.implementation_status, lastUpdate.justification], ['not_applicable', 'kein Einsatz']);
+  lastUpdate = null;
+  const noReason = await upd.cb(updShape.parse({ id: 1, implementation_status: 'nein' }), {});
+  eq('nein ohne Begruendung abgelehnt, nichts geschrieben', [noReason.isError, lastUpdate], [true, null]);
+  await upd.cb(updShape.parse({ id: 1, implementation_status: 'nein', justification: 'Risiko akzeptiert' }), {});
+  eq('nein mit Begruendung → not_implemented', lastUpdate.implementation_status, 'not_implemented');
   await upd.cb(updShape.parse({ id: 1, notes: 'x' }), {});
   eq('ohne Status kein Status im Update', 'implementation_status' in lastUpdate, false);
   eq('unbekannter Status abgelehnt', updShape.safeParse({ id: 1, implementation_status: 'vielleicht' }).success, false);

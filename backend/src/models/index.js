@@ -49,6 +49,7 @@ const BsiCatalogRequirement = require('./BsiCatalogRequirement');
 const BsiInformationDomain = require('./BsiInformationDomain');
 const BsiTargetObject = require('./BsiTargetObject');
 const BsiModeling = require('./BsiModeling');
+const BsiRequirementDocument = require('./BsiRequirementDocument');
 const Nis2Measure = require('./Nis2Measure');
 const Nis2SelfCheckItem = require('./Nis2SelfCheckItem');
 const C5Criterion = require('./C5Criterion');
@@ -279,6 +280,15 @@ BsiModeling.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_
 BsiModeling.belongsTo(BsiTargetObject, { as: 'targetObject', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 BsiModeling.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
 BsiRequirement.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', constraints: false });
+// IT-Grundschutz-Check: Status je Zielobjekt. RESTRICT: Ein Zielobjekt mit
+// Checkdaten laesst sich nicht entfernen (bsiDomainService.removeTargetObject).
+BsiRequirement.belongsTo(BsiTargetObject, { as: 'targetObject', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.hasMany(BsiRequirement, { as: 'checkEntries', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRequirement.belongsTo(Group, { as: 'responsibleGroup', foreignKey: 'responsible_group_id', constraints: false });
+// Nachweise: Verknuepfung geht mit der Anforderung bzw. dem Dokument (beides
+// wird nur ueber eigene, auditierte Loeschwege entfernt).
+BsiRequirement.belongsToMany(Document, { through: BsiRequirementDocument, as: 'evidence', foreignKey: 'requirement_id', otherKey: 'document_id' });
+Document.belongsToMany(BsiRequirement, { through: BsiRequirementDocument, as: 'bsiRequirements', foreignKey: 'document_id', otherKey: 'requirement_id' });
 Nis2Measure.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'answeredBy', foreignKey: 'answered_by_id' });
@@ -350,7 +360,7 @@ module.exports = {
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
-  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, BsiInformationDomain, BsiTargetObject, BsiModeling, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
+  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, BsiInformationDomain, BsiTargetObject, BsiModeling, BsiRequirementDocument, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,

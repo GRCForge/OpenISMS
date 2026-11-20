@@ -204,7 +204,11 @@ async function ensureDefaultDomain() {
 async function baselineWhere() {
   const { Op } = require('sequelize');
   const def = await getDefaultDomain();
-  return { domain_id: def ? { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: def.id }] } : { [Op.is]: null } };
+  return {
+    domain_id: def ? { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: def.id }] } : { [Op.is]: null },
+    // Eintraege des Grundschutz-Checks an Zielobjekten gehoeren nicht dazu.
+    target_object_id: { [Op.is]: null },
+  };
 }
 
 /** Alle Verbuende auf den (neu) aktiven Katalog umstellen. */
@@ -427,12 +431,15 @@ async function updateTargetObject(domainId, id, body, actor) {
  * Asset selbst bleibt unberuehrt.
  */
 async function removeTargetObject(domainId, id, actor) {
-  const { sequelize, BsiModeling } = getModels();
+  const { sequelize, BsiModeling, BsiRequirement } = getModels();
   return sequelize.transaction(async (transaction) => {
     const domain = await loadDomain(domainId, transaction);
     const row = await loadTargetObject(domain, id, actor, transaction);
     const modeled = await BsiModeling.count({ where: { target_object_id: row.id }, transaction });
     if (modeled > 0) throw new DomainError(409, `Dem Zielobjekt sind noch ${modeled} Baustein(e) zugeordnet; zuerst die Modellierung entfernen`);
+    // Checkdaten (Status, Begruendung, Nachweise) werden nie implizit verworfen.
+    const checked = await BsiRequirement.count({ where: { target_object_id: row.id }, transaction });
+    if (checked > 0) throw new DomainError(409, `Zum Zielobjekt sind ${checked} Eintraege des IT-Grundschutz-Checks erfasst; es bleibt im Verbund`);
     const snapshot = { asset_id: row.asset_id, target_type: row.target_type, notes: row.notes };
     await row.destroy({ transaction });
     return { domain, snapshot, asset: briefAsset(row.asset), id: row.id };

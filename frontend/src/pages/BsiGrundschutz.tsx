@@ -18,9 +18,12 @@ import { ControlMappings } from '../components/ControlMappings';
 import { hasWriteAccess } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 import { BsiCatalogManager } from '../components/bsi/BsiCatalogManager';
-import { BsiDomainPanel } from '../components/bsi/BsiDomainPanel';
+import { BsiDomainPanel, type BsiDomain } from '../components/bsi/BsiDomainPanel';
+import { BsiCheckPanel } from '../components/bsi/BsiCheckPanel';
 
-type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable';
+// not_implemented = "nein" im IT-Grundschutz-Check (bewusst nicht umgesetzt)
+type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable' | 'not_implemented';
+const NEEDS_JUSTIFICATION: ImplStatus[] = ['not_implemented', 'not_applicable'];
 // basis/standard/erhoehter_schutzbedarf: Kompendium 2023; normal_sdt/erhoeht: Grundschutz++
 type RequirementLevel = 'basis' | 'standard' | 'erhoehter_schutzbedarf' | 'normal_sdt' | 'erhoeht';
 
@@ -36,6 +39,7 @@ interface BsiRequirement {
   responsible?: { id: number; name: string };
   responsible_id?: number | null;
   notes?: string;
+  justification?: string | null;
   last_review_date?: string;
 }
 
@@ -60,6 +64,7 @@ const statusColors: Record<ImplStatus, string> = {
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   implemented: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   not_applicable: 'bg-slate-100 text-slate-400 dark:bg-slate-800/60 dark:text-slate-400',
+  not_implemented: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 };
 
 const levelColors: Record<RequirementLevel, string> = {
@@ -74,6 +79,7 @@ const emptyEditForm = {
   implementation_status: 'not_started' as ImplStatus,
   responsible_id: '',
   notes: '',
+  justification: '',
   last_review_date: '',
 };
 
@@ -87,14 +93,24 @@ export const BsiGrundschutz: React.FC = () => {
   const canManageCatalog = can('bsi_grundschutz', 'manage_catalog', user?.role === 'admin' || user?.role === 'assessor');
   const canManageDomain = can('bsi_grundschutz', 'manage_domain', user?.role === 'admin' || user?.role === 'assessor');
   const [catalogsOpen, setCatalogsOpen] = useState(false);
-  const [tab, setTab] = useState<'requirements' | 'domain'>('requirements');
+  const canEditCheck = can('bsi_grundschutz', 'edit', ['admin', 'assessor', 'it-staff'].includes(user?.role || ''));
+  const [tab, setTab] = useState<'requirements' | 'domain' | 'check'>('requirements');
   const [domainId, setDomainId] = useState<number | null>(null);
+  const [checkDomains, setCheckDomains] = useState<BsiDomain[]>([]);
+  useEffect(() => {
+    if (tab !== 'check') return;
+    api.get('/bsi-grundschutz/domains').then(r => {
+      setCheckDomains(r.data);
+      if (r.data.length && (domainId == null || !r.data.some((d: BsiDomain) => d.id === domainId))) setDomainId(r.data[0].id);
+    }).catch(() => setCheckDomains([]));
+  }, [tab, domainId]);
 
   const statusLabels: Record<ImplStatus, string> = {
     not_started: t('status.not_started'),
     in_progress: t('status.in_progress'),
     implemented: t('status.implemented'),
     not_applicable: t('status.not_applicable'),
+    not_implemented: t('status.not_implemented'),
   };
 
   const levelLabels: Record<RequirementLevel, string> = {
@@ -155,6 +171,7 @@ export const BsiGrundschutz: React.FC = () => {
       implementation_status: req.implementation_status,
       responsible_id: req.responsible_id ? String(req.responsible_id) : '',
       notes: req.notes || '',
+      justification: req.justification || '',
       last_review_date: req.last_review_date ? req.last_review_date.slice(0, 10) : '',
     });
   };
@@ -164,7 +181,16 @@ export const BsiGrundschutz: React.FC = () => {
     if (!editReq) return;
     setSaving(true);
     try {
-      const payload = { ...editForm, responsible_id: editForm.responsible_id ? Number(editForm.responsible_id) : null };
+      const { justification, ...rest } = editForm;
+      // Begruendung nur mitschicken, wenn sie gesetzt ist oder geleert wurde - sonst
+      // verlangte der Server sie auch beim blossen Aendern einer Notiz an einer
+      // Bestandszeile, die vor 3.5 ohne Begruendung auf "entbehrlich" stand.
+      const sendJustification = justification.trim() !== '' || (editReq.justification || '') !== '';
+      const payload = {
+        ...rest,
+        ...(sendJustification ? { justification } : {}),
+        responsible_id: editForm.responsible_id ? Number(editForm.responsible_id) : null,
+      };
       await api.put(`/bsi-grundschutz/${editReq.id}`, payload);
       setRequirements(rs => rs.map(r => r.id === editReq.id ? { ...r, ...payload, responsible: editForm.responsible_id ? { id: Number(editForm.responsible_id), name: users.find(u => u.id === Number(editForm.responsible_id))?.name || '' } : undefined } : r));
       setEditReq(null);
@@ -245,7 +271,7 @@ export const BsiGrundschutz: React.FC = () => {
       <BsiCatalogManager open={catalogsOpen} onClose={() => setCatalogsOpen(false)} canManage={canManageCatalog} onActivated={load} />
 
       <div role="tablist" className="flex gap-1 border-b border-gray-200 dark:border-slate-700">
-        {(['requirements', 'domain'] as const).map(k => (
+        {(['requirements', 'domain', 'check'] as const).map(k => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
             className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${tab === k ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}>
             {t(`tabs.${k}`)}
@@ -254,6 +280,16 @@ export const BsiGrundschutz: React.FC = () => {
       </div>
 
       {tab === 'domain' && <BsiDomainPanel canManage={canManageDomain} domainId={domainId} onDomainChange={setDomainId} />}
+
+      {tab === 'check' && (
+        <>
+          {checkDomains.length > 1 && (
+            <Select className="w-72" label={t('domain.select')} value={domainId ? String(domainId) : ''} onChange={e => setDomainId(Number(e.target.value))}
+              options={checkDomains.map(d => ({ value: String(d.id), label: d.name }))} />
+          )}
+          <BsiCheckPanel domain={checkDomains.find(d => d.id === domainId) || null} canEdit={canEditCheck} />
+        </>
+      )}
 
       {tab === 'requirements' && <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -342,6 +378,14 @@ export const BsiGrundschutz: React.FC = () => {
             </div>
           )}
           <Select label={t('modal.status')} value={editForm.implementation_status} onChange={e => setEditForm({ ...editForm, implementation_status: e.target.value as ImplStatus })} options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))} disabled={!canWrite} />
+          {(NEEDS_JUSTIFICATION.includes(editForm.implementation_status) || editForm.justification) && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="bsi-req-justification" className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('check.justification')}{NEEDS_JUSTIFICATION.includes(editForm.implementation_status) ? ' *' : ''}</label>
+              <textarea id="bsi-req-justification" rows={2} required={NEEDS_JUSTIFICATION.includes(editForm.implementation_status)} disabled={!canWrite}
+                className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white" value={editForm.justification}
+                onChange={e => setEditForm({ ...editForm, justification: e.target.value })} />
+            </div>
+          )}
           <SearchableSelect label={t('modal.responsible')} value={editForm.responsible_id} onChange={val => setEditForm({ ...editForm, responsible_id: val })} options={[{ value: '', label: t('modal.nobody') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} disabled={!canWrite} />
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('modal.lastReview')}</label>

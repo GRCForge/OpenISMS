@@ -5,7 +5,8 @@
     "not_started": "Öffnen",
     "in_progress": "In Bearbeitung",
     "implemented": "Implementiert",
-    "not_applicable": "Nicht anwendbar"
+    "not_applicable": "Nicht anwendbar",
+    "not_implemented": "Nicht umgesetzt"
   },
   "level": {
     "basis": "Einfache",
@@ -116,7 +117,8 @@
   },
   "tabs": {
     "requirements": "Anforderungen",
-    "domain": "Informationsverbund"
+    "domain": "Informationsverbund",
+    "check": "IT-Grundschutz-Check"
   },
   "domain": {
     "select": "Informationsverbund",
@@ -172,5 +174,48 @@
     "confirmRemoveTarget": "„{{name}}“ aus dem Verbund nehmen? Das Asset selbst bleibt erhalten.",
     "confirmRemoveModeling": "Modellierung {{module}} entfernen? Der erfasste Umsetzungsstand bleibt gespeichert.",
     "notInCatalog": "Nicht im aktiven Katalog enthalten"
+  },
+  "check": {
+    "status": {
+      "implemented": "ja",
+      "in_progress": "teilweise",
+      "not_implemented": "nein",
+      "not_applicable": "entbehrlich",
+      "not_started": "offen"
+    },
+    "noDomain": "Kein Informationsverbund vorhanden.",
+    "empty": "Noch keine Anforderungen: Ordnen Sie im Reiter „Informationsverbund“ Bausteine zu.",
+    "domainLevel": "Gesamter Verbund",
+    "filterTarget": "Zielobjekt",
+    "allTargets": "Alle Zielobjekte",
+    "fulfillment": "Erfüllungsgrad",
+    "moduleFulfillment": "Erfüllungsgrad {{value}}",
+    "openCount": "Offen/teilweise",
+    "costOnce": "Kosten einmalig",
+    "costRecurring": "Kosten laufend (pro Jahr)",
+    "export": "Excel (A.4)",
+    "edit": "Prüfen",
+    "responsible": "Verantwortlich",
+    "responsibleUser": "Verantwortliche Person",
+    "responsibleGroup": "Verantwortliche Gruppe",
+    "dueDate": "Umsetzung bis",
+    "justification": "Begründung",
+    "justificationRequired": "Bei „nein“ und „entbehrlich“ ist eine Begründung Pflicht.",
+    "evidence": "Nachweise",
+    "noDocuments": "Keine Dokumente an den Assets dieses Zielobjekts.",
+    "controls": "Maßnahmen",
+    "addControl": "Maßnahme hinzufügen …",
+    "removeControl": "Maßnahme entfernen",
+    "summaryTitle": "Auswertung je Zielobjekt und Baustein",
+    "target": "Zielobjekt",
+    "requirements": "Anforderungen",
+    "unmodeledTitle": "Erfasster Stand außerhalb der Modellierung ({{count}})",
+    "unmodeledHint": "Diese Einträge gehören zu keinem aktuell modellierten Baustein oder zu einer Stufe außerhalb der Absicherungsvariante. Sie bleiben gespeichert.",
+    "retired": "nicht mehr im Katalog",
+    "approachInfo": {
+      "basis": "Basis-Absicherung: geprüft werden die Basis-Anforderungen (B) der modellierten Bausteine.",
+      "standard": "Standard-Absicherung: geprüft werden Basis- und Standard-Anforderungen (B, S).",
+      "kern": "Kern-Absicherung: geprüft werden Basis-, Standard- und Anforderungen bei erhöhtem Schutzbedarf (B, S, H)."
+    }
   }
 }
