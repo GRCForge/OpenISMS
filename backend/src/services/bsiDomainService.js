@@ -331,7 +331,10 @@ async function updateDomain(id, body) {
   const values = domainValues(body, { creating: false });
   const before = {};
   const changes = {};
-  for (const [k, v] of Object.entries(values)) {
+  // Schluessel aus der festen Feldliste, nicht aus der Eingabe (CodeQL js/remote-property-injection).
+  for (const k of DOMAIN_FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(values, k)) continue;
+    const v = values[k];
     if (domain[k] !== v) { before[k] = domain[k]; changes[k] = v; }
   }
   if (Object.keys(changes).length) await domain.update(changes);
