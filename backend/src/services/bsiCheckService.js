@@ -153,10 +153,18 @@ async function checkReferences(values, transaction) {
 }
 
 /** Nur geaenderte Werte schreiben; liefert { before, changes } fuer das Audit-Log. */
+const ENTRY_FIELDS = Object.freeze([
+  'implementation_status', 'justification', 'notes', 'responsible_id', 'responsible_group_id',
+  'due_date', 'last_review_date', 'cost_once', 'cost_recurring',
+]);
+
 async function applyEntryValues(row, values, transaction) {
   const before = {};
   const changes = {};
-  for (const [k, v] of Object.entries(values)) {
+  // Schluessel aus der festen Feldliste, nicht aus der Eingabe (CodeQL js/remote-property-injection).
+  for (const k of ENTRY_FIELDS) {
+    if (!hasOwn(values, k)) continue;
+    const v = values[k];
     const cur = row[k] == null ? null : (['cost_once', 'cost_recurring'].includes(k) ? Number(row[k]) : row[k]);
     if (cur !== v) { before[k] = cur; changes[k] = v; }
   }

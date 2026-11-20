@@ -2,7 +2,7 @@
   "title": "BSI IT-Grundschutz",
   "subtitle": "IT-Grundschutz Compendium · {{count}} Anforderungen",
   "status": {
-    "not_started": "Öffnen",
+    "not_started": "Offen",
     "in_progress": "In Bearbeitung",
     "implemented": "Implementiert",
     "not_applicable": "Nicht anwendbar",
@@ -19,7 +19,7 @@
     "total": "Gesamt",
     "implemented": "Implementiert",
     "inProgress": "In Bearbeitung",
-    "open": "Öffnen"
+    "open": "Offen"
   },
   "filter": {
     "searchPlaceholder": "Anforderungsnummer, Modul oder Titel...",
