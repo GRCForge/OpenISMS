@@ -5,12 +5,15 @@
     "not_started": "Open",
     "in_progress": "In progress",
     "implemented": "Implemented",
-    "not_applicable": "Not applicable"
+    "not_applicable": "Not applicable",
+    "not_implemented": "Not implemented"
   },
   "level": {
     "basis": "Basic",
     "standard": "Standard",
-    "erhoehter_schutzbedarf": "High protection"
+    "erhoehter_schutzbedarf": "High protection",
+    "normal_sdt": "Normal (SotA)",
+    "erhoeht": "Elevated"
   },
   "stats": {
     "total": "Total",
@@ -54,5 +57,165 @@
   "toast": {
     "loadError": "Error loading catalogue",
     "saveError": "Error saving"
+  },
+  "catalogs": {
+    "open": "Catalogues",
+    "title": "Grundschutz catalogues",
+    "intro": "Catalogues are imported and stored as a preview first. Requirements are only taken over on activation; status, owners and notes of existing requirements are kept, requirements no longer contained are marked as retired, not deleted.",
+    "table": {
+      "name": "Catalogue",
+      "format": "Format",
+      "requirements": "Requirements",
+      "status": "Status",
+      "imported": "Imported"
+    },
+    "format": {
+      "auto": "Detect automatically",
+      "seed": "Bundled excerpt",
+      "kompendium_xml": "Kompendium (XML)",
+      "oscal_catalog": "OSCAL catalogue (JSON)"
+    },
+    "status": {
+      "preview": "Preview",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "compare": "Compare",
+    "activate": "Activate",
+    "activateConfirm": "Activate catalogue \"{{name}}\"? Its requirements will be reconciled with the implementation status.",
+    "discardConfirm": "Discard preview \"{{name}}\"?",
+    "diff": {
+      "title": "{{name}} compared to: {{against}}",
+      "none": "no active catalogue",
+      "added": "New",
+      "changed": "Changed",
+      "removed": "Removed",
+      "unchanged": "Unchanged",
+      "more": "… and {{count}} more",
+      "hint": "The preview changes nothing. Changes are applied only with \"Activate\"."
+    },
+    "import": {
+      "title": "Import catalogue",
+      "file": "Upload file",
+      "url": "Load from URL",
+      "urlLabel": "URL (public, http/https)",
+      "format": "Format",
+      "name": "Name (optional)",
+      "edition": "Edition (optional)",
+      "hint": "Supported: IT-Grundschutz-Kompendium as XML (DocBook) and OSCAL catalogues in JSON, such as the Grundschutz++ user catalogue. Max. 25 MB.",
+      "submit": "Import",
+      "running": "Importing…"
+    },
+    "toast": {
+      "imported": "Catalogue with {{count}} requirements imported as preview",
+      "importError": "Import failed",
+      "activated": "Catalogue activated: {{created}} new, {{updated}} updated, {{retired}} retired",
+      "activateError": "Activation failed",
+      "diffError": "Comparison could not be loaded",
+      "discardError": "Discarding failed"
+    }
+  },
+  "tabs": {
+    "requirements": "Requirements",
+    "domain": "Information domain",
+    "check": "IT-Grundschutz check"
+  },
+  "domain": {
+    "select": "Information domain",
+    "default": "default",
+    "create": "Create domain",
+    "edit": "Edit domain",
+    "name": "Name",
+    "description": "Description",
+    "scope": "Scope",
+    "approachLabel": "Protection approach",
+    "approach": {
+      "basis": "Basic protection",
+      "standard": "Standard protection",
+      "kern": "Core protection"
+    },
+    "approachHint": {
+      "basis": "Entry level: basic requirements only, for the whole domain.",
+      "standard": "Default approach of BSI Standard 200-2: basic and standard requirements.",
+      "kern": "Narrow scope (\"crown jewels\"): all requirements including high protection needs."
+    },
+    "catalog": "Catalogue",
+    "noCatalog": "No active catalogue",
+    "domainWide": "Modelling for the whole domain",
+    "domainWideHint": "Process modules (ISMS, ORP, CON, OPS, DER) and practices without a target object category apply to the whole domain.",
+    "targetObjects": "Target objects ({{count}})",
+    "addTarget": "Assign target object",
+    "noTargets": "No target objects yet. Assign assets from the asset register.",
+    "asset": "Asset",
+    "targetTypeLabel": "Target object type",
+    "chooseType": "Choose type …",
+    "targetType": {
+      "business_process": "Business process",
+      "application": "Application",
+      "it_system": "IT system",
+      "ics": "ICS system",
+      "room": "Room",
+      "building": "Building",
+      "network": "Network/communication link"
+    },
+    "suggestedType": "Suggested from asset type: {{type}}",
+    "noTypeSuggestion": "No suggestion for this asset type – please choose a type.",
+    "modeling": "Modelling",
+    "noModeling": "Nothing modelled yet",
+    "module": "Module/practice",
+    "suggest": "Suggestions",
+    "apply": "Apply",
+    "suggestTitleDomain": "Suggestions for the whole domain",
+    "suggestTitleTarget": "Suggestions for {{name}}",
+    "suggestHint": "Suggestions from the active catalogue. A module is only assigned once you click \"Apply\".",
+    "noSuggestions": "No further suggestions.",
+    "removeTarget": "Remove target object",
+    "removeModeling": "Remove modelling",
+    "confirmRemoveTarget": "Remove \"{{name}}\" from the domain? The asset itself is kept.",
+    "confirmRemoveModeling": "Remove modelling {{module}}? The recorded implementation status is kept.",
+    "notInCatalog": "Not contained in the active catalogue"
+  },
+  "check": {
+    "status": {
+      "implemented": "yes",
+      "in_progress": "partially",
+      "not_implemented": "no",
+      "not_applicable": "dispensable",
+      "not_started": "open"
+    },
+    "noDomain": "No information domain available.",
+    "empty": "No requirements yet: assign modules in the \"Information domain\" tab.",
+    "domainLevel": "Whole domain",
+    "filterTarget": "Target object",
+    "allTargets": "All target objects",
+    "fulfillment": "Fulfilment",
+    "moduleFulfillment": "Fulfilment {{value}}",
+    "openCount": "Open/partial",
+    "costOnce": "One-off cost",
+    "costRecurring": "Recurring cost (per year)",
+    "export": "Excel (A.4)",
+    "edit": "Check",
+    "responsible": "Responsible",
+    "responsibleUser": "Responsible person",
+    "responsibleGroup": "Responsible group",
+    "dueDate": "Due date",
+    "justification": "Justification",
+    "justificationRequired": "A justification is mandatory for \"no\" and \"dispensable\".",
+    "evidence": "Evidence",
+    "noDocuments": "No documents on the assets of this target object.",
+    "controls": "Controls",
+    "addControl": "Add control …",
+    "removeControl": "Remove control",
+    "summaryTitle": "Summary by target object and module",
+    "target": "Target object",
+    "requirements": "Requirements",
+    "unmodeledTitle": "Recorded status outside the modelling ({{count}})",
+    "unmodeledHint": "These entries belong to no currently modelled module or to a level outside the protection approach. They remain stored.",
+    "retired": "no longer in catalogue",
+    "approachInfo": {
+      "basis": "Basic protection: the basic requirements (B) of the modelled modules are checked.",
+      "standard": "Standard protection: basic and standard requirements (B, S) are checked.",
+      "kern": "Core protection: basic, standard and high-protection requirements (B, S, H) are checked."
+    }
   }
 }

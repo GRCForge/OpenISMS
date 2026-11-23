@@ -270,6 +270,8 @@ app.use('/api/dora', requireModule('dora'), require('./routes/dora'));
 app.use('/api/ai-act', requireModule('ai_act'), require('./routes/ai-act'));
 app.use('/api/bcm', requireModule('bcm'), require('./routes/bcm'));
 app.use('/api/iso27001', requireModule('iso27001'), require('./routes/iso27001'));
+// Vor dem allgemeinen BSI-Router: /domains/... soll nicht in dessen /:id-Routen laufen.
+app.use('/api/bsi-grundschutz/domains', requireModule('bsi_grundschutz'), require('./routes/bsi-domains'));
 app.use('/api/bsi-grundschutz', requireModule('bsi_grundschutz'), require('./routes/bsi-grundschutz'));
 app.use('/api/nis2', requireModule('nis2'), require('./routes/nis2'));
 app.use('/api/threat-intel', requireModule('threat_intel'), require('./routes/threatIntel'));
@@ -640,6 +642,41 @@ const start = async () => {
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_doc_analysis_findings_run ON document_analysis_findings(run_id)').catch(() => {});
     // AI systems: the compliance scan and list filter by risk category.
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_ai_systems_risk ON ai_systems(risk_category)').catch(() => {});
+
+    // Versionierte Grundschutz-Kataloge (idempotent): Den mitgelieferten Auszug
+    // als Katalog "IT-Grundschutz-Kompendium 2023 (Auszug)" anlegen. Bestehende
+    // BSI-Anforderungen werden ihm zugeordnet, ihr Umsetzungsstand bleibt.
+    try {
+      const created = await require('./services/bsiCatalogService').ensureSeedCatalog();
+      if (created) console.log(`[DB] BSI-Katalog "${created.name}" angelegt (${created.status})`);
+    } catch (e) {
+      console.warn('[DB] Could not create BSI seed catalog:', e.message);
+    }
+
+    // Informationsverbuende (idempotent): Standard-Verbund anlegen und den
+    // Bestand an BSI-Anforderungen ihm zuordnen. Es wird nur domain_id gesetzt,
+    // der Umsetzungsstand bleibt unveraendert. Ein Fehlschlag wird gemeldet,
+    // bricht den Start aber nicht ab - die Anforderungen bleiben dann ohne
+    // Verbund und werden beim naechsten Start zugeordnet.
+    try {
+      const { domain, created, attached } = await require('./services/bsiDomainService').ensureDefaultDomain();
+      if (created) console.log(`[DB] BSI-Informationsverbund "${domain.name}" angelegt`);
+      if (attached > 0) console.log(`[DB] ${attached} BSI-Anforderung(en) dem Verbund "${domain.name}" zugeordnet`);
+    } catch (e) {
+      console.error('[DB] Could not create default BSI information domain:', e.message);
+    }
+    // Eine Modellierung je (Verbund, Zielobjekt oder Verbund selbst, Modul).
+    // UNIQUE ueber target_object_id allein griffe bei NULL nicht (siehe models/BsiModeling.js).
+    await sequelize.query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS uq_bsi_modelings_target_module ON bsi_modelings (domain_id, COALESCE(target_object_id, 0), module_id)'
+    ).catch(e => console.error('[DB] Eindeutiger Index auf bsi_modelings konnte nicht angelegt werden:', e.message));
+    // Ein Check-Eintrag je (Verbund, Zielobjekt oder Verbund selbst, Anforderung).
+    // Scheitert das, gibt es bereits Dubletten (z. B. aus einer sehr alten
+    // Version) - nicht verschlucken, aber den Start nicht abbrechen; der Dienst
+    // sucht vor dem Anlegen ohnehin in derselben Transaktion.
+    await sequelize.query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS uq_bsi_requirements_domain_target_req ON bsi_requirements (domain_id, COALESCE(target_object_id, 0), req_id)'
+    ).catch(e => console.error('[DB] Eindeutiger Index auf bsi_requirements konnte nicht angelegt werden - vermutlich doppelte Anforderungen:', e.message));
 
     // Backfill ISO 27001 control descriptions from catalog (idempotent)
     try {
