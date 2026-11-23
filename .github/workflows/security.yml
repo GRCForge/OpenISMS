@@ -468,15 +468,19 @@ jobs:
           fetch-depth: 0
 
       - name: Install Gitleaks
+        # Feste Version mit Pruefsumme statt "latest" ueber die API: der
+        # unauthentifizierte API-Aufruf scheiterte am Rate-Limit (HTTP 403) und
+        # ein ungeprueftes Archiv ist ein Lieferketten-Risiko.
+        env:
+          GITLEAKS_VERSION: "8.28.0"
+          GITLEAKS_SHA256: a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
         run: |
-          if ! command -v gitleaks &>/dev/null; then
-            VERSION=$(curl -sSf https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
-              | grep '"tag_name"' | cut -d'"' -f4)
-            curl -sSfL \
-              "https://github.com/gitleaks/gitleaks/releases/download/${VERSION}/gitleaks_${VERSION#v}_linux_x64.tar.gz" \
-              | sudo tar xz -C /usr/local/bin gitleaks
-          fi
-          gitleaks version
+          curl -fsSLo "${RUNNER_TEMP}/gitleaks.tgz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  ${RUNNER_TEMP}/gitleaks.tgz" | sha256sum -c -
+          tar -xzf "${RUNNER_TEMP}/gitleaks.tgz" -C "${RUNNER_TEMP}" gitleaks
+          echo "${RUNNER_TEMP}" >> "$GITHUB_PATH"
+          "${RUNNER_TEMP}/gitleaks" version
 
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .gitleaks.toml --verbose --redact
