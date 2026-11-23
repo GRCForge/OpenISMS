@@ -179,6 +179,20 @@ jobs:
           echo "Package contents:"
           tar tzf "${PKG}.tar.gz" | head -30
 
+      - name: Generate CycloneDX SBOMs (npm sbom)
+        # Stueckliste der ausgelieferten Abhaengigkeiten als Release-Anhang
+        # (Security-Review 2026-11). Dasselbe Verfahren wie der SBOM-Job in
+        # security.yml: npm-Bordmittel, nur Lockfiles, ohne devDependencies.
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.prepare.outputs.version }}"
+          for part in backend frontend; do
+            (cd "$part" && npm sbom --sbom-format cyclonedx --omit dev --package-lock-only) \
+              > "openisms-v${VERSION}-sbom-${part}.cdx.json"
+            node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); if (b.bomFormat!=="CycloneDX"||!(b.components||[]).length) process.exit(1); console.log(process.argv[1]+": "+b.components.length+" Komponenten")' \
+              "openisms-v${VERSION}-sbom-${part}.cdx.json"
+          done
+
       - name: Compute image namespace (lowercase)
         id: ns
         run: echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
@@ -192,6 +206,8 @@ jobs:
           files: |
             openisms-v${{ needs.prepare.outputs.version }}.tar.gz
             openisms-v${{ needs.prepare.outputs.version }}.zip
+            openisms-v${{ needs.prepare.outputs.version }}-sbom-backend.cdx.json
+            openisms-v${{ needs.prepare.outputs.version }}-sbom-frontend.cdx.json
           body: |
             ## OpenISMS v${{ needs.prepare.outputs.version }}
 
