@@ -38,6 +38,8 @@
   },
   "actions": {
     "create": "Erstellt",
+    "import": "Importiert",
+    "activate": "Aktiviert",
     "update": "Aktualisiert",
     "delete": "Gelöscht",
     "assess": "Bewertet",
@@ -76,6 +78,7 @@
     "oidc_mapping": "OIDC Rollenzuordnung",
     "iso27001_control": "ISO 27001 Steuerung",
     "bsi_requirement": "BSI-Anforderung",
+    "bsi_catalog": "BSI-Katalog",
     "tisax_requirement": "TISAX-Anforderung",
     "tisax_assessment": "TISAX-Prüfung",
     "nis2_measure": "NIS-2 Takt",

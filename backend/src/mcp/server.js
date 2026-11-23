@@ -9,6 +9,12 @@ const { Op } = require('sequelize');
 const express = require('express');
 const { createMcpCors } = require('./cors');
 const { hashToken } = require('../services/cryptoService');
+const {
+  BSI_LAYERS, LAYER_ALIASES: BSI_LAYER_ALIASES, normalizeBsiLayer,
+  BSI_STATUSES, STATUS_ALIASES: BSI_STATUS_ALIASES, normalizeBsiStatus,
+} = require('../services/bsiLayers');
+const bsiDomains = require('../services/bsiDomainService');
+const bsiCheck = require('../services/bsiCheckService');
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 // See ./auth.js (token types) and ./oauthResource.js (OAuth 2.1 resource server).
@@ -100,6 +106,16 @@ const TOOL_GATES = {
   'isms_update_iso27001_control': { perm: ['iso27001', 'edit'], moduleKey: 'iso27001', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   'isms_list_bsi_requirements': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
   'isms_update_bsi_requirement': { perm: ['bsi_grundschutz', 'edit'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  // Informationsverbund / Modellierung: dieselben Matrix-Eintraege wie die REST-Routen
+  // (routes/bsi-domains.js) und dieselbe Logik (services/bsiDomainService.js).
+  'isms_list_bsi_domains': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  'isms_get_bsi_domain': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  'isms_suggest_bsi_modeling': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  'isms_assign_bsi_target_object': { perm: ['bsi_grundschutz', 'manage_domain'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_model_bsi_module': { perm: ['bsi_grundschutz', 'manage_domain'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  // IT-Grundschutz-Check: wie GET/PUT /api/bsi-grundschutz/domains/:id/check.
+  'isms_get_bsi_check': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  'isms_set_bsi_check_status': { perm: ['bsi_grundschutz', 'edit'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   // --- Bedrohungslage / Threat Intelligence ---
   'isms_list_threat_sources': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
   'isms_list_threat_advisories': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
@@ -4179,15 +4195,19 @@ server.tool(
   'List BSI IT-Grundschutz requirements and Bausteine with implementation status.',
   {
     search: z.string().optional().describe('Search in req_id, baustein_id, or title'),
-    layer: z.string().optional().describe('Filter by layer (ISMS, ORG, CON, OPS, DER, APP, SYS, IND, INF, NET)'),
-    status: z.enum(['ja', 'teilweise', 'nein', 'entbehrlich', 'all']).default('all').describe('Implementation status'),
+    layer: z.enum([...BSI_LAYERS, ...Object.keys(BSI_LAYER_ALIASES)]).optional()
+      .describe(`Filter by Kompendium layer: ${BSI_LAYERS.join(', ')}. "ORG" is accepted as an alias for ORP.`),
+    status: z.enum([...BSI_STATUSES, ...Object.keys(BSI_STATUS_ALIASES), 'all']).default('all')
+      .describe(`Implementation status: ${BSI_STATUSES.join(', ')} or all. Check values ja/teilweise/nein/entbehrlich/offen are mapped to implemented/in_progress/not_implemented/not_applicable/not_started.`),
     limit: z.number().int().min(1).max(500).default(100).describe('Max results'),
   },
   async ({ search, layer, status, limit }) => {
     const { BsiRequirement, User } = getModels();
-    const where = {};
-    if (status && status !== 'all') where.implementation_status = status;
-    if (layer) where.layer = layer;
+    // Nur Anforderungen des aktiven Katalogs (abgeloeste bleiben in der DB, siehe BsiRequirement.retired)
+    // und nur der Umsetzungsstand des Standard-Informationsverbunds (weitere Verbuende: isms_list_bsi_domains ff.).
+    const where = { ...(await bsiDomains.baselineWhere()), retired: false };
+    if (status && status !== 'all') where.implementation_status = normalizeBsiStatus(status);
+    if (layer) where.layer = normalizeBsiLayer(layer);
     if (search) {
       where[Op.or] = [
         { req_id: { [Op.iLike]: `%${search}%` } },
@@ -4207,23 +4227,174 @@ server.tool(
 
 server.tool(
   'isms_update_bsi_requirement',
-  'Update implementation status or responsible person of a BSI IT-Grundschutz requirement.',
+  'Update implementation status, justification, responsible person, notes or review date of a BSI IT-Grundschutz requirement in the default information domain (the list returned by isms_list_bsi_requirements). For target objects and other domains use isms_set_bsi_check_status. A justification is required for not_implemented (nein) and not_applicable (entbehrlich).',
   {
     id: z.number().int().describe('BSI requirement ID'),
-    implementation_status: z.enum(['ja', 'teilweise', 'nein', 'entbehrlich']).optional(),
+    implementation_status: z.enum([...BSI_STATUSES, ...Object.keys(BSI_STATUS_ALIASES)]).optional()
+      .describe(`${BSI_STATUSES.join(', ')}. Check values ja/teilweise/nein/entbehrlich/offen are mapped to implemented/in_progress/not_implemented/not_applicable/not_started.`),
+    justification: z.string().max(10000).nullable().optional().describe('Required when the status is not_implemented or not_applicable'),
     responsible_id: z.number().int().nullable().optional(),
     notes: z.string().optional(),
     last_review_date: z.string().optional(),
   },
   async (args, { mcpUser }) => {
     const { BsiRequirement } = getModels();
-    const item = await BsiRequirement.findByPk(args.id);
+    // Wie PUT /api/bsi-grundschutz/:id: nur der Verbund-Stand des Standard-Verbunds.
+    const item = await BsiRequirement.findOne({ where: { id: args.id, ...(await bsiDomains.baselineWhere()) } });
     if (!item) return { content: [{ type: 'text', text: 'BSI requirement not found' }], isError: true };
     const { id, ...updates } = args;
-    await item.update(updates);
-    await logAudit('update', 'bsi_requirement', item.id, item.req_id, updates, mcpUser);
+    if (updates.implementation_status !== undefined) {
+      updates.implementation_status = normalizeBsiStatus(updates.implementation_status);
+    }
+    let values;
+    try {
+      values = bsiCheck.validateEntryInput(updates, item);
+      await bsiCheck.checkReferences(values);
+    } catch (e) {
+      if (e instanceof bsiCheck.CheckError) return { content: [{ type: 'text', text: e.message }], isError: true };
+      throw e;
+    }
+    const { before, changes } = await bsiCheck.applyEntryValues(item, values);
+    if (Object.keys(changes).length) await logAudit('update', 'bsi_requirement', item.id, item.req_id, { before, after: changes }, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
   }
+);
+
+// ─── BSI IT-Grundschutz: Informationsverbund und Modellierung ────────────────
+// Fehler des Dienstes (fehlender Verbund, fremdes Zielobjekt, nicht sichtbares
+// Asset, doppelte Zuordnung) kommen als isError zurueck, wie die REST-Antwort.
+const bsiDomainResult = async (fn) => {
+  try {
+    return { content: [{ type: 'text', text: JSON.stringify(await fn(), null, 2) }] };
+  } catch (e) {
+    if (e instanceof bsiDomains.DomainError || e instanceof bsiCheck.CheckError) return { content: [{ type: 'text', text: e.message }], isError: true };
+    throw e;
+  }
+};
+
+server.tool(
+  'isms_list_bsi_domains',
+  'List BSI IT-Grundschutz information domains (Informationsverbuende) with protection approach (basis/standard/kern), assigned catalogue and counts of target objects and modelled modules.',
+  {},
+  async () => bsiDomainResult(() => bsiDomains.listDomains())
+);
+
+server.tool(
+  'isms_get_bsi_domain',
+  'Get one BSI information domain with its target objects (assets with Grundschutz target type) and its modelling (modules/practices assigned to target objects or to the whole domain). Only target objects whose asset the caller may see are returned.',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID (see isms_list_bsi_domains)'),
+  },
+  async ({ domain_id }, { mcpUser }) => bsiDomainResult(async () => ({
+    ...(await bsiDomains.getDomain(domain_id)),
+    target_objects: await bsiDomains.listTargetObjects(domain_id, mcpUser),
+    modeling: await bsiDomains.listModeling(domain_id, mcpUser),
+  }))
+);
+
+server.tool(
+  'isms_suggest_bsi_modeling',
+  'Suggest modules (Kompendium Bausteine) or practices (Grundschutz++) for a target object, or for the whole domain when target_object_id is omitted (process layers ISMS/ORP/CON/OPS/DER). Suggestions are not applied automatically; use isms_model_bsi_module to apply one.',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID'),
+    target_object_id: z.number().int().positive().optional().describe('Target object ID; omit for the whole domain'),
+  },
+  async ({ domain_id, target_object_id }, { mcpUser }) => bsiDomainResult(() => bsiDomains.suggestModeling(domain_id, target_object_id, mcpUser))
+);
+
+server.tool(
+  'isms_assign_bsi_target_object',
+  'Assign an asset from the asset register to a BSI information domain as target object. target_type is suggested from the asset type when omitted (hardware->it_system, software/application/service->application, process->business_process); information/data/personnel assets need an explicit target_type.',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID'),
+    asset_id: z.number().int().positive().describe('Asset ID from the asset register'),
+    target_type: z.enum(bsiDomains.TARGET_TYPES).optional().describe(`Grundschutz target object type: ${bsiDomains.TARGET_TYPES.join(', ')}`),
+    notes: z.string().max(10000).optional(),
+  },
+  async ({ domain_id, asset_id, target_type, notes }, { mcpUser }) => bsiDomainResult(async () => {
+    const { domain, targetObject, asset } = await bsiDomains.addTargetObject(domain_id, { asset_id, target_type, notes }, mcpUser);
+    await logAudit('create', 'bsi_target_object', targetObject.id, asset.name, {
+      domain_id: domain.id, asset_id: asset.id, target_type: targetObject.target_type,
+    }, mcpUser);
+    return targetObject;
+  })
+);
+
+server.tool(
+  'isms_model_bsi_module',
+  'Model a module (Kompendium Baustein) or practice (Grundschutz++) of the domain\'s active catalogue on a target object, or on the whole domain when target_object_id is omitted. System-layer Bausteine (APP, SYS, IND, NET, INF) require a target object of the same domain.',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID'),
+    module_id: z.string().min(1).max(40).describe('Module ID from the catalogue, e.g. SYS.1.1 or GC.1'),
+    target_object_id: z.number().int().positive().optional().describe('Target object ID; omit for the whole domain'),
+    notes: z.string().max(10000).optional(),
+  },
+  async ({ domain_id, module_id, target_object_id, notes }, { mcpUser }) => bsiDomainResult(async () => {
+    const { domain, modeling, module: mod, target } = await bsiDomains.addModeling(domain_id, { module_id, target_object_id, notes }, mcpUser);
+    await logAudit('create', 'bsi_modeling', modeling.id, mod.module_id, {
+      domain_id: domain.id, target_object_id: modeling.target_object_id, asset_id: target?.asset?.id ?? null,
+      module_id: mod.module_id, catalog_id: modeling.catalog_id,
+    }, mcpUser);
+    return modeling;
+  })
+);
+
+server.tool(
+  'isms_get_bsi_check',
+  'Read the IT-Grundschutz-Check of an information domain: every requirement of the modelled modules that the domain\'s protection approach makes relevant (basis: B; standard: B+S; kern: B+S+H), per target object or for the whole domain, with status (ja/teilweise/nein/entbehrlich/offen), justification, responsible user/group, due date, costs, evidence documents and linked controls. Optionally with fulfilment and cost summary per module and target object.',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID'),
+    target_object_id: z.union([z.number().int().positive(), z.literal('domain')]).optional().describe('Only this target object, or "domain" for domain-wide requirements only'),
+    status: z.enum([...BSI_STATUSES, ...Object.keys(BSI_STATUS_ALIASES)]).optional().describe('Only entries with this status'),
+    include_summary: z.boolean().default(true).describe('Include fulfilment and cost summary'),
+    limit: z.number().int().min(1).max(2000).default(500).describe('Max entries returned'),
+  },
+  async ({ domain_id, target_object_id, status, include_summary, limit }, { mcpUser }) => bsiDomainResult(async () => {
+    const c = await bsiCheck.getCheck(domain_id, mcpUser, { targetObjectId: target_object_id });
+    const wanted = status ? normalizeBsiStatus(status) : null;
+    const entries = wanted ? c.entries.filter(e => e.implementation_status === wanted) : c.entries;
+    return {
+      domain: c.domain, levels: c.levels,
+      summary: include_summary ? bsiCheck.summarize(c.entries) : undefined,
+      total_entries: entries.length, entries: entries.slice(0, limit), unmodeled: c.unmodeled,
+    };
+  })
+);
+
+server.tool(
+  'isms_set_bsi_check_status',
+  'Set the IT-Grundschutz-Check result of one requirement for a target object (or for the whole domain when target_object_id is omitted). The module must be modelled there. A justification is required for nein (not_implemented) and entbehrlich (not_applicable). document_ids / control_ids replace the linked evidence documents / controls (controls need controls.edit).',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID'),
+    req_id: z.string().min(1).max(40).describe('Requirement ID, e.g. SYS.1.1.A1'),
+    target_object_id: z.number().int().positive().optional().describe('Target object ID; omit for the whole domain'),
+    implementation_status: z.enum([...BSI_STATUSES, ...Object.keys(BSI_STATUS_ALIASES)]).optional()
+      .describe('ja/teilweise/nein/entbehrlich/offen or implemented/in_progress/not_implemented/not_applicable/not_started'),
+    justification: z.string().max(10000).nullable().optional(),
+    responsible_id: z.number().int().positive().nullable().optional().describe('Responsible user ID'),
+    responsible_group_id: z.number().int().positive().nullable().optional().describe('Responsible group ID'),
+    due_date: z.string().nullable().optional().describe('Implementation due date YYYY-MM-DD'),
+    cost_once: z.number().min(0).nullable().optional().describe('One-off cost in EUR'),
+    cost_recurring: z.number().min(0).nullable().optional().describe('Recurring cost in EUR per year'),
+    notes: z.string().max(10000).nullable().optional(),
+    last_review_date: z.string().nullable().optional().describe('YYYY-MM-DD'),
+    document_ids: z.array(z.number().int().positive()).max(200).optional().describe('Evidence document IDs (replaces the list)'),
+    control_ids: z.array(z.number().int().positive()).max(200).optional().describe('Control IDs (replaces the list)'),
+  },
+  async ({ domain_id, ...body }, { mcpUser }) => bsiDomainResult(async () => {
+    if (body.implementation_status !== undefined) body.implementation_status = normalizeBsiStatus(body.implementation_status);
+    const r = await bsiCheck.setCheckEntry(domain_id, body, mcpUser);
+    const changed = Object.keys(r.changes).length || r.docsAdded.length || r.docsRemoved.length || r.controlsAdded.length || r.controlsRemoved.length;
+    if (r.created || changed) {
+      await logAudit(r.created ? 'create' : 'update', 'bsi_requirement', r.row.id, r.row.req_id, {
+        domain_id: r.domain.id, target_object_id: r.row.target_object_id, asset_id: r.target?.asset_id ?? null,
+        before: r.before, after: r.changes,
+        documents_added: r.docsAdded, documents_removed: r.docsRemoved,
+        controls_added: r.controlsAdded, controls_removed: r.controlsRemoved,
+      }, mcpUser);
+    }
+    return r.row;
+  })
 );
 
 server.tool(
