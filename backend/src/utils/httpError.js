@@ -92,7 +92,10 @@ function requestError(res, err, context = 'API', status = 400) {
     const mapped = describeSequelizeError(err);
     if (!mapped) return serverError(res, err, context);
     const ref = crypto.randomBytes(4).toString('hex');
-    console.warn(`[${context}] Datenbankfehler ${ref}: ${err.name}: ${err.message}`);
+    // Zeilenumbrueche entfernen: die Meldung kann Eingaben des Aufrufers enthalten
+    // (Log-Injection, CodeQL js/log-injection).
+    const oneLine = (v) => String(v).replace(/[\r\n\u2028\u2029]+/g, ' ');
+    console.warn(`[${context}] Datenbankfehler ${ref}: ${oneLine(err.name)}: ${oneLine(err.message)}`);
     if (res.headersSent) return res.destroy();
     return res.status(mapped.status).json({ ...mapped.body, ref });
   }
