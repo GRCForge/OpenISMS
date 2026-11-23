@@ -118,7 +118,7 @@ jobs:
 
   # ── CodeQL: GitHub-native SAST ────────────────────────────────────────────
   # Results appear in the Security tab → Code scanning alerts.
-    codeql:
+  codeql:
     name: CodeQL — SAST
     needs: gate
     if: needs.gate.outputs.run_security == 'true'
