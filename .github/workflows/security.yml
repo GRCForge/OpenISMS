@@ -143,7 +143,7 @@ jobs:
             backend/package-lock.json
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4.39.3
+        uses: github/codeql-action/init@v4.39.4
         with:
           languages: javascript-typescript, actions
           queries: security-extended
@@ -161,10 +161,10 @@ jobs:
           threads: 1
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v4.39.3
+        uses: github/codeql-action/autobuild@v4.39.4
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v4.39.3
+        uses: github/codeql-action/analyze@v4.39.4
 
   # ── Frontend: TypeScript type-check + build ────────────────────────────────
   frontend-build:
