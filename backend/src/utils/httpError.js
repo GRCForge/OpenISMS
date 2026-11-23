@@ -94,8 +94,9 @@ function requestError(res, err, context = 'API', status = 400) {
     const ref = crypto.randomBytes(4).toString('hex');
     // Zeilenumbrueche entfernen: die Meldung kann Eingaben des Aufrufers enthalten
     // (Log-Injection, CodeQL js/log-injection).
-    const oneLine = (v) => String(v).replace(/[\r\n\u2028\u2029]+/g, ' ');
-    console.warn(`[${context}] Datenbankfehler ${ref}: ${oneLine(err.name)}: ${oneLine(err.message)}`);
+    const name = String(err.name).replace(/\n|\r/g, ' ');
+    const message = String(err.message).replace(/\n|\r/g, ' ');
+    console.warn(`[${context}] Datenbankfehler ${ref}: ${name}: ${message}`);
     if (res.headersSent) return res.destroy();
     return res.status(mapped.status).json({ ...mapped.body, ref });
   }
