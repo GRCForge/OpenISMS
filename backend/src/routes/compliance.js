@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { Asset, Assessment, Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, User, Task, Training } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { auditFromReq } = require('../services/auditService');
+const { pick } = require('../utils/massAssignment');
 const multer = require('multer');
 const path = require('path');
 // Bounded in-memory upload for the bulk-training spreadsheet: cap size and restrict
@@ -632,10 +633,19 @@ router.post('/trainings/bulk', authenticate, requirePermission('compliance_train
   }
 });
 
+// Felder einer Schulungszuweisung, die POST/PUT setzen duerfen (Security-Review
+// 2026-11, OP-4). status leitet der Server aus completed_at ab; contested und
+// contestation_comment setzt nur der Widerspruch des Mitarbeiters
+// (POST /trainings/:id/contest), nicht die Bearbeitung durch Assessoren.
+const USER_TRAINING_FIELDS = [
+  'user_id', 'training_id', 'training_title', 'employee_name', 'employee_email',
+  'completed_at', 'expires_at', 'certificate_url',
+];
+
 // POST create single user training assignment (backward compatibility)
 router.post('/trainings', authenticate, requirePermission('compliance_trainings','create','admin','assessor','dpo'), async (req, res) => {
   try {
-    const data = { ...req.body };
+    const data = pick(req.body, USER_TRAINING_FIELDS);
     if (data.training_id) {
       const tr = await Training.findByPk(data.training_id);
       if (tr) {
@@ -678,7 +688,7 @@ router.put('/trainings/:id', authenticate, requirePermission('compliance_trainin
       status: item.status
     };
 
-    const data = { ...req.body };
+    const data = pick(req.body, USER_TRAINING_FIELDS);
     if (data.training_id && data.training_id !== item.training_id) {
       const tr = await Training.findByPk(data.training_id);
       if (tr) {
