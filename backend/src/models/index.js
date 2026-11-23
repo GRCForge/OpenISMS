@@ -43,6 +43,13 @@ const BcmExercise = require('./BcmExercise');
 const Dsfa = require('./Dsfa');
 const Iso27001Control = require('./Iso27001Control');
 const BsiRequirement = require('./BsiRequirement');
+const BsiCatalog = require('./BsiCatalog');
+const BsiCatalogModule = require('./BsiCatalogModule');
+const BsiCatalogRequirement = require('./BsiCatalogRequirement');
+const BsiInformationDomain = require('./BsiInformationDomain');
+const BsiTargetObject = require('./BsiTargetObject');
+const BsiModeling = require('./BsiModeling');
+const BsiRequirementDocument = require('./BsiRequirementDocument');
 const Nis2Measure = require('./Nis2Measure');
 const Nis2SelfCheckItem = require('./Nis2SelfCheckItem');
 const C5Criterion = require('./C5Criterion');
@@ -247,6 +254,41 @@ Dsfa.belongsTo(User, { as: 'approver', foreignKey: 'approver_id' });
 // ISO 27001 / BSI / NIS-2 / C5 associations
 Iso27001Control.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });
 BsiRequirement.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
+// Versionierte Grundschutz-Kataloge: Module und Anforderungen gehoeren genau
+// einem Katalog und gehen mit ihm (nur Vorschau-Kataloge werden je geloescht).
+BsiCatalog.hasMany(BsiCatalogModule, { as: 'modules', foreignKey: 'catalog_id', onDelete: 'CASCADE' });
+BsiCatalog.hasMany(BsiCatalogRequirement, { as: 'requirements', foreignKey: 'catalog_id', onDelete: 'CASCADE' });
+BsiCatalogModule.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id' });
+BsiCatalogRequirement.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id' });
+BsiCatalog.belongsTo(User, { as: 'importedBy', foreignKey: 'imported_by_id' });
+BsiCatalog.belongsTo(User, { as: 'activatedBy', foreignKey: 'activated_by_id' });
+BsiRequirement.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
+// Informationsverbund, Zielobjekte und Modellierung. RESTRICT statt CASCADE/SET NULL:
+// SET NULL machte aus der Modellierung eines Zielobjekts stillschweigend eine des
+// ganzen Verbunds. Keine CASCADE-Loeschung:
+// Zielobjekte und Modellierungen tragen Pruefhistorie und werden nur einzeln,
+// mit Audit-Eintrag entfernt (routes/bsi-domains.js).
+BsiInformationDomain.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
+BsiInformationDomain.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id', constraints: false });
+BsiInformationDomain.hasMany(BsiTargetObject, { as: 'targetObjects', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiInformationDomain.hasMany(BsiModeling, { as: 'modelings', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.belongsTo(Asset, { as: 'asset', foreignKey: 'asset_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+Asset.hasMany(BsiTargetObject, { as: 'bsiTargetObjects', foreignKey: 'asset_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.hasMany(BsiModeling, { as: 'modelings', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiModeling.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiModeling.belongsTo(BsiTargetObject, { as: 'targetObject', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiModeling.belongsTo(BsiCatalog, { as: 'catalog', foreignKey: 'catalog_id', constraints: false });
+BsiRequirement.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', constraints: false });
+// IT-Grundschutz-Check: Status je Zielobjekt. RESTRICT: Ein Zielobjekt mit
+// Checkdaten laesst sich nicht entfernen (bsiDomainService.removeTargetObject).
+BsiRequirement.belongsTo(BsiTargetObject, { as: 'targetObject', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.hasMany(BsiRequirement, { as: 'checkEntries', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRequirement.belongsTo(Group, { as: 'responsibleGroup', foreignKey: 'responsible_group_id', constraints: false });
+// Nachweise: Verknuepfung geht mit der Anforderung bzw. dem Dokument (beides
+// wird nur ueber eigene, auditierte Loeschwege entfernt).
+BsiRequirement.belongsToMany(Document, { through: BsiRequirementDocument, as: 'evidence', foreignKey: 'requirement_id', otherKey: 'document_id' });
+Document.belongsToMany(BsiRequirement, { through: BsiRequirementDocument, as: 'bsiRequirements', foreignKey: 'document_id', otherKey: 'requirement_id' });
 Nis2Measure.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'answeredBy', foreignKey: 'answered_by_id' });
@@ -318,7 +360,7 @@ module.exports = {
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
-  Iso27001Control, BsiRequirement, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
+  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, BsiInformationDomain, BsiTargetObject, BsiModeling, BsiRequirementDocument, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, PushSubscription,

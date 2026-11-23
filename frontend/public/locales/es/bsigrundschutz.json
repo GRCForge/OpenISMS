@@ -5,12 +5,15 @@
     "not_started": "Open",
     "in_progress": "In progress",
     "implemented": "Implemented",
-    "not_applicable": "Not applicable"
+    "not_applicable": "Not applicable",
+    "not_implemented": "No implementado"
   },
   "level": {
     "basis": "Basic",
     "standard": "Standard",
-    "erhoehter_schutzbedarf": "High protection"
+    "erhoehter_schutzbedarf": "High protection",
+    "normal_sdt": "Normal (EdT)",
+    "erhoeht": "Elevado"
   },
   "stats": {
     "total": "Total",
@@ -54,5 +57,165 @@
   "toast": {
     "loadError": "Error loading catalogue",
     "saveError": "Error saving"
+  },
+  "catalogs": {
+    "open": "Catálogos",
+    "title": "Catálogos de Grundschutz",
+    "intro": "Los catálogos se importan y se guardan primero como vista previa. Los requisitos solo se adoptan al activarlos; el estado, los responsables y las notas de los requisitos existentes se conservan; los requisitos que ya no figuran se marcan como sustituidos, no se eliminan.",
+    "table": {
+      "name": "Catálogo",
+      "format": "Formato",
+      "requirements": "Requisitos",
+      "status": "Estado",
+      "imported": "Importado"
+    },
+    "format": {
+      "auto": "Detectar automáticamente",
+      "seed": "Extracto incluido",
+      "kompendium_xml": "Kompendium (XML)",
+      "oscal_catalog": "Catálogo OSCAL (JSON)"
+    },
+    "status": {
+      "preview": "Vista previa",
+      "active": "Activo",
+      "archived": "Archivado"
+    },
+    "compare": "Comparar",
+    "activate": "Activar",
+    "activateConfirm": "¿Activar el catálogo «{{name}}»? Sus requisitos se conciliarán con el estado de implementación.",
+    "discardConfirm": "¿Descartar la vista previa «{{name}}»?",
+    "diff": {
+      "title": "{{name}} comparado con: {{against}}",
+      "none": "ningún catálogo activo",
+      "added": "Nuevos",
+      "changed": "Modificados",
+      "removed": "Eliminados",
+      "unchanged": "Sin cambios",
+      "more": "… y {{count}} más",
+      "hint": "La vista previa no cambia nada. Los cambios se aplican solo con «Activar»."
+    },
+    "import": {
+      "title": "Importar catálogo",
+      "file": "Subir archivo",
+      "url": "Cargar desde URL",
+      "urlLabel": "URL (pública, http/https)",
+      "format": "Formato",
+      "name": "Nombre (opcional)",
+      "edition": "Edición (opcional)",
+      "hint": "Compatible: IT-Grundschutz-Kompendium en XML (DocBook) y catálogos OSCAL en JSON, como el catálogo de usuario de Grundschutz++. Máx. 25 MB.",
+      "submit": "Importar",
+      "running": "Importando…"
+    },
+    "toast": {
+      "imported": "Catálogo con {{count}} requisitos importado como vista previa",
+      "importError": "La importación ha fallado",
+      "activated": "Catálogo activado: {{created}} nuevos, {{updated}} actualizados, {{retired}} sustituidos",
+      "activateError": "La activación ha fallado",
+      "diffError": "No se pudo cargar la comparación",
+      "discardError": "No se pudo descartar"
+    }
+  },
+  "tabs": {
+    "requirements": "Requisitos",
+    "domain": "Ámbito de información",
+    "check": "Comprobación IT-Grundschutz"
+  },
+  "domain": {
+    "select": "Ámbito de información",
+    "default": "predeterminado",
+    "create": "Crear ámbito",
+    "edit": "Editar ámbito",
+    "name": "Nombre",
+    "description": "Descripción",
+    "scope": "Alcance",
+    "approachLabel": "Variante de protección",
+    "approach": {
+      "basis": "Protección básica",
+      "standard": "Protección estándar",
+      "kern": "Protección esencial"
+    },
+    "approachHint": {
+      "basis": "Nivel inicial: solo los requisitos básicos para todo el ámbito.",
+      "standard": "Enfoque habitual del estándar BSI 200-2: requisitos básicos y estándar.",
+      "kern": "Alcance acotado («joyas de la corona»): todos los requisitos, incluida la protección elevada."
+    },
+    "catalog": "Catálogo",
+    "noCatalog": "Ningún catálogo activo",
+    "domainWide": "Modelado para todo el ámbito",
+    "domainWideHint": "Los módulos de proceso (ISMS, ORP, CON, OPS, DER) y las prácticas sin categoría de objeto se aplican a todo el ámbito.",
+    "targetObjects": "Objetos objetivo ({{count}})",
+    "addTarget": "Asignar objeto objetivo",
+    "noTargets": "Aún no hay objetos objetivo. Asigne activos del registro de activos.",
+    "asset": "Activo",
+    "targetTypeLabel": "Tipo de objeto objetivo",
+    "chooseType": "Elegir tipo …",
+    "targetType": {
+      "business_process": "Proceso de negocio",
+      "application": "Aplicación",
+      "it_system": "Sistema TI",
+      "ics": "Sistema ICS",
+      "room": "Sala",
+      "building": "Edificio",
+      "network": "Red/enlace de comunicación"
+    },
+    "suggestedType": "Sugerido según el tipo de activo: {{type}}",
+    "noTypeSuggestion": "No hay sugerencia para este tipo de activo; elija un tipo.",
+    "modeling": "Modelado",
+    "noModeling": "Aún no hay nada modelado",
+    "module": "Módulo/práctica",
+    "suggest": "Sugerencias",
+    "apply": "Aplicar",
+    "suggestTitleDomain": "Sugerencias para todo el ámbito",
+    "suggestTitleTarget": "Sugerencias para {{name}}",
+    "suggestHint": "Sugerencias del catálogo activo. El módulo solo se asigna al pulsar «Aplicar».",
+    "noSuggestions": "No hay más sugerencias.",
+    "removeTarget": "Quitar objeto objetivo",
+    "removeModeling": "Quitar modelado",
+    "confirmRemoveTarget": "¿Quitar «{{name}}» del ámbito? El activo se conserva.",
+    "confirmRemoveModeling": "¿Quitar el modelado {{module}}? El estado de implementación registrado se conserva.",
+    "notInCatalog": "No incluido en el catálogo activo"
+  },
+  "check": {
+    "status": {
+      "implemented": "sí",
+      "in_progress": "parcialmente",
+      "not_implemented": "no",
+      "not_applicable": "prescindible",
+      "not_started": "abierto"
+    },
+    "noDomain": "No hay ningún ámbito de información.",
+    "empty": "Aún no hay requisitos: asigne módulos en la pestaña «Ámbito de información».",
+    "domainLevel": "Todo el ámbito",
+    "filterTarget": "Objeto objetivo",
+    "allTargets": "Todos los objetos objetivo",
+    "fulfillment": "Grado de cumplimiento",
+    "moduleFulfillment": "Cumplimiento {{value}}",
+    "openCount": "Abiertos/parciales",
+    "costOnce": "Coste único",
+    "costRecurring": "Coste recurrente (anual)",
+    "export": "Excel (A.4)",
+    "edit": "Comprobar",
+    "responsible": "Responsable",
+    "responsibleUser": "Persona responsable",
+    "responsibleGroup": "Grupo responsable",
+    "dueDate": "Fecha límite",
+    "justification": "Justificación",
+    "justificationRequired": "La justificación es obligatoria para «no» y «prescindible».",
+    "evidence": "Evidencias",
+    "noDocuments": "No hay documentos en los activos de este objeto objetivo.",
+    "controls": "Medidas",
+    "addControl": "Añadir medida …",
+    "removeControl": "Quitar medida",
+    "summaryTitle": "Resumen por objeto objetivo y módulo",
+    "target": "Objeto objetivo",
+    "requirements": "Requisitos",
+    "unmodeledTitle": "Estado registrado fuera del modelado ({{count}})",
+    "unmodeledHint": "Estas entradas no pertenecen a ningún módulo modelado actualmente o a un nivel fuera de la variante de protección. Se conservan.",
+    "retired": "ya no está en el catálogo",
+    "approachInfo": {
+      "basis": "Protección básica: se comprueban los requisitos básicos (B) de los módulos modelados.",
+      "standard": "Protección estándar: se comprueban los requisitos básicos y estándar (B, S).",
+      "kern": "Protección esencial: se comprueban los requisitos básicos, estándar y de protección elevada (B, S, H)."
+    }
   }
 }

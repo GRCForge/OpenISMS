@@ -2,21 +2,24 @@
   "title": "BSI IT-Grundschutz",
   "subtitle": "IT-Grundschutz Compendium · {{count}} Anforderungen",
   "status": {
-    "not_started": "Öffnen",
+    "not_started": "Offen",
     "in_progress": "In Bearbeitung",
     "implemented": "Implementiert",
-    "not_applicable": "Nicht anwendbar"
+    "not_applicable": "Nicht anwendbar",
+    "not_implemented": "Nicht umgesetzt"
   },
   "level": {
     "basis": "Einfache",
     "standard": "Standard",
-    "erhoehter_schutzbedarf": "Hoher Schutz"
+    "erhoehter_schutzbedarf": "Hoher Schutz",
+    "normal_sdt": "Normal (SdT)",
+    "erhoeht": "Erhöht"
   },
   "stats": {
     "total": "Gesamt",
     "implemented": "Implementiert",
     "inProgress": "In Bearbeitung",
-    "open": "Öffnen"
+    "open": "Offen"
   },
   "filter": {
     "searchPlaceholder": "Anforderungsnummer, Modul oder Titel...",
@@ -54,5 +57,165 @@
   "toast": {
     "loadError": "Fehler beim Laden des Katalogs",
     "saveError": "Fehler beim Speichern"
+  },
+  "catalogs": {
+    "open": "Kataloge",
+    "title": "Grundschutz-Kataloge",
+    "intro": "Kataloge werden importiert und zuerst als Vorschau gespeichert. Erst beim Aktivieren werden die Anforderungen übernommen; Status, Verantwortliche und Notizen bestehender Anforderungen bleiben erhalten, nicht mehr enthaltene Anforderungen werden als abgelöst markiert, nicht gelöscht.",
+    "table": {
+      "name": "Katalog",
+      "format": "Format",
+      "requirements": "Anforderungen",
+      "status": "Status",
+      "imported": "Importiert"
+    },
+    "format": {
+      "auto": "Automatisch erkennen",
+      "seed": "Mitgelieferter Auszug",
+      "kompendium_xml": "Kompendium (XML)",
+      "oscal_catalog": "OSCAL-Katalog (JSON)"
+    },
+    "status": {
+      "preview": "Vorschau",
+      "active": "Aktiv",
+      "archived": "Archiviert"
+    },
+    "compare": "Vergleichen",
+    "activate": "Aktivieren",
+    "activateConfirm": "Katalog „{{name}}“ aktivieren? Die Anforderungen werden mit dem Umsetzungsstand abgeglichen.",
+    "discardConfirm": "Vorschau „{{name}}“ verwerfen?",
+    "diff": {
+      "title": "{{name}} im Vergleich zu: {{against}}",
+      "none": "keinem aktiven Katalog",
+      "added": "Neu",
+      "changed": "Geändert",
+      "removed": "Entfallen",
+      "unchanged": "Unverändert",
+      "more": "… und {{count}} weitere",
+      "hint": "Die Vorschau ändert nichts. Übernommen wird erst mit „Aktivieren“."
+    },
+    "import": {
+      "title": "Katalog importieren",
+      "file": "Datei hochladen",
+      "url": "Von URL laden",
+      "urlLabel": "URL (öffentlich, http/https)",
+      "format": "Format",
+      "name": "Name (optional)",
+      "edition": "Edition (optional)",
+      "hint": "Unterstützt: IT-Grundschutz-Kompendium als XML (DocBook) und OSCAL-Kataloge im JSON-Format, etwa der Grundschutz++-Anwenderkatalog. Höchstens 25 MB.",
+      "submit": "Importieren",
+      "running": "Wird importiert…"
+    },
+    "toast": {
+      "imported": "Katalog mit {{count}} Anforderungen als Vorschau importiert",
+      "importError": "Import fehlgeschlagen",
+      "activated": "Katalog aktiviert: {{created}} neu, {{updated}} aktualisiert, {{retired}} abgelöst",
+      "activateError": "Aktivieren fehlgeschlagen",
+      "diffError": "Vergleich konnte nicht geladen werden",
+      "discardError": "Verwerfen fehlgeschlagen"
+    }
+  },
+  "tabs": {
+    "requirements": "Anforderungen",
+    "domain": "Informationsverbund",
+    "check": "IT-Grundschutz-Check"
+  },
+  "domain": {
+    "select": "Informationsverbund",
+    "default": "Standard",
+    "create": "Verbund anlegen",
+    "edit": "Verbund bearbeiten",
+    "name": "Name",
+    "description": "Beschreibung",
+    "scope": "Geltungsbereich",
+    "approachLabel": "Absicherungsvariante",
+    "approach": {
+      "basis": "Basis-Absicherung",
+      "standard": "Standard-Absicherung",
+      "kern": "Kern-Absicherung"
+    },
+    "approachHint": {
+      "basis": "Einstieg: nur die Basis-Anforderungen für den gesamten Verbund.",
+      "standard": "Regelfall nach BSI-Standard 200-2: Basis- und Standard-Anforderungen.",
+      "kern": "Eingegrenzter Bereich („Kronjuwelen“): alle Anforderungen einschließlich erhöhtem Schutzbedarf."
+    },
+    "catalog": "Katalog",
+    "noCatalog": "Kein aktiver Katalog",
+    "domainWide": "Modellierung für den gesamten Verbund",
+    "domainWideHint": "Prozessbausteine (ISMS, ORP, CON, OPS, DER) bzw. Praktiken ohne Zielobjektbezug gelten für den ganzen Verbund.",
+    "targetObjects": "Zielobjekte ({{count}})",
+    "addTarget": "Zielobjekt zuordnen",
+    "noTargets": "Noch keine Zielobjekte. Ordnen Sie Assets aus dem Assetregister zu.",
+    "asset": "Asset",
+    "targetTypeLabel": "Zielobjekttyp",
+    "chooseType": "Typ wählen …",
+    "targetType": {
+      "business_process": "Geschäftsprozess",
+      "application": "Anwendung",
+      "it_system": "IT-System",
+      "ics": "ICS-System",
+      "room": "Raum",
+      "building": "Gebäude",
+      "network": "Netz/Kommunikationsverbindung"
+    },
+    "suggestedType": "Vorschlag aus dem Asset-Typ: {{type}}",
+    "noTypeSuggestion": "Für diesen Asset-Typ gibt es keinen Vorschlag – bitte Typ wählen.",
+    "modeling": "Modellierung",
+    "noModeling": "Noch nichts modelliert",
+    "module": "Baustein/Praktik",
+    "suggest": "Vorschläge",
+    "apply": "Übernehmen",
+    "suggestTitleDomain": "Vorschläge für den gesamten Verbund",
+    "suggestTitleTarget": "Vorschläge für {{name}}",
+    "suggestHint": "Vorschläge aus dem aktiven Katalog. Erst „Übernehmen“ ordnet den Baustein zu.",
+    "noSuggestions": "Keine weiteren Vorschläge.",
+    "removeTarget": "Zielobjekt entfernen",
+    "removeModeling": "Modellierung entfernen",
+    "confirmRemoveTarget": "„{{name}}“ aus dem Verbund nehmen? Das Asset selbst bleibt erhalten.",
+    "confirmRemoveModeling": "Modellierung {{module}} entfernen? Der erfasste Umsetzungsstand bleibt gespeichert.",
+    "notInCatalog": "Nicht im aktiven Katalog enthalten"
+  },
+  "check": {
+    "status": {
+      "implemented": "ja",
+      "in_progress": "teilweise",
+      "not_implemented": "nein",
+      "not_applicable": "entbehrlich",
+      "not_started": "offen"
+    },
+    "noDomain": "Kein Informationsverbund vorhanden.",
+    "empty": "Noch keine Anforderungen: Ordnen Sie im Reiter „Informationsverbund“ Bausteine zu.",
+    "domainLevel": "Gesamter Verbund",
+    "filterTarget": "Zielobjekt",
+    "allTargets": "Alle Zielobjekte",
+    "fulfillment": "Erfüllungsgrad",
+    "moduleFulfillment": "Erfüllungsgrad {{value}}",
+    "openCount": "Offen/teilweise",
+    "costOnce": "Kosten einmalig",
+    "costRecurring": "Kosten laufend (pro Jahr)",
+    "export": "Excel (A.4)",
+    "edit": "Prüfen",
+    "responsible": "Verantwortlich",
+    "responsibleUser": "Verantwortliche Person",
+    "responsibleGroup": "Verantwortliche Gruppe",
+    "dueDate": "Umsetzung bis",
+    "justification": "Begründung",
+    "justificationRequired": "Bei „nein“ und „entbehrlich“ ist eine Begründung Pflicht.",
+    "evidence": "Nachweise",
+    "noDocuments": "Keine Dokumente an den Assets dieses Zielobjekts.",
+    "controls": "Maßnahmen",
+    "addControl": "Maßnahme hinzufügen …",
+    "removeControl": "Maßnahme entfernen",
+    "summaryTitle": "Auswertung je Zielobjekt und Baustein",
+    "target": "Zielobjekt",
+    "requirements": "Anforderungen",
+    "unmodeledTitle": "Erfasster Stand außerhalb der Modellierung ({{count}})",
+    "unmodeledHint": "Diese Einträge gehören zu keinem aktuell modellierten Baustein oder zu einer Stufe außerhalb der Absicherungsvariante. Sie bleiben gespeichert.",
+    "retired": "nicht mehr im Katalog",
+    "approachInfo": {
+      "basis": "Basis-Absicherung: geprüft werden die Basis-Anforderungen (B) der modellierten Bausteine.",
+      "standard": "Standard-Absicherung: geprüft werden Basis- und Standard-Anforderungen (B, S).",
+      "kern": "Kern-Absicherung: geprüft werden Basis-, Standard- und Anforderungen bei erhöhtem Schutzbedarf (B, S, H)."
+    }
   }
 }

@@ -4,10 +4,11 @@
 
 | Version | Supported |
 |---|---|
-| 3.0.x (latest) | ✅ |
-| < 3.0 | ❌ |
+| 3.3.x (latest release) | ✅ |
+| < 3.3 | ❌ |
 
-Only the latest release receives security patches.
+Only the latest release receives security patches. Update to it before you
+report an issue, and check whether it is already fixed there.
 
 v3.0.0 moved the project from MySQL to PostgreSQL and offers no upgrade path from
 2.2.x (see the release notes). The rule above is unchanged and applies all the
@@ -64,14 +65,21 @@ This repository uses an automated security pipeline on every pull request:
 ## Data & Application Hardening
 
 - **Secrets at rest**: API tokens are stored only as SHA-256 hashes (cleartext shown once at creation); OIDC/SMTP/LLM secrets and TOTP secrets are AES-256-GCM encrypted.
-- **Audit-log integrity**: every entry carries a per-row HMAC-SHA256 over its immutable content; administrators can verify the full log via `GET /api/auditlog/verify`.
+- **Audit-log integrity**: every entry carries a per-row HMAC-SHA256 over its immutable content; administrators can verify the full log via `GET /api/audit-log/verify`.
 - **Access control**: list and detail endpoints are scoped to the caller's role/ownership (object-level authorization); the OpenAPI specification requires authentication.
 - **Uploads**: extension allow-list, magic-byte validation, randomized stored filenames, path-traversal guards and SHA-256 integrity verification on download.
 - **Transport & headers**: helmet with a nonce-based Content-Security-Policy, CORS restricted to `APP_URL`, `trust proxy` pinned to one hop, layered rate limiting on authentication and expensive endpoints.
 
-## Verifikation von Abhängigkeiten
+## Configuring OpenISMS securely
 
-Bei einem Upgrade der Node.js-Laufzeit (z. B. auf Node.js 26.13.0) ist eine sorgfältige Verifikation der Abhängigkeiten erforderlich, um Regressions- oder Kompatibilitätsprobleme zu vermeiden. Empfohlene Schritte zum lokalen Testen:
+How to run an instance securely — secrets, HTTPS, roles, MFA, SSO, backups and
+a production checklist — is described in
+[docs/SECURITY-CONFIGURATION.md](docs/SECURITY-CONFIGURATION.md).
+
+## Verifying dependencies
+
+When upgrading the Node.js runtime or dependencies, verify them locally before
+opening a pull request:
 
 ```bash
 # Backend
@@ -84,14 +92,15 @@ cd ../frontend
 npm ci
 npm audit --audit-level=high
 
-# Weitere Prüfungen
+# Further checks
 npm outdated
-npx npm-check-updates -u   # nur zum Vorschlagen von Upgrades; immer testen
+npx npm-check-updates      # only to see available upgrades; always test them
 ```
 
-Zusätzlich zu `npm audit` empfehlen wir die Nutzung von Snyk, Trivy und CodeQL (bereits in den CI-Workflows eingebunden). Wenn kritische Fixes verfügbar sind, testen Sie diese in einer isolierten Branch/Umgebung und erstellen Sie einen PR mit dem Upgrade + Testbericht.
-
-Hinweis: Um Builds und Tests reproduzierbar zu machen, verwenden Sie dieselbe Node-Version lokal wie in CI (Node.js `26.13.0`). Siehe [README.md](README.md) für lokale Entwicklungsanforderungen.
+Use the same Node.js version locally as the CI and the Docker image (see
+`engines` in `package.json` and the `Dockerfile`). Snyk, Trivy and CodeQL run in
+the CI workflows in addition to `npm audit`. Test critical fixes on a separate
+branch and open a pull request with the upgrade and a short test report.
 
 ## Scope
 
