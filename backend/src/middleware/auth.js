@@ -4,6 +4,7 @@ const { notify } = require('../services/notifyService');
 const { hashToken } = require('../services/cryptoService');
 const { tokenAudienceMatches } = require('../utils/oidcAudience');
 const { isExplicitlyUnverified, emailDomainAllowed } = require('../services/oidcIdentity');
+const { getQueryToken } = require('../utils/queryToken');
 
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
@@ -26,21 +27,15 @@ const getTokenFromHeaders = (req) => {
   ).trim();
   if (apiKeyHeader) return apiKeyHeader;
 
-  // Query-string token fallback is a deliberate, scoped tradeoff (CodeQL flags
-  // reading credentials from a GET request, alerts #253/#252): browser EventSource
-  // (SSE) clients cannot set custom headers, so a short-lived session token has to
-  // travel in the URL for that one transport. Scoped to GET only -- POST-based
-  // Streamable-HTTP clients always authenticate via the Authorization header above
-  // and never need this fallback. Mitigation: helmet's default `Referrer-Policy:
-  // no-referrer` (see index.js) keeps the token out of any Referer header.
-  if (req.method === 'GET') {
-    const queryToken = req.query?.token || req.query?.apiKey || req.query?.api_key || req.query?.access_token || req.query?.key;
-    if (typeof queryToken === 'string' && queryToken.trim()) {
-      return queryToken.trim();
-    }
-  }
-
-  return null;
+  // Query-string token fallback only for Server-Sent Events (Security-Review
+  // 2026-11, OP-2; CodeQL alerts #253/#252): browser EventSource clients cannot set
+  // custom headers, so for that one transport a short-lived token has to travel in
+  // the URL. It used to apply to every GET route of the REST API, which let plain
+  // links authenticate and put tokens into proxy/access logs. Now only a GET with
+  // `Accept: text/event-stream` may use it (see utils/queryToken.js); every other
+  // request must send the Authorization header. helmet's `Referrer-Policy:
+  // no-referrer` (index.js) still keeps the token out of any Referer header.
+  return getQueryToken(req);
 };
 
 const authenticate = async (req, res, next) => {
@@ -189,4 +184,4 @@ const canViewAllAssets = (req) => ['admin', 'assessor', 'dpo', 'it-staff'].inclu
 const canViewAsset = (req, asset) =>
   canViewAllAssets(req) || req.user.id === asset.owner_id || req.user.id === asset.assessor_id;
 
-module.exports = { authenticate, requireRole, requirePermission, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset };
+module.exports = { authenticate, getTokenFromHeaders, requireRole, requirePermission, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset };
