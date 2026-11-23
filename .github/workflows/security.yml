@@ -374,7 +374,7 @@ jobs:
     name: SBOM — CycloneDX
     needs: gate
     if: needs.gate.outputs.run_audit == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04  # wie #329: self-hosted nur fuer SonarQube
     timeout-minutes: 15
     permissions:
       contents: read
