@@ -7,10 +7,19 @@ const { Op } = require('sequelize');
 const { authenticate, requireRole, requirePermission } = require('../middleware/auth');
 const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
+const { pick } = require('../utils/massAssignment');
 
 router.use(authenticate);
 
 const canWrite = requireRole('admin', 'dpo');
+
+// Felder, die POST/PUT setzen duerfen. ref und completed_at vergibt der Server
+// (Security-Review 2026-11, OP-4: POST uebernahm vorher den ganzen Body).
+const ALLOWED_UPDATE_FIELDS = [
+  'type', 'status', 'requester_name', 'requester_email', 'requester_id_verified',
+  'received_date', 'due_date', 'extended_until', 'extension_reason',
+  'description', 'decision', 'notes', 'handler_id',
+];
 
 const include = [
   { model: User, as: 'handler', attributes: ['id', 'name', 'email'] },
@@ -30,7 +39,8 @@ router.get('/', requirePermission('subject_requests','view','admin','dpo','asses
 
 router.post('/', requirePermission('subject_requests','create','admin','dpo'), async (req, res) => {
   try {
-    const body = { ...req.body };
+    const body = pick(req.body, ALLOWED_UPDATE_FIELDS);
+    if (body.status === 'completed') body.completed_at = new Date();
 
     if (!body.due_date && body.received_date) {
       const d = new Date(body.received_date);
@@ -41,7 +51,7 @@ router.post('/', requirePermission('subject_requests','create','admin','dpo'), a
     const request = await SubjectRequest.create(body);
     const year = new Date(request.created_at || new Date()).getFullYear();
     await request.update({ ref: `BSA-${year}-${String(request.id).padStart(3, '0')}` });
-    await auditFromReq(req, 'create', 'subject_request', request.id, `${body.ref} (${request.requester_name})`, {});
+    await auditFromReq(req, 'create', 'subject_request', request.id, `${request.ref} (${request.requester_name})`, {});
 
     const created = await SubjectRequest.findByPk(request.id, { include });
     res.status(201).json(created);
@@ -49,12 +59,6 @@ router.post('/', requirePermission('subject_requests','create','admin','dpo'), a
     requestError(res, e, 'subject-requests');
   }
 });
-
-const ALLOWED_UPDATE_FIELDS = [
-  'type', 'status', 'requester_name', 'requester_email', 'requester_id_verified',
-  'received_date', 'due_date', 'extended_until', 'extension_reason',
-  'description', 'decision', 'notes', 'handler_id',
-];
 
 router.put('/:id', requirePermission('subject_requests','edit','admin','dpo'), async (req, res) => {
   try {

@@ -256,6 +256,7 @@ jobs:
           node scripts/test-bsi-domain.js
           node scripts/test-bsi-check.js
           node scripts/test-query-token-scope.js
+          node scripts/test-mass-assignment-op4.js
           node scripts/test-request-error.js
         working-directory: .
         env:
@@ -375,7 +376,7 @@ jobs:
     name: SBOM — CycloneDX
     needs: gate
     if: needs.gate.outputs.run_audit == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04  # wie #329: self-hosted nur fuer SonarQube
     timeout-minutes: 15
     permissions:
       contents: read
