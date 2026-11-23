@@ -41,7 +41,8 @@ let failures = 0;
 const eq = (label, actual, expected) => {
   const ok = JSON.stringify(actual) === JSON.stringify(expected);
   if (!ok) failures++;
-  console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ` → ${JSON.stringify(actual)}, erwartet ${JSON.stringify(expected)}`}`);
+  // Keine Werte ausgeben: actual/expected koennen Tokens enthalten (CodeQL js/clear-text-logging).
+  console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ' → Ergebnis weicht ab'}`);
 };
 
 const req = ({ method = 'GET', accept, query = {}, authorization } = {}) => ({
