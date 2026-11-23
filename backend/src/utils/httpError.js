@@ -20,7 +20,9 @@ const crypto = require('crypto');
  */
 function serverError(res, err, context = 'API') {
   const ref = crypto.randomBytes(4).toString('hex');
-  console.error(`[${context}] Fehler ${ref}:`, err?.stack || err?.message || err);
+  const safeContext = sanitizeForLog(context);
+  const detail = sanitizeForLog(err?.stack || err?.message || err);
+  console.error(`[${safeContext}] Fehler ${ref}:`, detail);
   if (res.headersSent) {
     // A response already on the wire cannot be turned into a 500; cutting it off
     // makes the failure visible instead of delivering a truncated body that looks
@@ -46,6 +48,8 @@ function serverError(res, err, context = 'API') {
 // Log (wie bei serverError).
 
 const PROGRAMMING_ERRORS = new Set(['TypeError', 'ReferenceError', 'SyntaxError', 'RangeError', 'EvalError', 'URIError']);
+
+const sanitizeForLog = (value) => String(value).replace(/[\r\n]+/g, ' ');
 
 const isSequelizeError = (err) => typeof err?.name === 'string' && err.name.startsWith('Sequelize');
 
@@ -94,9 +98,10 @@ function requestError(res, err, context = 'API', status = 400) {
     const ref = crypto.randomBytes(4).toString('hex');
     // Zeilenumbrueche entfernen: die Meldung kann Eingaben des Aufrufers enthalten
     // (Log-Injection, CodeQL js/log-injection).
-    const name = String(err.name).replace(/\n|\r/g, ' ');
-    const message = String(err.message).replace(/\n|\r/g, ' ');
-    console.warn(`[${context}] Datenbankfehler ${ref}: ${name}: ${message}`);
+    const safeContext = sanitizeForLog(context);
+    const name = sanitizeForLog(err.name);
+    const message = sanitizeForLog(err.message);
+    console.warn(`[${safeContext}] Datenbankfehler ${ref}: ${name}: ${message}`);
     if (res.headersSent) return res.destroy();
     return res.status(mapped.status).json({ ...mapped.body, ref });
   }
