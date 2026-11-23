@@ -36,7 +36,7 @@ jobs:
   # ── Decide: read VERSION, is this a new release (tag missing) or an update? ──
   prepare:
     name: Determine version & release type
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -71,7 +71,7 @@ jobs:
   docker:
     name: Build & Push GHCR image
     needs: prepare
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
       contents: read
@@ -131,7 +131,7 @@ jobs:
     name: Create GitHub Release
     needs: [prepare, docker]
     if: needs.prepare.outputs.new_release == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: write
@@ -231,7 +231,7 @@ jobs:
   cleanup:
     name: Cleanup old packages
     needs: docker
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read

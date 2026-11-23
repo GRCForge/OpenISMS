@@ -71,13 +71,16 @@ jobs:
   #   to the push-to-main run right after merge.
   # push to main (post-merge, from any source): run everything.
   #
-  # Fork PR: nothing. Every job here runs on the self-hosted runner, and
-  #   several of them execute code from the branch (npm ci with lifecycle
-  #   scripts, CodeQL autobuild, vite.config.ts). A pull request from a fork
-  #   must never reach that machine — the job-level `if` below keeps the gate
-  #   from being scheduled at all, and every other job needs the gate, so
-  #   they are skipped with it. Maintainers re-push a reviewed fork branch to
-  #   this repository to get it scanned.
+  # Fork PR: nothing. Several jobs execute code from the branch (npm ci with
+  #   lifecycle scripts, CodeQL autobuild, vite.config.ts). The job-level `if`
+  #   below keeps the gate from being scheduled at all, and every other job
+  #   needs the gate, so they are skipped with it. Maintainers re-push a
+  #   reviewed fork branch to this repository to get it scanned.
+  #
+  # Runners: everything runs on GitHub-hosted runners (fresh VM per job).
+  #   Only SonarQube runs on the self-hosted runner, because the SonarQube
+  #   server is not reachable from the internet - and only for pushes to main
+  #   and manual runs, never for pull requests.
   #
   # The branch name (github.head_ref) is chosen by whoever opens the pull
   # request. It is passed through `env` and never interpolated into the
@@ -87,7 +90,7 @@ jobs:
   gate:
     name: Determine which sections run
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     outputs:
       run_security: ${{ steps.decide.outputs.run_security }}
@@ -115,12 +118,11 @@ jobs:
 
   # ── CodeQL: GitHub-native SAST ────────────────────────────────────────────
   # Results appear in the Security tab → Code scanning alerts.
-  # Runs on self-hosted to preserve cloud minutes.
-  codeql:
+    codeql:
     name: CodeQL — SAST
     needs: gate
     if: needs.gate.outputs.run_security == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -169,7 +171,7 @@ jobs:
     name: Frontend — TypeScript & Build
     needs: gate
     if: needs.gate.outputs.run_build == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -203,7 +205,7 @@ jobs:
     name: Backend — Install & Smoke Test
     needs: gate
     if: needs.gate.outputs.run_build == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -296,7 +298,7 @@ jobs:
     # Runs for Dependabot too: a bump that pulls in a new advisory is exactly
     # what this job is for, and it needs no secret to say so.
     if: needs.gate.outputs.run_audit == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -364,7 +366,7 @@ jobs:
     name: Snyk — Dependency Scan
     needs: gate
     if: needs.gate.outputs.run_security == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     continue-on-error: true
     permissions:
@@ -407,7 +409,7 @@ jobs:
     name: Gitleaks — Secret Scanning
     needs: gate
     if: needs.gate.outputs.run_security == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -439,7 +441,7 @@ jobs:
     name: Trivy — Vulnerability & Misconfiguration
     needs: gate
     if: needs.gate.outputs.run_security == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -470,7 +472,7 @@ jobs:
   sonarqube:
     name: SonarQube — Code Quality
     needs: gate
-    if: needs.gate.outputs.run_security == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    if: needs.gate.outputs.run_security == 'true' && github.event_name != 'pull_request'
     runs-on: self-hosted
     timeout-minutes: 45
     continue-on-error: true

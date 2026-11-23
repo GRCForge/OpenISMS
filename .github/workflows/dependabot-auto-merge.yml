@@ -56,7 +56,7 @@ jobs:
     if: >-
       github.event.pull_request.user.login == 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Decide and enable auto-merge
