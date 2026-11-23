@@ -5,7 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { Template, User } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 const UPLOAD_DIR = require('../services/uploadStorage').uploadRoot();
@@ -130,7 +130,7 @@ router.post('/', authenticate, requirePermission('templates','upload','admin','o
       const safe = getSafePath(req.file.filename);
       if (safe) fs.unlink(safe, () => {});
     }
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'templates');
   }
 });
 

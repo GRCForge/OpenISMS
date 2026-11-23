@@ -2,7 +2,7 @@ const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Control, Policy, Iso27001Control } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
@@ -73,7 +73,7 @@ router.put('/:id', authenticate, requirePermission('controls','edit','admin','as
     await auditFromReq(req, 'update', 'control', control.id, `${control.code} ${control.title}`, { before, after: { status: control.status } });
     const full = await Control.findByPk(control.id, { include: includeAll });
     res.json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'controls'); }
 });
 
 // Eigene (custom) Massnahme anlegen
@@ -86,7 +86,7 @@ router.post('/', authenticate, requirePermission('controls','create','admin'), a
     await auditFromReq(req, 'create', 'control', control.id, control.title, {});
     const full = await Control.findByPk(control.id, { include: includeAll });
     res.status(201).json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'controls'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('controls','delete','admin'), async (req, res) => {

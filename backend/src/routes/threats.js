@@ -2,7 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { Threat } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
@@ -29,7 +29,7 @@ router.post('/', authenticate, requirePermission('threats','create','admin'), as
     const threat = await Threat.create({ source: 'custom', code: req.body.code || null, title: req.body.title, description: req.body.description });
     await auditFromReq(req, 'create', 'settings', threat.id, threat.title, { action: 'create_custom_threat', code: threat.code });
     res.status(201).json(threat);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'threats'); }
 });
 
 module.exports = router;

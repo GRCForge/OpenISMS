@@ -7,7 +7,7 @@ const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { Document, User, Asset, Incident, Vendor } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission, canViewAsset } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 // Rate limiting for document download endpoint to mitigate DoS (CWE-770)
@@ -271,7 +271,7 @@ router.post('/', authenticate, requirePermission('documents','upload','admin','o
       const safe = getSafePath(req.file.filename);
       if (safe) fs.unlink(safe, () => {});
     }
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'documents');
   }
 });
 

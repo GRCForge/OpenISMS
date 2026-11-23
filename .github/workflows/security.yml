@@ -257,6 +257,7 @@ jobs:
           node scripts/test-bsi-check.js
           node scripts/test-query-token-scope.js
           node scripts/test-mass-assignment-op4.js
+          node scripts/test-request-error.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

@@ -9,7 +9,7 @@ const {
   Asset, User, Risk, Task, Incident, sequelize,
 } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { setFilter, boundedInt } = require('../utils/queryFilters');
 const { escapeLike } = require('../utils/sqlUtils');
 const { auditFromReq } = require('../services/auditService');
@@ -71,7 +71,7 @@ router.post('/sources', authenticate, requirePermission('threat_intel', 'create'
     const source = await ThreatSource.create(data);
     await auditFromReq(req, 'create', 'threat_source', source.id, source.name, { type: source.type });
     res.status(201).json(source);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'threatIntel'); }
 });
 
 router.post('/sources/seed', authenticate, requirePermission('threat_intel', 'seed', 'admin', 'assessor'), async (req, res) => {
@@ -104,7 +104,7 @@ router.put('/sources/:id', authenticate, requirePermission('threat_intel', 'edit
     await source.update(data);
     await auditFromReq(req, 'update', 'threat_source', source.id, source.name, {});
     res.json(source);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'threatIntel'); }
 });
 
 router.delete('/sources/:id', authenticate, requirePermission('threat_intel', 'delete', 'admin', 'assessor'), async (req, res) => {
@@ -249,7 +249,7 @@ router.post('/advisories', authenticate, requirePermission('threat_intel', 'crea
     const advisory = await ThreatAdvisory.create(data);
     await auditFromReq(req, 'create', 'threat_advisory', advisory.id, advisory.title, { severity: advisory.severity });
     res.status(201).json(advisory);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'threatIntel'); }
 });
 
 router.put('/advisories/:id', authenticate, requirePermission('threat_intel', 'edit', 'admin', 'assessor', 'it-staff'), async (req, res) => {
@@ -261,7 +261,7 @@ router.put('/advisories/:id', authenticate, requirePermission('threat_intel', 'e
     await advisory.update(pick(req.body, ADVISORY_FIELDS));
     await auditFromReq(req, 'update', 'threat_advisory', advisory.id, advisory.title, {});
     res.json(advisory);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'threatIntel'); }
 });
 
 /**
@@ -337,7 +337,7 @@ router.post('/advisories/:id/assets', authenticate, requirePermission('threat_in
     if (!link.confirmed) await link.update({ confirmed: true });
     await auditFromReq(req, 'update', 'threat_advisory', advisory.id, advisory.title, { linked_asset: asset.name });
     res.status(201).json(link);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'threatIntel'); }
 });
 
 router.delete('/advisories/:id/assets/:assetId', authenticate, requirePermission('threat_intel', 'edit', 'admin', 'assessor', 'it-staff'), async (req, res) => {

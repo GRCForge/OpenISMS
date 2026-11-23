@@ -1,7 +1,7 @@
 const express = require('express');
 const { Comment, User, Notification, Asset, Group, Task } = require('../models');
 const { authenticate, canViewAsset, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 const router = express.Router({ mergeParams: true });
@@ -168,7 +168,7 @@ router.post('/', authenticate, requirePermission('comments','create','admin','ow
       include: [{ model: User, as: 'author', attributes: ['id', 'name', 'role'] }],
     });
     res.status(201).json({ ...withAuthor.toJSON(), _createdTaskCount: createdTasks.length });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'comments'); }
 });
 
 router.delete('/:commentId', authenticate, requirePermission('comments','delete','admin','owner','assessor','it-staff','dpo'), async (req, res) => {

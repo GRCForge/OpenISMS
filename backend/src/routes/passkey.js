@@ -10,7 +10,7 @@ const {
 } = require('@simplewebauthn/server');
 const { User, PasskeyCredential } = require('../models');
 const { authenticate } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 const RP_NAME = process.env.APP_NAME || 'OpenISMS';
@@ -134,7 +134,7 @@ router.post('/register-verify', authenticate, async (req, res) => {
     res.json({ ok: true, id: created.id, name });
   } catch (e) {
     console.error('[Passkey register-verify]', e);
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'passkey');
   }
 });
 
@@ -230,7 +230,7 @@ router.post('/login-verify', async (req, res) => {
     });
   } catch (e) {
     console.error('[Passkey login-verify]', e);
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'passkey');
   }
 });
 

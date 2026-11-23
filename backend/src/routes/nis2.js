@@ -3,7 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Nis2Measure, Nis2SelfCheckItem, Task, User, sequelize } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { getSetting, setSetting } = require('../services/settingsService');
 const catalog = require('../services/nis2Catalog');
@@ -220,7 +220,7 @@ router.post('/', authenticate, requirePermission('nis2', 'create', 'admin', 'ass
     });
     await auditFromReq(req, 'create', 'nis2_measure', item.id, item.article_ref, { custom: true });
     res.status(201).json(item);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'nis2'); }
 });
 
 router.put('/:id', authenticate, requirePermission('nis2', 'edit', 'admin', 'assessor', 'dpo'), async (req, res) => {
@@ -475,7 +475,7 @@ router.post('/self-check', authenticate, requirePermission('nis2', 'create', 'ad
     });
     await auditFromReq(req, 'create', 'nis2_self_check', item.id, item.question_ref, { custom: true });
     res.status(201).json(item);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'nis2'); }
 });
 
 router.delete('/self-check/:id', authenticate, requirePermission('nis2', 'delete', 'admin', 'assessor'), async (req, res) => {

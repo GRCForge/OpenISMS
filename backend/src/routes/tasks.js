@@ -3,7 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Task, User, Group, GroupMember, Notification, Asset, Risk, Incident, Training, AiSystem, SubjectRequest } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { Op } = require('sequelize');
 
@@ -229,7 +229,7 @@ router.post('/', requirePermission('tasks','create','admin','owner','assessor','
     });
     const full = await Task.findByPk(task.id, { include: taskInclude });
     res.status(201).json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'tasks'); }
 });
 
 // Update task
@@ -290,7 +290,7 @@ router.put('/:id', authenticate, requirePermission('tasks','edit','admin','owner
     await auditFromReq(req, 'update', 'task', task.id, task.title, { before, after });
     const full = await Task.findByPk(task.id, { include: taskInclude });
     res.json(full);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'tasks'); }
 });
 
 

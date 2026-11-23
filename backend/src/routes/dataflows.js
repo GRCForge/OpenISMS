@@ -3,7 +3,7 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { DataFlow, Asset } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
 router.use(authenticate);
@@ -54,7 +54,7 @@ router.post('/', requirePermission('dataflows','create','admin','assessor'), asy
     const full = await DataFlow.findByPk(flow.id, { include: flowInclude });
     res.status(201).json(full);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'dataflows');
   }
 });
 
@@ -83,7 +83,7 @@ router.put('/:id', requirePermission('dataflows','edit','admin','assessor'), asy
     const full = await DataFlow.findByPk(flow.id, { include: flowInclude });
     res.json(full);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    requestError(res, e, 'dataflows');
   }
 });
 

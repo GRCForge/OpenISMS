@@ -1,7 +1,7 @@
 const express = require('express');
 const { Assessment, Asset, User, Reminder, Task, sequelize } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { checkAndManageAssetTasks } = require('../services/taskAutomationService');
 
@@ -146,7 +146,7 @@ router.post('/', authenticate, requirePermission('assessments','create','admin',
     await checkAndManageAssetTasks(asset);
 
     res.status(201).json(assessment);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'assessments'); }
 });
 
 module.exports = router;

@@ -5,7 +5,7 @@ const {
   Policy, PolicyVersion, VvtEntry, Incident, Risk 
 } = require('../models');
 const { authenticate, isAssessor, isItStaff, isAdmin, canViewAllAssets, canViewAsset, requirePermission } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
 const { requireModule } = require('../middleware/modules');
 const { auditFromReq } = require('../services/auditService');
@@ -220,7 +220,7 @@ router.post('/', authenticate, requirePermission('assets','create','admin','asse
     }
     if (asset.dsfa_required) await notifyDpos(asset, req.user.id);
     res.status(201).json(asset);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'assets'); }
 });
 
 router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -314,7 +314,7 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
     await checkAndManageAssetTasks(asset);
 
     res.json(asset);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { requestError(res, e, 'assets'); }
 });
 
 router.delete('/:id', authenticate, requirePermission('assets','delete','admin'), async (req, res) => {
