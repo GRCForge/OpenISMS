@@ -255,6 +255,7 @@ jobs:
           node scripts/test-bsi-catalog-source.js
           node scripts/test-bsi-domain.js
           node scripts/test-bsi-check.js
+          node scripts/test-query-token-scope.js
           node scripts/test-request-error.js
         working-directory: .
         env:
@@ -362,6 +363,55 @@ jobs:
             console.log("OK: no fixable high/critical vulnerabilities in frontend.");
           '
 
+  # ── SBOM: CycloneDX fuer Backend und Frontend ─────────────────────────────
+  # Security-Review 2026-11 (Supply Chain): Es gab keine Stueckliste der
+  # ausgelieferten Abhaengigkeiten. `npm sbom` ist in npm selbst enthalten
+  # (kein zusaetzliches Werkzeug, keine Secrets) und liest nur die Lockfiles —
+  # es wird nichts installiert und kein Code aus dem Branch ausgefuehrt.
+  # --omit dev: nur, was im Image bzw. im gebauten Frontend landet.
+  # Laeuft wie npm audit fuer jeden Trigger; das Artefakt haelt 90 Tage.
+  # Releases bekommen dieselben Dateien als Anhang (release.yml).
+  sbom:
+    name: SBOM — CycloneDX
+    needs: gate
+    if: needs.gate.outputs.run_audit == 'true'
+    runs-on: self-hosted
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26.13.0'
+
+      - name: Generate CycloneDX SBOMs (npm sbom)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sbom"
+          for part in backend frontend; do
+            (cd "$part" && npm sbom --sbom-format cyclonedx --omit dev --package-lock-only) \
+              > "$RUNNER_TEMP/sbom/openisms-${part}.cdx.json"
+          done
+          node -e '
+            const fs = require("fs"), dir = process.env.RUNNER_TEMP + "/sbom";
+            for (const f of fs.readdirSync(dir)) {
+              const b = JSON.parse(fs.readFileSync(dir + "/" + f, "utf8"));
+              const n = (b.components || []).length;
+              if (b.bomFormat !== "CycloneDX" || n === 0) { console.error("::error::Ungueltige SBOM " + f); process.exit(1); }
+              console.log(f + ": CycloneDX " + b.specVersion + ", " + n + " Komponenten");
+            }
+          '
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-cyclonedx-${{ github.sha }}
+          path: ${{ runner.temp }}/sbom/*.cdx.json
+          retention-days: 90
+          if-no-files-found: error
+
   # ── Snyk: Monorepo dependency scan ────────────────────────────────────────
   snyk-dependencies:
     name: Snyk — Dependency Scan
@@ -420,15 +470,19 @@ jobs:
           fetch-depth: 0
 
       - name: Install Gitleaks
+        # Feste Version mit Pruefsumme statt "latest" ueber die API: der
+        # unauthentifizierte API-Aufruf scheiterte am Rate-Limit (HTTP 403) und
+        # ein ungeprueftes Archiv ist ein Lieferketten-Risiko.
+        env:
+          GITLEAKS_VERSION: "8.28.0"
+          GITLEAKS_SHA256: a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
         run: |
-          if ! command -v gitleaks &>/dev/null; then
-            VERSION=$(curl -sSf https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
-              | grep '"tag_name"' | cut -d'"' -f4)
-            curl -sSfL \
-              "https://github.com/gitleaks/gitleaks/releases/download/${VERSION}/gitleaks_${VERSION#v}_linux_x64.tar.gz" \
-              | sudo tar xz -C /usr/local/bin gitleaks
-          fi
-          gitleaks version
+          curl -fsSLo "${RUNNER_TEMP}/gitleaks.tgz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  ${RUNNER_TEMP}/gitleaks.tgz" | sha256sum -c -
+          tar -xzf "${RUNNER_TEMP}/gitleaks.tgz" -C "${RUNNER_TEMP}" gitleaks
+          echo "${RUNNER_TEMP}" >> "$GITHUB_PATH"
+          "${RUNNER_TEMP}/gitleaks" version
 
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .gitleaks.toml --verbose --redact
