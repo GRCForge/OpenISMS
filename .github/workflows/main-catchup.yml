@@ -1,0 +1,69 @@
+name: main catch-up
+
+# Startet "Security & Quality" und "Release & Publish" fuer den aktuellen
+# main-Commit, wenn dafuer noch kein Lauf existiert.
+#
+# Warum: Dependabot-PRs werden per GitHub-Auto-Merge gemergt, den
+# dependabot-auto-merge.yml mit dem GITHUB_TOKEN einschaltet. Ereignisse, die
+# der GITHUB_TOKEN ausloest, starten keine weiteren Workflows - weder push auf
+# main noch pull_request_target (closed). Ausgenommen ist workflow_dispatch;
+# darum startet dieser Job die fehlenden Laeufe per "gh workflow run".
+#
+# Er laeuft zeitgesteuert und laesst main-Commits mit vorhandenem Lauf (auch
+# wartend, laufend oder durch einen neueren Lauf abgebrochen) in Ruhe. Er
+# fuehrt keinen Code aus dem Repository aus und nutzt keine Fremd-Actions.
+# Zusaetzlich entfernt er die Branches bereits gemergter Dependabot-PRs.
+
+on:
+  schedule:
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: main-catchup
+  cancel-in-progress: false
+
+jobs:
+  catchup:
+    name: Fehlende Laeufe auf main nachstarten
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Laeufe fuer den main-Commit pruefen und fehlende starten
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${REPO}/commits/main" --jq .sha)
+          echo "main: ${sha}"
+          for wf in security.yml release.yml; do
+            count=$(gh api "repos/${REPO}/actions/workflows/${wf}/runs?branch=main&head_sha=${sha}&per_page=1" --jq .total_count)
+            if [ "${count}" -gt 0 ]; then
+              echo "${wf}: Lauf vorhanden"
+            else
+              gh workflow run "${wf}" --repo "${REPO}" --ref main
+              echo "${wf}: nachgestartet"
+            fi
+          done
+
+      - name: Branches gemergter Dependabot-PRs entfernen
+        run: |
+          set -euo pipefail
+          gh api "repos/${REPO}/pulls?state=closed&sort=updated&direction=desc&per_page=30" \
+            --jq '.[] | select(.user.login == "dependabot[bot]" and .merged_at != null and ((.head.repo.full_name // "") | ascii_downcase) == (env.REPO | ascii_downcase)) | .head.ref' |
+          while IFS= read -r ref; do
+            case "${ref}" in
+              dependabot/*) ;;
+              *) continue ;;
+            esac
+            if gh api "repos/${REPO}/git/ref/heads/${ref}" >/dev/null 2>&1; then
+              gh api -X DELETE "repos/${REPO}/git/refs/heads/${ref}" >/dev/null && echo "entfernt: ${ref}"
+            fi
+          done

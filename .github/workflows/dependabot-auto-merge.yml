@@ -37,7 +37,7 @@ name: Dependabot auto-merge
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
 
 # pull_request_target runs against the BASE of the pull request, so this file
 # is the version on main, not the one in the branch. That is what allows the
@@ -168,31 +168,6 @@ jobs:
             );
             core.info(`Auto-merge enabled for #${pull_number} (${reason}).`);
 
-  # Nach dem Merge: Die Workflows auf main per workflow_dispatch starten. Ein
-  # Auto-Merge, den der GITHUB_TOKEN eingeschaltet hat, loest selbst keine
-  # push-Workflows aus - ohne diesen Job liefen nach einem Dependabot-Merge
-  # weder "Release & Publish" noch "Security & Quality" auf main (geprueft am
-  # Merge von #328, 23.11.2026: nur die dynamische Code-Quality lief).
-  main-workflows:
-    name: main-Workflows nach dem Merge starten
-    if: >-
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      actions: write
-      contents: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-      REPO: ${{ github.repository }}
-      HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
-    steps:
-      - name: Workflows starten, Branch entfernen
-        run: |
-          for wf in security.yml release.yml; do
-            gh workflow run "$wf" --repo "$REPO" --ref main && echo "gestartet: $wf"
-          done
-          gh api -X DELETE "repos/${REPO}/git/refs/heads/${HEAD_BRANCH}" || true
+# Laeufe auf main nach einem Dependabot-Merge startet main-catchup.yml: Ein
+# Merge per GITHUB_TOKEN loest weder push noch pull_request_target (closed)
+# aus, der fruehere Job hier wurde deshalb nie ausgefuehrt.
