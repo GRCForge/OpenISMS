@@ -22,6 +22,8 @@ const RiskControl = require('./RiskControl');
 const RiskMethodology = require('./RiskMethodology');
 const RiskCategory = require('./RiskCategory');
 const RiskScenario = require('./RiskScenario');
+const RiskTreatmentItem = require('./RiskTreatmentItem');
+const RiskAcceptanceRequest = require('./RiskAcceptanceRequest');
 const Vulnerability = require('./Vulnerability');
 const Incident = require('./Incident');
 const VvtEntry = require('./VvtEntry');
@@ -192,6 +194,33 @@ Vulnerability.hasMany(RiskScenario, { as: 'scenarios', foreignKey: 'vulnerabilit
 RiskScenario.belongsToMany(Asset, { through: 'risk_scenario_assets', as: 'assets', foreignKey: 'scenario_id', otherKey: 'asset_id' });
 Asset.belongsToMany(RiskScenario, { through: 'risk_scenario_assets', as: 'riskScenarios', foreignKey: 'asset_id', otherKey: 'scenario_id' });
 Risk.belongsTo(User, { as: 'residualOverrideBy', foreignKey: 'residual_override_by_id' });
+
+// Risk treatment plan and acceptance workflow (3.8.0). Both go with their risk
+// (CASCADE). A deleted control, task, user or group does not take the item or
+// request with it (SET NULL); the audit log keeps who did what.
+Risk.hasMany(RiskTreatmentItem, { as: 'treatmentItems', foreignKey: 'risk_id', onDelete: 'CASCADE', hooks: true });
+RiskTreatmentItem.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskTreatmentItem.belongsTo(User, { as: 'responsibleUser', foreignKey: 'responsible_user_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(Group, { as: 'responsibleGroup', foreignKey: 'responsible_group_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(Control, { as: 'control', foreignKey: 'control_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(Task, { as: 'task', foreignKey: 'task_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id', onDelete: 'SET NULL' });
+Risk.hasMany(RiskAcceptanceRequest, { as: 'acceptanceRequests', foreignKey: 'risk_id', onDelete: 'CASCADE', hooks: true });
+RiskAcceptanceRequest.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskAcceptanceRequest.belongsTo(User, { as: 'requestedBy', foreignKey: 'requested_by_id', onDelete: 'SET NULL' });
+RiskAcceptanceRequest.belongsTo(User, { as: 'decidedBy', foreignKey: 'decided_by_id', onDelete: 'SET NULL' });
+RiskAcceptanceRequest.belongsTo(User, { as: 'ownerConfirmedBy', foreignKey: 'owner_confirmed_by_id', onDelete: 'SET NULL' });
+
+// A task created from a treatment item keeps the item status in step (task
+// done -> item implemented, logged). Every write path of tasks - REST, MCP,
+// reminders, automation - runs through these hooks; bulk updates included.
+// Lazy require: the service needs the models.
+Task.addHook('afterUpdate', 'riskTreatmentSync', async (task, options) => {
+  await require('../services/riskTreatmentService').onTaskUpdated(task, options);
+});
+Task.addHook('afterBulkUpdate', 'riskTreatmentSync', async (options) => {
+  await require('../services/riskTreatmentService').onTasksBulkUpdated(options);
+});
 
 // Sicherheitsvorfaelle (Incident Management)
 Incident.belongsTo(User, { as: 'reporter', foreignKey: 'reporter_id' });
@@ -392,7 +421,7 @@ Asset.belongsToMany(ThreatAdvisory, { through: ThreatAdvisoryAsset, as: 'advisor
 module.exports = {
   sequelize, User, Asset, Assessment, Reminder, AuditLog, Document, Comment,
   Vendor, VendorContact, Policy, PolicyVersion, Setting, Risk, Notification,
-  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, RiskMethodology, RiskCategory, RiskScenario, Vulnerability, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
+  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, RiskMethodology, RiskCategory, RiskScenario, RiskTreatmentItem, RiskAcceptanceRequest, Vulnerability, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,

@@ -686,6 +686,11 @@ const start = async () => {
       if (seeded > 0) console.log(`[DB] ${seeded} Risikokategorie(n) angelegt (Standardliste)`);
       if (migrated > 0) console.log(`[DB] ${migrated} Risikokategorie(n) aus dem bisherigen Freitextfeld übernommen`);
     }
+    // One pending acceptance request per risk (3.8.0, four-eyes principle).
+    // A failure is reported, not swallowed: the service also checks before
+    // inserting, the index closes the gap between two concurrent requests.
+    await require('./services/riskAcceptanceService').ensureIndexes()
+      .catch(e => console.error('[DB] Partial unique index on risk_acceptance_requests could not be created:', String(e.message).replace(/[\r\n]+/g, ' ')));
     // One vulnerability per CVE identifier.
     await require('./services/vulnerabilityService').ensureIndexes()
       .catch(e => console.error('[DB] Eindeutiger Index auf vulnerabilities.cve_id konnte nicht angelegt werden - vermutlich doppelte CVE-Einträge:', String(e.message).replace(/[\r\n]+/g, ' ')));

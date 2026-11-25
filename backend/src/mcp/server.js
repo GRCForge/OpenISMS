@@ -87,6 +87,22 @@ const TOOL_GATES = {
   // Same matrix entries as PATCH /api/risks/:id/residual-override and the
   // category routes; record rights in services/riskService.js.
   'isms_override_risk_residual': { perm: ['risks', 'override_residual'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  // Risk treatment plan and acceptance workflow (3.8.0): same matrix entries
+  // as the routes in routes/risks.js; record rights, four-eyes principle and
+  // acceptance authority in services/riskService.js.
+  'isms_list_risk_treatment_items': { perm: ['risks', 'view'] },
+  'isms_create_risk_treatment_item': { perm: ['risks', 'edit'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_update_risk_treatment_item': { perm: ['risks', 'edit'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_create_task_from_treatment_item': { perm: ['risks', 'edit'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_get_risk_treatment_plan': { perm: ['risks', 'view'] },
+  'isms_list_risk_acceptance_requests': { perm: ['risks', 'view'] },
+  'isms_request_risk_acceptance': { perm: ['risks', 'request_acceptance'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  'isms_withdraw_risk_acceptance': { perm: ['risks', 'request_acceptance'], requiredRoles: ['admin', 'owner', 'assessor', 'it-staff', 'dpo'], needsWrite: true },
+  // Deciding without needsWrite, like isms_signoff_risk (management decides).
+  'isms_approve_risk_acceptance': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner', 'management'] },
+  'isms_reject_risk_acceptance': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner', 'management'] },
+  // Any role may own a risk; the owner check is in the service.
+  'isms_confirm_risk_acceptance_as_owner': { perm: ['risks', 'view'] },
   'isms_create_risk_category': { perm: ['risks', 'manage_methodology'], requiredRoles: ['admin'], needsWrite: true },
   'isms_update_risk_category': { perm: ['risks', 'manage_methodology'], requiredRoles: ['admin'], needsWrite: true },
   // Vulnerability register: like routes/vulnerabilities.js.
@@ -1195,7 +1211,7 @@ server.tool(
 
 server.tool(
   'isms_get_risk',
-  'Get full details of a single risk including linked controls, threats, assets, risk scenarios (asset(s) x threat x vulnerability), impact dimensions, assessment rationale, gross/net/target level, net-risk override, sign-off status, methodology version and risk appetite check.',
+  'Get full details of a single risk including linked controls, threats, assets, risk scenarios (asset(s) x threat x vulnerability), impact dimensions, assessment rationale, gross/net/target level, net-risk override, treatment options, treatment plan items with progress and costs, acceptance requests, sign-off status, methodology version and risk appetite check.',
   {
     id: z.number().int().describe('Risk ID'),
   },
@@ -1206,7 +1222,7 @@ server.tool(
     if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
     // Wie GET /api/risks/:id: Detail nur fuer admin, assessor und den Risiko-Owner.
     if (!riskService.canViewRisk(mcpUser, risk)) return { content: [{ type: 'text', text: 'Zugriff verweigert: Nur admin, assessor oder der Risiko-Owner sehen das Risiko im Detail.' }], isError: true };
-    const out = (await riskService.decorate([risk]))[0];
+    const out = (await riskService.decorate([risk], { detail: true }))[0];
     return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
   }
 );
@@ -1228,6 +1244,7 @@ server.tool(
     scenarios:            z.array(z.object({ asset_ids: z.array(z.number().int()).optional(), threat_id: z.number().int().nullable().optional(), vulnerability_id: z.number().int().nullable().optional(), description: z.string().optional() })).optional().describe('Risk scenarios: asset(s) x threat x vulnerability'),
     treatment:            z.enum(['mitigate','accept','transfer','avoid']).default('mitigate'),
     treatment_plan:       z.string().optional(),
+    treatment_options:    z.array(z.enum(['mitigate','accept','transfer','avoid'])).optional().describe('All treatment options (several allowed); treatment stays the main option and is always included'),
     owner_id:             z.number().int().optional(),
   },
   async (args, { mcpUser }) => {
@@ -1261,6 +1278,7 @@ server.tool(
     scenarios:            z.array(z.object({ asset_ids: z.array(z.number().int()).optional(), threat_id: z.number().int().nullable().optional(), vulnerability_id: z.number().int().nullable().optional(), description: z.string().optional() })).optional().describe('Risk scenarios, replaces all'),
     treatment:      z.enum(['mitigate', 'accept', 'transfer', 'avoid']).optional(),
     treatment_plan: z.string().optional(),
+    treatment_options: z.array(z.enum(['mitigate', 'accept', 'transfer', 'avoid'])).optional().describe('All treatment options (replaces the list; the main option is always included)'),
     status:         z.enum(['open', 'in_treatment', 'accepted', 'closed']).optional(),
     review_date:    z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
     reassess:       z.boolean().optional().describe('Reassess under the active methodology version (requires likelihood and impact)'),
@@ -1283,17 +1301,18 @@ server.tool(
 
 server.tool(
   'isms_signoff_risk',
-  'Digitally sign off and accept a risk (NIS-2 management sign-off). The acceptance authority of the active risk methodology decides which roles may accept which risk level and for how many months at most; without valid_until the longest permitted validity is used.',
+  'Digitally sign off a risk acceptance (NIS-2 management sign-off). Since 3.8.0 this approves the pending acceptance request of the risk (four-eyes principle: the requester cannot approve; request first with isms_request_risk_acceptance). The acceptance authority of the active risk methodology decides which roles may accept which risk level and for how many months at most; without valid_until the requested validity or the longest permitted one is used.',
   {
     id:          z.number().int().describe('Risk ID'),
     valid_until: z.string().optional().describe('ISO Date (YYYY-MM-DD) until acceptance is valid'),
+    request_id:  z.number().int().optional().describe('ID of the pending acceptance request (default: the pending request of the risk)'),
   },
-  async ({ id, valid_until }, { mcpUser }) => {
+  async ({ id, valid_until, request_id }, { mcpUser }) => {
     try {
       const { Risk } = getModels();
       const risk = await Risk.findByPk(id);
       if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
-      const out = await require('../services/riskService').signoffRisk(risk, mcpUser, valid_until, mcpReq(mcpUser));
+      const out = await require('../services/riskService').signoffRisk(risk, mcpUser, valid_until, mcpReq(mcpUser), { requestId: request_id ?? null });
       return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
     } catch (e) { return mcpRiskError(e); }
   }
@@ -1358,6 +1377,194 @@ server.tool(
       return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
     } catch (e) { return mcpRiskError(e); }
   }
+);
+
+// ─── Risk treatment plan and acceptance workflow (3.8.0) ─────────────────────
+// Same service functions as routes/risks.js (services/riskService.js).
+
+const mcpJson = (out) => ({ content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] });
+const mcpNotFound = (what) => ({ content: [{ type: 'text', text: `${what} not found` }], isError: true });
+const treatmentItemSchema = {
+  title:                z.string().optional().describe('Title of the measure (mandatory on create)'),
+  description:          z.string().nullable().optional(),
+  treatment_option:     z.enum(['mitigate', 'transfer', 'avoid', 'accept']).optional(),
+  responsible_user_id:  z.number().int().nullable().optional().describe('Responsible person (user ID) - or a group, not both'),
+  responsible_group_id: z.number().int().nullable().optional().describe('Responsible group (group ID)'),
+  due_date:             z.string().nullable().optional().describe('ISO Date (YYYY-MM-DD)'),
+  status:               z.enum(['planned', 'in_progress', 'implemented', 'discarded']).optional(),
+  status_reason:        z.string().nullable().optional().describe('Reason - mandatory for status discarded'),
+  cost_once:            z.number().min(0).nullable().optional().describe('One-off cost in EUR'),
+  cost_recurring:       z.number().min(0).nullable().optional().describe('Recurring cost in EUR per year'),
+  control_id:           z.number().int().nullable().optional().describe('Linked existing control'),
+  task_id:              z.number().int().nullable().optional().describe('Linked existing task'),
+  sort_order:           z.number().int().min(0).optional(),
+};
+
+server.tool(
+  'isms_list_risk_treatment_items',
+  'List the structured treatment plan of one risk: measures with option, responsible person/group, due date, status, costs (EUR), linked control and task. Record rights as for isms_get_risk.',
+  { risk_id: z.number().int().describe('Risk ID') },
+  async ({ risk_id }, { mcpUser }) => {
+    try {
+      const risk = await getModels().Risk.findByPk(risk_id);
+      if (!risk) return mcpNotFound('Risk');
+      return mcpJson(await require('../services/riskService').listTreatmentItems(risk, mcpUser));
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_create_risk_treatment_item',
+  'Add a measure to the treatment plan of a risk (ISO 27001 6.1.3 e). Responsible is a person or a group; status discarded needs status_reason. The free-text treatment_plan of the risk is not changed.',
+  { risk_id: z.number().int().describe('Risk ID'), ...treatmentItemSchema },
+  async ({ risk_id, ...body }, { mcpUser }) => {
+    try {
+      const risk = await getModels().Risk.findByPk(risk_id);
+      if (!risk) return mcpNotFound('Risk');
+      return mcpJson(await require('../services/riskService').createTreatmentItem(risk, body, mcpUser, mcpReq(mcpUser)));
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_update_risk_treatment_item',
+  'Change a measure of a risk treatment plan (only the fields sent). Setting status implemented also completes a linked task; discarded (with status_reason) cancels an open linked task. Every change is audit-logged.',
+  { risk_id: z.number().int().describe('Risk ID'), item_id: z.number().int().describe('Treatment item ID'), ...treatmentItemSchema },
+  async ({ risk_id, item_id, ...body }, { mcpUser }) => {
+    try {
+      const { Risk, RiskTreatmentItem } = getModels();
+      const risk = await Risk.findByPk(risk_id);
+      if (!risk) return mcpNotFound('Risk');
+      const item = await RiskTreatmentItem.findOne({ where: { id: item_id, risk_id } });
+      if (!item) return mcpNotFound('Treatment item');
+      return mcpJson(await require('../services/riskService').updateTreatmentItem(risk, item, body, mcpUser, mcpReq(mcpUser)));
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_create_task_from_treatment_item',
+  'Create a task from a treatment item (assigned to its responsible person or group, due date of the item, priority from the risk level unless given). When the task is done, the item becomes implemented automatically (audit-logged). Needs tasks.create as well.',
+  {
+    risk_id:  z.number().int().describe('Risk ID'),
+    item_id:  z.number().int().describe('Treatment item ID'),
+    priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  },
+  async ({ risk_id, item_id, priority }, { mcpUser }) => {
+    try {
+      const { Risk, RiskTreatmentItem } = getModels();
+      const risk = await Risk.findByPk(risk_id);
+      if (!risk) return mcpNotFound('Risk');
+      const item = await RiskTreatmentItem.findOne({ where: { id: item_id, risk_id } });
+      if (!item) return mcpNotFound('Treatment item');
+      return mcpJson(await require('../services/riskService').createTaskForTreatmentItem(risk, item, mcpUser, mcpReq(mcpUser), { priority }));
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_get_risk_treatment_plan',
+  'Risk treatment plan overview across risks (evidence for ISO 27001 6.1.3 e): all measures with risk, responsible, due date, status, overdue flag and costs, a summary, and risks without an active measure. admin/assessor/management see everything; others their own risks and the measures they are responsible for.',
+  {
+    status:              z.enum(['planned', 'in_progress', 'implemented', 'discarded']).optional(),
+    overdue:             z.boolean().optional().describe('Only overdue measures'),
+    risk_id:             z.number().int().optional(),
+    responsible_user_id: z.number().int().optional(),
+  },
+  async (args, { mcpUser }) => {
+    try {
+      return mcpJson(await require('../services/riskService').treatmentPlan(mcpUser, args));
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_list_risk_acceptance_requests',
+  'List risk acceptance requests (approval queue) with requester, decision, residual level and owner confirmation. Visible: requests on risks the caller may sign off and the caller\'s own requests.',
+  {
+    status:  z.enum(['pending', 'approved', 'rejected', 'withdrawn']).optional(),
+    risk_id: z.number().int().optional(),
+  },
+  async (args, { mcpUser }) => {
+    try {
+      return mcpJson(await require('../services/riskService').listAcceptanceRequests(mcpUser, args));
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_request_risk_acceptance',
+  'Request the acceptance of a risk (four-eyes principle, ISO 27001 6.1.3 f): justification, requested validity and residual risk. The current level is stored with the request; a person with acceptance authority who is not the requester approves it (isms_approve_risk_acceptance). One pending request per risk. confirm_as_owner records the risk owner\'s confirmation when the caller owns the risk.',
+  {
+    risk_id:                   z.number().int().describe('Risk ID'),
+    justification:             z.string().min(1).describe('Why the risk should be accepted'),
+    residual_risk_description: z.string().optional().describe('Description of the residual risk'),
+    requested_until:           z.string().optional().describe('Requested validity, ISO Date (YYYY-MM-DD)'),
+    confirm_as_owner:          z.boolean().optional(),
+  },
+  async ({ risk_id, ...body }, { mcpUser }) => {
+    try {
+      const risk = await getModels().Risk.findByPk(risk_id);
+      if (!risk) return mcpNotFound('Risk');
+      return mcpJson(await require('../services/riskService').requestAcceptance(risk, body, mcpUser, mcpReq(mcpUser)));
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+// decide(svc, risk, request, user, body, req) - fixed per tool, never from input.
+const decideTool = (decide) => async ({ risk_id, request_id, ...body }, { mcpUser }) => {
+  try {
+    const svc = require('../services/riskService');
+    const risk = await getModels().Risk.findByPk(risk_id);
+    if (!risk) return mcpNotFound('Risk');
+    const reqRow = await svc.findAcceptanceRequest(risk.id, request_id);
+    if (!reqRow) return mcpNotFound('Acceptance request');
+    return mcpJson(await decide(svc, risk, reqRow, mcpUser, body, mcpReq(mcpUser)));
+  } catch (e) { return mcpRiskError(e); }
+};
+
+server.tool(
+  'isms_approve_risk_acceptance',
+  'Approve a pending risk acceptance request. Only a person with acceptance authority for the level under the active methodology who is NOT the requester; the level must still be the requested one. Sets the risk to accepted until valid_until (default: requested validity, capped by the methodology).',
+  {
+    risk_id:     z.number().int().describe('Risk ID'),
+    request_id:  z.number().int().describe('Acceptance request ID'),
+    valid_until: z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    note:        z.string().optional(),
+  },
+  decideTool((svc, risk, r, u, body, req) => svc.approveAcceptance(risk, r, u, body, req)),
+);
+
+server.tool(
+  'isms_reject_risk_acceptance',
+  'Reject a pending risk acceptance request with a reason (acceptance authority for the level, not the requester).',
+  {
+    risk_id:    z.number().int().describe('Risk ID'),
+    request_id: z.number().int().describe('Acceptance request ID'),
+    reason:     z.string().min(1).describe('Reason for the rejection'),
+  },
+  decideTool((svc, risk, r, u, body, req) => svc.rejectAcceptance(risk, r, u, body, req)),
+);
+
+server.tool(
+  'isms_withdraw_risk_acceptance',
+  'Withdraw an own pending risk acceptance request (requester or admin).',
+  {
+    risk_id:    z.number().int().describe('Risk ID'),
+    request_id: z.number().int().describe('Acceptance request ID'),
+    note:       z.string().optional(),
+  },
+  decideTool((svc, risk, r, u, body, req) => svc.withdrawAcceptance(risk, r, u, body, req)),
+);
+
+server.tool(
+  'isms_confirm_risk_acceptance_as_owner',
+  'As the risk owner, confirm the acceptance of the residual risk on a pending or approved acceptance request (ISO 27001 6.1.3 f).',
+  {
+    risk_id:    z.number().int().describe('Risk ID'),
+    request_id: z.number().int().describe('Acceptance request ID'),
+  },
+  decideTool((svc, risk, r, u, body, req) => svc.confirmAcceptanceAsOwner(risk, r, u, req)),
 );
 
 server.tool(

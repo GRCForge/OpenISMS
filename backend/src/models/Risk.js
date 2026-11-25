@@ -34,6 +34,10 @@ const Risk = sequelize.define('Risk', {
   // Behandlung
   treatment: { type: DataTypes.ENUM('mitigate', 'accept', 'transfer', 'avoid'), defaultValue: 'mitigate' },
   treatment_plan: { type: DataTypes.TEXT },
+  // All treatment options of the risk (3.8.0), e.g. ["mitigate","transfer"].
+  // `treatment` stays the main option and is always part of the list. NULL:
+  // only the main option (all risks from before 3.8.0 - no conversion).
+  treatment_options: { type: DataTypes.JSONB, allowNull: true },
 
   // Net (current) risk with the implemented controls - calculated in
   // services/residual.js unless overridden with a rationale (residual_override).
@@ -58,6 +62,9 @@ const Risk = sequelize.define('Risk', {
   accepted_by_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
   accepted_at: { type: DataTypes.DATE },
   accepted_until: { type: DataTypes.DATEONLY },
+  // Approved acceptance request behind the current acceptance (3.8.0). NULL for
+  // acceptances given before 3.8.0 - they stay valid as they are.
+  acceptance_request_id: { type: DataTypes.INTEGER },
 
   // Version der Risikomethodik, nach der dieses Risiko bewertet ist. Weicht sie
   // von der aktiven Version ab, steht das Risiko auf der Liste "neu zu

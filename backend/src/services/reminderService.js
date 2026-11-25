@@ -207,6 +207,17 @@ const checkExpiringTrainings = async () => {
   }
 };
 
+// Overdue risk treatment items (3.8.0): remind the responsible person or the
+// members of the responsible group once a day.
+const checkOverdueTreatmentItems = async () => {
+  try {
+    const { overdue, notified } = await require('./riskTreatmentService').checkOverdueItems();
+    if (notified > 0) console.log(`[Reminders] ${overdue} overdue risk treatment item(s), ${notified} notification(s)`);
+  } catch (e) {
+    console.error('[Reminders] Error checking overdue risk treatment items:', String(e.message).replace(/[\r\n]+/g, ' '));
+  }
+};
+
 const startReminderService = () => {
   // Run daily at midnight
   cron.schedule('0 0 * * *', checkOverdueReminders);
@@ -214,11 +225,14 @@ const startReminderService = () => {
   cron.schedule('0 8 * * *', checkExpiringAcceptances);
   // Run daily at 08:00 — check for training expirations
   cron.schedule('0 8 * * *', checkExpiringTrainings);
+  // Run daily at 08:00 — overdue risk treatment items
+  cron.schedule('0 8 * * *', checkOverdueTreatmentItems);
   
   // Run once on startup
   checkOverdueReminders();
   checkExpiringAcceptances();
   checkExpiringTrainings();
+  checkOverdueTreatmentItems();
   console.log('[Reminders] Service started');
 };
 

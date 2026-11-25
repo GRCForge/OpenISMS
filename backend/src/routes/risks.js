@@ -1,6 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { Risk, Task, RiskCategory } = require('../models');
+const { Risk, Task, RiskCategory, RiskTreatmentItem } = require('../models');
+const { pick } = require('../utils/massAssignment');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
@@ -142,6 +143,25 @@ router.delete('/categories/:id', authenticate, requirePermission('risks', 'manag
   } catch (e) { requestError(res, e, 'risk-categories'); }
 });
 
+// ── Risk treatment plan and acceptance requests across risks (3.8.0) ────────
+// Before '/:id'. Row visibility is decided in the services (record rights).
+
+
+// Overview of all treatment items (ISO 27001 6.1.3 e evidence; Excel export in
+// the frontend). Filters: status, overdue=true, risk_id, responsible_user_id.
+router.get('/treatment-plan', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try {
+    res.json(await riskService.treatmentPlan(req.user, pick(req.query, ['status', 'overdue', 'risk_id', 'responsible_user_id'])));
+  } catch (e) { requestError(res, e, 'risk-treatment'); }
+});
+
+// Acceptance requests across risks (approval queue). Filters: status, risk_id.
+router.get('/acceptance-requests', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try {
+    res.json(await riskService.listAcceptanceRequests(req.user, pick(req.query, ['status', 'risk_id'])));
+  } catch (e) { requestError(res, e, 'risk-acceptance'); }
+});
+
 // ── Risikoregister ───────────────────────────────────────────────────────────
 
 router.get('/', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
@@ -169,7 +189,7 @@ router.get('/:id', authenticate, requirePermission('risks', 'view', 'admin', 'ow
     if (!risk) return res.status(404).json({ error: 'Not found' });
     // Authorization: only admin, assessor or the risk owner can view the detail.
     if (!riskService.canViewRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
-    res.json((await riskService.decorate([risk]))[0]);
+    res.json((await riskService.decorate([risk], { detail: true }))[0]);
   } catch (e) { serverError(res, e, 'risks'); }
 });
 
@@ -193,15 +213,122 @@ router.put('/:id', authenticate, requirePermission('risks', 'edit', 'admin', 'ow
 
 // Risk-Owner Sign-off (NIS-2 Management-Haftung): digitale Freigabe mit
 // Zeitstempel. Wer welche Stufe wie lange akzeptieren darf, regelt die
-// Akzeptanzbefugnis der aktiven Risikomethodik.
+// Akzeptanzbefugnis der aktiven Risikomethodik. Since 3.8.0 this approves the
+// pending acceptance request (four-eyes principle); without one: 409.
 router.patch('/:id/signoff', authenticate, requirePermission('risks', 'sign_off', 'admin', 'assessor', 'owner', 'management'), async (req, res) => {
   try {
     const id = parseId(req.params.id);
     if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
     const risk = await Risk.findByPk(id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
-    res.json(await riskService.signoffRisk(risk, req.user, req.body?.valid_until, req));
+    res.json(await riskService.signoffRisk(risk, req.user, req.body?.valid_until, req, { requestId: req.body?.request_id ?? null, note: req.body?.note }));
   } catch (e) { requestError(res, e, 'risks'); }
+});
+
+// ── Treatment items of a risk (3.8.0) ───────────────────────────────────────
+// Reading: record rights as for the detail view; writing: as for editing.
+
+const loadRisk = async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) { res.status(400).json({ error: 'Ungültige Kennung.' }); return null; }
+  const risk = await Risk.findByPk(id);
+  if (!risk) { res.status(404).json({ error: 'Not found' }); return null; }
+  return risk;
+};
+const loadItem = async (req, res, risk) => {
+  const itemId = parseId(req.params.itemId);
+  if (!itemId) { res.status(400).json({ error: 'Ungültige Kennung.' }); return null; }
+  const item = await RiskTreatmentItem.findOne({ where: { id: itemId, risk_id: risk.id } });
+  if (!item) { res.status(404).json({ error: 'Not found' }); return null; }
+  return item;
+};
+
+router.get('/:id/treatment-items', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    res.json(await riskService.listTreatmentItems(risk, req.user));
+  } catch (e) { requestError(res, e, 'risk-treatment'); }
+});
+
+router.post('/:id/treatment-items', authenticate, requirePermission('risks', 'edit', 'admin', 'owner', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    res.status(201).json(await riskService.createTreatmentItem(risk, req.body || {}, req.user, req));
+  } catch (e) { requestError(res, e, 'risk-treatment'); }
+});
+
+router.put('/:id/treatment-items/:itemId', authenticate, requirePermission('risks', 'edit', 'admin', 'owner', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    const item = await loadItem(req, res, risk); if (!item) return;
+    res.json(await riskService.updateTreatmentItem(risk, item, req.body || {}, req.user, req));
+  } catch (e) { requestError(res, e, 'risk-treatment'); }
+});
+
+// Create a task from the item (tasks.create is checked in the service).
+router.post('/:id/treatment-items/:itemId/task', authenticate, requirePermission('risks', 'edit', 'admin', 'owner', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    const item = await loadItem(req, res, risk); if (!item) return;
+    res.status(201).json(await riskService.createTaskForTreatmentItem(risk, item, req.user, req, { priority: req.body?.priority }));
+  } catch (e) { requestError(res, e, 'risk-treatment'); }
+});
+
+// ── Acceptance requests of a risk (3.8.0, four-eyes principle) ──────────────
+
+const loadRequest = async (req, res, risk) => {
+  const reqRow = await riskService.findAcceptanceRequest(risk.id, req.params.requestId);
+  if (!reqRow) { res.status(404).json({ error: 'Not found' }); return null; }
+  return reqRow;
+};
+
+router.get('/:id/acceptance-requests', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    if (!riskService.canViewRisk(req.user, risk) && !riskService.canSignoffRecord(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
+    res.json(await riskService.listAcceptanceRequests(req.user, { risk_id: String(risk.id) }));
+  } catch (e) { requestError(res, e, 'risk-acceptance'); }
+});
+
+router.post('/:id/acceptance-requests', authenticate, requirePermission('risks', 'request_acceptance', 'admin', 'owner', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    res.status(201).json(await riskService.requestAcceptance(risk, req.body || {}, req.user, req));
+  } catch (e) { requestError(res, e, 'risk-acceptance'); }
+});
+
+router.post('/:id/acceptance-requests/:requestId/approve', authenticate, requirePermission('risks', 'sign_off', 'admin', 'assessor', 'owner', 'management'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    const reqRow = await loadRequest(req, res, risk); if (!reqRow) return;
+    res.json(await riskService.approveAcceptance(risk, reqRow, req.user, req.body || {}, req));
+  } catch (e) { requestError(res, e, 'risk-acceptance'); }
+});
+
+router.post('/:id/acceptance-requests/:requestId/reject', authenticate, requirePermission('risks', 'sign_off', 'admin', 'assessor', 'owner', 'management'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    const reqRow = await loadRequest(req, res, risk); if (!reqRow) return;
+    res.json(await riskService.rejectAcceptance(risk, reqRow, req.user, req.body || {}, req));
+  } catch (e) { requestError(res, e, 'risk-acceptance'); }
+});
+
+router.post('/:id/acceptance-requests/:requestId/withdraw', authenticate, requirePermission('risks', 'request_acceptance', 'admin', 'owner', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    const reqRow = await loadRequest(req, res, risk); if (!reqRow) return;
+    res.json(await riskService.withdrawAcceptance(risk, reqRow, req.user, req.body || {}, req));
+  } catch (e) { requestError(res, e, 'risk-acceptance'); }
+});
+
+// The risk owner confirms the acceptance of the residual risk (6.1.3 f). Any
+// role may own a risk, so the gate is risks.view plus the owner check.
+router.post('/:id/acceptance-requests/:requestId/confirm-owner', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try {
+    const risk = await loadRisk(req, res); if (!risk) return;
+    const reqRow = await loadRequest(req, res, risk); if (!reqRow) return;
+    res.json(await riskService.confirmAcceptanceAsOwner(risk, reqRow, req.user, req));
+  } catch (e) { requestError(res, e, 'risk-acceptance'); }
 });
 
 // Override the calculated net risk with a rationale (or return to the

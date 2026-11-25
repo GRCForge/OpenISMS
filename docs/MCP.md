@@ -23,7 +23,7 @@ REST API. MCP is not a side door.
 8. [Working with the tools](#8-working-with-the-tools)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Configuration reference](#10-configuration-reference)
-11. [Tool reference (225 tools)](#11-tool-reference-225-tools)
+11. [Tool reference (236 tools)](#11-tool-reference-236-tools)
 
 ---
 
@@ -449,7 +449,7 @@ The server log lists the active authentication modes at startup
 
 ---
 
-## 11. Tool reference (225 tools)
+## 11. Tool reference (236 tools)
 
 Type: **R** read · **W** create or change · **D** delete or revoke.
 79 tools read, 95 write, 35 delete. Tools of an optional module only work while
@@ -495,19 +495,30 @@ that module is enabled.
 | `isms_ignore_discovered_software` | W | Ignore a staged discovered item so it is hidden from approval queues. |
 | `isms_delete_discovered_software` | D | Delete a staged discovered host or software item from the discovery inbox. |
 
-### Risks and threats (19)
+### Risks and threats (30)
 
 | Tool | Type | Description |
 |---|---|---|
 | `isms_get_risk_methodology` | R | Get the active risk methodology (ISO 27005): scales with criteria, risk levels and thresholds, matrix, risk appetite and acceptance authority; earlier versions and the version history on request. |
 | `isms_list_risks` | R | List risks from the risk register with optional filters, including risk appetite and reassessment flags. |
-| `isms_get_risk` | R | Get full details of a single risk including linked controls, threats, assets, risk scenarios, impact dimensions, rationale, gross/net/target level, net-risk override, sign-off status, methodology version and risk appetite check. |
+| `isms_get_risk` | R | Get full details of a single risk including linked controls, threats, assets, risk scenarios, impact dimensions, rationale, gross/net/target level, net-risk override, treatment options, treatment plan items with progress and costs, acceptance requests, sign-off status, methodology version and risk appetite check. |
 | `isms_create_risk` | W | Add a new risk to the risk register; rationale for likelihood and impact is mandatory, impact dimensions, target risk and scenarios optional. |
 | `isms_update_risk` | W | Update an existing risk including likelihood, impact, impact dimensions, target risk, scenarios, treatment and linked controls/assets; changed values need a rationale. |
-| `isms_signoff_risk` | W | Digitally sign off and accept a risk (NIS-2 management sign-off), subject to the acceptance authority of the risk methodology. |
+| `isms_signoff_risk` | W | Approve the pending acceptance request of a risk (NIS-2 management sign-off; since 3.8.0 four-eyes principle), subject to the acceptance authority of the risk methodology. |
 | `isms_revoke_risk_signoff` | W | Revoke a previous risk sign-off / acceptance, setting it back to in_treatment. |
 | `isms_delete_risk` | D | Delete a risk from the risk register and cancel related open tasks. |
 | `isms_override_risk_residual` | W | Override the calculated net risk with a rationale, or return to the calculation. |
+| `isms_list_risk_treatment_items` | R | List the structured treatment plan of one risk (option, responsible, due date, status, costs, linked control/task). |
+| `isms_create_risk_treatment_item` | W | Add a measure to the treatment plan of a risk. |
+| `isms_update_risk_treatment_item` | W | Change a treatment measure; implemented/discarded keeps a linked task in step. |
+| `isms_create_task_from_treatment_item` | W | Create a task from a treatment measure; task done marks the measure implemented. |
+| `isms_get_risk_treatment_plan` | R | Treatment plan overview across risks (ISO 27001 6.1.3 e): measures, responsible, due dates, overdue, costs, risks without a measure. |
+| `isms_list_risk_acceptance_requests` | R | List risk acceptance requests (approval queue). |
+| `isms_request_risk_acceptance` | W | Request the acceptance of a risk: justification, requested validity, residual risk. |
+| `isms_approve_risk_acceptance` | W | Approve a pending acceptance request (acceptance authority, not the requester). |
+| `isms_reject_risk_acceptance` | W | Reject a pending acceptance request with a reason. |
+| `isms_withdraw_risk_acceptance` | W | Withdraw an own pending acceptance request. |
+| `isms_confirm_risk_acceptance_as_owner` | W | As risk owner, confirm the acceptance of the residual risk (ISO 27001 6.1.3 f). |
 | `isms_list_risk_categories` | R | List the risk category taxonomy with labels, active flag and number of risks. |
 | `isms_create_risk_category` | W | Add an entry to the risk category taxonomy. |
 | `isms_update_risk_category` | W | Change labels, description, order or active flag of a risk category (the key is fixed). |
