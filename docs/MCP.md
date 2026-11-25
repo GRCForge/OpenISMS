@@ -23,7 +23,7 @@ REST API. MCP is not a side door.
 8. [Working with the tools](#8-working-with-the-tools)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Configuration reference](#10-configuration-reference)
-11. [Tool reference (236 tools)](#11-tool-reference-236-tools)
+11. [Tool reference (245 tools)](#11-tool-reference-245-tools)
 
 ---
 
@@ -449,7 +449,7 @@ The server log lists the active authentication modes at startup
 
 ---
 
-## 11. Tool reference (236 tools)
+## 11. Tool reference (245 tools)
 
 Type: **R** read · **W** create or change · **D** delete or revoke.
 79 tools read, 95 write, 35 delete. Tools of an optional module only work while
@@ -495,7 +495,7 @@ that module is enabled.
 | `isms_ignore_discovered_software` | W | Ignore a staged discovered item so it is hidden from approval queues. |
 | `isms_delete_discovered_software` | D | Delete a staged discovered host or software item from the discovery inbox. |
 
-### Risks and threats (30)
+### Risks and threats (39)
 
 | Tool | Type | Description |
 |---|---|---|
@@ -519,6 +519,15 @@ that module is enabled.
 | `isms_reject_risk_acceptance` | W | Reject a pending acceptance request with a reason. |
 | `isms_withdraw_risk_acceptance` | W | Withdraw an own pending acceptance request. |
 | `isms_confirm_risk_acceptance_as_owner` | W | As risk owner, confirm the acceptance of the residual risk (ISO 27001 6.1.3 f). |
+| `isms_get_risk_history` | R | Assessment history of a risk (ISO 27005 clause 10): one immutable entry per change of gross, net or target assessment with trigger, user and methodology version. |
+| `isms_get_risk_trend` | R | Trend heat map: how many risks moved from which matrix cell to which between two dates; level transitions, improved/worsened counts. |
+| `isms_get_risk_monitoring_summary` | R | Risk monitoring figures: trend, overdue reviews, KRI breaches, appetite breaches, open reassessments, expiring acceptances. |
+| `isms_list_risk_review_flags` | R | Reassessment list with reasons (incident, audit finding, threat advisory, CVE, KRI, overdue review) and the owner task. |
+| `isms_review_risk` | W | Confirm the periodic review / reassessment with a note; resolves open flags and completes their tasks. |
+| `isms_list_risk_kris` | R | Key risk indicators of a risk: linked KPIs with threshold, direction, last value and breach state. |
+| `isms_link_risk_kri` | W | Link a KPI to a risk as KRI with threshold and direction; a breach flags the risk once per breach. |
+| `isms_update_risk_kri` | W | Change threshold, direction or note of a KRI link. |
+| `isms_unlink_risk_kri` | W | Remove a KRI link (the KPI stays). |
 | `isms_list_risk_categories` | R | List the risk category taxonomy with labels, active flag and number of risks. |
 | `isms_create_risk_category` | W | Add an entry to the risk category taxonomy. |
 | `isms_update_risk_category` | W | Change labels, description, order or active flag of a risk category (the key is fixed). |
@@ -535,9 +544,9 @@ that module is enabled.
 | Tool | Type | Description |
 |---|---|---|
 | `isms_list_incidents` | R | List security incidents. |
-| `isms_create_incident` | W | Report a new security incident. |
+| `isms_create_incident` | W | Report a new security incident; risks on the affected assets are flagged for reassessment. |
 | `isms_update_incident_status` | W | Update the status of an incident. |
-| `isms_update_incident` | W | Update an existing security incident details. |
+| `isms_update_incident` | W | Update an existing security incident details; a raised severity or newly linked assets flag the risks on them for reassessment. |
 | `isms_delete_incident` | D | Delete / remove a security incident from the incident register. |
 
 ### Threat landscape (6)
@@ -548,7 +557,7 @@ that module is enabled.
 | `isms_list_threat_advisories` | R | List external threat advisories with their assessment and what they turned into (risk, task, incident). |
 | `isms_get_threat_intel_stats` | R | Evidence figures for NIS2 Art. 21(2)(a): how the threat landscape is monitored (sources, cadence, overdue reviews, national CSIRT coverage) and how advisories are fed into risk management (assessment and handover rates). |
 | `isms_create_threat_advisory` | W | Record an external threat advisory (authority warning, vendor advisory, security news) in the threat register. |
-| `isms_assess_threat_advisory` | W | Assess an advisory: is it relevant to this organisation, and what follows from it. |
+| `isms_assess_threat_advisory` | W | Assess an advisory: is it relevant to this organisation, and what follows from it. Relevant/critical: risks on the affected assets are flagged for reassessment. |
 | `isms_record_threat_source_review` | W | Record that a threat source was reviewed today and schedule the next review from its cadence. |
 
 ### Controls and cross-framework mappings (8)
@@ -656,8 +665,8 @@ that module is enabled.
 | `isms_list_audits` | R | List internal, external, and certification audits along with findings and CAPA tasks. |
 | `isms_create_audit` | W | Plan or log a new compliance audit (internal, external, or certification). |
 | `isms_update_audit` | W | Update details or status of an existing compliance audit. |
-| `isms_create_audit_finding` | W | Create a new finding / deviation from an audit and optionally assign it for remediation. |
-| `isms_update_audit_finding` | W | Update status, severity, or remediation details of an audit finding. |
+| `isms_create_audit_finding` | W | Create a new finding / deviation from an audit and optionally assign it for remediation; linked risks (risk_ids) are flagged for reassessment. |
+| `isms_update_audit_finding` | W | Update status, severity, remediation details or linked risks of an audit finding. |
 | `isms_list_kpis` | R | List security & compliance KPIs along with measurement history and target values. |
 | `isms_record_kpi_measurement` | W | Record a new measured value for a security KPI. |
 | `isms_delete_audit` | D | Delete a compliance audit. |

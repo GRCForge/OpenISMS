@@ -129,6 +129,16 @@ const checkExpiringAcceptances = async () => {
   } catch (e) {
     console.error('[Reminders] Error checking acceptance expiry:', e.message);
   }
+  // Acceptances in the risk register (3.9.0): 30 days ahead and on expiry, to
+  // the risk owner and the approver, in-app and by e-mail. Once a day across
+  // instances; the notices themselves are deduplicated per stage and date.
+  try {
+    const { withJobSlot, dailySlot } = require('../utils/jobLock');
+    const r = await withJobSlot('risk-acceptance-expiry', dailySlot(), () => require('./riskMonitoringService').checkExpiringRiskAcceptances());
+    if (r && !r.skipped && r.notified > 0) console.log(`[Reminders] Risk register: ${r.risks} expiring/expired acceptance(s), ${r.notified} notice(s), ${r.mailed} e-mail(s)`);
+  } catch (e) {
+    console.error('[Reminders] Error checking risk acceptance expiry:', String(e.message).replace(/[\r\n]+/g, ' '));
+  }
 };
 
 const checkExpiringTrainings = async () => {

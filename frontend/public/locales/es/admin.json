@@ -579,6 +579,9 @@
     "system": "Sistema",
     "show": "Mostrar",
     "dimensions": "Dimensiones de impacto",
-    "dimensionsHint": "Qué dimensiones del impacto se valoran por separado (ISO 27005 cap. 7–8, BSI 200-3). El impacto total de un riesgo es el máximo de sus dimensiones valoradas. Sin selección, el impacto sigue siendo un valor único. Un cambio crea una nueva versión de la metodología."
+    "dimensionsHint": "Qué dimensiones del impacto se valoran por separado (ISO 27005 cap. 7–8, BSI 200-3). El impacto total de un riesgo es el máximo de sus dimensiones valoradas. Sin selección, el impacto sigue siendo un valor único. Un cambio crea una nueva versión de la metodología.",
+    "reviewCycles": "Ciclo de revisión por nivel de riesgo (meses)",
+    "reviewCyclesHint": "Un riesgo de este nivel debe revisarse tantos meses después de su última evaluación o revisión; vacío = sin revisión periódica. Un cambio crea una nueva versión.",
+    "noReview": "ninguna"
   }
 }

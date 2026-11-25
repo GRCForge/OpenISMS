@@ -288,7 +288,10 @@
     "assigneeLabel": "Verantwortliche Person",
     "capaTaskLabel": "Verlinkte CAPA-Aktion (Aufgabe)",
     "noTaskLabel": "— Keine Aufgabe verknüpfen —",
-    "submitBtn": "Log Abweichung"
+    "submitBtn": "Log Abweichung",
+    "linkedRisks": "Risiken",
+    "risksLabel": "Risikobezug ({{count}})",
+    "risksHint": "Verknüpfte Risiken werden zur Neubewertung markiert; der Risikoeigner erhält eine Aufgabe."
   },
   "masterTrainingModal": {
     "editTitle": "Trainingskurs bearbeiten",

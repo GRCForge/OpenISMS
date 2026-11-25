@@ -297,6 +297,8 @@ router.post('/advisories/:id/assess', authenticate, requirePermission('threat_in
       assessed_at: new Date(),
     });
     await auditFromReq(req, 'assess', 'threat_advisory', advisory.id, advisory.title, { relevance, status: nextStatus });
+    // Relevant/critical with affected assets -> risks on them need reassessment (3.9.0).
+    await require('../services/riskMonitoringService').onThreatAdvisory(advisory, {}, req);
     res.json(advisory);
   } catch (e) { serverError(res, e, 'threat-intel'); }
 });
@@ -336,6 +338,8 @@ router.post('/advisories/:id/assets', authenticate, requirePermission('threat_in
     // eine Feststellung.
     if (!link.confirmed) await link.update({ confirmed: true });
     await auditFromReq(req, 'update', 'threat_advisory', advisory.id, advisory.title, { linked_asset: asset.name });
+    // Asset confirmed on an advisory already assessed as relevant (3.9.0).
+    await require('../services/riskMonitoringService').onThreatAdvisory(advisory, { assetIds: [assetId] }, req);
     res.status(201).json(link);
   } catch (e) { requestError(res, e, 'threatIntel'); }
 });

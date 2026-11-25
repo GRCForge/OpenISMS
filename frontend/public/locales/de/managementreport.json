@@ -76,7 +76,14 @@
       "taskCompletionRate": "Aufgabenabschlussrate",
       "activeVvt": "Aktive VVT-Einträge",
       "dsfaRequired": "{{count}} DPIA-erforderlich",
-      "reportDate": "Berichtsdatum"
+      "reportDate": "Berichtsdatum",
+      "rmOverdueReviews": "Risikoprüfungen überfällig",
+      "rmKriBreaches": "Risiken mit KRI-Überschreitung",
+      "rmAppetite": "Risiken über dem Appetit",
+      "rmReassessments": "Risiken neu zu bewerten",
+      "rmAcceptances": "Akzeptanzen ablaufend / abgelaufen",
+      "rmTrend": "Risikotrend besser / schlechter",
+      "rmTrendNote": "letzte {{days}} Tage (Netto)"
     },
     "notAssessed": "Nicht bewertet",
     "sheets": {
