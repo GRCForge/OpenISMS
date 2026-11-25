@@ -44,6 +44,11 @@ Act.** Built on Node.js, React and PostgreSQL — a GRCForge project.
 
 ## Documentation
 
+The full documentation is also available as the
+**[OpenISMS Wiki](https://github.com/GRCForge/OpenISMS/wiki)**, generated from
+these files plus getting-started, upgrade, troubleshooting, FAQ, architecture
+and glossary pages.
+
 | Document | Contents |
 |---|---|
 | [Features](docs/FEATURES.md) | Every module and function in detail |
@@ -199,8 +204,8 @@ CodeQL, Trivy, Gitleaks, npm audit, Snyk and SonarQube.
 ```
 ├── backend/src/
 │   ├── index.js          # Entry point: HTTP server, middleware, routes, jobs
-│   ├── models/           # 64 Sequelize models
-│   ├── routes/           # REST API (53 route files under /api)
+│   ├── models/           # Sequelize models
+│   ├── routes/           # REST API routes under /api
 │   ├── mcp/              # MCP server, authentication, OAuth resource server, CORS
 │   ├── services/         # Business logic, catalogues, integrations, scheduling
 │   ├── middleware/       # Authentication, permissions, modules, rate limits

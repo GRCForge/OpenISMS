@@ -9,6 +9,8 @@ how to set up your development environment, report issues, and submit changes.
 - [Ways to Contribute](#ways-to-contribute)
 - [Development Setup](#development-setup)
 - [Branch Strategy](#branch-strategy)
+- [Language](#language)
+- [Documentation and Wiki](#documentation-and-wiki)
 - [Commit Messages](#commit-messages)
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Code Style](#code-style)
@@ -30,7 +32,7 @@ behavior to **maximilian@herz.dev**.
 | **Bug report** | Open a GitHub Issue with steps to reproduce, expected vs. actual behavior, and your environment (OS, Node.js version, browser). |
 | **Feature request** | Open a GitHub Issue describing the use case and why the feature belongs in an ISMS tool. |
 | **Code change** | Fork the repository, create a branch (see below), make your changes, and open a Pull Request. |
-| **Documentation** | Improvements to README, inline comments, or OpenAPI descriptions are always welcome. |
+| **Documentation** | Improvements to README, `docs/`, the wiki (sources in `wiki/`), inline comments, or OpenAPI descriptions are always welcome. |
 | **Security vulnerability** | **Do not** open a public issue. Email **maximilian@herz.dev** directly. |
 
 ---
@@ -115,9 +117,49 @@ numbers yourself — that happens on merge to `main`.
 
 ---
 
+## Language
+
+**English** is the project language for everything written for the project's
+history and its readers:
+
+- commit messages (subject and body)
+- pull request titles and descriptions, review comments, issues
+- documentation in `docs/` and `wiki/`, release notes, the README
+
+The user interface is translated through Crowdin (see the
+[Translation Style Guide](docs/TRANSLATION_STYLEGUIDE.md)); its German and
+Spanish strings are the exception, not the rule.
+
+---
+
+## Documentation and Wiki
+
+The [GitHub wiki](https://github.com/GRCForge/OpenISMS/wiki) is generated from
+the repository on every merge to `main`; edits made directly in the wiki are
+overwritten. To change it:
+
+- the large guides (features, configuration, security, MCP), `SECURITY.md`,
+  this file and the release notes are edited in place — they are published as
+  wiki pages
+- wiki-only pages (Home, Getting Started, FAQ, Troubleshooting, …) live in
+  `wiki/`
+- link between files with normal relative Markdown links; the build turns them
+  into wiki links
+
+Check your change before opening the pull request — every link and anchor must
+resolve:
+
+```bash
+node scripts/build-wiki.js --check     # validate
+node scripts/build-wiki.js             # write the wiki to build/wiki for a preview
+```
+
+---
+
 ## Commit Messages
 
-Use [Conventional Commits](https://www.conventionalcommits.org/):
+Use [Conventional Commits](https://www.conventionalcommits.org/), written in
+English:
 
 ```
 <type>(<scope>): <short summary>
