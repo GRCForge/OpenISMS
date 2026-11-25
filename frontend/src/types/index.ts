@@ -162,8 +162,6 @@ export interface Risk {
   owner?: User;
   likelihood: number;
   impact: number;
-  inherent_likelihood: number;
-  inherent_impact: number;
   inherent_level?: RiskLevel;
   treatment: RiskTreatment;
   treatment_plan?: string;
@@ -171,6 +169,14 @@ export interface Risk {
   residual_impact?: number;
   residual_level?: RiskLevel;
   status: RiskStatus;
+  // Risikomethodik (vom Server berechnet, siehe services/riskMethodology.js)
+  methodology_id?: number | null;
+  methodology_version?: number | null;
+  needs_reassessment?: boolean;
+  matrix_changed?: boolean;
+  effective_level?: RiskLevel | null;
+  appetite_max_level?: RiskLevel | null;
+  appetite_exceeded?: boolean;
   acceptance_document_id?: number;
   acceptanceDocument?: { id: number; original_name: string };
   review_date?: string;
@@ -255,12 +261,47 @@ export interface Incident {
 }
 
 export interface RiskMatrixCell { likelihood: number; impact: number; score: number; level: RiskLevel | null; }
+export interface RiskScaleStep {
+  value: number;
+  label_de: string;
+  label_en: string;
+  description: string | null;
+  range_min: number | null;
+  range_max: number | null;
+}
+export interface RiskLevelDef { key: RiskLevel; label_de: string; label_en: string; color: string; min_score: number; max_score: number; }
+export interface RiskAppetite { default_max_level: RiskLevel | null; categories: { category: string; max_level: RiskLevel }[]; }
+export interface RiskAcceptanceRule { level: RiskLevel; roles: string[]; max_months: number | null; }
+// Antwort von /api/risks/scale: die aktive (oder per ?version angefragte) Risikomethodik.
 export interface RiskScale {
+  id: number | null;
+  version: number | null;
+  name: string;
+  status: 'active' | 'superseded';
+  change_note?: string | null;
+  activated_at?: string | null;
+  created_by?: { id: number; name: string } | null;
   size: number;
+  likelihood_size: number;
+  impact_size: number;
+  max_score: number;
   likelihood: (string | null)[];
   impact: (string | null)[];
+  likelihood_unit: string | null;
+  impact_unit: string | null;
+  likelihood_levels: RiskScaleStep[];
+  impact_levels: RiskScaleStep[];
+  risk_levels: RiskLevelDef[];
   thresholds: Record<string, string>;
   matrix: RiskMatrixCell[][];
+  appetite: RiskAppetite;
+  acceptance: RiskAcceptanceRule[];
+}
+export interface RiskMethodologyVersion {
+  id: number; version: number; name: string; status: 'active' | 'superseded';
+  likelihood_size: number; impact_size: number; change_note: string | null;
+  created_at: string; activated_at: string | null; superseded_at: string | null;
+  created_by: { id: number; name: string } | null; risk_count: number;
 }
 
 export interface Reminder {

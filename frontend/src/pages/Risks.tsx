@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { Plus, ShieldAlert, Grid3x3, Trash2, AlertTriangle, CheckCircle, ShieldCheck, Download, FileSpreadsheet, ChevronRight, Search, Shield, FolderOpen, FileText } from 'lucide-react';
+import { Plus, ShieldAlert, Grid3x3, Trash2, AlertTriangle, CheckCircle, ShieldCheck, Download, FileSpreadsheet, ChevronRight, Search, Shield, FolderOpen, FileText, Flag, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useKeyShortcut } from '../hooks/useKeyShortcut';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import i18n from '../i18n';
 import api from '../lib/api';
-import type { Risk, Asset, User, Threat, Control, RiskLevel, RiskTreatment, RiskStatus, Template } from '../types';
+import type { Risk, Asset, User, Threat, Control, RiskLevel, RiskTreatment, RiskStatus, Template, RiskScale } from '../types';
+import { RiskHeatmap } from '../components/risks/RiskHeatmap';
+import type { HeatmapCellRef } from '../components/risks/RiskHeatmap';
+import { loadActiveScale, loadScaleVersion, levelLabel, stepOptions } from '../lib/riskMethodology';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -30,17 +33,47 @@ const emptyRisk = {
   status: 'open' as RiskStatus, review_date: '',
   asset_ids: [] as number[], threat_ids: [] as number[],
   controls: [] as { id: number; effectiveness: number }[],
+  // Neubewertung nach der aktiven Methodik (nur bei Risiken an einer aelteren Version)
+  reassess: false,
+};
+
+// Kennzeichen aus der Risikomethodik: Appetit ueberschritten, neu zu bewerten.
+const RiskFlags: React.FC<{ r: Risk }> = ({ r }) => {
+  const { t } = useTranslation('risks');
+  if (!r.appetite_exceeded && !r.needs_reassessment) return null;
+  return (
+    <span className="flex flex-wrap gap-1 mt-1">
+      {r.appetite_exceeded && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" title={t('methodology.appetiteTitle', { level: r.appetite_max_level })}>
+          <Flag size={9} />{t('methodology.appetiteExceeded')}
+        </span>
+      )}
+      {r.needs_reassessment && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+          <RefreshCcw size={9} />{t('methodology.needsReassessmentShort', { version: r.methodology_version })}
+        </span>
+      )}
+    </span>
+  );
 };
 
 export const Risks: React.FC = () => {
   const { t } = useTranslation(['risks', 'common']);
   const dateFnsLocale = i18n.language === 'de' ? de : enUS;
 
+  // Aktive Risikomethodik (Skalen, Stufen, Schwellen, Appetit, Akzeptanz).
+  const [scale, setScale] = useState<RiskScale | null>(null);
+  // Skala im Formular: die Version des bearbeiteten Risikos, bei Neubewertung die aktive.
+  const [formScale, setFormScale] = useState<RiskScale | null>(null);
+  const [heatCell, setHeatCell] = useState<HeatmapCellRef | null>(null);
+  const [flagFilter, setFlagFilter] = useState('');
+
+  // Bezeichnungen der Stufen aus der Methodik, ersatzweise aus der Uebersetzung.
   const levelLabels: Record<RiskLevel, string> = {
-    low: t('risks:levels.low'),
-    medium: t('risks:levels.medium'),
-    high: t('risks:levels.high'),
-    critical: t('risks:levels.critical'),
+    low: levelLabel(scale, 'low', t('risks:levels.low')),
+    medium: levelLabel(scale, 'medium', t('risks:levels.medium')),
+    high: levelLabel(scale, 'high', t('risks:levels.high')),
+    critical: levelLabel(scale, 'critical', t('risks:levels.critical')),
   };
 
   const categoryLabels: Record<string, string> = {
@@ -68,15 +101,6 @@ export const Risks: React.FC = () => {
     accepted: t('risks:status.accepted'),
     closed: t('risks:status.closed'),
   };
-
-  const ratingLabels = [
-    '',
-    t('risks:ratings.1'),
-    t('risks:ratings.2'),
-    t('risks:ratings.3'),
-    t('risks:ratings.4'),
-    t('risks:ratings.5'),
-  ];
 
   const fwLabels: Record<string, string> = {
     iso27001: t('common:frameworks.iso27001'),
@@ -155,6 +179,7 @@ export const Risks: React.FC = () => {
     api.get('/threats').then(r => setThreats(r.data)).catch(() => setThreats([]));
     api.get('/controls').then(r => setAllControls(r.data)).catch(() => setAllControls([]));
     api.get('/templates?category=risk').then(r => setTemplates(r.data)).catch(() => setTemplates([]));
+    loadActiveScale().then(setScale).catch(() => setScale(null));
   }, []);
 
   const stats = useMemo(() => {
@@ -169,12 +194,27 @@ export const Risks: React.FC = () => {
     if (statusFilter && r.status !== statusFilter) return false;
     if (categoryFilter && r.category !== categoryFilter) return false;
     if (levelFilter && r.inherent_level !== levelFilter) return false;
+    if (flagFilter === 'appetite' && !r.appetite_exceeded) return false;
+    if (flagFilter === 'reassess' && !r.needs_reassessment) return false;
+    if (heatCell && (r.needs_reassessment || r.likelihood !== heatCell.likelihood || r.impact !== heatCell.impact)) return false;
     if (search && !`${r.ref} ${r.title}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }), [risks, statusFilter, categoryFilter, levelFilter, search]);
+  }), [risks, statusFilter, categoryFilter, levelFilter, flagFilter, heatCell, search]);
+
+  // Heatmap zaehlt nur Risiken, die nach der aktiven Version bewertet sind -
+  // Werte einer anderen Skala gehoeren nicht in diese Matrix.
+  const heatCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    risks.filter(r => !r.needs_reassessment).forEach(r => m.set(`${r.likelihood}-${r.impact}`, (m.get(`${r.likelihood}-${r.impact}`) || 0) + 1));
+    return m;
+  }, [risks]);
+  const reassessCount = useMemo(() => risks.filter(r => r.needs_reassessment).length, [risks]);
+  const appetiteCount = useMemo(() => risks.filter(r => r.appetite_exceeded).length, [risks]);
+  const resetFilters = () => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); setFlagFilter(''); setHeatCell(null); };
 
   const openNew = () => {
     setEditId(null);
+    setFormScale(scale);
     setForm({ ...emptyRisk });
     setAssetSearch('');
     setThreatSearch('');
@@ -182,6 +222,9 @@ export const Risks: React.FC = () => {
   };
   const openEdit = (r: Risk) => {
     setEditId(r.id);
+    // Werte gelten in der Skala der Version, nach der das Risiko bewertet ist.
+    setFormScale(r.needs_reassessment ? null : scale);
+    if (r.needs_reassessment && r.methodology_id) loadScaleVersion(r.methodology_id).then(setFormScale).catch(() => setFormScale(null));
     setForm({
       title: r.title, description: r.description || '', category: r.category || 'it_security',
       owner_id: r.owner_id ? String(r.owner_id) : '',
@@ -191,6 +234,7 @@ export const Risks: React.FC = () => {
       asset_ids: (r.assets || []).map(a => a.id),
       threat_ids: (r.threats || []).map(t => t.id),
       controls: (r.controls || []).map(c => ({ id: c.id, effectiveness: (c as any).RiskControl?.effectiveness || 3 })),
+      reassess: false,
     });
     setAssetSearch('');
     setThreatSearch('');
@@ -210,6 +254,15 @@ export const Risks: React.FC = () => {
       setModalOpen(false); load();
     } catch (err: any) { toast.error(err.response?.data?.error || t('risks:toast.errorSaving')); }
     finally { setSaving(false); }
+  };
+
+  // Neubewertung: Formular auf die aktive Skala umstellen. Die Werte muessen
+  // bewusst neu gewaehlt werden; gespeichert wird mit reassess, der Server
+  // protokolliert den Wechsel der Version.
+  const startReassess = () => {
+    if (!scale) return;
+    setFormScale(scale);
+    setForm(f => ({ ...f, reassess: true, likelihood: Math.min(f.likelihood, scale.likelihood_size), impact: Math.min(f.impact, scale.impact_size) }));
   };
 
   const remove = async (r: Risk) => {
@@ -253,6 +306,8 @@ export const Risks: React.FC = () => {
     [t('risks:form.acceptedBy', { name: '' }).trim()]: r.acceptedBy?.name || '',
     [t('risks:acceptedUntil')]: r.accepted_until ? format(new Date(r.accepted_until), 'dd.MM.yyyy', { locale: dateFnsLocale }) : '',
     [t('risks:form.nextReview')]: r.review_date ? format(new Date(r.review_date), 'dd.MM.yyyy', { locale: dateFnsLocale }) : '',
+    [t('risks:methodology.versionColumn')]: r.methodology_version ?? '',
+    [t('risks:methodology.appetiteExceeded')]: r.appetite_exceeded ? t('risks:methodology.yes') : '',
   }));
 
   useKeyShortcut('n', openNew, { disabled: loading || editId !== null });
@@ -263,6 +318,10 @@ export const Risks: React.FC = () => {
   if (loading) return <div className="flex justify-center pt-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
   const editingRisk = risks.find(r => r.id === editId);
+  const acceptanceRule = scale?.acceptance.find(a => a.level === editingRisk?.effective_level);
+  const statusOptions = Object.entries(statusLabels)
+    .filter(([v]) => v !== 'accepted' || form.status === 'accepted')
+    .map(([v, l]) => ({ value: v, label: l }));
 
   return (
     <div className="space-y-6">
@@ -290,11 +349,12 @@ export const Risks: React.FC = () => {
           <Card className="space-y-4">
             <FilterBar
               search={search} onSearch={setSearch} searchPlaceholder={t('risks:searchPlaceholder')}
-              activeCount={[statusFilter, categoryFilter, levelFilter].filter(Boolean).length}
-              onReset={() => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); }}>
+              activeCount={[statusFilter, categoryFilter, levelFilter, flagFilter, heatCell ? 'x' : ''].filter(Boolean).length}
+              onReset={resetFilters}>
               <Select className="w-40" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allStatus') }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]} />
               <Select className="w-40" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allCategories') }, ...Object.entries(categoryLabels).map(([v, l]) => ({ value: v, label: l }))]} />
               <Select className="w-40" value={levelFilter} onChange={e => setLevelFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allLevels') }, ...Object.entries(levelLabels).map(([v, l]) => ({ value: v, label: l }))]} />
+              <Select className="w-48" value={flagFilter} onChange={e => setFlagFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allFlags') }, { value: 'appetite', label: `${t('risks:methodology.appetiteExceeded')} (${appetiteCount})` }, { value: 'reassess', label: `${t('risks:methodology.needsReassessment')} (${reassessCount})` }]} />
             </FilterBar>
 
             <Card className="!border-0 shadow-none">
@@ -315,7 +375,7 @@ export const Risks: React.FC = () => {
                   ) : filtered.length === 0 ? (
                     <div className="py-12 text-center px-6">
                       <p className="text-gray-500 dark:text-slate-400">{t('risks:noFilter')}</p>
-                      <button onClick={() => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); }}
+                      <button onClick={resetFilters}
                         className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
                         {t('common:actions.reset')}
                       </button>
@@ -331,6 +391,7 @@ export const Risks: React.FC = () => {
                               <p className="font-mono text-[10px] text-gray-500 dark:text-slate-400">{r.ref}</p>
                               <p className="text-sm font-medium dark:text-slate-200 mt-0.5 leading-snug">{r.title}</p>
                               <p className="text-[11px] text-gray-500 mt-0.5 dark:text-gray-400">{categoryLabels[r.category!] || r.category}</p>
+                              <RiskFlags r={r} />
                             </div>
                             {canWrite && (
                               <IconButton label={t('common:actions.delete')} variant="danger" onClick={e => { e.stopPropagation(); remove(r); }}><Trash2 size={14} /></IconButton>
@@ -366,6 +427,7 @@ export const Risks: React.FC = () => {
                                <span>{categoryLabels[r.category!] || r.category}</span>
                                {(r.assets?.length || 0) > 0 && <span className="flex items-center gap-0.5"><Shield size={10} />{r.assets!.length}</span>}
                             </p>
+                            <RiskFlags r={r} />
                           </Td>
                           <Td><Badge value={r.inherent_level!} label={levelLabels[r.inherent_level!]} /></Td>
                           <Td>
@@ -373,7 +435,7 @@ export const Risks: React.FC = () => {
                               {r.residual_level ? (
                                 <>
                                   <Badge value={r.residual_level} label={levelLabels[r.residual_level]} />
-                                  {(r.inherent_level !== r.residual_level) && <span className="text-[10px] text-green-600 font-bold">-{Math.round((r.inherent_likelihood * r.inherent_impact - (r.residual_likelihood || 0) * (r.residual_impact || 0)) / (r.inherent_likelihood * r.inherent_impact || 1) * 100)}%</span>}
+                                  {(r.inherent_level !== r.residual_level) && <span className="text-[10px] text-green-600 font-bold">-{Math.round((r.likelihood * r.impact - (r.residual_likelihood || 0) * (r.residual_impact || 0)) / (r.likelihood * r.impact || 1) * 100)}%</span>}
                                 </>
                               ) : <span className="text-xs text-gray-300 italic">{t('risks:notTreated')}</span>}
                             </div>
@@ -409,7 +471,7 @@ export const Risks: React.FC = () => {
                         <tr>
                           <td colSpan={6} className="px-4 py-12 text-center">
                             <p className="text-gray-500 dark:text-slate-400">{t('risks:noFilter')}</p>
-                            <button onClick={() => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); }}
+                            <button onClick={resetFilters}
                               className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
                               {t('common:actions.reset')}
                             </button>
@@ -425,6 +487,28 @@ export const Risks: React.FC = () => {
         </div>
 
         <div className="lg:col-span-1 space-y-6">
+          {scale && (
+            <Card>
+              <CardHeader className="pb-2 border-b dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Grid3x3 className="text-blue-500" size={18} />
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-semibold dark:text-white">{t('risks:heatmap.title')}</h2>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400 truncate">{t('risks:methodology.versionLabel', { version: scale.version, name: scale.name })}</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardBody className="pt-3 space-y-2">
+                <RiskHeatmap scale={scale} counts={heatCounts} selected={heatCell} onSelect={setHeatCell} compact />
+                <p className="text-[10px] text-gray-500 dark:text-slate-400">{t('risks:heatmap.hint')}</p>
+                {reassessCount > 0 && (
+                  <button type="button" onClick={() => setFlagFilter('reassess')} className="text-[11px] text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1">
+                    <RefreshCcw size={11} />{t('risks:heatmap.reassessPending', { count: reassessCount })}
+                  </button>
+                )}
+              </CardBody>
+            </Card>
+          )}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b dark:border-slate-800">
               <div className="flex items-center gap-2">
@@ -478,11 +562,29 @@ export const Risks: React.FC = () => {
             <SearchableSelect label={t('risks:form.owner')} value={String(form.owner_id || '')} onChange={val => setForm({ ...form, owner_id: val })} options={[{ value: '', label: t('risks:form.select') }, ...users.map(u => ({ value: String(u.id), label: u.name }))]} />
 
             <section className="md:col-span-2 p-4 rounded-xl border dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/20 space-y-4">
-              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('risks:form.inherentSection')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select label={t('risks:form.likelihood')} value={String(form.likelihood)} onChange={e => setForm({ ...form, likelihood: parseInt(e.target.value) })} options={[1,2,3,4,5].map(n => ({ value: String(n), label: ratingLabels[n] }))} />
-                <Select label={t('risks:form.impact')} value={String(form.impact)} onChange={e => setForm({ ...form, impact: parseInt(e.target.value) })} options={[1,2,3,4,5].map(n => ({ value: String(n), label: ratingLabels[n] }))} />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('risks:form.inherentSection')}</h3>
+                {formScale && <span className="text-[10px] text-gray-500 dark:text-slate-400">{t('risks:methodology.versionLabel', { version: formScale.version, name: formScale.name })}</span>}
               </div>
+              {editingRisk?.needs_reassessment && !form.reassess && (
+                <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300">
+                  <span>{t(editingRisk.matrix_changed ? 'risks:methodology.outdatedMatrix' : 'risks:methodology.outdated', { version: editingRisk.methodology_version, active: scale?.version })}</span>
+                  {canWrite && <Button type="button" size="sm" variant="secondary" onClick={startReassess}><RefreshCcw size={12} />{t('risks:methodology.reassess')}</Button>}
+                </div>
+              )}
+              {form.reassess && (
+                <p className="text-xs text-blue-700 dark:text-blue-300">{t('risks:methodology.reassessHint', { version: scale?.version })}</p>
+              )}
+              {formScale ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Select label={t('risks:form.likelihood')} value={String(form.likelihood)} onChange={e => setForm({ ...form, likelihood: parseInt(e.target.value) })} options={stepOptions(formScale.likelihood_levels, formScale.likelihood_unit)} />
+                  <Select label={t('risks:form.impact')} value={String(form.impact)} onChange={e => setForm({ ...form, impact: parseInt(e.target.value) })} options={stepOptions(formScale.impact_levels, formScale.impact_unit)} />
+                </div>
+              ) : <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('risks:methodology.loading')}</p>}
+              {formScale && (() => {
+                const desc = [formScale.likelihood_levels[form.likelihood - 1], formScale.impact_levels[form.impact - 1]].filter(s => s?.description);
+                return desc.length > 0 ? <ul className="text-[11px] text-gray-500 dark:text-slate-400 list-disc pl-4">{desc.map((s, i) => <li key={i}>{s!.description}</li>)}</ul> : null;
+              })()}
             </section>
 
             <div className="md:col-span-2 space-y-2">
@@ -526,7 +628,7 @@ export const Risks: React.FC = () => {
             </div>
 
             <Select label={t('risks:form.treatment')} value={form.treatment} onChange={e => setForm({ ...form, treatment: e.target.value as RiskTreatment })} options={Object.entries(treatmentLabels).map(([v, l]) => ({ value: v, label: l }))} />
-            <Select label={t('risks:table.status')} value={form.status} onChange={e => setForm({ ...form, status: e.target.value as RiskStatus })} options={Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Select label={t('risks:table.status')} value={form.status} onChange={e => setForm({ ...form, status: e.target.value as RiskStatus })} options={statusOptions} />
 
             <div className="md:col-span-2 flex flex-col gap-1">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:form.treatmentPlan')}</label>
@@ -584,9 +686,18 @@ export const Risks: React.FC = () => {
                     <button type="button" onClick={revokeSignoff} className="text-xs text-red-600 dark:text-red-400 hover:underline font-bold uppercase">{t('risks:form.revokeSignoff')}</button>
                   </div>
                 ) : (
+                  <div className="space-y-2">
+                  {acceptanceRule && (
+                    <p className="text-[11px] text-gray-600 dark:text-slate-400">
+                      {t('risks:acceptance.rule', { level: levelLabels[acceptanceRule.level], roles: acceptanceRule.roles.join(', ') })}
+                      {acceptanceRule.max_months ? ` ${t('risks:acceptance.maxMonths', { count: acceptanceRule.max_months })}` : ''}
+                    </p>
+                  )}
+                  {editingRisk?.needs_reassessment && <p className="text-[11px] text-amber-700 dark:text-amber-400">{t('risks:acceptance.reassessFirst')}</p>}
                   <div className="flex items-end gap-4">
                     <div className="flex-1"><Input label={t('risks:form.signoffDate')} type="date" value={signoffUntil} onChange={e => setSignoffUntil(e.target.value)} /></div>
-                    <Button type="button" variant="secondary" className="bg-white dark:bg-slate-900" onClick={doSignoff}><ShieldCheck size={14} />{t('risks:form.digitalSignoff')}</Button>
+                    <Button type="button" variant="secondary" className="bg-white dark:bg-slate-900" onClick={doSignoff} disabled={!!editingRisk?.needs_reassessment}><ShieldCheck size={14} />{t('risks:form.digitalSignoff')}</Button>
+                  </div>
                   </div>
                 )}
               </div>

@@ -49,7 +49,8 @@
   "filters": {
     "allStatus": "All Status",
     "allCategories": "All Categories",
-    "allLevels": "All Levels"
+    "allLevels": "All Levels",
+    "allFlags": "Todas las marcas"
   },
   "empty": {
     "title": "No risks recorded yet",
@@ -130,5 +131,33 @@
     "implemented": "implemented",
     "planned": "planned",
     "na": "n/a"
+  },
+  "heatmap": {
+    "title": "Matriz de riesgos",
+    "likelihood": "Probabilidad",
+    "impact": "Impacto",
+    "hint": "Haga clic en una celda para filtrar la lista. Se cuentan los riesgos evaluados con la metodología activa (inherente).",
+    "reassessPending_one": "{{count}} riesgo con una metodología anterior – reevaluar",
+    "reassessPending_other": "{{count}} riesgos con una metodología anterior – reevaluar"
+  },
+  "methodology": {
+    "versionLabel": "Metodología v{{version}} · {{name}}",
+    "versionColumn": "Versión de metodología",
+    "appetiteExceeded": "Apetito superado",
+    "appetiteTitle": "Tolerado hasta el nivel «{{level}}»",
+    "needsReassessment": "Pendiente de reevaluar",
+    "needsReassessmentShort": "v{{version}} · reevaluar",
+    "outdated": "Evaluado con la metodología v{{version}} (activa: v{{active}}). Los valores corresponden a la escala anterior.",
+    "outdatedMatrix": "Evaluado con la metodología v{{version}} con otro tamaño de matriz (activa: v{{active}}). Los valores corresponden a la escala anterior.",
+    "reassess": "Reevaluar con la metodología actual",
+    "reassessHint": "Reevaluación con la metodología v{{version}}: elija de nuevo probabilidad e impacto. El cambio queda registrado.",
+    "loading": "Cargando escala…",
+    "yes": "sí"
+  },
+  "acceptance": {
+    "rule": "Pueden aceptar el nivel «{{level}}»: {{roles}}.",
+    "maxMonths_one": "Válido como máximo {{count}} mes.",
+    "maxMonths_other": "Válido como máximo {{count}} meses.",
+    "reassessFirst": "Reevalúe con la metodología activa antes de la aprobación."
   }
 }

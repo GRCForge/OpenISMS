@@ -49,7 +49,8 @@
   "filters": {
     "allStatus": "All Status",
     "allCategories": "All Categories",
-    "allLevels": "All Levels"
+    "allLevels": "All Levels",
+    "allFlags": "All flags"
   },
   "empty": {
     "title": "No risks recorded yet",
@@ -130,5 +131,33 @@
     "implemented": "implemented",
     "planned": "planned",
     "na": "n/a"
+  },
+  "heatmap": {
+    "title": "Risk matrix",
+    "likelihood": "Likelihood",
+    "impact": "Impact",
+    "hint": "Click a cell to filter the list. Counts risks assessed under the active methodology (inherent).",
+    "reassessPending_one": "{{count}} risk under an older methodology – reassess",
+    "reassessPending_other": "{{count}} risks under an older methodology – reassess"
+  },
+  "methodology": {
+    "versionLabel": "Methodology v{{version}} · {{name}}",
+    "versionColumn": "Methodology version",
+    "appetiteExceeded": "Appetite exceeded",
+    "appetiteTitle": "Tolerated up to level \"{{level}}\"",
+    "needsReassessment": "Needs reassessment",
+    "needsReassessmentShort": "v{{version}} · reassess",
+    "outdated": "Assessed under methodology v{{version}} (active: v{{active}}). Values are on the old scale.",
+    "outdatedMatrix": "Assessed under methodology v{{version}} with a different matrix size (active: v{{active}}). Values are on the old scale.",
+    "reassess": "Reassess under current methodology",
+    "reassessHint": "Reassessment under methodology v{{version}}: choose likelihood and impact again. The change is logged.",
+    "loading": "Loading scale…",
+    "yes": "yes"
+  },
+  "acceptance": {
+    "rule": "Level \"{{level}}\" may be accepted by: {{roles}}.",
+    "maxMonths_one": "Valid for at most {{count}} month.",
+    "maxMonths_other": "Valid for at most {{count}} months.",
+    "reassessFirst": "Reassess under the active methodology before signing off."
   }
 }
