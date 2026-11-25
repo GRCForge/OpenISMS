@@ -1,0 +1,111 @@
+name: Wiki
+
+# Builds the GitHub wiki from docs/ and wiki/ (scripts/build-wiki.js).
+#
+#   pull request → validate only: every link and anchor must resolve
+#   push to main → validate and publish to <repo>.wiki.git
+#
+# The wiki is generated; edits made on GitHub are overwritten on the next run.
+#
+# One-time setup: enable the wiki (Settings → General → Features → Wikis) and
+# create any first page in the GitHub UI — GitHub creates the wiki repository
+# only then. Publishing uses the workflow token; if your organisation does not
+# allow it to push to the wiki, add a fine-grained token with "Contents: write"
+# on this repository as the secret WIKI_TOKEN.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'wiki/**'
+      - 'SECURITY.md'
+      - 'CONTRIBUTING.md'
+      - 'scripts/build-wiki.js'
+      - '.github/workflows/wiki.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'wiki/**'
+      - 'SECURITY.md'
+      - 'CONTRIBUTING.md'
+      - 'scripts/build-wiki.js'
+      - '.github/workflows/wiki.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  build:
+    name: Build & validate wiki
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26.13.0'
+
+      - name: Build wiki
+        run: node scripts/build-wiki.js build/wiki
+
+  publish:
+    name: Publish wiki
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # Rebuilt from the same commit rather than passed as an artifact: the
+      # build is deterministic and takes a second.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26.13.0'
+
+      - name: Build wiki
+        run: node scripts/build-wiki.js build/wiki
+
+      - name: Push to the wiki repository
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN || github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          url="https://x-access-token:${WIKI_TOKEN}@github.com/${REPO}.wiki.git"
+          if ! git clone --quiet --depth 1 "$url" wiki-repo; then
+            echo "::error::Cannot clone ${REPO}.wiki.git. Enable the wiki and create the first page once in the GitHub UI (see the comment at the top of this workflow)."
+            exit 1
+          fi
+          # Replace the whole content: pages removed from the sources disappear.
+          find wiki-repo -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R build/wiki/. wiki-repo/
+          cd wiki-repo
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki is already up to date."
+            exit 0
+          fi
+          git commit --quiet -m "docs(wiki): sync from ${REPO}@${SHA::7}"
+          git push --quiet origin HEAD
+          echo "Wiki published: https://github.com/${REPO}/wiki"

@@ -211,7 +211,7 @@ REST API, never over MCP.
 |---|---|
 | **Compliance overview** | Coverage per framework (ISO 27001, NIS-2, GDPR) with the assigned and unassigned assets, quick assignment, and **GDPR gap detection**: assets that process personal data (Art. 6/9) without a complete processing record |
 | **ISO 27001:2022** | Statement of Applicability for all 93 Annex A controls in four themes |
-| **BSI IT-Grundschutz** | Compendium requirements with implementation status (seed catalogue: 64 requirements in 25 modules). Versioned catalogues are imported at runtime — IT-Grundschutz-Kompendium as XML (DocBook) or OSCAL catalogues in JSON such as the Grundschutz++ user catalogue — by upload or from a public URL, previewed with a diff (new/changed/removed) and activated deliberately; existing status data is kept, requirements no longer contained are marked as retired |
+| **BSI IT-Grundschutz** | Information domains, modelling and the IT-Grundschutz check per BSI Standard 200-2, on versioned catalogues — see below |
 | **BSI C5:2026** | 174 criteria in 18 domains with status and evidence |
 | **TISAX** | Assessments with label and validity, plus a VDA ISA self-assessment of maturity levels 0–3 (38 requirements) |
 | **NIS-2 / BSIG** | See below |
@@ -235,6 +235,36 @@ REST API, never over MCP.
 - The **scoring model** (weights, the value of "partly", maturity thresholds) is
   editable and audit-logged
 - Incident reporting deadlines are covered in the incident module
+
+### BSI IT-Grundschutz (BSI Standard 200-2)
+- **Versioned catalogues:** the IT-Grundschutz-Kompendium (DocBook XML as
+  published by the BSI) or a Grundschutz++ catalogue (OSCAL JSON) is imported at
+  runtime, by upload or from an allowed HTTPS URL. An import is a preview with a
+  comparison against the active catalogue (new / changed / withdrawn) and only
+  takes effect when activated. Existing status, owners and notes are kept;
+  requirements no longer in the catalogue are marked as retired, never deleted.
+  A built-in excerpt (64 requirements in 25 modules) is available from the start
+- **Information domains** (Informationsverbund) with scope and protection
+  approach — basic, standard or core protection — and several domains per
+  installation
+- **Target objects:** assets from the asset register, assigned to a domain with
+  their Grundschutz type (business process, application, IT system, ICS, room,
+  building, network). The type is suggested from the asset type
+- **Modelling:** Kompendium modules or Grundschutz++ practices are assigned to a
+  target object or to the whole domain. Suggestions per target type are applied
+  only by an explicit click
+- **IT-Grundschutz check** per target object: yes / partially / no /
+  dispensable / open. "No" and "dispensable" require a justification, enforced
+  on the server. Each entry carries a responsible user or group, a due date,
+  one-off and recurring costs, evidence documents and linked controls
+- The protection approach filters the requirements (basic: B; standard: B+S;
+  core: B+S+H). Fulfilment per module and target object and cost totals are
+  calculated
+- **Excel export** in the layout of the BSI reference document A.4
+  "IT-Grundschutz-Check"
+- New permissions `bsi_grundschutz.manage_catalog` and
+  `bsi_grundschutz.manage_domain`; every import, activation and change is
+  audit-logged
 
 ---
 
@@ -506,7 +536,7 @@ Seeded on first start or when a module is enabled:
 |---|---|
 | ISO 27001:2022 Annex A | 93 controls |
 | BSI C5:2026 | 174 criteria in 18 domains |
-| BSI IT-Grundschutz | 64 requirements in 25 modules |
+| BSI IT-Grundschutz | 64 requirements in 25 modules (built-in excerpt; full Kompendium or Grundschutz++ catalogues are imported) |
 | TISAX / VDA ISA | 38 requirements |
 | NIS-2 / BSIG criteria | 126 entries (23 anchors, 103 sub-requirements) |
 | NIS-2 self-check | 37 questions |

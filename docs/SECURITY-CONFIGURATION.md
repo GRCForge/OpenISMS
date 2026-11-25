@@ -337,9 +337,10 @@ encrypted. Settings that matter for security (**Administration → Security**):
   tokens for dedicated users with the smallest role that works.
 - Always set an expiry date. Expired tokens are rejected and removed nightly.
 - Tokens are accepted in the `Authorization: Bearer` header and in `X-API-Key`.
-  On `GET` requests they are also accepted as a query parameter (for clients
-  that cannot set headers); the server log redacts them, but proxies may not —
-  prefer headers.
+  Since v3.5.1 the REST API accepts a token in the query string only for
+  server-sent event streams (`GET` with `Accept: text/event-stream`), because
+  `EventSource` cannot set headers. On every other request a query token is
+  ignored. The server log redacts query tokens, but proxies may not.
 
 ---
 

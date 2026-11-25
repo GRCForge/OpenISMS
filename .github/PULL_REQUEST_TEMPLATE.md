@@ -27,6 +27,7 @@
 
 - [ ] Branch follows the naming convention from [CONTRIBUTING.md](../CONTRIBUTING.md) (`release/vX.Y.Z` or `security/vX.Y.Z`)
 - [ ] `cd frontend && npm run build` passes without TypeScript errors
+- [ ] Commit messages, PR title and description are in English
 - [ ] No secrets, credentials, or `.env` files committed
 - [ ] New dependencies justified and bundle size impact considered
 - [ ] Database schema changes are backward-compatible (no destructive `ALTER TABLE`)

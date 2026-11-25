@@ -1,0 +1,1 @@
+This wiki is generated from the [OpenISMS repository](https://github.com/GRCForge/OpenISMS) (`docs/` and `wiki/`). Changes are made there by pull request — edits made directly in the wiki are overwritten on the next publish.
