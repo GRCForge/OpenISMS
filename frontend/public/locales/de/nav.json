@@ -142,6 +142,10 @@
     "threatIntel": {
       "label": "Bedrohungslage",
       "hint": "Warnmeldungen & Quellen"
+    },
+    "vulnerabilities": {
+      "label": "Schwachstellen",
+      "hint": "Register & CVE-Übernahme"
     }
   },
   "overdueReviews_one": "{{count}} überfällige Überprüfung",

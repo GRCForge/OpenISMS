@@ -289,7 +289,8 @@
     "users": "Gestión de usuarios",
     "tokens": "Tokens de API",
     "backup": "Copia y restauración",
-    "threat_intel": "Panorama de amenazas"
+    "threat_intel": "Panorama de amenazas",
+    "vulnerabilities": "Vulnerabilidades"
   },
   "actions": {
     "view": "Read",
@@ -332,7 +333,8 @@
     "upload": "Subir",
     "verify": "Verificar integridad",
     "view_details": "Ver detalles",
-    "manage_methodology": "Gestionar metodología de riesgos"
+    "manage_methodology": "Gestionar metodología de riesgos",
+    "override_residual": "Sobrescribir riesgo neto"
   },
   "llm": {
     "title": "AI / LLM Configuration",
@@ -574,6 +576,8 @@
     "riskCount": "Riesgos",
     "createdBy": "Creada",
     "system": "Sistema",
-    "show": "Mostrar"
+    "show": "Mostrar",
+    "dimensions": "Dimensiones de impacto",
+    "dimensionsHint": "Qué dimensiones del impacto se valoran por separado (ISO 27005 cap. 7–8, BSI 200-3). El impacto total de un riesgo es el máximo de sus dimensiones valoradas. Sin selección, el impacto sigue siendo un valor único. Un cambio crea una nueva versión de la metodología."
   }
 }

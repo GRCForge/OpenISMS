@@ -63,7 +63,8 @@
     "risk": "Risk",
     "inherent": "Inherent",
     "residual": "Residual",
-    "status": "Status"
+    "status": "Status",
+    "target": "Objetivo"
   },
   "notTreated": "Untreated",
   "acceptedUntil": "Accepted until",
@@ -159,5 +160,117 @@
     "maxMonths_one": "Válido como máximo {{count}} mes.",
     "maxMonths_other": "Válido como máximo {{count}} meses.",
     "reassessFirst": "Reevalúe con la metodología activa antes de la aprobación."
+  },
+  "categoriesAdmin": {
+    "inactive": "inactiva",
+    "title": "Categorías de riesgo",
+    "hint": "Lista mantenida de categorías de riesgo. La clave es fija porque los riesgos y las versiones de la metodología se refieren a ella; las etiquetas, el orden y el estado activo se pueden cambiar. Las categorías inactivas ya no se ofrecen para nuevos riesgos. Solo se puede eliminar una entrada mientras nada se refiera a ella.",
+    "key": "Clave",
+    "order": "Orden",
+    "active": "Activa",
+    "risks": "Riesgos",
+    "migrated": "migrada",
+    "migratedHint": "Migrada del antiguo campo de texto libre: revise las etiquetas.",
+    "saved": "Guardado.",
+    "confirmDelete": "¿Eliminar la categoría de riesgo «{{label}}»?",
+    "keyPlaceholder": "vacío = a partir de la etiqueta en inglés",
+    "add": "Añadir categoría"
+  },
+  "assessment": {
+    "likelihoodRationale": "Justificación de la probabilidad",
+    "impactRationale": "Justificación del impacto",
+    "likelihoodRationalePlaceholder": "p. ej. dos incidentes el año pasado, ataques conocidos en el sector",
+    "impactRationalePlaceholder": "p. ej. datos de clientes afectados, obligación de notificación RGPD",
+    "rationaleHint": "Los valores han cambiado: actualice la justificación (obligatorio).",
+    "impactFromDimensions": "Total: {{value}} (máximo de las dimensiones)",
+    "impactSingle": "Total: {{value}} (ninguna dimensión valorada)",
+    "maxPrinciple": "Principio del máximo: el impacto total es la dimensión con la valoración más alta.",
+    "dimensions": "Impacto por dimensión",
+    "notRated": "– sin valorar –",
+    "overallImpact": "Impacto total (sin dimensiones)"
+  },
+  "dimensions": {
+    "confidentiality": "Confidencialidad",
+    "integrity": "Integridad",
+    "availability": "Disponibilidad",
+    "financial": "Financiero",
+    "legal": "Legal/regulatorio",
+    "reputation": "Reputación",
+    "operational": "Operativo"
+  },
+  "scenarios": {
+    "title": "Escenarios de riesgo ({{count}})",
+    "hint": "Escenario = activo(s) × amenaza × vulnerabilidad (ISO 27005, BSI 200-3).",
+    "add": "Escenario",
+    "empty": "No hay escenarios registrados.",
+    "number": "Escenario {{n}}",
+    "assets": "Activos",
+    "threat": "Amenaza",
+    "vulnerability": "Vulnerabilidad",
+    "none": "– ninguna –",
+    "description": "Breve descripción del escenario"
+  },
+  "levels3": {
+    "overridden": "sobrescrito",
+    "overriddenShort": "manual",
+    "overrideReason": "Justificación",
+    "overrideBy": "Sobrescrito por {{name}} el {{date}}",
+    "calculated": "Calculado: P{{l}} × I{{i}} ({{level}})",
+    "override": "Sobrescribir riesgo neto",
+    "overrideChange": "Cambiar sobrescritura",
+    "overrideRemove": "Volver al cálculo",
+    "overrideSave": "Sobrescribir",
+    "overrideReasonPlaceholder": "Justificación (obligatoria), p. ej. eficacia demostrada por pentest",
+    "targetSection": "Riesgo objetivo (tras el tratamiento previsto)",
+    "targetHint": "Manual: el riesgo esperado una vez aplicado el plan de tratamiento.",
+    "basis": "Nivel del mapa de calor",
+    "gross": "Bruto",
+    "net": "Neto",
+    "target": "Objetivo"
+  },
+  "vulns": {
+    "title": "Vulnerabilidades",
+    "subtitle": "{{count}} vulnerabilidades en el registro",
+    "importFromAsset": "Adoptar de los datos CVE",
+    "new": "Nueva vulnerabilidad",
+    "edit": "Editar vulnerabilidad",
+    "searchPlaceholder": "Buscar título, CVE, referencia…",
+    "allSources": "Todas las fuentes",
+    "allSeverities": "Todas las severidades",
+    "vulnerability": "Vulnerabilidad",
+    "severityLabel": "Severidad",
+    "assets": "Activos",
+    "risks": "Riesgos",
+    "empty": "Aún no hay vulnerabilidades registradas.",
+    "confirmDelete": "¿Eliminar la vulnerabilidad {{ref}}?",
+    "loadCvesError": "No se pudieron cargar los datos CVE.",
+    "imported": "{{created}} creadas, {{linked}} vinculadas al activo.",
+    "cveEntryHint": "Adoptada de datos CVE: el identificador CVE es fijo; el título y la valoración se pueden cambiar.",
+    "titleLabel": "Título",
+    "usedIn": "Usada en escenarios de riesgo:",
+    "hiddenRisks": "{{count}} riesgos más sin permiso de lectura",
+    "importHint": "Elija un activo y marque los CVE que desea adoptar como vulnerabilidades. No se adopta nada automáticamente; un CVE ya registrado solo se vincula al activo.",
+    "asset": "Activo",
+    "cvesOfAsset": "CVE del activo ({{count}})",
+    "noCves": "No hay datos CVE para este activo.",
+    "alreadyLinked": "ya registrada ({{ref}})",
+    "willLink": "registrada como {{ref}}: se vinculará al activo",
+    "importSelected": "Adoptar {{count}}",
+    "severity": {
+      "critical": "Crítica",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja",
+      "none": "Ninguna"
+    },
+    "status": {
+      "open": "Abierta",
+      "mitigated": "Mitigada",
+      "closed": "Cerrada"
+    },
+    "source": {
+      "manual": "Manual",
+      "cve": "CVE"
+    }
   }
 }
