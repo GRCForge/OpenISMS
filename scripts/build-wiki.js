@@ -128,7 +128,11 @@ function collectSources() {
     const rel = `docs/${r.file}`;
     const content = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     const title = (/^#\s+(.*)$/m.exec(content) || [, r.version])[1];
-    const summary = title.replace(/^OpenISMS\s+v?[\w.-]+\s*[—–-]\s*/, '').replace(/\|/g, '\\|');
+    // Table cell: escape backslashes first, then pipes, so "\|" in a title stays literal.
+    const summary = title
+      .replace(/^OpenISMS\s+v?[\w.-]+\s*[—–-]\s*/, '')
+      .replace(/\\/g, '\\\\')
+      .replace(/\|/g, '\\|');
     const name = `Release-Notes-v${r.version}`;
     PAGES[rel] = name;
     pages.push({ name, source: rel, content });
