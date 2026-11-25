@@ -1,36 +1,16 @@
-// Zentrale, standardisierte 5x5-Risikoskala (ISO 27005). Single Source of Truth
-// fuer Backend (Level-Berechnung) und Frontend (Matrix-Heatmap via /api/risks/scale).
+// Feste 5x5-Skala bis OpenISMS 3.5.1 - heute das Standardprofil der
+// Risikomethodik (services/riskMethodology.js). Bleibt als duenne Huelle fuer
+// Aufrufer, die ohne Profil rechnen; neue Stellen nutzen riskMethodology direkt,
+// damit die Version des Risikos zaehlt.
 
-const LIKELIHOOD = [null, 'Selten', 'Unwahrscheinlich', 'Möglich', 'Wahrscheinlich', 'Fast sicher'];
-const IMPACT = [null, 'Vernachlässigbar', 'Gering', 'Spürbar', 'Kritisch', 'Existenzbedrohend'];
+const { DEFAULT_PROFILE, computeLevel: computeWithProfile, scaleInfo: scaleWithProfile } = require('./riskMethodology');
 
-// Risiko = Wahrscheinlichkeit (1-5) x Auswirkung (1-5) -> Score 1..25 -> Stufe
-const computeLevel = (likelihood, impact) => {
-  const s = (Number(likelihood) || 0) * (Number(impact) || 0);
-  if (s <= 0) return null;
-  if (s <= 4) return 'low';
-  if (s <= 9) return 'medium';
-  if (s <= 14) return 'high';
-  return 'critical';
-};
+const LIKELIHOOD = [null, ...DEFAULT_PROFILE.likelihood_levels.map(l => l.label_de)];
+const IMPACT = [null, ...DEFAULT_PROFILE.impact_levels.map(l => l.label_de)];
 
-// Vollstaendige Matrix (fuer die Heatmap im Frontend)
-const buildMatrix = () => {
-  const rows = [];
-  for (let l = 5; l >= 1; l--) {
-    const row = [];
-    for (let i = 1; i <= 5; i++) row.push({ likelihood: l, impact: i, score: l * i, level: computeLevel(l, i) });
-    rows.push(row);
-  }
-  return rows;
-};
+// Ohne Profil: Standardprofil (Score 1-4 low, 5-9 medium, 10-14 high, 15-25 critical).
+const computeLevel = (likelihood, impact, profile = DEFAULT_PROFILE) => computeWithProfile(likelihood, impact, profile);
 
-const scaleInfo = () => ({
-  size: 5,
-  likelihood: LIKELIHOOD,
-  impact: IMPACT,
-  thresholds: { low: '1–4', medium: '5–9', high: '10–14', critical: '15–25' },
-  matrix: buildMatrix(),
-});
+const scaleInfo = (profile = DEFAULT_PROFILE) => scaleWithProfile(profile);
 
 module.exports = { LIKELIHOOD, IMPACT, computeLevel, scaleInfo };

@@ -16,7 +16,7 @@ const DEFAULT_PERMISSIONS = {
   // the other two stay in the handler, where they belong. edit_compliance names the
   // protected-field rule so it is at least visible and adjustable.
   assets:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit_basics: ['admin','owner','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin'], cve: ['admin','assessor','it-staff'] },
-  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'], sign_off: ['admin','assessor','owner'] },
+  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'], sign_off: ['admin','assessor','owner','management'], manage_methodology: ['admin'] },
   incidents:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin','assessor'] },
   assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor'] },
   controls:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },

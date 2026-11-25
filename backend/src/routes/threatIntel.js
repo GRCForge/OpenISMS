@@ -13,7 +13,7 @@ const { serverError, requestError } = require('../utils/httpError');
 const { setFilter, boundedInt } = require('../utils/queryFilters');
 const { escapeLike } = require('../utils/sqlUtils');
 const { auditFromReq } = require('../services/auditService');
-const { computeLevel } = require('../services/riskScale');
+const { computeLevel, getActiveProfile, DEFAULT_PROFILE } = require('../services/riskMethodology');
 const catalog = require('../services/threatSourceCatalog');
 const {
   nextReviewDate, isOverdue, toDateOnly, refreshSource, refreshAllSources, matchAssetsByCve,
@@ -399,8 +399,15 @@ router.post('/advisories/:id/to-risk', authenticate, requirePermission('threat_i
     if (!advisory) return res.status(404).json({ error: 'Nicht gefunden' });
     if (advisory.risk_id) return res.status(409).json({ error: 'Zu dieser Meldung existiert bereits ein Risiko.', risk_id: advisory.risk_id });
 
-    const likelihood = boundedInt(req.body?.likelihood, 3, 1, 5);
-    const impact = boundedInt(req.body?.impact, severityToImpact(advisory.severity), 1, 5);
+    // Werte gelten in der Skala der aktiven Risikomethodik (3 bis 6 Stufen).
+    // Der Vorschlag aus der Schwere ist auf 1-5 gedacht und wird auf die
+    // Skalenlaenge abgebildet (bei 5 Stufen unveraendert).
+    const methodik = (await getActiveProfile()) || DEFAULT_PROFILE;
+    const maxL = methodik.likelihood_levels.length;
+    const maxI = methodik.impact_levels.length;
+    const aufSkala = (v, max) => Math.min(max, Math.max(1, Math.round(1 + (v - 1) * (max - 1) / 4)));
+    const likelihood = boundedInt(req.body?.likelihood, aufSkala(3, maxL), 1, maxL);
+    const impact = boundedInt(req.body?.impact, aufSkala(severityToImpact(advisory.severity), maxI), 1, maxI);
     const title = (req.body?.title || `Bedrohung: ${advisory.title}`).slice(0, 255);
 
     const risk = await Risk.create({
@@ -415,7 +422,7 @@ router.post('/advisories/:id/to-risk', authenticate, requirePermission('threat_i
       owner_id: req.body?.owner_id || req.user.id,
       likelihood,
       impact,
-      inherent_level: computeLevel(likelihood, impact),
+      inherent_level: computeLevel(likelihood, impact, methodik),
       treatment: 'mitigate',
       status: 'open',
     });

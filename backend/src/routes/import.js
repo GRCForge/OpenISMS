@@ -353,6 +353,18 @@ router.post('/process', authenticate, requirePermission('import','access','admin
           continue;
         }
 
+        // Akzeptiert wird ein Risiko nur ueber die Freigabe mit Akzeptanzbefugnis
+        // (services/riskService.js), nicht ueber eine Spalte in einer Datei.
+        // Skala und Stufe prueft bzw. berechnet der Hook am Modell nach der
+        // aktiven Risikomethodik.
+        if (type === 'risk') {
+          if (data.status === 'accepted') throw new Error('Status "accepted" nur über die Freigabe (Sign-off), nicht per Import.');
+          delete data.methodology_id;
+          delete data.accepted_by_id;
+          delete data.accepted_at;
+          delete data.accepted_until;
+        }
+
         await config.model.create(data);
         results.created++;
       } catch (e) {

@@ -665,6 +665,18 @@ const start = async () => {
     } catch (e) {
       console.error('[DB] Could not create default BSI information domain:', e.message);
     }
+    // Risikomethodik (idempotent): Standardprofil = die 5x5-Skala bis 3.5.1 als
+    // Version 1, Risiken ohne Version werden ihr zugeordnet. Es wird nur
+    // methodology_id gesetzt; Werte, Stufen und updated_at bleiben. Scheitert
+    // das, bricht der Start ab: Ohne aktive Methodik koennte kein Risiko
+    // gespeichert werden, das waere ein halber Betrieb ohne erkennbaren Grund.
+    {
+      const { created, reactivated, attached, active } = await require('./services/riskMethodology').ensureDefaultProfile();
+      if (created) console.log(`[DB] Risikomethodik "${active.name}" (Version ${active.version}) angelegt`);
+      if (reactivated) console.warn(`[DB] Keine aktive Risikomethodik gefunden - Version ${active.version} wieder aktiv gesetzt`);
+      if (attached > 0) console.log(`[DB] ${attached} Risiko/Risiken der Methodik-Version 1 zugeordnet`);
+    }
+
     // Eine Modellierung je (Verbund, Zielobjekt oder Verbund selbst, Modul).
     // UNIQUE ueber target_object_id allein griffe bei NULL nicht (siehe models/BsiModeling.js).
     await sequelize.query(

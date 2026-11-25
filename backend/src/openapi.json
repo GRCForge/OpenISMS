@@ -4483,8 +4483,12 @@
           },
           "401": {
             "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
           }
-        }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`."
       }
     },
     "/risks/{id}/signoff": {
@@ -13118,6 +13122,153 @@
             "description": "Bezeichner (id)"
           }
         ]
+      }
+    },
+    "/risks/methodology/versions": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "versions abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`."
+      }
+    },
+    "/risks/methodology/validate": {
+      "post": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "validate anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.manage_methodology`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risks/methodology": {
+      "put": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "methodology aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.manage_methodology`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risks/methodology/carry-over": {
+      "post": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "carry over anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.manage_methodology`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risks/reassessment": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "reassessment abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`."
       }
     }
   },

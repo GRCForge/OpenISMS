@@ -1,8 +1,11 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-// Zentrales Risikoregister (ISO 27005 / BSI 200-3). Standardisierte Bewertung
-// ueber Wahrscheinlichkeit x Auswirkung (5x5, siehe services/riskScale.js).
+// Zentrales Risikoregister (ISO 27005 / BSI 200-3). Bewertung ueber
+// Wahrscheinlichkeit x Auswirkung nach der Risikomethodik, an deren Version das
+// Risiko haengt (methodology_id, siehe services/riskMethodology.js). Die Skalen
+// haben 3 bis 6 Stufen; ob ein Wert in die Skala SEINER Version passt, prueft der
+// beforeSave-Hook in models/index.js - die Grenzen hier sind nur der Rahmen.
 const Risk = sequelize.define('Risk', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   ref: { type: DataTypes.STRING(20) },                 // R-0001 (auto)
@@ -13,8 +16,8 @@ const Risk = sequelize.define('Risk', {
   owner_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
 
   // Inhaerentes Risiko
-  likelihood: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3, validate: { min: 1, max: 5 } },
-  impact: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3, validate: { min: 1, max: 5 } },
+  likelihood: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3, validate: { min: 1, max: 6 } },
+  impact: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3, validate: { min: 1, max: 6 } },
   inherent_level: { type: DataTypes.ENUM('low', 'medium', 'high', 'critical') },
 
   // Behandlung
@@ -22,8 +25,8 @@ const Risk = sequelize.define('Risk', {
   treatment_plan: { type: DataTypes.TEXT },
 
   // Restrisiko (nach Behandlung)
-  residual_likelihood: { type: DataTypes.INTEGER, validate: { min: 1, max: 5 } },
-  residual_impact: { type: DataTypes.INTEGER, validate: { min: 1, max: 5 } },
+  residual_likelihood: { type: DataTypes.INTEGER, validate: { min: 1, max: 6 } },
+  residual_impact: { type: DataTypes.INTEGER, validate: { min: 1, max: 6 } },
   residual_level: { type: DataTypes.ENUM('low', 'medium', 'high', 'critical') },
 
   status: { type: DataTypes.ENUM('open', 'in_treatment', 'accepted', 'closed'), defaultValue: 'open' },
@@ -34,6 +37,12 @@ const Risk = sequelize.define('Risk', {
   accepted_by_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
   accepted_at: { type: DataTypes.DATE },
   accepted_until: { type: DataTypes.DATEONLY },
+
+  // Version der Risikomethodik, nach der dieses Risiko bewertet ist. Weicht sie
+  // von der aktiven Version ab, steht das Risiko auf der Liste "neu zu
+  // bewerten"; umgerechnet wird nie still, nur durch eine protokollierte
+  // Neubewertung (services/riskService.js).
+  methodology_id: { type: DataTypes.INTEGER, references: { model: 'risk_methodologies', key: 'id' } },
 }, { tableName: 'risks', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
 // Lesbare Referenz (R-0001) nach dem Anlegen setzen

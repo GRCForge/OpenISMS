@@ -258,6 +258,7 @@ jobs:
           node scripts/test-query-token-scope.js
           node scripts/test-mass-assignment-op4.js
           node scripts/test-request-error.js
+          node scripts/test-risk-methodology.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only
