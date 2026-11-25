@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users as UsersIcon, History, KeyRound, Settings as SettingsIcon, CheckCircle2, XCircle, Copy, Loader2, ShieldCheck, Wrench, Trash2, Lock, RefreshCw, BookOpen, ExternalLink, Database, Download, Upload, AlertTriangle, FileArchive, Mail, Send, Wifi, Puzzle, Shield, Zap, Bot, LifeBuoy, Target, Car, Radar, Radio, AlertOctagon, Tag } from 'lucide-react';
+import { Users as UsersIcon, History, KeyRound, Settings as SettingsIcon, CheckCircle2, XCircle, Copy, Loader2, ShieldCheck, Wrench, Trash2, Lock, RefreshCw, BookOpen, ExternalLink, Database, Download, Upload, AlertTriangle, FileArchive, Mail, Send, Wifi, Puzzle, Shield, Zap, Bot, LifeBuoy, Target, Car, Radar, Radio, AlertOctagon, Tag, Gauge } from 'lucide-react';
 import api from '../lib/api';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -10,11 +10,12 @@ import { Users } from './Users';
 import { AuditLogPage } from './AuditLog';
 import { Groups } from './Groups';
 import { TriageProfilesSettings } from '../components/settings/TriageProfilesSettings';
+import { RiskMethodologySettings } from '../components/settings/RiskMethodologySettings';
 import { useModules } from '../contexts/ModulesContext';
 import type { ModuleKey } from '../contexts/ModulesContext';
 import { IconButton } from '../components/ui/IconButton';
 
-type AdminTab = 'users' | 'groups' | 'audit' | 'settings' | 'security' | 'rbac' | 'api' | 'backup' | 'smtp' | 'modules' | 'llm';
+type AdminTab = 'users' | 'groups' | 'audit' | 'settings' | 'security' | 'rbac' | 'risk' | 'api' | 'backup' | 'smtp' | 'modules' | 'llm';
 
 // ---------------- SMTP / E-Mail ----------------
 interface SmtpState { host: string; port: string; secure: boolean; user: string; password: string; from: string; }
@@ -1575,6 +1576,7 @@ export const Admin: React.FC = () => {
     { key: 'smtp', label: t('tabs.smtp'), icon: Mail },
     { key: 'settings', label: t('tabs.settings'), icon: SettingsIcon },
     { key: 'rbac', label: t('tabs.rbac'), icon: Lock },
+    { key: 'risk', label: t('tabs.risk'), icon: Gauge },
     { key: 'api', label: t('tabs.api'), icon: BookOpen },
     { key: 'backup', label: t('tabs.backup'), icon: Database },
     { key: 'llm', label: t('tabs.llm'), icon: Bot },
@@ -1623,6 +1625,7 @@ export const Admin: React.FC = () => {
       {tab === 'smtp' && <SmtpSettings />}
       {tab === 'settings' && <GeneralSettings />}
       {tab === 'rbac' && <RbacEditor />}
+      {tab === 'risk' && <RiskMethodologySettings />}
       {tab === 'api' && <ApiDocs />}
       {tab === 'backup' && <BackupRestore />}
       {tab === 'llm' && <div className="space-y-6"><LlmSettings /><TriageProfilesSettings /></div>}

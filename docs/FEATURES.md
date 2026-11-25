@@ -180,14 +180,59 @@ REST API, never over MCP.
 - Templates for assessments and protection needs
 
 ### Risk register (ISO 27005)
-- 5×5 matrix of likelihood × impact; inherent and residual risk separately
+- Likelihood × impact on the scales of the active **risk methodology**
+  (see below); inherent and residual risk separately
 - Linked to assets, threats (BSI elementary threats and custom threats) and
-  controls with an effectiveness rating
+  controls with an effectiveness rating; only implemented controls lower the
+  residual likelihood
 - Risk owner, treatment plan, risk templates
 - **Risk acceptance** as a management sign-off with an expiry date; acceptances
   expiring within 30 days are flagged and mailed, expired ones turn red. A
-  sign-off can be revoked
-- The matrix works as a click filter; CSV and Excel export
+  sign-off can be revoked. The status "accepted" is only set through the
+  sign-off, never through the edit form, an import or an MCP update
+- If the decisive level of an accepted risk rises (for example after a
+  reassessment), the acceptance lapses and the change is logged
+- Flags and filters for risks above the risk appetite and for risks that need
+  reassessment
+- The risk matrix (heatmap) works as a click filter; CSV and Excel export
+
+### Risk methodology (ISO 27005 clauses 6/7, ISO 31000 6.3.4, ISO 27001 6.1.2 a)
+Administration → Risk methodology defines how risks are assessed:
+- **Scales:** 3 to 6 levels each for likelihood and impact, set separately
+  (for example 4 × 5). Each level has a German and English label, a criterion
+  (frequency, damage in EUR, outage duration …) and an optional numeric range
+  with a unit
+- **Risk levels:** low, medium, high and critical with label, colour and score
+  thresholds (score = likelihood × impact). The thresholds must start at 1,
+  end at the highest score and leave neither gaps nor overlaps; a level that
+  contains no reachable score is reported as a warning
+- **Risk appetite / tolerance:** the highest tolerated level per risk category
+  plus an optional default. The residual risk counts (the inherent risk where
+  there is no residual); risks above it are flagged in the register, the API
+  and the MCP tools
+- **Acceptance authority:** per level, the roles allowed to accept a risk and
+  the maximum validity of an acceptance in months. The server enforces it for
+  the web interface, the API and the MCP tool `isms_signoff_risk`; without a
+  date the longest permitted validity is set
+- **Versioning:** every saved change creates a new, immutable version; exactly
+  one is active. Earlier versions stay readable with their author, date and
+  change note. Changes are recorded in the audit log
+- **No silent conversion:** risks stay on the version they were assessed
+  under and show it. After a change they appear on the list *Needs
+  reassessment*; an explicit reassessment moves them to the active version and
+  is logged. With an unchanged matrix size, an administrator can carry risks
+  over after confirmation — the level is then recalculated from the new
+  thresholds and logged per risk. A risk under an older version cannot be
+  signed off until it is reassessed
+- Live validation with a matrix preview and the number of risks a change
+  would affect; suggested thresholds when the matrix size changes
+- **Upgrade:** the default methodology is exactly the 5 × 5 scale used up to
+  3.5.1 (thresholds 1–4 / 5–9 / 10–14 / 15–25, acceptance by admin, assessor
+  and risk owner without a maximum validity, no appetite). Existing risks are
+  assigned to it without changing their values or levels
+- Permission `risks.manage_methodology` (default: admin). `risks.sign_off`
+  additionally includes management by default; which levels each role may
+  accept is decided by the methodology
 
 ---
 

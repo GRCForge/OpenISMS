@@ -1,40 +1,108 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { Risk, Asset, User, Document, Threat, Control, VvtEntry, Incident, Task } = require('../models');
+const { Risk, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
-const { notify } = require('../services/notifyService');
-const { computeLevel, scaleInfo } = require('../services/riskScale');
-const { computeResidual } = require('../services/residual');
 const { escapeLike } = require('../utils/sqlUtils');
+const rm = require('../services/riskMethodology');
+const riskService = require('../services/riskService');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
-const includeAll = [
-  { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
-  { model: User, as: 'acceptedBy', attributes: ['id', 'name'] },
-  { model: Asset, as: 'assets', attributes: ['id', 'name', 'type'], through: { attributes: [] } },
-  { model: Threat, as: 'threats', attributes: ['id', 'code', 'title', 'source'], through: { attributes: [] } },
-  { model: Control, as: 'controls', attributes: ['id', 'code', 'title', 'framework', 'status'], through: { attributes: ['effectiveness'] } },
-  { model: Document, as: 'acceptanceDocument', attributes: ['id', 'original_name'] },
-  { model: VvtEntry, as: 'vvtEntries', through: { attributes: [] } },
-  { model: Incident, as: 'incidents', through: { attributes: [] } },
-];
+const parseId = (v) => { const n = Number(v); return Number.isInteger(n) && n > 0 ? n : null; };
 
-// Per-record write authorization, mirroring the read scope in GET /:id: admin and
-// assessor may act on any risk; any other role only on risks they own. Prevents a
-// generic owner/it-staff/dpo user from modifying or signing off risks they cannot read.
-const canWriteRisk = (user, risk) =>
-  user.role === 'admin' || user.role === 'assessor' || risk.owner_id === user.id;
+// Validierungsfehler der Methodik mit allen Feldern beantworten; alles andere
+// laeuft ueber requestError (keine DB-Interna nach aussen).
+const methodologyError = (res, e) => {
+  if (e && e.status === 400 && e.extra && Array.isArray(e.extra.errors)) {
+    return res.status(400).json({ error: e.message, errors: e.extra.errors, warnings: e.extra.warnings || [] });
+  }
+  return requestError(res, e, 'risk-methodology');
+};
 
-// Standardisierte Skala/Matrix (fuer die Heatmap im Frontend)
-router.get('/scale', authenticate, (req, res) => res.json(scaleInfo()));
+// ── Risikomethodik ───────────────────────────────────────────────────────────
+// Diese Routen stehen vor '/:id', sonst faengt die Detailroute sie ab.
 
-router.get('/', authenticate, requirePermission('risks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+// Aktive Methodik (Skalen, Stufen, Matrix, Appetit, Akzeptanz) - fuer Heatmap
+// und Formulare. ?version=<id> liefert eine fruehere Version (nur lesen).
+router.get('/scale', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try {
+    if (req.query.version !== undefined) {
+      const id = parseId(req.query.version);
+      if (!id) return res.status(400).json({ error: 'Ungültige Version.' });
+      const p = await rm.getProfile(id);
+      if (!p) return res.status(404).json({ error: 'Not found' });
+      return res.json(rm.scaleInfo(p));
+    }
+    const active = await rm.getActiveProfile();
+    res.json(rm.scaleInfo(active || rm.DEFAULT_PROFILE));
+  } catch (e) { serverError(res, e, 'risk-methodology'); }
+});
+
+router.get('/methodology/versions', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try { res.json(await rm.listVersions()); } catch (e) { serverError(res, e, 'risk-methodology'); }
+});
+
+// Vorschau ohne Speichern: Pruefergebnis, Matrix, Zahl der Risiken, die danach
+// neu zu bewerten waeren.
+router.post('/methodology/validate', authenticate, requirePermission('risks', 'manage_methodology', 'admin'), async (req, res) => {
+  try {
+    const { profile, errors, warnings } = rm.validateProfile(req.body?.profile ?? req.body);
+    const active = await rm.getActiveProfile();
+    const unchanged = !!active && rm.sameContent(active, profile);
+    const affected = errors.length || unchanged ? 0 : await Risk.count();
+    res.json({
+      valid: errors.length === 0 && !unchanged,
+      unchanged,
+      errors,
+      warnings,
+      preview: errors.length ? null : rm.scaleInfo(profile),
+      matrix_changed: !!active && !errors.length && (active.likelihood_levels.length !== profile.likelihood_levels.length || active.impact_levels.length !== profile.impact_levels.length),
+      risks_to_reassess: affected,
+    });
+  } catch (e) { serverError(res, e, 'risk-methodology'); }
+});
+
+// Neue Version speichern und aktivieren. Die bisherige bleibt lesbar.
+router.put('/methodology', authenticate, requirePermission('risks', 'manage_methodology', 'admin'), async (req, res) => {
+  try {
+    const input = req.body?.profile ?? req.body;
+    const { profile, previous, warnings } = await rm.saveNewVersion(input, req.user, { changeNote: req.body?.change_note });
+    await auditFromReq(req, 'update', 'risk_methodology', profile.id, `${profile.name} (v${profile.version})`, {
+      version: profile.version,
+      previous_version: previous?.version ?? null,
+      change_note: profile.change_note,
+      likelihood_size: profile.likelihood_levels.length,
+      impact_size: profile.impact_levels.length,
+      thresholds: profile.risk_levels.map(r => ({ key: r.key, min: r.min_score, max: r.max_score })),
+      appetite: profile.appetite,
+      acceptance: profile.acceptance,
+    });
+    const toReassess = await Risk.count({ where: { [Op.or]: [{ methodology_id: { [Op.ne]: profile.id } }, { methodology_id: null }] } });
+    res.json({ ...rm.scaleInfo(profile), warnings, risks_to_reassess: toReassess });
+  } catch (e) { methodologyError(res, e); }
+});
+
+// Bestaetigte Uebernahme in die aktive Version (nur bei gleicher Matrixgroesse).
+router.post('/methodology/carry-over', authenticate, requirePermission('risks', 'manage_methodology', 'admin'), async (req, res) => {
+  try {
+    if (req.body?.confirm !== true) return res.status(400).json({ error: 'Übernahme bitte ausdrücklich bestätigen (confirm: true).' });
+    res.json(await riskService.carryOver(req.body?.risk_ids, req));
+  } catch (e) { requestError(res, e, 'risk-methodology'); }
+});
+
+// Liste "neu zu bewerten": Risiken, die nicht nach der aktiven Version bewertet sind.
+router.get('/reassessment', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try { res.json(await riskService.listForReassessment()); } catch (e) { serverError(res, e, 'risks'); }
+});
+
+// ── Risikoregister ───────────────────────────────────────────────────────────
+
+router.get('/', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
   try {
     const { status, treatment, level, search } = req.query;
     const where = {};
@@ -42,164 +110,73 @@ router.get('/', authenticate, requirePermission('risks','view','admin','owner','
     setFilter(where, 'treatment', treatment);
     setFilter(where, 'inherent_level', level);
     if (search) where.title = { [Op.iLike]: `%${escapeLike(search)}%` };
-    const risks = await Risk.findAll({ where, include: includeAll, order: [['created_at', 'DESC']] });
-    res.json(risks);
+    const risks = await Risk.findAll({ where, include: riskService.includeAll(), order: [['created_at', 'DESC']] });
+    let out = await rm.decorateRisks(risks);
+    if (req.query.appetite_exceeded === 'true') out = out.filter(r => r.appetite_exceeded);
+    if (req.query.needs_reassessment === 'true') out = out.filter(r => r.needs_reassessment);
+    res.json(out);
   } catch (e) { serverError(res, e, 'risks'); }
 });
 
-router.get('/:id', authenticate, requirePermission('risks','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+router.get('/:id', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
   try {
-    const risk = await Risk.findByPk(req.params.id, { include: includeAll });
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const risk = await Risk.findByPk(id, { include: riskService.includeAll() });
     if (!risk) return res.status(404).json({ error: 'Not found' });
-    
-    // Authorization: only admin, assessor, risk owner, or risk is assigned to user's role can view
-    const isAdmin = req.user.role === 'admin';
-    const isAssessor = req.user.role === 'assessor';
-    const isOwner = risk.owner_id === req.user.id;
-    
-    if (!isAdmin && !isAssessor && !isOwner) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    res.json(risk);
+    // Authorization: only admin, assessor or the risk owner can view the detail.
+    if (!riskService.canViewRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
+    res.json(await rm.decorateRisk(risk));
   } catch (e) { serverError(res, e, 'risks'); }
 });
 
-const buildFields = (body) => {
-  const f = {
-    title: body.title,
-    description: body.description ?? null,
-    category: body.category ?? null,
-    owner_id: body.owner_id || null,
-    likelihood: parseInt(body.likelihood) || 3,
-    impact: parseInt(body.impact) || 3,
-    treatment: body.treatment || 'mitigate',
-    treatment_plan: body.treatment_plan ?? null,
-    status: body.status || 'open',
-    review_date: (body.review_date === '' || body.review_date === 'Invalid date') ? null : (body.review_date || null),
-    acceptance_document_id: body.acceptance_document_id || null,
-  };
-  f.inherent_level = computeLevel(f.likelihood, f.impact);
-  return f;
-};
-
-// Verknuepfungen (Assets, Bedrohungen, Controls mit Wirksamkeit) setzen.
-// Die Zuordnungen betreffen unterschiedliche Verknüpfungstabellen und sind
-// voneinander unabhängig — daher parallel statt sequentiell.
-const applyLinks = async (risk, body) => {
-  const ops = [];
-  if (Array.isArray(body.asset_ids)) ops.push(risk.setAssets(body.asset_ids));
-  if (Array.isArray(body.threat_ids)) ops.push(risk.setThreats(body.threat_ids));
-  if (Array.isArray(body.vvt_ids)) ops.push(risk.setVvtEntries(body.vvt_ids));
-  if (Array.isArray(body.incident_ids)) ops.push(risk.setIncidents(body.incident_ids));
-  if (Array.isArray(body.controls)) {
-    ops.push((async () => {
-      await risk.setControls([]);
-      await Promise.all(
-        body.controls.filter(c => c && c.id).map(c =>
-          risk.addControl(c.id, { through: { effectiveness: parseInt(c.effectiveness) || 3 } })
-        )
-      );
-    })());
-  }
-  await Promise.all(ops);
-};
-
-// Automatische Restrisiko-Berechnung aus umgesetzten Controls
-const recomputeResidual = async (risk) => {
-  const controls = await risk.getControls({ joinTableAttributes: ['effectiveness'] });
-  const links = controls.map(c => ({ effectiveness: c.RiskControl?.effectiveness, status: c.status }));
-  await risk.update(computeResidual(risk.likelihood, risk.impact, links));
-};
-
-router.post('/', authenticate, requirePermission('risks','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
+router.post('/', authenticate, requirePermission('risks', 'create', 'admin', 'owner', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
   try {
-    if (!req.body.title) return res.status(400).json({ error: 'Titel ist erforderlich' });
-    const risk = await Risk.create(buildFields(req.body));
-    await applyLinks(risk, req.body);
-    await recomputeResidual(risk);
-    await auditFromReq(req, 'create', 'risk', risk.id, risk.title, { level: risk.inherent_level, treatment: risk.treatment });
-    if (risk.owner_id) {
-      await notify({
-        userId: risk.owner_id, actorId: req.user.id, type: 'assignment',
-        title: 'Risiko zugewiesen',
-        content: `Sie wurden als Risiko-Owner für „${risk.ref || risk.title}" zugewiesen.`,
-        link: '/risks',
-      });
-    }
-    const full = await Risk.findByPk(risk.id, { include: includeAll });
-    res.status(201).json(full);
+    if (!req.body?.title) return res.status(400).json({ error: 'Titel ist erforderlich' });
+    res.status(201).json(await riskService.createRisk(req.body, req.user, req));
   } catch (e) { requestError(res, e, 'risks'); }
 });
 
-router.put('/:id', authenticate, requirePermission('risks','edit','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('risks', 'edit', 'admin', 'owner', 'assessor', 'it-staff', 'dpo'), async (req, res) => {
   try {
-    const risk = await Risk.findByPk(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const risk = await Risk.findByPk(id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
-    if (!canWriteRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
-    const fields = [
-      'title', 'description', 'category', 'owner_id', 'likelihood', 'impact',
-      'inherent_level', 'inherent_score', 'residual_likelihood', 'residual_impact',
-      'residual_level', 'residual_score', 'treatment', 'status', 'review_date'
-    ];
-    const before = {};
-    fields.forEach(f => before[f] = risk[f]);
-    const prevOwner = risk.owner_id;
-    
-    await risk.update(buildFields(req.body));
-    await applyLinks(risk, req.body);
-    await recomputeResidual(risk);
-    
-    if (risk.owner_id && String(prevOwner) !== String(risk.owner_id)) {
-      await notify({
-        userId: risk.owner_id, actorId: req.user.id, type: 'assignment',
-        title: 'Risiko zugewiesen',
-        content: `Sie wurden als Risiko-Owner für „${risk.ref || risk.title}" zugewiesen.`,
-        link: '/risks',
-      });
-    }
-    
-    const after = {};
-    fields.forEach(f => after[f] = risk[f]);
-    
-    await auditFromReq(req, 'update', 'risk', risk.id, risk.title, { before, after });
-    const full = await Risk.findByPk(risk.id, { include: includeAll });
-    res.json(full);
+    if (!riskService.canWriteRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
+    res.json(await riskService.updateRisk(risk, req.body || {}, req.user, req));
   } catch (e) { requestError(res, e, 'risks'); }
 });
 
-// Risk-Owner Sign-off (NIS-2 Management-Haftung): digitale Freigabe mit Zeitstempel
-router.patch('/:id/signoff', authenticate, requirePermission('risks','sign_off','admin','assessor','owner'), async (req, res) => {
+// Risk-Owner Sign-off (NIS-2 Management-Haftung): digitale Freigabe mit
+// Zeitstempel. Wer welche Stufe wie lange akzeptieren darf, regelt die
+// Akzeptanzbefugnis der aktiven Risikomethodik.
+router.patch('/:id/signoff', authenticate, requirePermission('risks', 'sign_off', 'admin', 'assessor', 'owner', 'management'), async (req, res) => {
   try {
-    const risk = await Risk.findByPk(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const risk = await Risk.findByPk(id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
-    if (!canWriteRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
-    await risk.update({
-      status: 'accepted',
-      accepted_by_id: req.user.id,
-      accepted_at: new Date(),
-      accepted_until: req.body.valid_until || null,
-    });
-    await auditFromReq(req, 'acknowledge', 'risk', risk.id, risk.title, { accepted_until: req.body.valid_until || null });
-    const full = await Risk.findByPk(risk.id, { include: includeAll });
-    res.json(full);
+    res.json(await riskService.signoffRisk(risk, req.user, req.body?.valid_until, req));
   } catch (e) { requestError(res, e, 'risks'); }
 });
 
 // Sign-off zuruecknehmen
-router.patch('/:id/revoke', authenticate, requirePermission('risks','sign_off','admin','assessor','owner'), async (req, res) => {
+router.patch('/:id/revoke', authenticate, requirePermission('risks', 'sign_off', 'admin', 'assessor', 'owner', 'management'), async (req, res) => {
   try {
-    const risk = await Risk.findByPk(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const risk = await Risk.findByPk(id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
-    if (!canWriteRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
-    await risk.update({ status: 'in_treatment', accepted_by_id: null, accepted_at: null, accepted_until: null });
-    const full = await Risk.findByPk(risk.id, { include: includeAll });
-    res.json(full);
+    res.json(await riskService.revokeRisk(risk, req.user, req));
   } catch (e) { requestError(res, e, 'risks'); }
 });
 
-router.delete('/:id', authenticate, requirePermission('risks','delete','admin'), async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('risks', 'delete', 'admin'), async (req, res) => {
   try {
-    const risk = await Risk.findByPk(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const risk = await Risk.findByPk(id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
     await Task.update(
       { status: 'cancelled' },

@@ -78,8 +78,11 @@ const TOOL_GATES = {
   // --- Risks & Threats ---
   'isms_create_risk': { perm: ['risks', 'create'], needsWrite: true },
   'isms_update_risk': { perm: ['risks', 'edit'], needsWrite: true },
-  'isms_signoff_risk': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
-  'isms_revoke_risk_signoff': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner'], needsWrite: true },
+  // Freigabe ohne needsWrite: Die Geschaeftsleitung (management, sonst nur
+  // lesend) soll akzeptieren koennen, wenn die Methodik es ihr zuweist. Wer
+  // welche Stufe akzeptieren darf, prueft services/riskService.js.
+  'isms_signoff_risk': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner', 'management'] },
+  'isms_revoke_risk_signoff': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner', 'management'] },
   'isms_delete_risk': { perm: ['risks', 'delete'], requiredRoles: ['admin'], needsWrite: true },
   'isms_create_threat': { perm: ['threats', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Management Reviews ---
@@ -280,6 +283,7 @@ const TOOL_GATES = {
   'isms_get_policy_acknowledgments': { perm: ['policies', 'acknowledgments'] },
   'isms_get_review_signoffs': { perm: ['review', 'view'] },
   'isms_get_risk': { perm: ['risks', 'view'] },
+  'isms_get_risk_methodology': { perm: ['risks', 'view'] },
   'isms_get_task': { perm: ['tasks', 'view'] },
   'isms_get_task_stats': { perm: ['tasks', 'view'] },
   'isms_list_api_tokens': { perm: ['tokens', 'view'] },
@@ -1104,188 +1108,168 @@ server.tool(
 );
 
 // ─── Risks ───────────────────────────────────────────────────────────────────
+//
+// Schreibende Risiko-Tools laufen ueber services/riskService.js - dieselben
+// Regeln wie die REST-Routen (Datensatzrechte, Akzeptanzbefugnis, Methodik).
+// Antworten tragen die Bewertungsfelder der Methodik: methodology_version,
+// needs_reassessment, effective_level, appetite_max_level, appetite_exceeded.
+
+const mcpReq = (mcpUser) => ({ user: mcpUser ? { id: mcpUser.id, name: mcpUser.name || 'MCP Client', role: mcpUser.role } : null, ip: '127.0.0.1' });
+const mcpRiskError = (e) => {
+  if (e && Number.isInteger(e.status) && e.status < 500 && !(typeof e.name === 'string' && e.name.startsWith('Sequelize'))) {
+    return { content: [{ type: 'text', text: e.message }], isError: true };
+  }
+  if (e && typeof e.name === 'string' && e.name.startsWith('Sequelize')) {
+    console.error('[MCP] Risiko:', String(e.message).replace(/[\r\n]+/g, ' '));
+    return { content: [{ type: 'text', text: 'Ungültige Eingabe.' }], isError: true };
+  }
+  throw e;
+};
+
+server.tool(
+  'isms_get_risk_methodology',
+  'Get the active risk methodology (ISO 27005): likelihood and impact scales with criteria, risk levels with score thresholds, the risk matrix, risk appetite per category and acceptance authority per level. Pass version_id to read an earlier (superseded) version; list_versions returns the version history.',
+  {
+    version_id:    z.number().int().optional().describe('ID of a specific methodology version (default: active version)'),
+    list_versions: z.boolean().optional().default(false).describe('Also return the version history with the number of risks assessed under each version'),
+  },
+  async ({ version_id, list_versions }) => {
+    const rm = require('../services/riskMethodology');
+    const profile = version_id ? await rm.getProfile(version_id) : await rm.getActiveProfile();
+    if (!profile) return { content: [{ type: 'text', text: 'Methodology version not found' }], isError: true };
+    const out = { methodology: rm.scaleInfo(profile) };
+    if (list_versions) out.versions = await rm.listVersions();
+    return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+  }
+);
 
 server.tool(
   'isms_list_risks',
-  'List risks from the risk register with optional filters.',
+  'List risks from the risk register with optional filters. Each risk carries its methodology version, whether it needs reassessment under the active methodology, and whether it exceeds the risk appetite of its category (appetite_exceeded).',
   {
     status:  z.enum(['open','in_treatment','accepted','closed']).optional(),
     level:   z.enum(['low','medium','high','critical']).optional().describe('Filter by residual risk level'),
     search:  z.string().optional().describe('Search in title/description'),
+    appetite_exceeded:  z.boolean().optional().describe('Only risks above the risk appetite of their category'),
+    needs_reassessment: z.boolean().optional().describe('Only risks assessed under an older methodology version'),
     limit:   z.number().int().min(1).max(200).default(50),
   },
-  async ({ status, level, search, limit }) => {
+  async ({ status, level, search, appetite_exceeded, needs_reassessment, limit }) => {
     const { Risk, User } = getModels();
+    const { escapeLike } = require('../utils/sqlUtils');
+    const { decorateRisks } = require('../services/riskMethodology');
     const where = {};
     if (status) where.status = status;
     if (level) where.residual_level = level;
     if (search) where[Op.or] = [
-      { title: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } },
+      { title: { [Op.iLike]: `%${escapeLike(search)}%` } },
+      { description: { [Op.iLike]: `%${escapeLike(search)}%` } },
     ];
-
+    // Die Methodik-Filter wirken auf berechnete Felder; ohne sie greift das Limit in der Datenbank.
+    const filtered = appetite_exceeded !== undefined || needs_reassessment !== undefined;
     const risks = await Risk.findAll({
-      where, limit,
+      where, ...(filtered ? {} : { limit }),
       order: [['created_at', 'DESC']],
       include: [{ model: User, as: 'owner', attributes: ['id','name'] }],
     });
-    return { content: [{ type: 'text', text: JSON.stringify(risks, null, 2) }] };
+    let out = await decorateRisks(risks);
+    if (appetite_exceeded !== undefined) out = out.filter(r => r.appetite_exceeded === appetite_exceeded);
+    if (needs_reassessment !== undefined) out = out.filter(r => r.needs_reassessment === needs_reassessment);
+    return { content: [{ type: 'text', text: JSON.stringify(out.slice(0, limit), null, 2) }] };
   }
 );
 
 server.tool(
   'isms_get_risk',
-  'Get full details of a single risk including linked controls, threats, assets, and sign-off status.',
+  'Get full details of a single risk including linked controls, threats, assets, sign-off status, methodology version and risk appetite check.',
   {
     id: z.number().int().describe('Risk ID'),
   },
-  async ({ id }) => {
-    const { Risk, Asset, User, Threat, Control, Document, VvtEntry, Incident } = getModels();
-    const risk = await Risk.findByPk(id, {
-      include: [
-        { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
-        { model: User, as: 'acceptedBy', attributes: ['id', 'name', 'email'] },
-        { model: Asset, as: 'assets', attributes: ['id', 'name', 'type'], through: { attributes: [] } },
-        { model: Threat, as: 'threats', attributes: ['id', 'code', 'title', 'source'], through: { attributes: [] } },
-        { model: Control, as: 'controls', attributes: ['id', 'code', 'title', 'framework', 'status'], through: { attributes: ['effectiveness'] } },
-        { model: Document, as: 'acceptanceDocument', attributes: ['id', 'original_name'] },
-        { model: VvtEntry, as: 'vvtEntries', through: { attributes: [] } },
-        { model: Incident, as: 'incidents', through: { attributes: [] } },
-      ],
-    });
+  async ({ id }, { mcpUser }) => {
+    const { Risk } = getModels();
+    const riskService = require('../services/riskService');
+    const risk = await Risk.findByPk(id, { include: riskService.includeAll() });
     if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
-    return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+    // Wie GET /api/risks/:id: Detail nur fuer admin, assessor und den Risiko-Owner.
+    if (!riskService.canViewRisk(mcpUser, risk)) return { content: [{ type: 'text', text: 'Zugriff verweigert: Nur admin, assessor oder der Risiko-Owner sehen das Risiko im Detail.' }], isError: true };
+    const out = await require('../services/riskMethodology').decorateRisk(risk);
+    return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
   }
 );
 
 server.tool(
   'isms_create_risk',
-  'Add a new risk to the risk register.',
+  'Add a new risk to the risk register. Likelihood and impact are values on the scales of the active risk methodology (see isms_get_risk_methodology; 3 to 6 levels).',
   {
     title:                z.string().min(1),
     description:          z.string().optional(),
     category:             z.string().optional(),
-    inherent_likelihood:  z.number().int().min(1).max(5),
-    inherent_impact:      z.number().int().min(1).max(5),
+    inherent_likelihood:  z.number().int().min(1).max(6),
+    inherent_impact:      z.number().int().min(1).max(6),
     treatment:            z.enum(['mitigate','accept','transfer','avoid']).default('mitigate'),
+    treatment_plan:       z.string().optional(),
     owner_id:             z.number().int().optional(),
   },
   async (args, { mcpUser }) => {
-    const { Risk } = getModels();
-    const score = args.inherent_likelihood * args.inherent_impact;
-    const level = score <= 4 ? 'low' : score <= 9 ? 'medium' : score <= 16 ? 'high' : 'critical';
-    const risk = await Risk.create({
-      ...args,
-      likelihood: args.inherent_likelihood,
-      impact: args.inherent_impact,
-      inherent_level: level,
-      residual_likelihood: args.inherent_likelihood,
-      residual_impact: args.inherent_impact,
-      residual_level: level,
-      status: 'open',
-    });
-    await logAudit('create', 'risk', risk.id, risk.title, args, mcpUser);
-    return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+    try {
+      const { inherent_likelihood, inherent_impact, ...rest } = args;
+      const risk = await require('../services/riskService').createRisk(
+        { ...rest, likelihood: inherent_likelihood, impact: inherent_impact, status: 'open' },
+        mcpUser, mcpReq(mcpUser),
+      );
+      return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
   }
 );
 
 server.tool(
   'isms_update_risk',
-  'Update an existing risk in the risk register including likelihood, impact, treatment, and linked controls/assets.',
+  'Update an existing risk in the risk register including likelihood, impact, treatment, and linked controls/assets. Values are on the scale of the methodology version the risk is assessed under; set reassess=true (with likelihood and impact on the active scale) to move a risk to the active methodology version. Status "accepted" is only set via isms_signoff_risk.',
   {
     id:             z.number().int().describe('Risk ID'),
     title:          z.string().optional(),
     description:    z.string().optional(),
     category:       z.string().optional(),
     owner_id:       z.number().int().optional(),
-    likelihood:     z.number().int().min(1).max(5).optional(),
-    impact:         z.number().int().min(1).max(5).optional(),
+    likelihood:     z.number().int().min(1).max(6).optional(),
+    impact:         z.number().int().min(1).max(6).optional(),
     treatment:      z.enum(['mitigate', 'accept', 'transfer', 'avoid']).optional(),
     treatment_plan: z.string().optional(),
     status:         z.enum(['open', 'in_treatment', 'accepted', 'closed']).optional(),
     review_date:    z.string().optional().describe('ISO Date (YYYY-MM-DD)'),
+    reassess:       z.boolean().optional().describe('Reassess under the active methodology version (requires likelihood and impact)'),
     asset_ids:      z.array(z.number().int()).optional().describe('Linked Asset IDs'),
     threat_ids:     z.array(z.number().int()).optional().describe('Linked Threat IDs'),
     vvt_ids:        z.array(z.number().int()).optional().describe('Linked VVT entry IDs'),
     incident_ids:   z.array(z.number().int()).optional().describe('Linked Incident IDs'),
     controls:       z.array(z.object({ id: z.number().int(), effectiveness: z.number().int().min(1).max(5).optional() })).optional().describe('Linked Controls with effectiveness (1-5)'),
   },
-  async ({ id, asset_ids, threat_ids, vvt_ids, incident_ids, controls, ...updates }, { mcpUser }) => {
-    const { Risk } = getModels();
-    const { computeLevel } = require('../services/riskScale');
-    const { computeResidual } = require('../services/residual');
-
-    const risk = await Risk.findByPk(id);
-    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
-
-    const l = updates.likelihood !== undefined ? updates.likelihood : (risk.likelihood || risk.inherent_likelihood || 3);
-    const i = updates.impact !== undefined ? updates.impact : (risk.impact || risk.inherent_impact || 3);
-    const inherent_level = computeLevel(l, i);
-
-    const f = {
-      ...updates,
-      likelihood: l,
-      impact: i,
-      inherent_likelihood: l,
-      inherent_impact: i,
-      inherent_level,
-    };
-
-    await risk.update(f);
-
-    const ops = [];
-    if (Array.isArray(asset_ids)) ops.push(risk.setAssets(asset_ids));
-    if (Array.isArray(threat_ids)) ops.push(risk.setThreats(threat_ids));
-    if (Array.isArray(vvt_ids)) ops.push(risk.setVvtEntries(vvt_ids));
-    if (Array.isArray(incident_ids)) ops.push(risk.setIncidents(incident_ids));
-    if (Array.isArray(controls)) {
-      ops.push((async () => {
-        await risk.setControls([]);
-        await Promise.all(
-          controls.filter(c => c && c.id).map(c =>
-            risk.addControl(c.id, { through: { effectiveness: parseInt(c.effectiveness) || 3 } })
-          )
-        );
-      })());
-    }
-    await Promise.all(ops);
-
-    const riskControls = await risk.getControls({ joinTableAttributes: ['effectiveness'] });
-    const links = riskControls.map(c => ({ effectiveness: c.RiskControl?.effectiveness, status: c.status }));
-    const residual = computeResidual(l, i, links);
-    await risk.update(residual);
-
-    await logAudit('update', 'risk', risk.id, risk.title, updates, mcpUser);
-
-    const updated = await Risk.findByPk(id, {
-      include: [{ model: getModels().User, as: 'owner', attributes: ['id', 'name'] }],
-    });
-    return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+  async ({ id, ...updates }, { mcpUser }) => {
+    try {
+      const { Risk } = getModels();
+      const risk = await Risk.findByPk(id);
+      if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+      const updated = await require('../services/riskService').updateRisk(risk, updates, mcpUser, mcpReq(mcpUser), { partial: true });
+      return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
   }
 );
 
 server.tool(
   'isms_signoff_risk',
-  'Digitally sign off and accept a risk (NIS-2 management sign-off).',
+  'Digitally sign off and accept a risk (NIS-2 management sign-off). The acceptance authority of the active risk methodology decides which roles may accept which risk level and for how many months at most; without valid_until the longest permitted validity is used.',
   {
     id:          z.number().int().describe('Risk ID'),
     valid_until: z.string().optional().describe('ISO Date (YYYY-MM-DD) until acceptance is valid'),
   },
   async ({ id, valid_until }, { mcpUser }) => {
-    const { Risk } = getModels();
-    const risk = await Risk.findByPk(id);
-    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
-
-    const accepted_by_id = await getValidUserId(mcpUser);
-    await risk.update({
-      status: 'accepted',
-      accepted_by_id,
-      accepted_at: new Date(),
-      accepted_until: valid_until || null,
-    });
-
-    await logAudit('acknowledge', 'risk', risk.id, risk.title, { accepted_until: valid_until || null }, mcpUser);
-    return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+    try {
+      const { Risk } = getModels();
+      const risk = await Risk.findByPk(id);
+      if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+      const out = await require('../services/riskService').signoffRisk(risk, mcpUser, valid_until, mcpReq(mcpUser));
+      return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
   }
 );
 
@@ -1296,19 +1280,13 @@ server.tool(
     id: z.number().int().describe('Risk ID'),
   },
   async ({ id }, { mcpUser }) => {
-    const { Risk } = getModels();
-    const risk = await Risk.findByPk(id);
-    if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
-
-    await risk.update({
-      status: 'in_treatment',
-      accepted_by_id: null,
-      accepted_at: null,
-      accepted_until: null,
-    });
-
-    await logAudit('update', 'risk', risk.id, risk.title, { action: 'revoke_signoff' }, mcpUser);
-    return { content: [{ type: 'text', text: JSON.stringify(risk, null, 2) }] };
+    try {
+      const { Risk } = getModels();
+      const risk = await Risk.findByPk(id);
+      if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+      const out = await require('../services/riskService').revokeRisk(risk, mcpUser, mcpReq(mcpUser));
+      return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
   }
 );
 

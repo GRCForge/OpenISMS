@@ -19,6 +19,7 @@ const ThreatSource = require('./ThreatSource');
 const ThreatAdvisory = require('./ThreatAdvisory');
 const ThreatAdvisoryAsset = require('./ThreatAdvisoryAsset');
 const RiskControl = require('./RiskControl');
+const RiskMethodology = require('./RiskMethodology');
 const Incident = require('./Incident');
 const VvtEntry = require('./VvtEntry');
 const Task = require('./Task');
@@ -145,6 +146,21 @@ Control.belongsToMany(Policy, { through: 'policy_controls', as: 'policies', fore
 Risk.belongsTo(User, { as: 'owner', foreignKey: 'owner_id' });
 Risk.belongsTo(User, { as: 'acceptedBy', foreignKey: 'accepted_by_id' });
 Risk.belongsTo(Document, { as: 'acceptanceDocument', foreignKey: 'acceptance_document_id' });
+// Version der Risikomethodik, nach der das Risiko bewertet ist. RESTRICT: eine
+// Version, an der Bewertungen haengen, darf nicht verschwinden.
+Risk.belongsTo(RiskMethodology, { as: 'methodology', foreignKey: 'methodology_id', onDelete: 'RESTRICT' });
+RiskMethodology.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id' });
+
+// Jede Speicherung eines Risikos - Formular, MCP, Import, Uebernahme aus einer
+// Warnmeldung - laeuft hier durch: Risiken ohne Version bekommen die aktive,
+// Wahrscheinlichkeit und Auswirkung werden gegen die Skala IHRER Version geprueft
+// und die Stufen nach deren Schwellen berechnet. Ohne den zentralen Hook haette
+// jeder Schreibweg eine eigene Kopie der Regeln (der MCP-Weg rechnete bis 3.5.1
+// mit einer eigenen, abweichenden Schwelle). Lazy require: der Dienst braucht
+// die Modelle.
+Risk.addHook('beforeSave', 'riskMethodology', async (risk, options) => {
+  await require('../services/riskMethodology').applyToRisk(risk, options);
+});
 Risk.belongsToMany(Asset, { through: 'risk_assets', as: 'assets', foreignKey: 'risk_id' });
 Asset.belongsToMany(Risk, { through: 'risk_assets', as: 'risks', foreignKey: 'asset_id' });
 
@@ -356,7 +372,7 @@ Asset.belongsToMany(ThreatAdvisory, { through: ThreatAdvisoryAsset, as: 'advisor
 module.exports = {
   sequelize, User, Asset, Assessment, Reminder, AuditLog, Document, Comment,
   Vendor, VendorContact, Policy, PolicyVersion, Setting, Risk, Notification,
-  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
+  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, RiskMethodology, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,

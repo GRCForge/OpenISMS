@@ -49,7 +49,8 @@
   "filters": {
     "allStatus": "Alle Status",
     "allCategories": "Alle Kategorien",
-    "allLevels": "Alle Ebenen"
+    "allLevels": "Alle Ebenen",
+    "allFlags": "Alle Kennzeichen"
   },
   "empty": {
     "title": "Noch keine Risiken erfasst",
@@ -130,5 +131,33 @@
     "implemented": "implementiert",
     "planned": "geplant",
     "na": "n/a"
+  },
+  "heatmap": {
+    "title": "Risikomatrix",
+    "likelihood": "Wahrscheinlichkeit",
+    "impact": "Auswirkung",
+    "hint": "Zelle anklicken, um die Liste zu filtern. Gezählt werden Risiken nach der aktiven Methodik (Brutto).",
+    "reassessPending_one": "{{count}} Risiko nach älterer Methodik – neu bewerten",
+    "reassessPending_other": "{{count}} Risiken nach älterer Methodik – neu bewerten"
+  },
+  "methodology": {
+    "versionLabel": "Methodik v{{version}} · {{name}}",
+    "versionColumn": "Methodik-Version",
+    "appetiteExceeded": "Appetit überschritten",
+    "appetiteTitle": "Toleriert bis Stufe „{{level}}“",
+    "needsReassessment": "Neu zu bewerten",
+    "needsReassessmentShort": "v{{version}} · neu bewerten",
+    "outdated": "Bewertet nach Methodik v{{version}} (aktiv: v{{active}}). Werte gelten in der alten Skala.",
+    "outdatedMatrix": "Bewertet nach Methodik v{{version}} mit anderer Matrixgröße (aktiv: v{{active}}). Werte gelten in der alten Skala.",
+    "reassess": "Nach aktueller Methodik neu bewerten",
+    "reassessHint": "Neubewertung nach Methodik v{{version}}: Wahrscheinlichkeit und Auswirkung bewusst neu wählen. Der Wechsel wird protokolliert.",
+    "loading": "Skala wird geladen…",
+    "yes": "ja"
+  },
+  "acceptance": {
+    "rule": "Stufe „{{level}}“ dürfen akzeptieren: {{roles}}.",
+    "maxMonths_one": "Höchstens {{count}} Monat gültig.",
+    "maxMonths_other": "Höchstens {{count}} Monate gültig.",
+    "reassessFirst": "Vor der Freigabe nach der aktiven Methodik neu bewerten."
   }
 }
