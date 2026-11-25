@@ -23,7 +23,7 @@ REST API. MCP is not a side door.
 8. [Working with the tools](#8-working-with-the-tools)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Configuration reference](#10-configuration-reference)
-11. [Tool reference (216 tools)](#11-tool-reference-216-tools)
+11. [Tool reference (225 tools)](#11-tool-reference-225-tools)
 
 ---
 
@@ -449,7 +449,7 @@ The server log lists the active authentication modes at startup
 
 ---
 
-## 11. Tool reference (216 tools)
+## 11. Tool reference (225 tools)
 
 Type: **R** read · **W** create or change · **D** delete or revoke.
 79 tools read, 95 write, 35 delete. Tools of an optional module only work while
@@ -495,18 +495,27 @@ that module is enabled.
 | `isms_ignore_discovered_software` | W | Ignore a staged discovered item so it is hidden from approval queues. |
 | `isms_delete_discovered_software` | D | Delete a staged discovered host or software item from the discovery inbox. |
 
-### Risks and threats (10)
+### Risks and threats (19)
 
 | Tool | Type | Description |
 |---|---|---|
 | `isms_get_risk_methodology` | R | Get the active risk methodology (ISO 27005): scales with criteria, risk levels and thresholds, matrix, risk appetite and acceptance authority; earlier versions and the version history on request. |
 | `isms_list_risks` | R | List risks from the risk register with optional filters, including risk appetite and reassessment flags. |
-| `isms_get_risk` | R | Get full details of a single risk including linked controls, threats, assets, sign-off status, methodology version and risk appetite check. |
-| `isms_create_risk` | W | Add a new risk to the risk register. |
-| `isms_update_risk` | W | Update an existing risk in the risk register including likelihood, impact, treatment, and linked controls/assets. |
+| `isms_get_risk` | R | Get full details of a single risk including linked controls, threats, assets, risk scenarios, impact dimensions, rationale, gross/net/target level, net-risk override, sign-off status, methodology version and risk appetite check. |
+| `isms_create_risk` | W | Add a new risk to the risk register; rationale for likelihood and impact is mandatory, impact dimensions, target risk and scenarios optional. |
+| `isms_update_risk` | W | Update an existing risk including likelihood, impact, impact dimensions, target risk, scenarios, treatment and linked controls/assets; changed values need a rationale. |
 | `isms_signoff_risk` | W | Digitally sign off and accept a risk (NIS-2 management sign-off), subject to the acceptance authority of the risk methodology. |
 | `isms_revoke_risk_signoff` | W | Revoke a previous risk sign-off / acceptance, setting it back to in_treatment. |
 | `isms_delete_risk` | D | Delete a risk from the risk register and cancel related open tasks. |
+| `isms_override_risk_residual` | W | Override the calculated net risk with a rationale, or return to the calculation. |
+| `isms_list_risk_categories` | R | List the risk category taxonomy with labels, active flag and number of risks. |
+| `isms_create_risk_category` | W | Add an entry to the risk category taxonomy. |
+| `isms_update_risk_category` | W | Change labels, description, order or active flag of a risk category (the key is fixed). |
+| `isms_list_vulnerabilities` | R | List vulnerabilities (manual or from asset CVE data) with linked assets and risk count. |
+| `isms_create_vulnerability` | W | Record a vulnerability manually. |
+| `isms_update_vulnerability` | W | Update a vulnerability (title, description, status, severity, CVSS, related assets). |
+| `isms_delete_vulnerability` | D | Delete a vulnerability that no risk scenario uses. |
+| `isms_import_asset_cves_as_vulnerabilities` | W | List the CVEs of an asset, or take selected ones over as vulnerabilities. |
 | `isms_list_threats` | R | List cybersecurity threats from the standardized threat catalog. |
 | `isms_create_threat` | W | Add a custom cybersecurity threat to the ISMS threat catalog. |
 
