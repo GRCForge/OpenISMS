@@ -16,7 +16,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 const statusColors: Record<LegalRequirementStatus, string> = {
@@ -41,8 +41,8 @@ export const LegalRequirements: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('legal_requirements', 'create', hasWriteAccess(user?.role));
-  const canDelete = can('legal_requirements', 'delete', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('legal_requirements', 'create', hasWriteAccess(user));
+  const canDelete = can('legal_requirements', 'delete', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const categoryLabels: Record<LegalRequirementCategory, string> = {
     data_protection: t('category.data_protection'),

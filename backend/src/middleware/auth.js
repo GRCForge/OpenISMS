@@ -5,6 +5,7 @@ const { hashToken } = require('../services/cryptoService');
 const { tokenAudienceMatches } = require('../utils/oidcAudience');
 const { isExplicitlyUnverified, emailDomainAllowed } = require('../services/oidcIdentity');
 const { getQueryToken } = require('../utils/queryToken');
+const { attachAccess, hasRole, isReadOnly, rolesOf } = require('../services/accessService');
 
 const getTokenFromHeaders = (req) => {
   const authHeader = String(req.headers.authorization || '').trim();
@@ -68,7 +69,7 @@ const authenticate = async (req, res, next) => {
       const user = await User.findByPk(dbToken.user_id, { attributes: { exclude: ['password_hash'] } });
       if (!user || !user.active) return res.status(401).json({ error: 'Unauthorized' });
 
-      req.user = user;
+      req.user = await attachAccess(user);
       return next();
     }
 
@@ -97,7 +98,7 @@ const authenticate = async (req, res, next) => {
               attributes: { exclude: ['password_hash', 'totp_secret', 'reset_password_token', 'reset_password_expires'] },
             });
             if (oidcUser && oidcUser.active && oidcUser.sso_user) {
-              req.user = oidcUser;
+              req.user = await attachAccess(oidcUser);
               return next();
             }
           }
@@ -133,30 +134,30 @@ const authenticate = async (req, res, next) => {
       user.save({ fields: ['last_seen_at'], silent: true }).catch(e => console.error('Error updating last_seen_at:', e.message));
     }
 
-    req.user = user;
+    req.user = await attachAccess(user);
     next();
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
+// Roles come from the user's groups (services/accessService.js). A user can hold
+// several; every role-based rule below asks whether ANY of them qualifies.
 const requireRole = (...roles) => (req, res, next) => {
-  if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
+  if (!hasRole(req.user, roles)) return res.status(403).json({ error: 'Forbidden' });
   next();
 };
 
-// Permission-matrix guard. Where the effective matrix defines module+action it is
-// authoritative — that is the point of an editable matrix, and of letting a custom
-// role carry its own. Where it defines nothing, fallbackRoles decides, which is the
-// role list the route carried before, so behaviour is unchanged until an admin
-// actually edits the matrix. Passing no fallbackRoles means "deny when undefined".
+// Permission guard. Each role of the user is asked in turn and access is granted
+// as soon as one allows (allow-only union across roles): its permission set says
+// true, or says nothing about module+action while its base role is among
+// fallbackRoles — the role list the route carried before, so behaviour is
+// unchanged until an admin actually edits the matrix. Passing no fallbackRoles
+// means "deny when undefined".
 const requirePermission = (module, action, ...fallbackRoles) => async (req, res, next) => {
   try {
-    const { can } = require('../services/permissionService');
-    const verdict = await can(req.user, module, action);
-    if (verdict === true) return next();
-    if (verdict === false) return res.status(403).json({ error: 'Forbidden' });
-    if (fallbackRoles.includes(req.user.role)) return next();
+    const { decide } = require('../services/permissionService');
+    if (await decide(req.user, module, action, fallbackRoles)) return next();
     return res.status(403).json({ error: 'Forbidden' });
   } catch (e) {
     // Never fail open: a broken matrix lookup must not hand out access.
@@ -165,23 +166,25 @@ const requirePermission = (module, action, ...fallbackRoles) => async (req, res,
   }
 };
 
+// viewer, management and employee are read-only roles. A user may write as soon
+// as one of their roles may; a user without any role may not.
 const requireWriteAccess = () => (req, res, next) => {
-  if (req.user.role === 'viewer' || req.user.role === 'management' || req.user.role === 'employee') {
+  if (isReadOnly(rolesOf(req.user))) {
     return res.status(403).json({ error: 'Diese Rolle hat keine Berechtigung für schreibende Zugriffe.' });
   }
   next();
 };
 
-const isAdmin = (req) => req.user.role === 'admin';
-const isAssessor = (req) => req.user.role === 'admin' || req.user.role === 'assessor';
-const isDpo = (req) => req.user.role === 'admin' || req.user.role === 'dpo';
-const isItStaff = (req) => req.user.role === 'admin' || req.user.role === 'assessor' || req.user.role === 'it-staff';
+const isAdmin = (req) => hasRole(req.user, 'admin');
+const isAssessor = (req) => hasRole(req.user, 'admin', 'assessor');
+const isDpo = (req) => hasRole(req.user, 'admin', 'dpo');
+const isItStaff = (req) => hasRole(req.user, 'admin', 'assessor', 'it-staff');
 
 // Asset visibility scope, shared by the asset detail, asset list and asset
 // comments so all three enforce the same rule: staff roles see every asset;
 // everyone else only assets they own or assess.
-const canViewAllAssets = (req) => ['admin', 'assessor', 'dpo', 'it-staff'].includes(req.user.role);
+const canViewAllAssets = (req) => hasRole(req.user, 'admin', 'assessor', 'dpo', 'it-staff');
 const canViewAsset = (req, asset) =>
   canViewAllAssets(req) || req.user.id === asset.owner_id || req.user.id === asset.assessor_id;
 
-module.exports = { authenticate, getTokenFromHeaders, requireRole, requirePermission, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset };
+module.exports = { authenticate, getTokenFromHeaders, requireRole, requirePermission, requireWriteAccess, isAdmin, isAssessor, isDpo, isItStaff, canViewAllAssets, canViewAsset, hasRole };

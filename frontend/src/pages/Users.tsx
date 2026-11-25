@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { UserPlus, Pencil, Trash2, KeyRound, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
-import type { User as UserType, UserRole, CustomRole } from '../types';
+import type { User as UserType, UserRole, CustomRole, Group } from '../types';
+import { RoleChips } from '../components/RoleChips';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardBody } from '../components/ui/Card';
@@ -15,7 +16,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { IconButton } from '../components/ui/IconButton';
 
-const emptyForm = { name: '', email: '', password: '', role: 'viewer' as UserRole, department: '', active: true, custom_role_id: null as number | null };
+// Roles come from groups (v3.8.0): a user is assigned groups, never a role directly.
+const emptyForm = { name: '', email: '', password: '', department: '', active: true, group_ids: [] as number[] };
 
 export const Users: React.FC = () => {
   const { t } = useTranslation(['users', 'common']);
@@ -35,11 +37,11 @@ export const Users: React.FC = () => {
 
   const [users, setUsers] = useState<UserType[]>([]);
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [authFilter, setAuthFilter] = useState('');
-  const [roleChanging, setRoleChanging] = useState<number | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserType | null>(null);
@@ -53,10 +55,13 @@ export const Users: React.FC = () => {
     load();
     // Custom-Rollen laden (nur Admins haben Zugriff – bei 403 bleibt die Liste leer).
     api.get('/admin/custom-roles').then(r => setCustomRoles(r.data)).catch(() => setCustomRoles([]));
+    api.get('/groups').then(r => setGroups(r.data)).catch(() => setGroups([]));
   }, []);
 
-  const roleSelectValue = (u: { role: UserRole; custom_role_id?: number | null }) =>
-    u.custom_role_id ? `custom:${u.custom_role_id}` : u.role;
+  const toggleGroup = (id: number) => setForm(f => ({
+    ...f,
+    group_ids: f.group_ids.includes(id) ? f.group_ids.filter(g => g !== id) : [...f.group_ids, id],
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,20 +94,6 @@ export const Users: React.FC = () => {
     } finally { setSaving(false); }
   };
 
-  const changeRole = async (u: UserType, value: string) => {
-    if (u.id === currentUser?.id) { toast.warning(t('users:toasts.ownRoleWarning')); return; }
-    setRoleChanging(u.id);
-    try {
-      const body = value.startsWith('custom:')
-        ? { custom_role_id: parseInt(value.slice(7)) }
-        : { role: value, custom_role_id: null };
-      await api.put(`/users/${u.id}`, body);
-      load();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || t('users:toasts.roleChangeError'));
-    } finally { setRoleChanging(null); }
-  };
-
   const deleteUser = async (id: number) => {
     if (id === currentUser?.id) { toast.warning(t('users:toasts.selfDeleteWarning')); return; }
     if (!confirm(t('users:confirmDeleteShort'))) return;
@@ -116,7 +107,8 @@ export const Users: React.FC = () => {
 
   const filtered = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = !roleFilter || u.role === roleFilter;
+    // Matches if the user holds the role through any group (or a custom role with that base role).
+    const matchesRole = !roleFilter || (u.access_roles || []).some(r => (r.system_role || r.base_role) === roleFilter);
     let matchesAuth = true;
     if (authFilter === 'sso') matchesAuth = !!u.sso_user;
     if (authFilter === 'local') matchesAuth = !u.sso_user;
@@ -154,7 +146,7 @@ export const Users: React.FC = () => {
         <CardBody className="p-0">
           <Table>
             <Thead>
-              <tr><Th>{t('users:fields.name')}</Th><Th>{t('users:fields.email')}</Th><Th>{t('users:fields.role')}</Th><Th>{t('users:fields.department')}</Th><Th>{t('users:fields.authentication')}</Th><Th>{t('users:fields.status')}</Th><Th>{''}</Th></tr>
+              <tr><Th>{t('users:fields.name')}</Th><Th>{t('users:fields.email')}</Th><Th>{t('users:fields.groupsAndRoles')}</Th><Th>{t('users:fields.department')}</Th><Th>{t('users:fields.authentication')}</Th><Th>{t('users:fields.status')}</Th><Th>{''}</Th></tr>
             </Thead>
             <Tbody>
               {filtered.map(u => (
@@ -167,20 +159,19 @@ export const Users: React.FC = () => {
                   </Td>
                   <Td className="text-sm dark:text-slate-400">{u.email}</Td>
                   <Td>
-                    <select
-                      value={roleSelectValue(u)}
-                      disabled={u.id === currentUser?.id || roleChanging === u.id}
-                      onChange={e => changeRole(u, e.target.value)}
-                      className="text-xs font-medium rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-200 px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={u.id === currentUser?.id ? t('users:roleSelect.ownRoleNotChangeable') : t('users:roleSelect.changeRoleDirectly')}
-                    >
-                      {Object.entries(roleLabels).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                      {customRoles.length > 0 && (
-                        <optgroup label={t('users:customRolesGroup')}>
-                          {customRoles.map(cr => <option key={cr.id} value={`custom:${cr.id}`}>{cr.name}</option>)}
-                        </optgroup>
-                      )}
-                    </select>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap gap-1">
+                        {(u.groups || []).length === 0
+                          ? <span className="text-xs text-gray-500 dark:text-slate-500">{t('users:noGroups')}</span>
+                          : (u.groups || []).map(g => (
+                            <span key={g.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300" title={g.source === 'sso' ? t('users:groupFromSso') : undefined}>
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: g.color || '#9ca3af' }} />{g.name}{g.source === 'sso' ? ' · SSO' : ''}
+                            </span>
+                          ))}
+                      </div>
+                      <RoleChips roles={u.access_roles} customRoles={customRoles}
+                        empty={<span className="text-[11px] font-medium text-red-600 dark:text-red-400">{t('users:noRole')}</span>} />
+                    </div>
                   </Td>
                   <Td className="text-sm dark:text-slate-400">{u.department || '–'}</Td>
                   <Td>
@@ -210,7 +201,7 @@ export const Users: React.FC = () => {
                   <Td><Badge value={u.active ? 'active' : 'archived'} label={u.active ? t('users:statusLabels.active') : t('users:statusLabels.deactivated')} /></Td>
                   <Td>
                     <div className="flex justify-end gap-2">
-                       <IconButton label={t('common:actions.edit')} onClick={() => { setEditUser(u); setForm({ ...u, department: u.department || '', password: '', custom_role_id: u.custom_role_id ?? null }); setModalOpen(true); }}><Pencil size={14}/></IconButton>
+                       <IconButton label={t('common:actions.edit')} onClick={() => { setEditUser(u); setForm({ name: u.name, email: u.email, department: u.department || '', password: '', active: u.active, group_ids: (u.groups || []).map(g => g.id) }); setModalOpen(true); }}><Pencil size={14}/></IconButton>
                        <IconButton label={t('users:resetPw.tooltip')} onClick={() => setResetPwModal(u)}><KeyRound size={14}/></IconButton>
                        <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deleteUser(u.id)}><Trash2 size={14}/></IconButton>
                     </div>
@@ -231,27 +222,28 @@ export const Users: React.FC = () => {
             <Input label={t('users:form.emailLabel')} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required placeholder={t('users:form.emailPlaceholder')} />
             <Input label={t('users:form.departmentLabel')} value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} placeholder={t('users:form.departmentPlaceholder')} />
 
-            <Select label={t('users:form.systemRole')}
-              value={form.custom_role_id ? `custom:${form.custom_role_id}` : form.role}
-              onChange={e => {
-                const v = e.target.value;
-                if (v.startsWith('custom:')) setForm({ ...form, custom_role_id: parseInt(v.slice(7)) });
-                else setForm({ ...form, role: v as UserRole, custom_role_id: null });
-              }}>
-              <option value="admin">{t('users:form.roleOptions.admin')}</option>
-              <option value="assessor">{t('users:form.roleOptions.assessor')}</option>
-              <option value="it-staff">{t('users:form.roleOptions.it-staff')}</option>
-              <option value="dpo">{t('users:form.roleOptions.dpo')}</option>
-              <option value="owner">{t('users:form.roleOptions.owner')}</option>
-              <option value="management">{t('users:form.roleOptions.management')}</option>
-              <option value="viewer">{t('users:form.roleOptions.viewer')}</option>
-              <option value="employee">{t('users:form.roleOptions.employee')}</option>
-              {customRoles.length > 0 && (
-                <optgroup label={t('users:customRolesGroup')}>
-                  {customRoles.map(cr => <option key={cr.id} value={`custom:${cr.id}`}>{cr.name}</option>)}
-                </optgroup>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('users:form.groups')}</label>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">{t('users:form.groupsHint')}</p>
+              {groups.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-slate-400">{t('users:form.noGroupsYet')}</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-60 overflow-y-auto">
+                  {groups.map(g => (
+                    <label key={g.id} className="flex items-start gap-2 p-2 rounded-lg border dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                      <input type="checkbox" className="mt-0.5" checked={form.group_ids.includes(g.id)} onChange={() => toggleGroup(g.id)} />
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-slate-200">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: g.color }} />{g.name}
+                        </span>
+                        <RoleChips roles={g.roles} customRoles={customRoles}
+                          empty={<span className="text-[11px] text-gray-500 dark:text-slate-500">{t('users:form.groupWithoutRoles')}</span>} />
+                      </span>
+                    </label>
+                  ))}
+                </div>
               )}
-            </Select>
+            </div>
 
             {!editUser && (
               <Input label={t('users:form.initialPassword')} type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />

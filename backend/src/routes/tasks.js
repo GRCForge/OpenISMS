@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Task, User, Group, GroupMember, Notification, Asset, Risk, Incident, Training, AiSystem, SubjectRequest } = require('../models');
-const { authenticate, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission, hasRole } = require('../middleware/auth');
 const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { Op } = require('sequelize');
@@ -189,8 +189,8 @@ router.get('/:id', authenticate, requirePermission('tasks','view','admin','owner
     // Authorization: user can see task if assigned to them, their group, their role, or they are admin/assessor
     const isAssigned = task.assigned_to_id === req.user.id;
     const isGroupMember = task.assigned_to_group_id && task.assignedGroup?.members?.some(m => m.id === req.user.id);
-    const isRoleMatch = task.assigned_role && task.assigned_role === req.user.role;
-    const isPrivileged = ['admin', 'assessor'].includes(req.user.role);
+    const isRoleMatch = !!task.assigned_role && hasRole(req.user, task.assigned_role);
+    const isPrivileged = hasRole(req.user, 'admin', 'assessor');
     
     if (!isAssigned && !isGroupMember && !isRoleMatch && !isPrivileged) {
       return res.status(403).json({ error: 'Forbidden' });

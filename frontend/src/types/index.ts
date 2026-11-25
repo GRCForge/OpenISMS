@@ -1,4 +1,9 @@
 export type UserRole = 'admin' | 'owner' | 'assessor' | 'viewer' | 'it-staff' | 'dpo' | 'management' | 'employee';
+/** Value of `user.role` for a user who holds no role through any group. */
+export type UserRoleOrNone = UserRole | 'none';
+
+/** A role a group carries: a built-in role or a custom role. */
+export type RoleRef = { system_role: UserRole; custom_role_id?: never; name?: never; base_role?: never } | { custom_role_id: number; name?: string | null; base_role?: UserRole | null; system_role?: never };
 export type AssetType = 'hardware' | 'software' | 'information' | 'process' | 'service' | 'personal' | 'application' | 'data' | 'ai_application' | 'ai_agent' | 'other';
 export type Classification = 'public' | 'internal' | 'confidential' | 'secret';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
@@ -14,14 +19,23 @@ export interface CustomRole {
   name: string;
   description?: string | null;
   base_role: UserRole;
+  permissions?: Record<string, Record<string, boolean>> | null;
   users_count?: number;
+  groups?: { id: number; name: string; members?: number }[];
 }
 
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: UserRole;
+  /** The most privileged role the user holds through groups ('none' = no role). */
+  role: UserRoleOrNone;
+  /** All roles the user holds through groups (from /auth/me). */
+  roles?: UserRole[];
+  group_ids?: number[];
+  /** Admin directory only: the user's groups and the roles they grant. */
+  groups?: { id: number; name: string; color?: string; source?: 'manual' | 'sso' }[];
+  access_roles?: RoleRef[];
   department?: string;
   active: boolean;
   last_seen_at?: string;
@@ -504,7 +518,9 @@ export interface Group {
   description?: string;
   color: string;
   created_by_id?: number;
-  members: { id: number; name: string; email: string; role: UserRole }[];
+  members: { id: number; name: string; email: string; role: UserRoleOrNone; source?: 'manual' | 'sso' }[];
+  /** Roles the group carries; its members receive all of them. */
+  roles?: RoleRef[];
   created_at: string;
   updated_at: string;
 }

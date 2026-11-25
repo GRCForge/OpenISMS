@@ -2,6 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { Asset, Assessment, Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, User, Task, Training } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { onlyRoles } = require('../services/accessService');
 const { auditFromReq } = require('../services/auditService');
 const { pick } = require('../utils/massAssignment');
 const multer = require('multer');
@@ -404,7 +405,7 @@ router.delete('/trainings-list/:id', authenticate, requirePermission('compliance
 // GET all user training assignments
 router.get('/trainings', authenticate, requirePermission('compliance_trainings','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
-    const whereClause = req.user.role === 'employee' ? { user_id: req.user.id } : {};
+    const whereClause = onlyRoles(req.user, 'employee') ? { user_id: req.user.id } : {};
     const items = await UserTraining.findAll({
       where: whereClause,
       include: [
@@ -424,7 +425,7 @@ router.post('/trainings/:id/contest', authenticate, requirePermission('complianc
     if (!item) return res.status(404).json({ error: 'Schulungsteilnahme nicht gefunden' });
     
     // An employee can only contest their own training
-    if (req.user.role === 'employee' && item.user_id !== req.user.id) {
+    if (onlyRoles(req.user, 'employee') && item.user_id !== req.user.id) {
       return res.status(403).json({ error: 'Nicht autorisiert, diese Schulung zu beanstanden' });
     }
     

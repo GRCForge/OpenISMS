@@ -813,6 +813,20 @@ const start = async () => {
       }
     }
 
+    // Group-based access (v3.8.0): roles reach users only through groups. The
+    // one-time migration turns every user's former role into a group membership
+    // (including the administrator seeded just above on a fresh install). A
+    // failure stops the start: without it nobody would have any role.
+    {
+      const { ensureGroupBasedAccess } = require('./services/accessMigration');
+      await ensureGroupBasedAccess();
+      const { findUserIdsWithRole } = require('./services/accessService');
+      if ((await findUserIdsWithRole('admin')).length === 0) {
+        console.error('[Access] No active user holds the administrator role through a group. '
+          + 'Add a user to a group carrying the role "admin" (directly in the database if necessary).');
+      }
+    }
+
     await seedCatalog();
     startReminderService();
 

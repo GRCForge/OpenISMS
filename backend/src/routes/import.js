@@ -4,7 +4,7 @@ const { readSheet } = require('read-excel-file/node');
 const { Asset, User, Vendor, VendorContact, Risk } = require('../models');
 const { abgleichen } = require('../services/discoverySync');
 const datei = require('../services/integrations/datei');
-const { authenticate, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission, hasRole } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
@@ -246,7 +246,7 @@ router.post('/process', authenticate, requirePermission('import','access','admin
   if (!config) return res.status(400).json({ error: 'Ungültiger Import-Typ' });
   // Creating users (which carry a role/active flag) is a privilege boundary —
   // restrict it to admins so a non-admin importer cannot provision admin accounts.
-  if (type === 'user' && req.user.role !== 'admin') {
+  if (type === 'user' && !hasRole(req.user, 'admin')) {
     return res.status(403).json({ error: 'Nur Administratoren dürfen Benutzer importieren.' });
   }
 
@@ -368,6 +368,24 @@ router.post('/process', authenticate, requirePermission('import','access','admin
           if (Object.prototype.hasOwnProperty.call(data, 'category')) {
             data.category = await require('../services/riskCategoryService').resolveImportValue(data.category);
           }
+        }
+
+        // Roles reach users only through groups (v3.8.0): the role column puts
+        // the imported user into the group that carries that role.
+        if (type === 'user') {
+          const access = require('../services/accessService');
+          const role = String(data.role || '').trim();
+          if (role && !access.isBuiltinRole(role)) throw new Error(`Unbekannte Rolle "${role}"`);
+          const created = await config.model.create({ ...data, role: 'none' });
+          if (role) {
+            const group = await access.groupForSystemRole(role);
+            await require('../models').GroupMember.findOrCreate({
+              where: { group_id: group.id, user_id: created.id }, defaults: { source: 'manual' },
+            });
+            await access.syncUserRoles([created.id]);
+          }
+          results.created++;
+          continue;
         }
 
         await config.model.create(data);

@@ -15,7 +15,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 import { SelfCheck } from '../components/nis2/SelfCheck';
 
@@ -137,8 +137,8 @@ export const Nis2: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('nis2', 'create', hasWriteAccess(user?.role));
-  const canManage = can('nis2', 'edit', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('nis2', 'create', hasWriteAccess(user));
+  const canManage = can('nis2', 'edit', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const statusLabels: Record<ImplStatus, string> = {
     not_started: t('status.not_started'),

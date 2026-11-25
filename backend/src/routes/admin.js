@@ -41,12 +41,14 @@ router.get('/settings', requirePermission('admin','settings','admin'), async (re
 
 router.put('/settings', requirePermission('admin','settings','admin'), async (req, res) => {
   try {
-    const { appName, reviewIntervalMonths, ssoAutoProvision, ssoDefaultRole, ssoAllowedDomains, ssoStrictRoleSync, auditLogRetentionMonths, passwordPolicy, bruteForcePolicy } = req.body || {};
+    const { appName, reviewIntervalMonths, ssoAutoProvision, ssoDefaultRole, ssoDefaultGroupId, ssoAllowedDomains, ssoStrictRoleSync, auditLogRetentionMonths, passwordPolicy, bruteForcePolicy } = req.body || {};
     const patch = {};
     if (appName !== undefined) patch.appName = appName;
     if (reviewIntervalMonths !== undefined) patch.reviewIntervalMonths = parseInt(reviewIntervalMonths) || 12;
     if (ssoAutoProvision !== undefined) patch.ssoAutoProvision = !!ssoAutoProvision;
-    if (ssoDefaultRole !== undefined) patch.ssoDefaultRole = ssoDefaultRole;
+    // The group new SSO users join (v3.8.0); null/'' = none. A legacy
+    // ssoDefaultRole means the group carrying that role.
+    Object.assign(patch, await require('../services/ssoGroupSync').ssoDefaultGroupPatch({ ssoDefaultGroupId, ssoDefaultRole }));
     if (ssoAllowedDomains !== undefined) patch.ssoAllowedDomains = String(ssoAllowedDomains).toLowerCase().trim();
     if (ssoStrictRoleSync !== undefined) patch.ssoStrictRoleSync = !!ssoStrictRoleSync;
     if (auditLogRetentionMonths !== undefined) patch.auditLogRetentionMonths = Math.max(3, parseInt(auditLogRetentionMonths) || 15);
@@ -114,15 +116,29 @@ router.post('/permissions/reset', requirePermission('admin','permissions','admin
 router.get('/custom-roles', requirePermission('admin','roles','admin'), async (req, res) => {
   try {
     const roles = await CustomRole.findAll({ order: [['name', 'ASC']] });
-    // Anzahl der direkt zugewiesenen Benutzer je Rolle ergänzen (für die GUI).
-    const counts = await User.findAll({
-      attributes: ['custom_role_id', [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'cnt']],
-      where: { custom_role_id: { [Op.ne]: null } },
-      group: ['custom_role_id'],
-      raw: true,
-    });
-    const countMap = Object.fromEntries(counts.map(c => [c.custom_role_id, parseInt(c.cnt)]));
-    res.json(roles.map(r => ({ ...r.toJSON(), users_count: countMap[r.id] || 0 })));
+    // Since v3.8.0 a role reaches users through groups: report the groups that
+    // carry it and the number of users who hold it through them.
+    const { QueryTypes } = require('sequelize');
+    const sequelize = require('../config/database');
+    const rows = await sequelize.query(
+      `SELECT gr.custom_role_id, g.id AS group_id, g.name AS group_name,
+              (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id) AS members
+         FROM group_roles gr JOIN "groups" g ON g.id = gr.group_id
+        WHERE gr.custom_role_id IS NOT NULL`,
+      { type: QueryTypes.SELECT },
+    );
+    const users = await sequelize.query(
+      `SELECT gr.custom_role_id, COUNT(DISTINCT gm.user_id) AS cnt
+         FROM group_roles gr JOIN group_members gm ON gm.group_id = gr.group_id
+        WHERE gr.custom_role_id IS NOT NULL GROUP BY gr.custom_role_id`,
+      { type: QueryTypes.SELECT },
+    );
+    const countMap = Object.fromEntries(users.map(c => [c.custom_role_id, parseInt(c.cnt)]));
+    res.json(roles.map(r => ({
+      ...r.toJSON(),
+      users_count: countMap[r.id] || 0,
+      groups: rows.filter(x => x.custom_role_id === r.id).map(x => ({ id: x.group_id, name: x.group_name, members: parseInt(x.members) })),
+    })));
   } catch (e) { serverError(res, e, 'admin'); }
 });
 
@@ -154,9 +170,15 @@ router.put('/custom-roles/:id', requirePermission('admin','roles','admin'), asyn
       ...(base_role !== undefined && { base_role }),
       ...(permissions !== undefined && { permissions: sanitizeMatrix(permissions) }),
     });
-    // Basisrolle geändert: effektive Rolle aller zugewiesenen Benutzer nachziehen.
+    // Base role changed: the role-based rules of every holder change with it.
     if (base_role !== undefined && base_role !== before.base_role) {
-      await User.update({ role: base_role }, { where: { custom_role_id: role.id } });
+      const { syncUserRoles, findUserIdsWithRole } = require('../services/accessService');
+      await syncUserRoles();
+      if ((await findUserIdsWithRole('admin')).length === 0) {
+        await role.update({ base_role: before.base_role });
+        await syncUserRoles();
+        return res.status(409).json({ error: 'This change would leave the installation without an active administrator.' });
+      }
     }
     invalidatePermissionCache();
     const after = { name: role.name, description: role.description, base_role: role.base_role, permissions: role.permissions };
@@ -170,9 +192,22 @@ router.delete('/custom-roles/:id', requirePermission('admin','roles','admin'), a
     const role = await CustomRole.findByPk(req.params.id);
     if (!role) return res.status(404).json({ error: 'Nicht gefunden' });
     const name = role.name;
-    // Zuweisung bei Benutzern entfernen (Basisrolle bleibt als effektive Rolle erhalten).
-    await User.update({ custom_role_id: null }, { where: { custom_role_id: role.id } });
-    await role.destroy();
+    // The groups carrying the role lose it; its holders lose what it granted.
+    const { GroupRole } = require('../models');
+    const sequelize = require('../config/database');
+    const { assertAdminRemains, syncUserRoles, AccessError } = require('../services/accessService');
+    try {
+      await sequelize.transaction(async (t) => {
+        await GroupRole.destroy({ where: { custom_role_id: role.id }, transaction: t });
+        await User.update({ custom_role_id: null }, { where: { custom_role_id: role.id }, transaction: t });
+        await role.destroy({ transaction: t });
+        await assertAdminRemains(t);
+      });
+    } catch (err) {
+      if (err instanceof AccessError) return res.status(err.status).json({ error: err.message });
+      throw err;
+    }
+    await syncUserRoles();
     invalidatePermissionCache();
     await auditFromReq(req, 'delete', 'custom_role', req.params.id, name, {});
     res.json({ ok: true });
@@ -192,8 +227,12 @@ router.get('/oidc-mappings', requirePermission('admin','sso','admin'), async (re
     if (getOidcEnvStatus().mappingsFromEnv) {
       return res.json(await geltendeMappings());
     }
+    const { Group } = require('../models');
     const mappings = await OidcClaimMapping.findAll({
-      include: [{ model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] }],
+      include: [
+        { model: CustomRole, as: 'customRole', attributes: ['id', 'name', 'base_role'] },
+        { model: Group, as: 'group', attributes: ['id', 'name'] },
+      ],
       order: [['priority', 'DESC'], ['id', 'ASC']],
     });
     res.json(mappings);
@@ -209,14 +248,30 @@ router.post('/oidc-mappings', requirePermission('admin','sso','admin'), async (r
           + `und koennen hier nicht geaendert werden.`,
       });
     }
-    const { claim_path, claim_value, role, custom_role_id, priority } = req.body || {};
+    const { claim_path, claim_value, group_id, role, custom_role_id, priority } = req.body || {};
     if (!claim_path?.trim() || !claim_value?.trim()) return res.status(400).json({ error: 'claim_path und claim_value erforderlich' });
-    if (!role && !custom_role_id) return res.status(400).json({ error: 'role oder custom_role_id erforderlich' });
+    // Since v3.8.0 a mapping grants a group. role / custom_role_id are still
+    // accepted and resolved to the group carrying that role.
+    let groupId = null;
+    const access = require('../services/accessService');
+    if (group_id) {
+      const { Group } = require('../models');
+      const g = await Group.findByPk(parseInt(group_id));
+      if (!g) return res.status(400).json({ error: 'group_id: group not found' });
+      groupId = g.id;
+    } else if (custom_role_id) {
+      const cr = await CustomRole.findByPk(custom_role_id);
+      if (!cr) return res.status(400).json({ error: 'custom_role_id: role not found' });
+      groupId = (await access.groupForCustomRole(cr)).id;
+    } else if (role && access.isBuiltinRole(role)) {
+      groupId = (await access.groupForSystemRole(role)).id;
+    } else {
+      return res.status(400).json({ error: 'group_id erforderlich' });
+    }
     const mapping = await OidcClaimMapping.create({
       claim_path: claim_path.trim(),
       claim_value: claim_value.trim(),
-      role: role || null,
-      custom_role_id: custom_role_id || null,
+      group_id: groupId,
       priority: parseInt(priority) || 0,
     });
     await auditFromReq(req, 'create', 'oidc_mapping', mapping.id, `${claim_path}=${claim_value}`, {});

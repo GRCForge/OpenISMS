@@ -44,7 +44,8 @@ const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const { auditFromReq } = require('../services/auditService');
 const { getOidcRaw, getGeneral, isOidcUsable } = require('../services/settingsService');
-const { geltendeMappings } = require('../services/oidcMappings');
+const { geltendeMappings, gruppeDesMappings } = require('../services/oidcMappings');
+const { applySsoGroups } = require('../services/ssoGroupSync');
 const { buildConfig, getCallbackUrl, client } = require('../services/oidcService');
 const { isExplicitlyUnverified, emailDomainAllowed, mayLinkExistingAccount } = require('../services/oidcIdentity');
 
@@ -235,7 +236,9 @@ router.get('/callback', async (req, res) => {
         name,
         email,
         password_hash: await User.hashPassword(crypto.randomBytes(24).toString('hex')),
-        role: general.ssoDefaultRole || 'viewer',
+        // Roles come from groups (v3.8.0); the claim mappings or the SSO
+        // default group below decide which ones.
+        role: 'none',
         active: true,
         avatar_url,
         sso_user: true,
@@ -260,14 +263,13 @@ router.get('/callback', async (req, res) => {
       throw new Error('Account ist deaktiviert');
     }
 
-    // Apply OIDC claim → role mappings (highest priority wins)
+    // Apply OIDC claim mappings: every matching mapping grants its group
+    // (services/ssoGroupSync.js). Failures are logged, never fatal.
     try {
       // Quelle ist seit v3.0.0 nicht mehr zwingend die Tabelle: Ist
       // OIDC_CLAIM_MAPPINGS gesetzt, gilt ausschliesslich diese Liste.
       // geltendeMappings() liefert beides in derselben Form.
       const mappings = await geltendeMappings();
-      let mappedRole = null;
-      let mappedCustomRoleId = null;
       // Diagnose-Log (18.08.2026, Notion-Aufgabe "Keycloak-OIDC-Rollenmapping"):
       // zeigt bei jedem SSO-Login, welche Top-Level-Claim-Keys aus welcher
       // Quelle tatsaechlich angekommen sind - damit sich ohne manuellen
@@ -277,6 +279,7 @@ router.get('/callback', async (req, res) => {
         userInfoClaims: Object.keys(info),
         accessTokenClaims: Object.keys(accessTokenClaims),
       });
+      const grantedGroupIds = [];
       for (const mapping of mappings) {
         let claimVal = info[mapping.claim_path] ?? claims[mapping.claim_path] ?? accessTokenClaims[mapping.claim_path];
         // Support dot-notation for nested claims (e.g. "realm_access.roles")
@@ -290,44 +293,30 @@ router.get('/callback', async (req, res) => {
           ? claimVal.map(String).includes(mapping.claim_value)
           : String(claimVal ?? '') === mapping.claim_value;
         if (matches) {
-          if (mapping.custom_role_id && mapping.customRole) {
-            mappedRole = mapping.customRole.base_role;
-            mappedCustomRoleId = mapping.custom_role_id;
-          } else if (mapping.role) {
-            mappedRole = mapping.role;
-            mappedCustomRoleId = null;
-          }
-          break;
+          const gid = await gruppeDesMappings(mapping);
+          if (gid) grantedGroupIds.push(gid);
         }
       }
-      // No mapping matched. With mappings configured the IdP is the authority on
-      // entitlements, so a user who no longer matches any of them has lost the
-      // grant that raised their role — leaving it untouched means an IdP group
-      // removal never revokes access here. Only strict mode acts on that, because
-      // the reset also catches roles an admin assigned by hand.
-      if (!mappedRole && mappings.length > 0 && general.ssoStrictRoleSync) {
-        const fallbackRole = general.ssoDefaultRole || 'viewer';
-        if (user.role !== fallbackRole || user.custom_role_id !== null) {
-          // Never strand the deployment without an administrator.
-          const lastAdmin = user.role === 'admin' && (await User.count({ where: { role: 'admin', active: true } })) <= 1;
-          if (lastAdmin) {
-            console.warn(`[OIDC] strict role sync skipped for ${user.email}: last active admin`);
-          } else {
-            mappedRole = fallbackRole;
-            mappedCustomRoleId = null;
-          }
-        }
+      const before = { role: user.role };
+      const result = await applySsoGroups({
+        userId: user.id,
+        grantedGroupIds,
+        general,
+        mappingsConfigured: mappings.length > 0,
+      });
+      if (result.skippedRemoval) {
+        console.warn(`[OIDC] strict group sync skipped for ${user.email}: ${result.skippedRemoval}`);
       }
-
-      if (mappedRole && (user.role !== mappedRole || user.custom_role_id !== mappedCustomRoleId)) {
-        const before = { role: user.role, custom_role_id: user.custom_role_id };
-        await user.update({ role: mappedRole, custom_role_id: mappedCustomRoleId });
+      if (result.added.length || result.removed.length) {
+        await user.reload();
         // A privilege change with no audit entry is invisible to a later review;
-        // every other path that changes a role writes one.
+        // every other path that changes group memberships writes one.
         await auditFromReq(req, 'update', 'user', user.id, user.name, {
           source: 'oidc_claim_mapping',
+          groups_added: result.added,
+          groups_removed: result.removed,
           before,
-          after: { role: mappedRole, custom_role_id: mappedCustomRoleId },
+          after: { role: user.role },
         });
       }
     } catch (e) {

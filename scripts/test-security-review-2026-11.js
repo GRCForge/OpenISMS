@@ -128,7 +128,12 @@ const documentTests = async () => {
   };
   const model = (name) => ({ findByPk: async (id) => rows[name][id] || null, findAll: async () => [], findOne: async () => null });
   mock('models/index.js', { Asset: model('Asset'), Incident: model('Incident'), Vendor: model('Vendor'), Document: model('Asset'), User: model('Asset'), ApiToken: model('Asset') });
-  mock('services/permissionService.js', { can: async () => undefined });
+  // The matrix says nothing here: each role falls back to the route's role list
+  // (permissionService.decide, allow-only across the user's roles).
+  mock('services/permissionService.js', {
+    can: async () => undefined,
+    decide: async (user, module, action, fallback = []) => [user.role].some((r) => fallback.includes(r)),
+  });
   const { canAccessDocumentParent } = require(path.join(backendSrc, 'routes', 'documents.js'));
   const req = (id, role) => ({ user: { id, role } });
 

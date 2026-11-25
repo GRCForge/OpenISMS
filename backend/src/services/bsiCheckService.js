@@ -275,9 +275,8 @@ const CONTROL_VIEW_FALLBACK = ['admin', 'assessor', 'it-staff', 'dpo', 'owner', 
 const CONTROL_EDIT_FALLBACK = ['admin', 'assessor', 'it-staff'];
 
 async function allowed(actor, module, action, fallback) {
-  const { can } = require('./permissionService');
-  const v = await can(actor, module, action);
-  return v === true || (v !== false && fallback.includes(actor?.role));
+  const { decide } = require('./permissionService');
+  return decide(actor, module, action, fallback);
 }
 
 /** Filter fuer Nachweis-Dokumente: Modulrecht documents.view und Sichtbarkeit des Elternobjekts. */

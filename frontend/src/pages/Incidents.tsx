@@ -70,7 +70,7 @@ export const Incidents: React.FC = () => {
   const { t } = useTranslation(['incidents', 'common']);
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canWrite = can('incidents', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('incidents', 'create', hasWriteAccess(user));
   const toast = useToast();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);

@@ -235,12 +235,19 @@ Google, Zitadel, Okta, Auth0 and others.
 3. Enter issuer URL, client ID, client secret and scopes
    (`openid profile email`)
 4. **Test connection**, then enable SSO
-5. Set the allowed domains, default role and claim → role mappings
+5. Set the allowed domains, the SSO default group and claim → group mappings
+   (**Administration → General** for the default group)
 
 Authorization Code flow with PKCE; the client secret is stored encrypted. On
 the first SSO login a user is created (unless auto-provisioning is off), and
 the profile picture from the `picture` claim is synced on every login. Local
 login stays available for accounts that are not linked to SSO.
+
+Since v3.8.0 SSO hands out **group memberships**, not roles: every matching
+claim mapping adds the user to its group (marked *SSO* in the UI), and the user
+receives the roles of all their groups. Without a match the user joins the SSO
+default group; without a default group they have no role until an
+administrator adds them to a group.
 
 ### Through environment variables
 For installations rolled out by configuration management:
@@ -252,15 +259,16 @@ For installations rolled out by configuration management:
 | `OIDC_ISSUER` | Issuer URL |
 | `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | Client credentials |
 | `OIDC_SCOPES` | Requested scopes |
-| `OIDC_CLAIM_MAPPINGS` | JSON array of claim → role mappings, e.g. `[{"claim_path":"groups","claim_value":"isms-admins","role":"admin","priority":100}]`. Custom roles are named by name (`"custom_role":"Audit"`) |
+| `OIDC_CLAIM_MAPPINGS` | JSON array of claim → group mappings, e.g. `[{"claim_path":"groups","claim_value":"isms-admins","group":"Administrators","priority":100}]`. Groups are named by name. Each entry names exactly one of `group`, `role` (built-in role) or `custom_role` (by name); `role` and `custom_role` mean the group that carries that role, created if none exists |
 | `OIDC_LINK_UNVERIFIED_EMAIL` | Allow taking over a local account without `email_verified=true` (default `false`) |
 
 **The environment wins.** A field set there is read-only in the app, and the
 API rejects changes to it with a reason. Values from the environment are never
 written to the database, so removing a variable brings back what the database
 held. If `OIDC_CLAIM_MAPPINGS` is set but invalid, **no** mappings apply — a
-typo must not silently hand out a different role; the reason is logged and
-shown in the app.
+typo must not silently hand out a different group; the reason is logged and
+shown in the app. An entry naming a group that does not exist is ignored and
+logged.
 
 Security recommendations for SSO are in
 [SECURITY-CONFIGURATION.md](SECURITY-CONFIGURATION.md#single-sign-on-oidc).

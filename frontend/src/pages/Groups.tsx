@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Users, Plus, Pencil, Trash2, UserPlus, UserMinus, Tag } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, UserPlus, UserMinus, Tag, ShieldCheck, Info } from 'lucide-react';
 import api from '../lib/api';
-import type { Group, User } from '../types';
+import type { Group, User, CustomRole, RoleRef } from '../types';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -10,19 +10,26 @@ import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { IconButton } from '../components/ui/IconButton';
+import { hasRole } from '../lib/permissions';
+import { RoleChips, RolePicker } from '../components/RoleChips';
+import { usePermissions } from '../contexts/PermissionsContext';
 
 const COLORS = [
   '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
 ];
 
-const emptyForm = { name: '', description: '', color: '#3b82f6' };
+const emptyForm = { name: '', description: '', color: '#3b82f6', roles: [] as RoleRef[] };
 
 export const Groups: React.FC = () => {
   const { user } = useAuth();
   const toast = useToast();
   const { t } = useTranslation('groups');
 
+  const { can } = usePermissions();
+  // Giving a group roles hands out permissions: needs admin.roles (admin by default).
+  const canManageRoles = can('admin', 'roles', hasRole(user, 'admin'));
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +49,10 @@ export const Groups: React.FC = () => {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.get('/admin/custom-roles').then(r => setCustomRoles(r.data)).catch(() => setCustomRoles([]));
+  }, []);
 
   const openCreate = () => {
     setEditGroup(null);
@@ -52,7 +62,7 @@ export const Groups: React.FC = () => {
 
   const openEdit = (g: Group) => {
     setEditGroup(g);
-    setForm({ name: g.name, description: g.description || '', color: g.color });
+    setForm({ name: g.name, description: g.description || '', color: g.color, roles: g.roles || [] });
     setModalOpen(true);
   };
 
@@ -60,11 +70,12 @@ export const Groups: React.FC = () => {
     ev.preventDefault();
     setSaving(true);
     try {
+      const body = canManageRoles ? form : { name: form.name, description: form.description, color: form.color };
       if (editGroup) {
-        await api.put(`/groups/${editGroup.id}`, form);
+        await api.put(`/groups/${editGroup.id}`, body);
         toast.success(t('toast.updated'));
       } else {
-        await api.post('/groups', form);
+        await api.post('/groups', body);
         toast.success(t('toast.created'));
       }
       setModalOpen(false);
@@ -111,7 +122,7 @@ export const Groups: React.FC = () => {
     }
   };
 
-  if (user?.role !== 'admin') {
+  if (!hasRole(user, 'admin')) {
     return (
       <div className="text-center py-20 text-gray-500 dark:text-slate-400">
         {t('adminOnly')}
@@ -134,6 +145,11 @@ export const Groups: React.FC = () => {
           </p>
         </div>
         <Button onClick={openCreate}><Plus size={16} />{t('new')}</Button>
+      </div>
+
+      <div className="flex gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 text-sm text-blue-900 dark:text-blue-200">
+        <Info size={18} className="shrink-0 mt-0.5" />
+        <p>{t('rolesIntro')}</p>
       </div>
 
       {groups.length === 0 ? (
@@ -162,6 +178,12 @@ export const Groups: React.FC = () => {
               {g.description && (
                 <p className="text-sm text-gray-500 dark:text-slate-400 line-clamp-2">{g.description}</p>
               )}
+
+              <div className="flex items-start gap-2">
+                <ShieldCheck size={14} className="mt-0.5 shrink-0 text-gray-400" />
+                <RoleChips roles={g.roles} customRoles={customRoles}
+                  empty={<span className="text-xs text-gray-500 dark:text-slate-500">{t('noRoles')}</span>} />
+              </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 {g.members.length === 0 ? (
@@ -239,6 +261,11 @@ export const Groups: React.FC = () => {
               ))}
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('form.roles')}</label>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">{canManageRoles ? t('form.rolesHint') : t('form.rolesNoPermission')}</p>
+            <RolePicker value={form.roles} onChange={roles => setForm(f => ({ ...f, roles }))} customRoles={customRoles} disabled={!canManageRoles} />
+          </div>
           <div className="flex gap-3 pt-2 border-t dark:border-slate-700">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="flex-1">{t('form.cancel')}</Button>
             <Button type="submit" disabled={saving} className="flex-1">{saving ? t('form.saving') : t('form.save')}</Button>
@@ -255,6 +282,15 @@ export const Groups: React.FC = () => {
       >
         {memberModal && (
           <div className="space-y-4">
+            {(memberModal.roles?.length ?? 0) > 0 && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-900 dark:text-amber-200">
+                <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p>{t('members.grantsRoles')}</p>
+                  <RoleChips roles={memberModal.roles} customRoles={customRoles} />
+                </div>
+              </div>
+            )}
             <div className="space-y-1 max-h-56 overflow-y-auto">
               {memberModal.members.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-slate-600 py-2 text-center">{t('members.empty')}</p>
@@ -264,6 +300,9 @@ export const Groups: React.FC = () => {
                     <div>
                       <span className="text-sm font-medium text-gray-800 dark:text-slate-200">{m.name}</span>
                       <span className="ml-2 text-xs text-gray-500 dark:text-slate-400">{m.email}</span>
+                      {m.source === 'sso' && (
+                        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" title={t('members.ssoHint')}>SSO</span>
+                      )}
                     </div>
                     <IconButton label={t('members.remove')} variant="danger" onClick={() => handleRemoveMember(memberModal.id, m.id)}><UserMinus size={14} /></IconButton>
                   </div>

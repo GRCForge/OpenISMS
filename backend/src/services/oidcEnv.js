@@ -152,8 +152,11 @@ const mappingsAusUmgebung = () => {
     }
     const rolle = typeof eintrag.role === 'string' ? eintrag.role.trim() : '';
     const eigeneRolle = typeof eintrag.custom_role === 'string' ? eintrag.custom_role.trim() : '';
-    if (!rolle && !eigeneRolle) {
-      maengel.push(`${pos}: entweder role oder custom_role angeben`);
+    // Since v3.8.0 a mapping grants a group (by name). role and custom_role
+    // remain accepted and mean "the group that carries this role".
+    const gruppe = typeof eintrag.group === 'string' ? eintrag.group.trim() : '';
+    if ([rolle, eigeneRolle, gruppe].filter(Boolean).length !== 1) {
+      maengel.push(`${pos}: genau eines von group, role oder custom_role angeben`);
       return;
     }
     if (rolle && !BASIS_ROLLEN.includes(rolle)) {
@@ -165,6 +168,7 @@ const mappingsAusUmgebung = () => {
       claim_value: claimValue,
       role: rolle || null,
       custom_role_name: eigeneRolle || null,
+      group_name: gruppe || null,
       priority: Number.isInteger(eintrag.priority) ? eintrag.priority : 0,
     });
   });

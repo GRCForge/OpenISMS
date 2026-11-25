@@ -11,6 +11,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { IconButton } from './ui/IconButton';
+import { hasRole } from '../lib/permissions';
 
 interface DocumentAnalysisModalProps {
   open: boolean;
@@ -82,7 +83,7 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
   const toast = useToast();
 
   const ANALYSIS_ROLES = ['admin', 'assessor', 'it-staff', 'dpo'];
-  const canRun = can('document_analysis', 'run', ANALYSIS_ROLES.includes(user?.role || ''));
+  const canRun = can('document_analysis', 'run', hasRole(user, ANALYSIS_ROLES));
 
   const basePath = `/${subjectType === 'document' ? 'documents' : 'policies'}/${subjectId}/analyze`;
 
@@ -358,7 +359,7 @@ export const DocumentAnalysisModal: React.FC<DocumentAnalysisModalProps> = ({ op
                       {run.status === 'error' && canRun && (
                         <IconButton label={t('documentanalysis:retry')} onClick={() => retryRun(run.id)}><RefreshCw size={14} /></IconButton>
                       )}
-                      {user?.role === 'admin' && (
+                      {hasRole(user, 'admin') && (
                         <IconButton label={t('documentanalysis:delete_run')} variant="danger" onClick={() => deleteRun(run.id)}><Trash2 size={14} /></IconButton>
                       )}
                     </div>

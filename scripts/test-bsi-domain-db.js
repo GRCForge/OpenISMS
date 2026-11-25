@@ -98,6 +98,9 @@ const status = async (p) => { try { await p; return 'ok'; } catch (e) { if (proc
   const owner = await mkUser('owner', 'owner');
   const noAssets = await m.CustomRole.create({ name: 'ohne Assets', base_role: 'assessor', permissions: { assets: { view: false } } });
   const blind = await mkUser('blind', 'assessor', { custom_role_id: noAssets.id });
+  // Since 3.8.0 roles come from groups; the startup migration puts these
+  // users into the groups of their roles, as it would on an upgrade.
+  await require(path.join(SRC, 'services', 'accessMigration')).ensureGroupBasedAccess({ log: { log: () => {} } });
   const mkAsset = (name, type, ownerId) => m.Asset.create({ name, type, classification: 'internal', owner_id: ownerId, assessor_id: admin.id });
   const server = await mkAsset('srv-01', 'hardware', admin.id);
   const app = await mkAsset('ERP', 'application', owner.id);

@@ -84,8 +84,12 @@ const getMcpSecretRole = () => {
   return USER_ROLES.includes(role) ? role : 'viewer';
 };
 
-const setUser = (req, user) => {
+const setUser = async (req, user) => {
   req.mcpUser = { id: user.id, name: user.name, role: user.role, custom_role_id: user.custom_role_id ?? null };
+  // Roles from the user's groups (services/accessService.js). The MCP_SECRET
+  // pseudo-user (id 0) has no groups; its role comes from MCP_SECRET_ROLE.
+  if (user.id === 0) req.mcpUser.technical = true;
+  await require('../services/accessService').attachAccess(req.mcpUser);
   req.auth = req.mcpUser;
   req._mcpUser = req.mcpUser;
 };
@@ -136,10 +140,22 @@ const userFromClaims = async (claims) => {
       name: claims.name || email,
       email,
       password_hash: await User.hashPassword(require('crypto').randomBytes(24).toString('hex')),
-      role: general.ssoDefaultRole || 'viewer',
+      role: 'none',
       active: true,
       sso_user: true,
     });
+    // Roles come from groups (v3.8.0): the new account joins the SSO default
+    // group, like an SSO login without matching claim mapping. An MCP login
+    // does not evaluate claim mappings.
+    if (general.ssoDefaultGroupId) {
+      const { GroupMember } = getModels();
+      await GroupMember.findOrCreate({
+        where: { group_id: general.ssoDefaultGroupId, user_id: user.id },
+        defaults: { source: 'sso' },
+      }).catch((e) => console.warn('[MCP] could not add the new user to the SSO default group:', e.message));
+      await require('../services/accessService').syncUserRoles([user.id]);
+      await user.reload();
+    }
   }
   if (!user) throw new oauth.TokenError('invalid_token', 'No OpenISMS account for this identity', 401, 'no_account');
   if (!user.active) throw new oauth.TokenError('invalid_token', 'User inactive', 401, 'inactive');
@@ -186,7 +202,7 @@ async function mcpAuth(req, res, next) {
     const tokenBuf = Buffer.from(token, 'utf8');
     const secretBuf = Buffer.from(secret, 'utf8');
     if (tokenBuf.length === secretBuf.length && timingSafeEqual(tokenBuf, secretBuf)) {
-      setUser(req, { id: 0, name: 'MCP Client (MCP_SECRET)', role: getMcpSecretRole(), custom_role_id: null });
+      await setUser(req, { id: 0, name: 'MCP Client (MCP_SECRET)', role: getMcpSecretRole(), custom_role_id: null });
       return next();
     }
   }
@@ -215,7 +231,7 @@ async function mcpAuth(req, res, next) {
 
       const user = await User.findByPk(dbToken.user_id);
       if (!user || !user.active) return invalid('User inactive', 'MCP: User not found or inactive');
-      setUser(req, user);
+      await setUser(req, user);
       return next();
     } catch (e) {
       console.error('[MCP] API token check failed:', e.message);
@@ -243,7 +259,7 @@ async function mcpAuth(req, res, next) {
       const { User } = getModels();
       const user = await User.findByPk(session.id);
       if (!user || !user.active) return invalid('User inactive', 'MCP: User not found or inactive');
-      setUser(req, user);
+      await setUser(req, user);
       return next();
     } catch (e) {
       console.error('[MCP] session token check failed:', e.message);
@@ -256,7 +272,7 @@ async function mcpAuth(req, res, next) {
   try {
     const claims = await oauth.verifyAccessToken(token, { issuer: cfg.issuer });
     const user = await userFromClaims(claims);
-    setUser(req, user);
+    await setUser(req, user);
     return next();
   } catch (e) {
     if (e instanceof oauth.TokenError) {

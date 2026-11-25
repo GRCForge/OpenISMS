@@ -9,6 +9,7 @@ import { Select } from '../components/ui/Select';
 import { Mermaid } from '../components/ui/Mermaid';
 import { mermaidLabel } from '../lib/mermaid';
 import { useAuth } from '../contexts/AuthContext';
+import { hasRole } from '../lib/permissions';
 
 // Beziehungsauswertung ueber den Graphen (Apache AGE, seit v3.0.0).
 //
@@ -158,7 +159,7 @@ export const Graph: React.FC = () => {
           </h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 max-w-3xl">{t('subtitle')}</p>
         </div>
-        {user?.role === 'admin' && (
+        {hasRole(user, 'admin') && (
           <div className="flex items-center gap-3">
             {rebuildMsg && <span className="text-xs text-gray-500 dark:text-slate-400">{rebuildMsg}</span>}
             <Button variant="secondary" onClick={rebuild} disabled={rebuilding}>

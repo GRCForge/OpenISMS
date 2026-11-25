@@ -129,11 +129,17 @@ const DEFAULTS = {
     appName: 'OpenISMS',
     reviewIntervalMonths: 12,
     ssoAutoProvision: true,
+    // Legacy (before v3.8.0): the role new SSO users received. The migration to
+    // group-based access turns it into ssoDefaultGroupId.
     ssoDefaultRole: 'viewer',
+    // The group a new SSO user joins when no claim mapping applies. null = none,
+    // the user then has no access until an administrator adds them to a group.
+    ssoDefaultGroupId: null,
     ssoAllowedDomains: '',
-    // Off by default: switching it on downgrades every SSO user who matches no
-    // claim mapping, including ones an admin assigned manually. Opting in makes
-    // the IdP authoritative for roles, so removing a group there revokes access.
+    // Off by default. When on, the IdP is authoritative for the groups it
+    // grants: memberships an SSO login added ('sso') are removed when no claim
+    // mapping grants them any more. Memberships an administrator added by hand
+    // are never touched.
     ssoStrictRoleSync: false,
     auditLogRetentionMonths: 15,
     passwordPolicy: {

@@ -7,6 +7,7 @@ const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { Document, User, Asset, Incident, Vendor } = require('../models');
 const { authenticate, requireWriteAccess, requirePermission, canViewAsset } = require('../middleware/auth');
+const { onlyRoles } = require('../services/accessService');
 const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
@@ -55,7 +56,8 @@ const INLINE_MIME = {
 };
 
 // it-staff and viewer roles must not access contract documents (mirrors the list filter).
-const canAccessContract = (user) => user.role !== 'it-staff' && user.role !== 'viewer';
+// IT staff and viewers do not see contracts; any other role of the user lifts that.
+const canAccessContract = (user) => !onlyRoles(user, 'it-staff', 'viewer');
 
 // Rollen, die Lieferanten-Details sehen (GET /api/vendors/:id, vendors.view_details).
 const VENDOR_DETAIL_FALLBACK = ['admin', 'assessor', 'it-staff', 'dpo'];
@@ -99,9 +101,8 @@ const parentAccess = async (req, { assetId, vendorId, incidentId }) => {
     if (!id) return 400;
     const vendor = await Vendor.findByPk(id, { attributes: ['id'] });
     if (!vendor) return 404;
-    const { can } = require('../services/permissionService');
-    const verdict = await can(req.user, 'vendors', 'view_details');
-    const ok = verdict === true || (verdict !== false && VENDOR_DETAIL_FALLBACK.includes(req.user.role));
+    const { decide } = require('../services/permissionService');
+    const ok = await decide(req.user, 'vendors', 'view_details', VENDOR_DETAIL_FALLBACK);
     return ok ? true : 403;
   }
   return 400;
@@ -189,7 +190,7 @@ router.use(apiLimiter);
 
 router.get('/', authenticate, requirePermission('documents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), requireParentAccess, async (req, res) => {
   try {
-    const isRestricted = req.user.role === 'it-staff' || req.user.role === 'viewer';
+    const isRestricted = onlyRoles(req.user, 'it-staff', 'viewer');
     const where = {};
     if (req.params.assetId) {
       where.asset_id = req.params.assetId;

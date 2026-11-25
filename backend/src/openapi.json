@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenISMS API",
     "description": "REST API für das Information Security Management System (OpenISMS).\n\n## Authentifizierung\nAlle geschützten Endpunkte erfordern einen **Bearer JWT-Token** im `Authorization`-Header:\n```\nAuthorization: Bearer <token>\n```\nDen Token erhalten Sie über `POST /api/auth/login`.\n\n## Rollen\n- `admin` – Vollzugriff\n- `assessor` – Risikobewerter / Auditor\n- `it-staff` – IT-Mitarbeiter (Security-Daten)\n- `dpo` – Datenschutzbeauftragter\n- `owner` – Asset-Verantwortlicher\n- `management` – Nur-Lesen (Management-Ebene)\n- `employee` – Schulungs-Tab, eigene Trainingsübersicht\n- `viewer` – Nur Lesezugriff\n\n**Custom Roles**: Eigene Rollennamen mit Basisrolle über `/api/admin/custom-roles` verwalten.",
-    "version": "3.7.0",
+    "version": "3.8.0",
     "contact": {
       "name": "ISMS Support"
     }
@@ -921,7 +921,8 @@
               }
             }
           }
-        }
+        },
+        "description": " Includes roles (all roles held through groups) and group_ids; role is the most privileged of them."
       }
     },
     "/auth/change-password": {
@@ -1336,14 +1337,15 @@
               }
             }
           }
-        }
+        },
+        "description": " Each group lists its members (with source manual|sso) and the roles it carries."
       },
       "post": {
         "tags": [
           "Gruppen"
         ],
         "summary": "Neue Gruppe anlegen",
-        "description": "Erfordert Rolle: admin",
+        "description": "Erfordert Rolle: admin Groups are teams and, since v3.8.0, the only way roles reach users. Assigning roles, or changing the members of a group that carries roles, requires admin.roles; a change that would leave no active administrator is refused with 409.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1363,6 +1365,32 @@
                   "color": {
                     "type": "string",
                     "example": "#3b82f6"
+                  },
+                  "roles": {
+                    "type": "array",
+                    "description": "Roles the group carries. Members receive all of them (allow-only union). Requires admin.roles.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "system_role": {
+                          "type": "string",
+                          "enum": [
+                            "admin",
+                            "assessor",
+                            "it-staff",
+                            "dpo",
+                            "owner",
+                            "management",
+                            "employee",
+                            "viewer"
+                          ]
+                        },
+                        "custom_role_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "description": "Exactly one of system_role or custom_role_id"
+                    }
                   }
                 }
               }
@@ -1403,7 +1431,7 @@
           "Gruppen"
         ],
         "summary": "Gruppe aktualisieren",
-        "description": "Erfordert Rolle: admin",
+        "description": "Erfordert Rolle: admin Groups are teams and, since v3.8.0, the only way roles reach users. Assigning roles, or changing the members of a group that carries roles, requires admin.roles; a change that would leave no active administrator is refused with 409.",
         "parameters": [
           {
             "name": "id",
@@ -1419,7 +1447,35 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Group"
+                "$ref": "#/components/schemas/Group",
+                "properties": {
+                  "roles": {
+                    "type": "array",
+                    "description": "Roles the group carries. Members receive all of them (allow-only union). Requires admin.roles.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "system_role": {
+                          "type": "string",
+                          "enum": [
+                            "admin",
+                            "assessor",
+                            "it-staff",
+                            "dpo",
+                            "owner",
+                            "management",
+                            "employee",
+                            "viewer"
+                          ]
+                        },
+                        "custom_role_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "description": "Exactly one of system_role or custom_role_id"
+                    }
+                  }
+                }
               }
             }
           }
@@ -2459,8 +2515,7 @@
                 "required": [
                   "name",
                   "email",
-                  "password",
-                  "role"
+                  "password"
                 ],
                 "properties": {
                   "name": {
@@ -2484,7 +2539,8 @@
                       "management",
                       "employee",
                       "viewer"
-                    ]
+                    ],
+                    "description": "Deprecated since v3.8.0: adds the user to the group carrying this built-in role."
                   },
                   "department": {
                     "type": "string"
@@ -2492,7 +2548,14 @@
                   "custom_role_id": {
                     "type": "integer",
                     "nullable": true,
-                    "description": "Custom Role zuweisen (überschreibt role mit base_role)"
+                    "description": "Deprecated since v3.8.0: adds the user to the group carrying this custom role."
+                  },
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "Groups the user belongs to. Since v3.8.0 roles reach users only through groups; the user receives the roles of all these groups. Requires admin.roles."
                   }
                 }
               }
@@ -2528,7 +2591,16 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/User"
+                "$ref": "#/components/schemas/User",
+                "properties": {
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "Groups the user belongs to. Since v3.8.0 roles reach users only through groups; the user receives the roles of all these groups. Requires admin.roles. Replaces the current memberships."
+                  }
+                }
               }
             }
           }

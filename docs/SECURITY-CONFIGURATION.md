@@ -52,8 +52,10 @@ list of environment variables see [CONFIGURATION.md](CONFIGURATION.md).
 - [ ] Set up TOTP or a passkey for every administrator
 - [ ] Review the password policy and account lockout
       (**Administration → Security**)
-- [ ] Configure SSO, if available, with a domain allow-list and the
-      `viewer` default role
+- [ ] Configure SSO, if available, with a domain allow-list and a default
+      group with the `viewer` role (or none)
+- [ ] Review the role-carrying groups (**Administration → Groups**); after an
+      upgrade to v3.8.0, check the groups the migration created
 - [ ] Review the permission matrix (**Administration → Roles & permissions**)
 - [ ] Disable modules you do not use (**Administration → Modules**)
 - [ ] Set the audit log retention to what your retention policy requires
@@ -173,6 +175,18 @@ database, or pin clients to an instance with sticky sessions.
 
 ## 4. Roles and permissions
 
+Since v3.8.0 access is built from three parts:
+
+- **Permission objects** — one per module and action, e.g. `incidents.edit`.
+- **Roles** — named sets of permission objects: the eight built-in roles and
+  any number of custom roles.
+- **Groups** — carry roles. A user receives roles **only through groups**,
+  never directly, and receives every role of every group they belong to.
+
+Roles combine **allow-only**: if any of a user's roles allows an action, the
+user may perform it. There is no deny. A user in no role-carrying group has
+**no role** and can only manage their own account.
+
 ### Built-in roles
 
 | Role | Intended for | Write access |
@@ -187,7 +201,8 @@ database, or pin clients to an instance with sticky sessions.
 | `viewer` | Read-only access | **no** |
 
 `management`, `employee` and `viewer` stay read-only even if the permission
-matrix grants them a write action.
+matrix grants them a write action. A user is read-only only if **all** of their
+roles are read-only — a viewer who also belongs to an assessor group can write.
 
 ### Permission matrix
 **Administration → Roles & permissions** defines, per module and action (view,
@@ -216,14 +231,45 @@ every user out of their own account.
 
 ### Custom roles
 **Administration → Security → Custom roles**: a name, a base role and optionally
-a permission matrix of its own, which then replaces the global matrix for users
-of that role. The base role decides the write protection. Custom roles can be
-assigned by hand or through OIDC claim mappings.
+a permission set of its own, which then replaces the global matrix for that
+role. The base role decides the write protection and the role-based rules that
+are not yet permission objects. Like built-in roles, custom roles reach users
+only through groups. A custom role that sets an action to `false` does not take
+it away from a user whose other roles allow it.
+
+### Groups
+**Administration → Groups**: every group can carry any combination of built-in
+and custom roles. Groups without roles are plain teams for task assignment and
+@-mentions and grant nothing.
+
+- Assigning roles to a group, deleting a group that carries roles, and changing
+  the members of such a group require the permission **`admin.roles`** in
+  addition to `groups.manage`. A user who may only manage teams cannot hand out
+  permissions.
+- No change — removing a member, changing a group's roles, deleting a group or
+  a custom role, deactivating a user, an SSO sync — may leave the installation
+  without an **active administrator**; such a change is rejected with `409`.
+- Administrators cannot remove the administrator role from themselves.
+- Every change to group roles and memberships is written to the audit log.
+
+`users.role` is kept as a cache of the most privileged role for display and
+filtering (`none` if the user has no role). Access decisions never read it.
+
+### Upgrading to v3.8.0
+The first start migrates automatically and keeps every user's access as it was:
+one group per role in use (*Administrators*, *Assessors*, …, *Role: <custom
+role>*), every user in the group of their former role, OIDC mappings and the SSO
+default role moved to groups. Existing groups are left untouched and carry no
+roles. Review the new groups afterwards — see
+[RELEASE-NOTES-v3.8.0.md](RELEASE-NOTES-v3.8.0.md).
 
 ### Recommendations
 - Keep the number of administrators small; give everyday ISMS work the
   `assessor` role.
-- Use `viewer` as the SSO default role and grant more through claim mappings.
+- Use a group with the `viewer` role (or no default group at all) as the SSO
+  default group and grant more through claim mappings.
+- Keep role-carrying groups separate from plain teams, so adding someone to a
+  team never grants permissions by accident.
 - Restrict delete actions to the roles that really need them.
 - Review the matrix after every upgrade that adds a module.
 - An administrator cannot deactivate or demote themselves, and users are
@@ -314,9 +360,9 @@ encrypted. Settings that matter for security (**Administration → Security**):
 |---|---|
 | Allowed domains | Set them. Only addresses of these domains may log in via SSO |
 | Auto-provisioning | Leave on only if every account at the IdP should have access |
-| Default role | `viewer`; grant more through claim mappings |
-| Strict role sync | On, if the IdP is the source of truth for roles: users matching no mapping fall back to the default role (never the last administrator) |
-| Claim → role mappings | Map IdP groups to roles; highest priority wins |
+| Default group | A group with the `viewer` role, or none (new SSO users then have no access until an administrator adds them to a group) |
+| Strict group sync | On, if the IdP is the source of truth: memberships the IdP granted (source `sso`) are removed when no mapping grants them any more. Memberships added by hand are kept; the last administrator is never removed |
+| Claim → group mappings | Map IdP groups to OpenISMS groups. **Every** matching mapping applies; the user receives the roles of all those groups |
 
 - Addresses the IdP explicitly marks as unverified (`email_verified=false`) are
   rejected.

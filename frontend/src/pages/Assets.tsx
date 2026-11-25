@@ -23,7 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { useModules } from '../contexts/ModulesContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasRole, hasWriteAccess } from '../lib/permissions';
 import i18n from '../i18n';
 
 const emptyForm = { name: '', type: 'application', description: '', classification: 'internal', owner_id: '', assessor_id: '', version: '', vendor: '', location: '', vendor_id: '', hosting_type: 'on-premise', lifecycle_status: 'production', dsfa_required: 'false', nis2_relevant: 'false' };
@@ -89,8 +89,8 @@ export const Assets: React.FC = () => {
   const { can } = usePermissions();
   const toast = useToast();
   const { isEnabled } = useModules();
-  const canWrite = can('assets', 'create', hasWriteAccess(user?.role));
-  const canDelete = can('assets', 'delete', user?.role === 'admin');
+  const canWrite = can('assets', 'create', hasWriteAccess(user));
+  const canDelete = can('assets', 'delete', hasRole(user, 'admin'));
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -277,12 +277,13 @@ export const Assets: React.FC = () => {
 
   const activeUsers = useMemo(() => users.filter(u => u.active), [users]);
   const exportData = useMemo(() => flattenForExport(assets), [assets, t, dateFnsLocale]);
-  const isItStaff = user?.role === 'it-staff';
+  // IT staff may not change classification or frameworks — unless another role of theirs may.
+  const isItStaff = hasRole(user, 'it-staff') && !hasRole(user, 'admin', 'assessor', 'dpo');
 
   const searchPlaceholder = t('assets:searchPlaceholder');
 
   useKeyShortcut('n', () => {
-    if (user?.role === 'viewer' || user?.role === 'management') return;
+    if (!hasWriteAccess(user)) return;
     setEditId(null); setForm(emptyForm); setModalOpen(true);
   }, { disabled: modalOpen });
   useKeyShortcut('/', () => {

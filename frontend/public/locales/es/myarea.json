@@ -67,7 +67,8 @@
     "dpo": "Data Protection Officer",
     "owner": "Asset Owner",
     "viewer": "Guest",
-    "employee": "Employee"
+    "employee": "Employee",
+    "none": "Sin rol"
   },
   "toast": {
     "contestSuccess": "Contestation submitted successfully.",

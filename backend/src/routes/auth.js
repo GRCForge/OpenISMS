@@ -101,7 +101,7 @@ const handleFailedLoginForIp = async (req, email) => {
       });
 
       try {
-        const admins = await User.findAll({ where: { role: 'admin', active: true } });
+        const admins = await require('../services/accessService').findUsersWithRole('admin');
         const { notify } = require('../services/notifyService');
         const title = 'Sicherheitswarnung: Brute-Force-Verdacht';
         const content = `Die IP-Adresse ${ip} wurde vorübergehend gesperrt, da sie ${failedCount} fehlgeschlagene Loginversuche durchgeführt hat (letzter Versuch mit Benutzernamen/E-Mail: "${email}").`;
@@ -326,7 +326,9 @@ router.post('/login/totp', async (req, res) => {
   }
 });
 
-router.get('/me', authenticate, (req, res) => res.json(req.user));
+// The own account plus the roles it holds through its groups (v3.8.0): the UI
+// shows and hides by `roles`; `role` is the most privileged of them.
+router.get('/me', authenticate, (req, res) => res.json({ ...req.user.toJSON(), roles: req.user.roles || [], group_ids: req.user.groupIds || [] }));
 
 router.post('/change-password', authenticate, async (req, res) => {
   if (req.user.sso_user) return res.status(403).json({ error: 'Passwortänderung ist für SSO-Benutzer deaktiviert.' });

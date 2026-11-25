@@ -11,7 +11,7 @@ import { csvCell } from '../lib/csv';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { Card, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -171,14 +171,14 @@ export const ThreatIntel: React.FC = () => {
   const { can } = usePermissions();
   const toast = useToast();
 
-  const writer = hasWriteAccess(user?.role);
+  const writer = hasWriteAccess(user);
   const canCreate = can('threat_intel', 'create', writer);
   const canEdit = can('threat_intel', 'edit', writer);
   const canAssess = can('threat_intel', 'assess', writer);
   const canReview = can('threat_intel', 'review', writer);
   const canFetch = can('threat_intel', 'fetch', writer);
-  const canSeed = can('threat_intel', 'seed', user?.role === 'admin' || user?.role === 'assessor');
-  const canDelete = can('threat_intel', 'delete', user?.role === 'admin' || user?.role === 'assessor');
+  const canSeed = can('threat_intel', 'seed', hasRole(user, 'admin') || hasRole(user, 'assessor'));
+  const canDelete = can('threat_intel', 'delete', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const [tab, setTab] = useState<'advisories' | 'sources'>('advisories');
   const [stats, setStats] = useState<Stats | null>(null);

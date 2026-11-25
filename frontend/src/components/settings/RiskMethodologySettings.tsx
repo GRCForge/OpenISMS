@@ -13,6 +13,7 @@ import { RiskCategorySettings } from './RiskCategorySettings';
 import { usePermissions } from '../../contexts/PermissionsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Risk, RiskLevel, RiskScale, RiskScaleStep, RiskMethodologyVersion, RiskLevelDef, RiskAcceptanceRule, RiskCategory, ImpactDimensionDef, ImpactDimensionKey } from '../../types';
+import { hasRole } from '../../lib/permissions';
 
 const LEVELS: RiskLevel[] = ['low', 'medium', 'high', 'critical'];
 const ROLES = ['admin', 'assessor', 'owner', 'it-staff', 'dpo', 'management', 'viewer', 'employee'];
@@ -63,7 +64,7 @@ export const RiskMethodologySettings: React.FC = () => {
   const { t } = useTranslation(['admin', 'risks', 'common']);
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canManage = can('risks', 'manage_methodology', user?.role === 'admin');
+  const canManage = can('risks', 'manage_methodology', hasRole(user, 'admin'));
   const [active, setActive] = useState<RiskScale | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [versions, setVersions] = useState<RiskMethodologyVersion[]>([]);

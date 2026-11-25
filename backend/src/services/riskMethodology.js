@@ -682,7 +682,7 @@ const checkAcceptance = async (risk, user, validUntil) => {
   const level = effectiveLevel(risk, own);
   if (!level) throw httpError(400, 'Das Risiko ist nicht bewertet.');
   const rule = (rules.acceptance || []).find(a => a.level === level);
-  if (!rule || !rule.roles.includes(user?.role)) {
+  if (!rule || !require('./accessService').hasRole(user, rule.roles)) {
     throw httpError(403, `Risiken der Stufe „${levelLabel(rules, level)}“ dürfen nur folgende Rollen akzeptieren: ${(rule?.roles || []).join(', ') || '–'}.`);
   }
   const today = todayStr();

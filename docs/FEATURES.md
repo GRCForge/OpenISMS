@@ -551,26 +551,31 @@ Under **Administration** (administrators only):
 
 | Tab | Purpose |
 |---|---|
-| Users | Create, assign roles, deactivate (no hard delete), reset passwords |
-| Groups | Teams for task assignment and `@group` mentions |
+| Users | Create, assign groups (and with them roles), deactivate (no hard delete), reset passwords |
+| Groups | Carry roles for their members; also teams for task assignment and `@group` mentions |
 | Modules | Feature toggles |
 | Audit log | Filterable log with retention setting and integrity check |
-| Security | Password policy, account lockout, audit log retention, SSO (OIDC), custom roles, OIDC claim → role mappings |
+| Security | Password policy, account lockout, audit log retention, SSO (OIDC), custom roles, OIDC claim → group mappings |
 | SMTP | Mail server with connection test and test mail |
-| Settings | Application name, review interval |
+| Settings | Application name, review interval, SSO default group and auto-provisioning |
 | Roles & permissions | The permission matrix per module and action; reset to defaults |
 | API | Links to the OpenAPI spec and Swagger UI, authentication guide |
 | Backup | Export, preview and restore |
 | LLM | AI provider and triage profiles |
 
 ### Users and authentication
-- Eight built-in roles plus **custom roles** — see
+- **Roles as permission sets**: eight built-in roles plus **custom roles**, each
+  a named set of permission objects (module × action)
+- **Roles via groups**: groups carry any combination of roles, users receive
+  every role of every group they belong to; permissions add up (allow-only).
+  Assigning roles needs `admin.roles`; the last administrator is protected — see
   [SECURITY-CONFIGURATION.md](SECURITY-CONFIGURATION.md#4-roles-and-permissions)
 - Local login with password policy and account lockout
 - **TOTP** (RFC 6238) and **passkeys** (WebAuthn / FIDO2)
 - **SSO** via any OIDC provider (Authentik, Keycloak, Entra ID, Google,
   Zitadel, Okta, Auth0 …) with auto-provisioning, domain allow-list, claim →
-  role mapping and profile pictures
+  group mapping (several mappings combine), optional strict group sync and
+  profile pictures
 - Personal **API tokens** for scripts and MCP clients
 
 ### Audit log

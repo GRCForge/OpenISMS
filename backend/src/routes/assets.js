@@ -42,7 +42,7 @@ const assetWritableFields = () =>
 
 // Inform active DPOs about DPIA requirements
 const notifyDpos = async (asset, actorId) => {
-  const dpos = await User.findAll({ where: { role: 'dpo', active: true }, attributes: ['id'] });
+  const dpos = await require('../services/accessService').findUsersWithRole('dpo', { attributes: ['id'] });
   for (const d of dpos) {
     await notify({
       userId: d.id, actorId, type: 'assignment',
@@ -248,11 +248,8 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
     // admin could edit it and nothing changed. Now the matrix decides, and the
     // old role list is the fallback for when it says nothing (same contract as
     // requirePermission).
-    const { can } = require('../services/permissionService');
-    const mayEditCompliance = await can(req.user, 'assets', 'edit_compliance');
-    const compliancePermitted = typeof mayEditCompliance === 'boolean'
-      ? mayEditCompliance
-      : (isAssessor(req) || isDpo(req) || isAdmin(req));
+    const { decide } = require('../services/permissionService');
+    const compliancePermitted = await decide(req.user, 'assets', 'edit_compliance', ['admin', 'assessor', 'dpo']);
     if (!compliancePermitted) {
       const protectedFields = ['classification', 'nis2_relevant', 'rto', 'rpo'];
       const changed = protectedFields.filter(f => data[f] !== undefined && String(data[f]) !== String(asset[f]));
@@ -265,8 +262,9 @@ router.put('/:id', authenticate, requirePermission('assets','edit_basics','admin
     // matrix but nothing ever read it, so the knob was decorative. Its default is
     // the set that may edit these fields today (everyone who passes edit_basics),
     // which keeps access unchanged; narrowing it is now a deliberate admin edit.
-    const mayEditSecurity = await can(req.user, 'assets', 'edit_security');
-    if (mayEditSecurity === false) {
+    const { BUILTIN_ROLES } = require('../services/accessService');
+    const mayEditSecurity = await decide(req.user, 'assets', 'edit_security', BUILTIN_ROLES);
+    if (!mayEditSecurity) {
       const securityFields = ['patch_status', 'hardening_status', 'eol_date', 'backup_plan', 'last_restore_test'];
       const changed = securityFields.filter(f => data[f] !== undefined && String(data[f]) !== String(asset[f]));
       if (changed.length > 0) {

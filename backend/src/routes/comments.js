@@ -1,6 +1,6 @@
 const express = require('express');
 const { Comment, User, Notification, Asset, Group, Task } = require('../models');
-const { authenticate, canViewAsset, requirePermission } = require('../middleware/auth');
+const { authenticate, canViewAsset, requirePermission, hasRole } = require('../middleware/auth');
 const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 
@@ -175,7 +175,7 @@ router.delete('/:commentId', authenticate, requirePermission('comments','delete'
   try {
     const comment = await Comment.findByPk(req.params.commentId);
     if (!comment) return res.status(404).json({ error: 'Not found' });
-    if (comment.user_id !== req.user.id && req.user.role !== 'admin') {
+    if (comment.user_id !== req.user.id && !hasRole(req.user, 'admin')) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     const asset = await Asset.findByPk(comment.asset_id);
