@@ -143,6 +143,13 @@ depends on it.
   report
 - Nightly refresh of all active technical assets; an `NVD_API_KEY` raises the
   NVD rate limit
+- **Vulnerability register** (ISO 27005:2022 8.2.4): vulnerabilities are
+  recorded manually (title, description, severity, CVSS, related assets) or
+  taken over from the CVE data of an asset — by selecting individual CVEs,
+  never automatically. One entry per CVE; taking the same CVE over from a
+  second asset links that asset. A vulnerability used in a risk scenario
+  cannot be deleted. Permissions `vulnerabilities.view` (not viewer/employee),
+  `vulnerabilities.manage` (admin, assessor, IT staff), `vulnerabilities.delete`
 
 ### Network discovery and staging
 **No source creates assets on its own.** Everything a source reports lands in an
@@ -181,7 +188,37 @@ REST API, never over MCP.
 
 ### Risk register (ISO 27005)
 - Likelihood × impact on the scales of the active **risk methodology**
-  (see below); inherent and residual risk separately
+  (see below)
+- **Three levels:** gross (inherent), net (current, calculated from the
+  implemented controls) and target (after the planned treatment, set
+  manually). The register shows all three; the heatmap switches between them
+- **Net-risk override:** the calculated net risk can be overridden with a
+  mandatory rationale (permission `risks.override_residual`, default admin and
+  assessor, plus the record rights). The risk is flagged *overridden*, who,
+  when and why are shown together with the value the calculation gives, and
+  the override and its removal are written to the audit log. The calculation
+  stays the default; a reassessment removes an override
+- **Impact dimensions** (ISO 27005:2022 7.2/8.3.3, BSI 200-3): if the
+  methodology enables them, impact is rated per dimension — confidentiality,
+  integrity, availability, financial, legal/regulatory, reputation,
+  operational. The overall impact is the maximum of the rated dimensions
+  (maximum principle); dimensions may stay empty. Risks from before 3.7.0 keep
+  their single impact value, nothing is converted
+- **Rationale:** whoever sets or changes likelihood or impact (including a
+  dimension) states why — mandatory for the web interface, the API and the
+  MCP tools, also on a reassessment. Existing risks without a rationale stay
+  editable as long as their values do not change
+- **Risk scenarios:** asset(s) × threat × vulnerability, several per risk.
+  Scenarios are shown in the risk detail (record rights), not in the register
+  list
+- **Risk categories** are a maintained list (Administration → Risk
+  methodology → Risk categories): key, labels in German, English and Spanish,
+  order, active flag. The key never changes; deactivated categories are no
+  longer offered for new risks; an entry is only deleted while no risk and no
+  methodology version uses it. On upgrade, the nine former form values,
+  "Bedrohungslage" and every other value found in existing risks or risk
+  appetites become entries; risks are not changed. Imports accept the key or a
+  label; unknown values fail the row
 - Linked to assets, threats (BSI elementary threats and custom threats) and
   controls with an effectiveness rating; only implemented controls lower the
   residual likelihood
@@ -206,8 +243,11 @@ Administration → Risk methodology defines how risks are assessed:
   thresholds (score = likelihood × impact). The thresholds must start at 1,
   end at the highest score and leave neither gaps nor overlaps; a level that
   contains no reachable score is reported as a warning
-- **Risk appetite / tolerance:** the highest tolerated level per risk category
-  plus an optional default. The residual risk counts (the inherent risk where
+- **Impact dimensions:** which dimensions are rated separately (see the risk
+  register); labels and a criterion per dimension can be set. Changing the
+  selection creates a new version
+- **Risk appetite / tolerance:** the highest tolerated level per entry of the
+  risk category list plus an optional default. The residual risk counts (the inherent risk where
   there is no residual); risks above it are flagged in the register, the API
   and the MCP tools
 - **Acceptance authority:** per level, the roles allowed to accept a risk and

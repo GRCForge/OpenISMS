@@ -45,6 +45,8 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   const m = require(path.join(SRC, 'models'));
   const rm = require(path.join(SRC, 'services', 'riskMethodology'));
   const svc = require(path.join(SRC, 'services', 'riskService'));
+  // Since 3.7.0 every assessment carries a rationale (services/riskService.js).
+  const R = { likelihood_rationale: 'Test', impact_rationale: 'Test' };
 
   // 1. Schema wie v3.5.1: volles Schema, dann die neuen Teile wieder entfernen.
   await m.sequelize.sync();
@@ -68,6 +70,8 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   console.log('Startmigration:');
   await m.sequelize.sync({ alter: { drop: false } });
   const mig = await rm.ensureDefaultProfile();
+  // Since 3.7.0 categories are a maintained list; the former values become entries.
+  await require(path.join(SRC, 'services', 'riskCategoryService')).ensureCategories();
   eq('Standardprofil als Version 1 angelegt, aktiv', [mig.created, mig.active.version, mig.active.status, mig.active.likelihood_levels.length, mig.active.impact_levels.length], [true, 1, 'active', 5, 5]);
   eq('alle vier Bestandsrisiken zugeordnet', mig.attached, 4);
   const after = await snap();
@@ -83,16 +87,16 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   const expected = [];
   for (let l = 1; l <= 5; l++) {
     for (let i = 1; i <= 5; i++) {
-      const r = await svc.createRisk({ title: `K ${l}x${i}`, owner_id: owner.id, likelihood: l, impact: i }, admin, { user: admin });
+      const r = await svc.createRisk({ ...R, title: `K ${l}x${i}`, owner_id: owner.id, likelihood: l, impact: i }, admin, { user: admin });
       levels.push([r.inherent_level, r.residual_level, r.methodology_id]);
       expected.push([oldComputeLevel(l, i), oldComputeLevel(l, i), V1]);
     }
   }
   eq('25 Kombinationen: Brutto/Netto-Stufe und Version', levels, expected);
-  eq('Wahrscheinlichkeit 6 auf 5er-Skala → 400', await status(svc.createRisk({ title: 'x', likelihood: 6, impact: 1 }, admin, { user: admin })), 400);
-  eq('Status accepted beim Anlegen → 400', await status(svc.createRisk({ title: 'x', status: 'accepted' }, admin, { user: admin })), 400);
+  eq('Wahrscheinlichkeit 6 auf 5er-Skala → 400', await status(svc.createRisk({ ...R, title: 'x', likelihood: 6, impact: 1 }, admin, { user: admin })), 400);
+  eq('Status accepted beim Anlegen → 400', await status(svc.createRisk({ ...R, title: 'x', status: 'accepted' }, admin, { user: admin })), 400);
   const ctrl = await m.Control.create({ framework: 'custom', code: 'C-1', title: 'Backup', status: 'implemented' });
-  const withCtrl = await svc.createRisk({ title: 'mit Massnahme', owner_id: owner.id, likelihood: 4, impact: 4, controls: [{ id: ctrl.id, effectiveness: 3 }] }, admin, { user: admin });
+  const withCtrl = await svc.createRisk({ ...R, title: 'mit Massnahme', owner_id: owner.id, likelihood: 4, impact: 4, controls: [{ id: ctrl.id, effectiveness: 3 }] }, admin, { user: admin });
   eq('Netto mit umgesetzter Massnahme (W3): 4 → 2, 2x4 = medium (brutto 4x4 = critical)', [withCtrl.residual_likelihood, withCtrl.residual_level, withCtrl.inherent_level], [2, 'medium', 'critical']);
   eq('Antwort traegt Methodik-Felder', [withCtrl.methodology_version, withCtrl.needs_reassessment, withCtrl.appetite_exceeded, withCtrl.effective_level], [1, false, false, 'medium']);
 
@@ -101,7 +105,7 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   eq('owner, eigenes Risiko → ok, keine Hoechstdauer', await (async () => { const x = await svc.signoffRisk(r1, owner, null, { user: owner }); return [x.status, x.accepted_until]; })(), ['accepted', null]);
   eq('it-staff → 403 (Datensatz)', await status(svc.signoffRisk(await m.Risk.findByPk(3), it, null, { user: it })), 403);
   eq('management → 403 (Standardprofil erlaubt nur admin/assessor/owner)', await status(svc.signoffRisk(await m.Risk.findByPk(3), boss, null, { user: boss })), 403);
-  eq('Status accepted per Bearbeiten → 400', await status(svc.updateRisk(await m.Risk.findByPk(3), { title: 'Alt kritisch', status: 'accepted', likelihood: 5, impact: 5 }, admin, { user: admin })), 400);
+  eq('Status accepted per Bearbeiten → 400', await status(svc.updateRisk(await m.Risk.findByPk(3), { ...R, title: 'Alt kritisch', status: 'accepted', likelihood: 5, impact: 5 }, admin, { user: admin })), 400);
 
   console.log('\nNeue Version 3x3:');
   const P3 = {
@@ -139,21 +143,21 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   eq('Altlast 4x4 bleibt an Version 1 mit Stufe high', [r4.methodology_id, r4.inherent_level, r4.likelihood, r4.impact], [V1, 'high', 4, 4]);
   eq('Freigabe an alter Version → 409', await status(svc.signoffRisk(await m.Risk.findByPk(3), admin, null, { user: admin })), 409);
   const r3 = await m.Risk.findByPk(3);
-  eq('Bearbeiten ohne Neubewertung: Werte nach Version 1 (5 erlaubt)', await (async () => { const x = await svc.updateRisk(r3, { title: 'Alt kritisch', likelihood: 5, impact: 4 }, admin, { user: admin }); return [x.methodology_version, x.inherent_level]; })(), [1, 'critical']);
-  eq('Neubewertung ohne Werte → 400', await status(svc.updateRisk(await m.Risk.findByPk(3), { title: 'Alt kritisch', reassess: true }, admin, { user: admin })), 400);
+  eq('Bearbeiten ohne Neubewertung: Werte nach Version 1 (5 erlaubt)', await (async () => { const x = await svc.updateRisk(r3, { ...R, title: 'Alt kritisch', likelihood: 5, impact: 4 }, admin, { user: admin }); return [x.methodology_version, x.inherent_level]; })(), [1, 'critical']);
+  eq('Neubewertung ohne Werte → 400', await status(svc.updateRisk(await m.Risk.findByPk(3), { ...R, title: 'Alt kritisch', reassess: true }, admin, { user: admin })), 400);
   eq('Neubewertung mit Wert ausserhalb der neuen Skala (5) → 400, Version bleibt',
-    [await status(svc.updateRisk(await m.Risk.findByPk(3), { title: 'Alt kritisch', reassess: true, likelihood: 5, impact: 3 }, admin, { user: admin })), (await m.Risk.findByPk(3)).methodology_id], [400, V1]);
-  const re = await svc.updateRisk(await m.Risk.findByPk(3), { title: 'Alt kritisch', reassess: true, likelihood: 3, impact: 2 }, admin, { user: admin });
+    [await status(svc.updateRisk(await m.Risk.findByPk(3), { ...R, title: 'Alt kritisch', reassess: true, likelihood: 5, impact: 3 }, admin, { user: admin })), (await m.Risk.findByPk(3)).methodology_id], [400, V1]);
+  const re = await svc.updateRisk(await m.Risk.findByPk(3), { ...R, title: 'Alt kritisch', reassess: true, likelihood: 3, impact: 2 }, admin, { user: admin });
   eq('Neubewertung: Version 2, 3x2 = high', [re.methodology_version, re.inherent_level, re.needs_reassessment], [2, 'high', false]);
   const reLog = await m.AuditLog.findOne({ where: { entity_type: 'risk', entity_id: 3 }, order: [['id', 'DESC']] });
   eq('Neubewertung im Audit-Log (signiert)', [reLog.details.action, reLog.details.from_version, reLog.details.to_version, reLog.details.before.likelihood, reLog.details.after.inherent_level, !!reLog.integrity_hash], ['reassess', 1, 2, 5, 'high', true]);
   eq('Uebernahme 5x5 → 3x3 abgelehnt (Matrixgroesse)', (await svc.carryOver([1, 2], { user: admin })).skipped.map(s => s.reason), ['matrix_changed', 'matrix_changed']);
 
   console.log('\nAppetit (Version 2):');
-  const priv = await svc.createRisk({ title: 'Datenschutz', category: 'privacy', owner_id: owner.id, likelihood: 2, impact: 2 }, admin, { user: admin });
-  const ops = await svc.createRisk({ title: 'Betrieb', category: 'operational', owner_id: owner.id, likelihood: 3, impact: 3 }, admin, { user: admin });
+  const priv = await svc.createRisk({ ...R, title: 'Datenschutz', category: 'privacy', owner_id: owner.id, likelihood: 2, impact: 2 }, admin, { user: admin });
+  const ops = await svc.createRisk({ ...R, title: 'Betrieb', category: 'operational', owner_id: owner.id, likelihood: 3, impact: 3 }, admin, { user: admin });
   eq('privacy medium > low → markiert; operational critical > high (Standard) → markiert', [priv.methodology_version, priv.appetite_max_level, priv.appetite_exceeded, ops.inherent_level, ops.appetite_exceeded], [2, 'low', true, 'critical', true]);
-  eq('Wahrscheinlichkeit 4 auf 3er-Skala → 400', await status(svc.createRisk({ title: 'x', likelihood: 4, impact: 1 }, admin, { user: admin })), 400);
+  eq('Wahrscheinlichkeit 4 auf 3er-Skala → 400', await status(svc.createRisk({ ...R, title: 'x', likelihood: 4, impact: 1 }, admin, { user: admin })), 400);
   eq('Hook gilt auch am Dienst vorbei (Import/Warnmeldung): Risk.create 4x1 → 400', await status(m.Risk.create({ title: 'direkt', likelihood: 4, impact: 1 })), 400);
   const direct = await m.Risk.create({ title: 'direkt', likelihood: 3, impact: 1 });
   eq('… gueltig: Version 2, Stufe berechnet', [direct.methodology_id, direct.inherent_level], [V2, 'medium']);
@@ -170,10 +174,10 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   eq('Zuruecknehmen durch it-staff → 403', await status(svc.revokeRisk(await m.Risk.findByPk(ops.id), it, { user: it })), 403);
   eq('Zuruecknehmen durch assessor (darf critical nicht akzeptieren) → 403', await status(svc.revokeRisk(await m.Risk.findByPk(ops.id), assessor, { user: assessor })), 403);
   eq('Zuruecknehmen durch den Akzeptierenden → ok', (await svc.revokeRisk(await m.Risk.findByPk(ops.id), boss, { user: boss })).status, 'in_treatment');
-  const lowRisk = await svc.createRisk({ title: 'klein', category: 'it_security', owner_id: owner.id, likelihood: 1, impact: 2 }, admin, { user: admin });
+  const lowRisk = await svc.createRisk({ ...R, title: 'klein', category: 'it_security', owner_id: owner.id, likelihood: 1, impact: 2 }, admin, { user: admin });
   const lowAcc = await svc.signoffRisk(await m.Risk.findByPk(lowRisk.id), owner, null, { user: owner });
   eq('low: owner darf, 24 Monate', [lowAcc.status, lowAcc.accepted_until], ['accepted', rm.addMonths(rm.todayStr(), 24)]);
-  const raised = await svc.updateRisk(await m.Risk.findByPk(lowRisk.id), { title: 'klein', status: 'accepted', likelihood: 3, impact: 2 }, owner, { user: owner });
+  const raised = await svc.updateRisk(await m.Risk.findByPk(lowRisk.id), { ...R, title: 'klein', status: 'accepted', likelihood: 3, impact: 2 }, owner, { user: owner });
   eq('Stufe steigt (low → high): Akzeptanz erlischt, protokolliert', [raised.status, raised.accepted_by_id, raised.accepted_until], ['in_treatment', null, null]);
   eq('… Audit-Eintrag acceptance_lapsed', !!(await m.AuditLog.findOne({ where: { entity_type: 'risk', entity_id: lowRisk.id }, order: [['id', 'DESC']] })).details.acceptance_lapsed, true);
 

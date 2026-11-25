@@ -8,14 +8,16 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { IconButton } from '../ui/IconButton';
 import { RiskHeatmap } from '../risks/RiskHeatmap';
-import { forgetScales, loadActiveScale, loadScaleVersion, levelLabel } from '../../lib/riskMethodology';
+import { forgetScales, loadActiveScale, loadScaleVersion, levelLabel, loadRiskCategories, categoryLabel } from '../../lib/riskMethodology';
+import { RiskCategorySettings } from './RiskCategorySettings';
 import { usePermissions } from '../../contexts/PermissionsContext';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Risk, RiskLevel, RiskScale, RiskScaleStep, RiskMethodologyVersion, RiskLevelDef, RiskAcceptanceRule } from '../../types';
+import type { Risk, RiskLevel, RiskScale, RiskScaleStep, RiskMethodologyVersion, RiskLevelDef, RiskAcceptanceRule, RiskCategory, ImpactDimensionDef, ImpactDimensionKey } from '../../types';
 
 const LEVELS: RiskLevel[] = ['low', 'medium', 'high', 'critical'];
 const ROLES = ['admin', 'assessor', 'owner', 'it-staff', 'dpo', 'management', 'viewer', 'employee'];
-const CATEGORY_KEYS = ['it_security', 'privacy', 'compliance', 'operational', 'financial', 'reputation', 'ai_risk', 'supply_chain', 'other'];
+// Fixed catalogue of impact dimensions (backend services/riskMethodology.js).
+const DIMENSION_KEYS: ImpactDimensionKey[] = ['confidentiality', 'integrity', 'availability', 'financial', 'legal', 'reputation', 'operational'];
 const MIN = 3;
 const MAX = 6;
 
@@ -28,6 +30,7 @@ interface Draft {
   risk_levels: RiskLevelDef[];
   appetite: { default_max_level: RiskLevel | ''; categories: { category: string; max_level: RiskLevel }[] };
   acceptance: RiskAcceptanceRule[];
+  impact_dimensions: ImpactDimensionDef[];
 }
 interface Issue { field: string; message: string; }
 interface ValidateResult { valid: boolean; unchanged: boolean; errors: Issue[]; warnings: Issue[]; preview: RiskScale | null; matrix_changed: boolean; risks_to_reassess: number; }
@@ -44,6 +47,7 @@ const toDraft = (s: RiskScale): Draft => ({
     const r = s.acceptance.find(a => a.level === level);
     return { level, roles: r ? [...r.roles] : ['admin'], max_months: r?.max_months ?? null };
   }),
+  impact_dimensions: (s.impact_dimensions || []).map(d => ({ ...d })),
 });
 
 // Schwellen gleichmaessig ueber den Score verteilen (Verhaeltnis wie beim
@@ -72,6 +76,9 @@ export const RiskMethodologySettings: React.FC = () => {
   const [pending, setPending] = useState<Risk[]>([]);
   const [carrySel, setCarrySel] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<RiskCategory[]>([]);
+  const reloadCategories = useCallback(() => loadRiskCategories().then(setCategories).catch(() => setCategories([])), []);
+  useEffect(() => { reloadCategories(); }, [reloadCategories]);
 
   const reload = useCallback(async () => {
     forgetScales();
@@ -136,7 +143,16 @@ export const RiskMethodologySettings: React.FC = () => {
   const maxScore = draft.likelihood_levels.length * draft.impact_levels.length;
   const fieldErrors = (prefix: string) => (check?.errors || []).filter(e => e.field.startsWith(prefix));
   const num = (v: string) => (v === '' ? null : Number(v));
-  const catLabel = (c: string) => (CATEGORY_KEYS.includes(c) ? t(`risks:categories.${c}`) : c);
+  // Empty labels: the server fills in the catalogue labels (de/en) on validation.
+  const dimDefault = (_key: ImpactDimensionKey) => ({ label_de: '', label_en: '' });
+  const toggleDimension = (key: ImpactDimensionKey) => {
+    const on = draft.impact_dimensions.some(d => d.key === key);
+    const next = on
+      ? draft.impact_dimensions.filter(d => d.key !== key)
+      : [...draft.impact_dimensions, { key, ...dimDefault(key), description: null }];
+    set({ impact_dimensions: DIMENSION_KEYS.map(k => next.find(d => d.key === k)).filter((d): d is ImpactDimensionDef => !!d) });
+  };
+  const setDimension = (key: ImpactDimensionKey, patch: Partial<ImpactDimensionDef>) => set({ impact_dimensions: draft.impact_dimensions.map(d => (d.key === key ? { ...d, ...patch } : d)) });
 
   const save = async () => {
     if (!payload) return;
@@ -257,6 +273,27 @@ export const RiskMethodologySettings: React.FC = () => {
           </div>
 
           <div className="space-y-2">
+            <h4 className="text-sm font-semibold dark:text-white">{t('admin:riskMethodology.dimensions')}</h4>
+            <p className="text-xs text-gray-500 dark:text-slate-400">{t('admin:riskMethodology.dimensionsHint')}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {DIMENSION_KEYS.map(key => (
+                <label key={key} className="inline-flex items-center gap-1 text-xs dark:text-slate-300">
+                  <input type="checkbox" className="w-3.5 h-3.5 rounded text-blue-600" disabled={!canManage} checked={draft.impact_dimensions.some(d => d.key === key)} onChange={() => toggleDimension(key)} />
+                  {t(`risks:dimensions.${key}`)}
+                </label>
+              ))}
+            </div>
+            {draft.impact_dimensions.map(d => (
+              <div key={d.key} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <Input aria-label={`${d.key} de`} value={d.label_de} disabled={!canManage} onChange={e => setDimension(d.key, { label_de: e.target.value })} placeholder={`${t('admin:riskMethodology.labelDe')} · ${t(`risks:dimensions.${d.key}`)}`} />
+                <Input aria-label={`${d.key} en`} value={d.label_en} disabled={!canManage} onChange={e => setDimension(d.key, { label_en: e.target.value })} placeholder={`${t('admin:riskMethodology.labelEn')} · ${t(`risks:dimensions.${d.key}`)}`} />
+                <Input aria-label={`${d.key} criterion`} value={d.description || ''} disabled={!canManage} onChange={e => setDimension(d.key, { description: e.target.value || null })} placeholder={t('admin:riskMethodology.criterion')} />
+              </div>
+            ))}
+            {fieldErrors('impact_dimensions').map((e, i) => <p key={i} className="text-xs text-red-600 dark:text-red-400">{e.message}</p>)}
+          </div>
+
+          <div className="space-y-2">
             <h4 className="text-sm font-semibold dark:text-white">{t('admin:riskMethodology.appetite')}</h4>
             <p className="text-xs text-gray-500 dark:text-slate-400">{t('admin:riskMethodology.appetiteHint')}</p>
             <div className="w-64">
@@ -264,11 +301,12 @@ export const RiskMethodologySettings: React.FC = () => {
                 onChange={e => set({ appetite: { ...draft.appetite, default_max_level: e.target.value as RiskLevel | '' } })}
                 options={[{ value: '', label: t('admin:riskMethodology.noLimit') }, ...LEVELS.map(k => ({ value: k, label: levelLabel(active, k) }))]} />
             </div>
-            <datalist id="risk-categories">{CATEGORY_KEYS.map(c => <option key={c} value={c}>{catLabel(c)}</option>)}</datalist>
             {draft.appetite.categories.map((c, i) => (
               <div key={i} className="flex items-end gap-2">
-                <div className="flex-1"><Input list="risk-categories" label={i === 0 ? t('admin:riskMethodology.category') : undefined} aria-label={t('admin:riskMethodology.category')} value={c.category} disabled={!canManage}
-                  onChange={e => set({ appetite: { ...draft.appetite, categories: draft.appetite.categories.map((x, j) => (j === i ? { ...x, category: e.target.value } : x)) } })} /></div>
+                <div className="flex-1"><Select label={i === 0 ? t('admin:riskMethodology.category') : undefined} aria-label={t('admin:riskMethodology.category')} value={c.category} disabled={!canManage}
+                  onChange={e => set({ appetite: { ...draft.appetite, categories: draft.appetite.categories.map((x, j) => (j === i ? { ...x, category: e.target.value } : x)) } })}
+                  options={[{ value: '', label: t('risks:form.select') }, ...categories.map(cat => ({ value: cat.key, label: cat.active ? categoryLabel(cat) : `${categoryLabel(cat)} (${t('risks:categoriesAdmin.inactive')})` })),
+                    ...(c.category && !categories.some(cat => cat.key === c.category) ? [{ value: c.category, label: c.category }] : [])]} /></div>
                 <div className="w-48"><Select label={i === 0 ? t('admin:riskMethodology.maxLevel') : undefined} aria-label={t('admin:riskMethodology.maxLevel')} value={c.max_level} disabled={!canManage}
                   onChange={e => set({ appetite: { ...draft.appetite, categories: draft.appetite.categories.map((x, j) => (j === i ? { ...x, max_level: e.target.value as RiskLevel } : x)) } })}
                   options={LEVELS.map(k => ({ value: k, label: levelLabel(active, k) }))} /></div>
@@ -404,6 +442,8 @@ export const RiskMethodologySettings: React.FC = () => {
           )}
         </CardBody>
       </Card>
+
+      <RiskCategorySettings categories={categories} canManage={canManage} onChanged={reloadCategories} />
     </div>
   );
 };

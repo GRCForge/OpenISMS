@@ -7,10 +7,10 @@ import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import i18n from '../i18n';
 import api from '../lib/api';
-import type { Risk, Asset, User, Threat, Control, RiskLevel, RiskTreatment, RiskStatus, Template, RiskScale } from '../types';
+import type { Risk, Asset, User, Threat, Control, RiskLevel, RiskTreatment, RiskStatus, Template, RiskScale, RiskCategory, Vulnerability, ImpactDimensionKey } from '../types';
 import { RiskHeatmap } from '../components/risks/RiskHeatmap';
 import type { HeatmapCellRef } from '../components/risks/RiskHeatmap';
-import { loadActiveScale, loadScaleVersion, levelLabel, stepOptions } from '../lib/riskMethodology';
+import { loadActiveScale, loadScaleVersion, levelLabel, stepOptions, loadRiskCategories, categoryLabel, dimensionLabel, maxDimension } from '../lib/riskMethodology';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -27,6 +27,8 @@ import { useToast } from '../contexts/ToastContext';
 import { hasWriteAccess } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
+interface ScenarioForm { asset_ids: number[]; threat_id: number | null; vulnerability_id: number | null; description: string; }
+
 const emptyRisk = {
   title: '', description: '', category: 'it_security', owner_id: '',
   likelihood: 3, impact: 3, treatment: 'mitigate' as RiskTreatment, treatment_plan: '',
@@ -35,6 +37,22 @@ const emptyRisk = {
   controls: [] as { id: number; effectiveness: number }[],
   // Neubewertung nach der aktiven Methodik (nur bei Risiken an einer aelteren Version)
   reassess: false,
+  // 3.7.0: impact per dimension (maximum principle), rationale, target risk, scenarios
+  impact_dimensions: {} as Partial<Record<ImpactDimensionKey, number>>,
+  likelihood_rationale: '',
+  impact_rationale: '',
+  target_likelihood: '' as number | '',
+  target_impact: '' as number | '',
+  scenarios: [] as ScenarioForm[],
+};
+
+type LevelBasis = 'gross' | 'net' | 'target';
+
+// Values of a risk on the chosen level: gross (inherent), net (current), target.
+const valuesOn = (r: Risk, basis: LevelBasis): { l: number | null; i: number | null; level: RiskLevel | null } => {
+  if (basis === 'net') return { l: r.residual_likelihood ?? null, i: r.residual_impact ?? null, level: r.residual_level ?? null };
+  if (basis === 'target') return { l: r.target_likelihood ?? null, i: r.target_impact ?? null, level: r.target_level ?? null };
+  return { l: r.likelihood, i: r.impact, level: r.inherent_level ?? null };
 };
 
 // Kennzeichen aus der Risikomethodik: Appetit ueberschritten, neu zu bewerten.
@@ -76,17 +94,9 @@ export const Risks: React.FC = () => {
     critical: levelLabel(scale, 'critical', t('risks:levels.critical')),
   };
 
-  const categoryLabels: Record<string, string> = {
-    it_security: t('risks:categories.it_security'),
-    privacy: t('risks:categories.privacy'),
-    compliance: t('risks:categories.compliance'),
-    operational: t('risks:categories.operational'),
-    financial: t('risks:categories.financial'),
-    reputation: t('risks:categories.reputation'),
-    ai_risk: t('risks:categories.ai_risk'),
-    supply_chain: t('risks:categories.supply_chain'),
-    other: t('risks:categories.other'),
-  };
+  // Risk categories from the maintained taxonomy (/api/risks/categories).
+  const [categories, setCategories] = useState<RiskCategory[]>([]);
+  const categoryLabels: Record<string, string> = Object.fromEntries(categories.map(c => [c.key, categoryLabel(c)]));
 
   const treatmentLabels: Record<RiskTreatment, string> = {
     mitigate: t('risks:treatment.mitigate'),
@@ -113,6 +123,12 @@ export const Risks: React.FC = () => {
 
   const { can } = usePermissions();
   const canWrite = can('risks', 'create', hasWriteAccess(user?.role));
+  const canOverride = can('risks', 'override_residual', user?.role === 'admin' || user?.role === 'assessor');
+  const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
+  const [heatBasis, setHeatBasis] = useState<LevelBasis>('gross');
+  // Values the risk had when the form opened - a change makes the rationale mandatory.
+  const [origValues, setOrigValues] = useState<{ likelihood: number; impact: number; dims: string } | null>(null);
+  const [overrideForm, setOverrideForm] = useState<{ open: boolean; likelihood: number; impact: number; reason: string }>({ open: false, likelihood: 1, impact: 1, reason: '' });
   const toast = useToast();
   const [risks, setRisks] = useState<Risk[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -180,6 +196,9 @@ export const Risks: React.FC = () => {
     api.get('/controls').then(r => setAllControls(r.data)).catch(() => setAllControls([]));
     api.get('/templates?category=risk').then(r => setTemplates(r.data)).catch(() => setTemplates([]));
     loadActiveScale().then(setScale).catch(() => setScale(null));
+    loadRiskCategories().then(setCategories).catch(() => setCategories([]));
+    // Only roles with vulnerabilities.view get the list; others just cannot pick one.
+    api.get('/vulnerabilities').then(r => setVulnerabilities(Array.isArray(r.data) ? r.data : [])).catch(() => setVulnerabilities([]));
   }, []);
 
   const stats = useMemo(() => {
@@ -196,26 +215,36 @@ export const Risks: React.FC = () => {
     if (levelFilter && r.inherent_level !== levelFilter) return false;
     if (flagFilter === 'appetite' && !r.appetite_exceeded) return false;
     if (flagFilter === 'reassess' && !r.needs_reassessment) return false;
-    if (heatCell && (r.needs_reassessment || r.likelihood !== heatCell.likelihood || r.impact !== heatCell.impact)) return false;
+    if (heatCell) {
+      const v = valuesOn(r, heatBasis);
+      if (r.needs_reassessment || v.l !== heatCell.likelihood || v.i !== heatCell.impact) return false;
+    }
     if (search && !`${r.ref} ${r.title}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }), [risks, statusFilter, categoryFilter, levelFilter, flagFilter, heatCell, search]);
+  }), [risks, statusFilter, categoryFilter, levelFilter, flagFilter, heatCell, heatBasis, search]);
 
   // Heatmap zaehlt nur Risiken, die nach der aktiven Version bewertet sind -
   // Werte einer anderen Skala gehoeren nicht in diese Matrix.
   const heatCounts = useMemo(() => {
     const m = new Map<string, number>();
-    risks.filter(r => !r.needs_reassessment).forEach(r => m.set(`${r.likelihood}-${r.impact}`, (m.get(`${r.likelihood}-${r.impact}`) || 0) + 1));
+    risks.filter(r => !r.needs_reassessment).forEach(r => {
+      const v = valuesOn(r, heatBasis);
+      if (v.l == null || v.i == null) return;
+      m.set(`${v.l}-${v.i}`, (m.get(`${v.l}-${v.i}`) || 0) + 1);
+    });
     return m;
-  }, [risks]);
+  }, [risks, heatBasis]);
   const reassessCount = useMemo(() => risks.filter(r => r.needs_reassessment).length, [risks]);
   const appetiteCount = useMemo(() => risks.filter(r => r.appetite_exceeded).length, [risks]);
   const resetFilters = () => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); setFlagFilter(''); setHeatCell(null); };
 
+  const defaultCategory = () => (categories.find(c => c.key === 'it_security' && c.active) || categories.find(c => c.active))?.key || '';
   const openNew = () => {
     setEditId(null);
     setFormScale(scale);
-    setForm({ ...emptyRisk });
+    setForm({ ...emptyRisk, category: defaultCategory() });
+    setOrigValues(null);
+    setOverrideForm({ open: false, likelihood: 1, impact: 1, reason: '' });
     setAssetSearch('');
     setThreatSearch('');
     setModalOpen(true);
@@ -226,7 +255,7 @@ export const Risks: React.FC = () => {
     setFormScale(r.needs_reassessment ? null : scale);
     if (r.needs_reassessment && r.methodology_id) loadScaleVersion(r.methodology_id).then(setFormScale).catch(() => setFormScale(null));
     setForm({
-      title: r.title, description: r.description || '', category: r.category || 'it_security',
+      title: r.title, description: r.description || '', category: r.category || '',
       owner_id: r.owner_id ? String(r.owner_id) : '',
       likelihood: r.likelihood, impact: r.impact,
       treatment: r.treatment || 'mitigate', treatment_plan: r.treatment_plan || '',
@@ -235,7 +264,20 @@ export const Risks: React.FC = () => {
       threat_ids: (r.threats || []).map(t => t.id),
       controls: (r.controls || []).map(c => ({ id: c.id, effectiveness: (c as any).RiskControl?.effectiveness || 3 })),
       reassess: false,
+      impact_dimensions: { ...(r.impact_dimensions || {}) },
+      likelihood_rationale: r.likelihood_rationale || '',
+      impact_rationale: r.impact_rationale || '',
+      target_likelihood: r.target_likelihood ?? '',
+      target_impact: r.target_impact ?? '',
+      scenarios: [],
     });
+    setOrigValues({ likelihood: r.likelihood, impact: r.impact, dims: JSON.stringify(r.impact_dimensions || {}) });
+    setOverrideForm({ open: false, likelihood: r.residual_likelihood || 1, impact: r.residual_impact || 1, reason: '' });
+    // Scenarios are only in the detail view (record rights are checked there).
+    api.get(`/risks/${r.id}`).then(d => {
+      const sc = (d.data?.scenarios || []) as NonNullable<Risk['scenarios']>;
+      setForm(f => ({ ...f, scenarios: sc.map(x => ({ asset_ids: (x.assets || []).map(a => a.id), threat_id: x.threat?.id ?? null, vulnerability_id: x.vulnerability?.id ?? null, description: x.description || '' })) }));
+    }).catch(() => { /* list data stays usable */ });
     setAssetSearch('');
     setThreatSearch('');
     setModalOpen(true);
@@ -247,10 +289,18 @@ export const Risks: React.FC = () => {
       toast.error(t('risks:form.ownerRequired'));
       return;
     }
+    const dims = Object.fromEntries(Object.entries(form.impact_dimensions).filter(([, v]) => typeof v === 'number' && v > 0));
+    const payload = {
+      ...form,
+      impact_dimensions: Object.keys(dims).length ? dims : null,
+      impact: maxDimension(dims) ?? form.impact,
+      target_likelihood: form.target_likelihood === '' ? null : form.target_likelihood,
+      target_impact: form.target_impact === '' ? null : form.target_impact,
+    };
     setSaving(true);
     try {
-      if (editId) await api.put(`/risks/${editId}`, form);
-      else await api.post('/risks', form);
+      if (editId) await api.put(`/risks/${editId}`, payload);
+      else await api.post('/risks', payload);
       setModalOpen(false); load();
     } catch (err: any) { toast.error(err.response?.data?.error || t('risks:toast.errorSaving')); }
     finally { setSaving(false); }
@@ -262,8 +312,32 @@ export const Risks: React.FC = () => {
   const startReassess = () => {
     if (!scale) return;
     setFormScale(scale);
-    setForm(f => ({ ...f, reassess: true, likelihood: Math.min(f.likelihood, scale.likelihood_size), impact: Math.min(f.impact, scale.impact_size) }));
+    const enabled = (scale.impact_dimensions || []).map(d => d.key);
+    setForm(f => ({
+      ...f, reassess: true,
+      likelihood: Math.min(f.likelihood, scale.likelihood_size), impact: Math.min(f.impact, scale.impact_size),
+      impact_dimensions: Object.fromEntries(Object.entries(f.impact_dimensions).filter(([k, v]) => enabled.includes(k as ImpactDimensionKey) && typeof v === 'number' && v <= scale.impact_size)),
+      target_likelihood: '', target_impact: '',
+      // A reassessment is a new assessment: the rationale is written afresh.
+      likelihood_rationale: '', impact_rationale: '',
+    }));
   };
+
+  // Net risk: override with rationale, or back to the calculation.
+  const saveOverride = async (override: boolean) => {
+    if (!editId) return;
+    try {
+      await api.patch(`/risks/${editId}/residual-override`, override
+        ? { override: true, residual_likelihood: overrideForm.likelihood, residual_impact: overrideForm.impact, reason: overrideForm.reason }
+        : { override: false });
+      setOverrideForm(o => ({ ...o, open: false, reason: '' }));
+      load();
+    } catch (err: any) { toast.error(err.response?.data?.error || t('risks:toast.errorSaving')); }
+  };
+
+  const setScenario = (idx: number, patch: Partial<ScenarioForm>) => setForm(f => ({ ...f, scenarios: f.scenarios.map((sc, i) => (i === idx ? { ...sc, ...patch } : sc)) }));
+  const addScenario = () => setForm(f => ({ ...f, scenarios: [...f.scenarios, { asset_ids: [], threat_id: null, vulnerability_id: null, description: '' }] }));
+  const removeScenario = (idx: number) => setForm(f => ({ ...f, scenarios: f.scenarios.filter((_, i) => i !== idx) }));
 
   const remove = async (r: Risk) => {
     if (!confirm(t('risks:confirm.delete', { ref: r.ref || r.title }))) return;
@@ -301,6 +375,11 @@ export const Risks: React.FC = () => {
     [t('risks:table.inherent')]: levelLabels[r.inherent_level!],
     [t('risks:form.likelihood')]: r.likelihood,
     [t('risks:form.impact')]: r.impact,
+    [t('risks:assessment.likelihoodRationale')]: r.likelihood_rationale || '',
+    [t('risks:assessment.impactRationale')]: r.impact_rationale || '',
+    [t('risks:table.residual')]: r.residual_level ? levelLabels[r.residual_level] : '',
+    [t('risks:levels3.overridden')]: r.residual_override ? t('risks:methodology.yes') : '',
+    [t('risks:table.target')]: r.target_level ? levelLabels[r.target_level] : '',
     [t('risks:form.treatment')]: treatmentLabels[r.treatment || 'mitigate'],
     [t('risks:table.status')]: statusLabels[r.status],
     [t('risks:form.acceptedBy', { name: '' }).trim()]: r.acceptedBy?.name || '',
@@ -416,7 +495,7 @@ export const Risks: React.FC = () => {
                 {/* Desktop table (sm+) */}
                 <div className="hidden sm:block">
                   <Table>
-                    <Thead><tr><Th>{t('risks:table.ref')}</Th><Th>{t('risks:table.risk')}</Th><Th>{t('risks:table.inherent')}</Th><Th>{t('risks:table.residual')}</Th><Th>{t('risks:table.status')}</Th><Th>{''}</Th></tr></Thead>
+                    <Thead><tr><Th>{t('risks:table.ref')}</Th><Th>{t('risks:table.risk')}</Th><Th>{t('risks:table.inherent')}</Th><Th>{t('risks:table.residual')}</Th><Th>{t('risks:table.target')}</Th><Th>{t('risks:table.status')}</Th><Th>{''}</Th></tr></Thead>
                     <Tbody>
                       {filtered.map(r => (
                         <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => openEdit(r)}>
@@ -435,11 +514,13 @@ export const Risks: React.FC = () => {
                               {r.residual_level ? (
                                 <>
                                   <Badge value={r.residual_level} label={levelLabels[r.residual_level]} />
+                                  {r.residual_override && <span title={r.residual_override_reason || ''} className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold">{t('risks:levels3.overriddenShort')}</span>}
                                   {(r.inherent_level !== r.residual_level) && <span className="text-[10px] text-green-600 font-bold">-{Math.round((r.likelihood * r.impact - (r.residual_likelihood || 0) * (r.residual_impact || 0)) / (r.likelihood * r.impact || 1) * 100)}%</span>}
                                 </>
                               ) : <span className="text-xs text-gray-300 italic">{t('risks:notTreated')}</span>}
                             </div>
                           </Td>
+                          <Td>{r.target_level ? <Badge value={r.target_level} label={levelLabels[r.target_level]} /> : <span className="text-xs text-gray-300">–</span>}</Td>
                           <Td>
                             <div className="flex flex-col gap-1">
                               <span className="text-xs font-medium dark:text-slate-400">{statusLabels[r.status]}</span>
@@ -455,7 +536,7 @@ export const Risks: React.FC = () => {
                       ))}
                       {filtered.length === 0 && risks.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="px-4 py-12 text-center">
+                          <td colSpan={7} className="px-4 py-12 text-center">
                             <p className="text-gray-500 dark:text-slate-400 font-medium">{t('risks:empty.title')}</p>
                             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 mb-4">{t('risks:empty.subtitle')}</p>
                             {canWrite && (
@@ -469,7 +550,7 @@ export const Risks: React.FC = () => {
                       )}
                       {filtered.length === 0 && risks.length > 0 && (
                         <tr>
-                          <td colSpan={6} className="px-4 py-12 text-center">
+                          <td colSpan={7} className="px-4 py-12 text-center">
                             <p className="text-gray-500 dark:text-slate-400">{t('risks:noFilter')}</p>
                             <button onClick={resetFilters}
                               className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
@@ -499,6 +580,14 @@ export const Risks: React.FC = () => {
                 </div>
               </CardHeader>
               <CardBody className="pt-3 space-y-2">
+                <div className="flex rounded-lg border dark:border-slate-700 overflow-hidden text-[11px]" role="group" aria-label={t('risks:levels3.basis')}>
+                  {(['gross', 'net', 'target'] as LevelBasis[]).map(b => (
+                    <button key={b} type="button" aria-pressed={heatBasis === b} onClick={() => { setHeatBasis(b); setHeatCell(null); }}
+                      className={`flex-1 px-2 py-1 ${heatBasis === b ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'}`}>
+                      {t(`risks:levels3.${b}`)}
+                    </button>
+                  ))}
+                </div>
                 <RiskHeatmap scale={scale} counts={heatCounts} selected={heatCell} onSelect={setHeatCell} compact />
                 <p className="text-[10px] text-gray-500 dark:text-slate-400">{t('risks:heatmap.hint')}</p>
                 {reassessCount > 0 && (
@@ -558,7 +647,7 @@ export const Risks: React.FC = () => {
               <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder={t('risks:form.descriptionPlaceholder')} />
             </div>
 
-            <Select label={t('risks:form.category')} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} options={Object.entries(categoryLabels).map(([v, l]) => ({ value: v, label: l }))} />
+            <Select label={t('risks:form.category')} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} options={[{ value: '', label: t('risks:form.select') }, ...categories.filter(c => c.active || c.key === form.category).map(c => ({ value: c.key, label: c.active ? categoryLabel(c) : `${categoryLabel(c)} (${t('risks:categoriesAdmin.inactive')})` }))]} />
             <SearchableSelect label={t('risks:form.owner')} value={String(form.owner_id || '')} onChange={val => setForm({ ...form, owner_id: val })} options={[{ value: '', label: t('risks:form.select') }, ...users.map(u => ({ value: String(u.id), label: u.name }))]} />
 
             <section className="md:col-span-2 p-4 rounded-xl border dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/20 space-y-4">
@@ -578,9 +667,59 @@ export const Risks: React.FC = () => {
               {formScale ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Select label={t('risks:form.likelihood')} value={String(form.likelihood)} onChange={e => setForm({ ...form, likelihood: parseInt(e.target.value) })} options={stepOptions(formScale.likelihood_levels, formScale.likelihood_unit)} />
-                  <Select label={t('risks:form.impact')} value={String(form.impact)} onChange={e => setForm({ ...form, impact: parseInt(e.target.value) })} options={stepOptions(formScale.impact_levels, formScale.impact_unit)} />
+                  {(formScale.impact_dimensions || []).length === 0 ? (
+                    <Select label={t('risks:form.impact')} value={String(form.impact)} onChange={e => setForm({ ...form, impact: parseInt(e.target.value) })} options={stepOptions(formScale.impact_levels, formScale.impact_unit)} />
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:form.impact')}</span>
+                      <p className="text-sm dark:text-slate-200">
+                        {maxDimension(form.impact_dimensions) != null
+                          ? t('risks:assessment.impactFromDimensions', { value: maxDimension(form.impact_dimensions) })
+                          : t('risks:assessment.impactSingle', { value: form.impact })}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('risks:assessment.maxPrinciple')}</p>
+                    </div>
+                  )}
                 </div>
               ) : <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('risks:methodology.loading')}</p>}
+              {formScale && (formScale.impact_dimensions || []).length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-[11px] font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('risks:assessment.dimensions')}</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {formScale.impact_dimensions.map(d => (
+                      <Select key={d.key} label={dimensionLabel(d)} title={d.description || undefined}
+                        value={form.impact_dimensions[d.key] ? String(form.impact_dimensions[d.key]) : ''}
+                        onChange={e => setForm({ ...form, impact_dimensions: { ...form.impact_dimensions, [d.key]: e.target.value ? parseInt(e.target.value) : undefined } })}
+                        options={[{ value: '', label: t('risks:assessment.notRated') }, ...stepOptions(formScale.impact_levels, formScale.impact_unit)]} />
+                    ))}
+                  </div>
+                  {maxDimension(form.impact_dimensions) == null && (
+                    <Select label={t('risks:assessment.overallImpact')} value={String(form.impact)} onChange={e => setForm({ ...form, impact: parseInt(e.target.value) })} options={stepOptions(formScale.impact_levels, formScale.impact_unit)} />
+                  )}
+                </div>
+              )}
+              {(() => {
+                // Rationale is mandatory when the values are set (new risk,
+                // reassessment) or changed; the server enforces it.
+                const dimsNow = JSON.stringify(Object.fromEntries(Object.entries(form.impact_dimensions).filter(([, v]) => typeof v === 'number')));
+                const lNeeded = !origValues || form.reassess || form.likelihood !== origValues.likelihood;
+                const impactNow = maxDimension(form.impact_dimensions) ?? form.impact;
+                const iNeeded = !origValues || form.reassess || impactNow !== origValues.impact || dimsNow !== origValues.dims;
+                const area = 'bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden';
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:assessment.likelihoodRationale')}{lNeeded ? ' *' : ''}</label>
+                      <textarea className={area} rows={2} required={lNeeded} value={form.likelihood_rationale} onChange={e => setForm({ ...form, likelihood_rationale: e.target.value })} placeholder={t('risks:assessment.likelihoodRationalePlaceholder')} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:assessment.impactRationale')}{iNeeded ? ' *' : ''}</label>
+                      <textarea className={area} rows={2} required={iNeeded} value={form.impact_rationale} onChange={e => setForm({ ...form, impact_rationale: e.target.value })} placeholder={t('risks:assessment.impactRationalePlaceholder')} />
+                    </div>
+                    {(lNeeded || iNeeded) && origValues && <p className="md:col-span-2 text-[11px] text-amber-700 dark:text-amber-400">{t('risks:assessment.rationaleHint')}</p>}
+                  </div>
+                );
+              })()}
               {formScale && (() => {
                 const desc = [formScale.likelihood_levels[form.likelihood - 1], formScale.impact_levels[form.impact - 1]].filter(s => s?.description);
                 return desc.length > 0 ? <ul className="text-[11px] text-gray-500 dark:text-slate-400 list-disc pl-4">{desc.map((s, i) => <li key={i}>{s!.description}</li>)}</ul> : null;
@@ -627,6 +766,44 @@ export const Risks: React.FC = () => {
               </div>
             </div>
 
+            <section className="md:col-span-2 p-4 rounded-xl border dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/20 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">{t('risks:scenarios.title', { count: form.scenarios.length })}</h3>
+                  <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('risks:scenarios.hint')}</p>
+                </div>
+                {canWrite && <Button type="button" size="sm" variant="secondary" onClick={addScenario}><Plus size={12} />{t('risks:scenarios.add')}</Button>}
+              </div>
+              {form.scenarios.length === 0 && <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('risks:scenarios.empty')}</p>}
+              {form.scenarios.map((sc, idx) => (
+                <div key={idx} className="p-3 rounded-lg border dark:border-slate-700 bg-white dark:bg-slate-900/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-gray-600 dark:text-slate-300">{t('risks:scenarios.number', { n: idx + 1 })}</span>
+                    {canWrite && <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => removeScenario(idx)}><Trash2 size={13} /></IconButton>}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-semibold text-gray-600 dark:text-slate-400">{t('risks:scenarios.assets')}</span>
+                      <div className="max-h-28 overflow-y-auto border dark:border-slate-700 rounded-lg p-1.5 custom-scrollbar">
+                        {assets.map(a => (
+                          <label key={a.id} className="flex items-center gap-2 px-1 py-0.5 text-xs dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" className="w-3.5 h-3.5 rounded text-blue-600" checked={sc.asset_ids.includes(a.id)}
+                              onChange={() => setScenario(idx, { asset_ids: sc.asset_ids.includes(a.id) ? sc.asset_ids.filter(x => x !== a.id) : [...sc.asset_ids, a.id] })} />
+                            <span className="truncate">{a.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <Select label={t('risks:scenarios.threat')} value={sc.threat_id ? String(sc.threat_id) : ''} onChange={e => setScenario(idx, { threat_id: e.target.value ? parseInt(e.target.value) : null })}
+                      options={[{ value: '', label: t('risks:scenarios.none') }, ...threats.map(th => ({ value: String(th.id), label: `${th.code ? `${th.code} ` : ''}${th.title}` }))]} />
+                    <Select label={t('risks:scenarios.vulnerability')} value={sc.vulnerability_id ? String(sc.vulnerability_id) : ''} onChange={e => setScenario(idx, { vulnerability_id: e.target.value ? parseInt(e.target.value) : null })}
+                      options={[{ value: '', label: t('risks:scenarios.none') }, ...vulnerabilities.map(v => ({ value: String(v.id), label: `${v.ref || ''} ${v.cve_id && !v.title.startsWith(v.cve_id) ? `${v.cve_id} · ` : ''}${v.title}`.trim() }))]} />
+                  </div>
+                  <Input placeholder={t('risks:scenarios.description')} value={sc.description} onChange={e => setScenario(idx, { description: e.target.value })} />
+                </div>
+              ))}
+            </section>
+
             <Select label={t('risks:form.treatment')} value={form.treatment} onChange={e => setForm({ ...form, treatment: e.target.value as RiskTreatment })} options={Object.entries(treatmentLabels).map(([v, l]) => ({ value: v, label: l }))} />
             <Select label={t('risks:table.status')} value={form.status} onChange={e => setForm({ ...form, status: e.target.value as RiskStatus })} options={statusOptions} />
 
@@ -661,15 +838,54 @@ export const Risks: React.FC = () => {
               <p className="text-[11px] text-gray-500 dark:text-gray-400" dangerouslySetInnerHTML={{ __html: t('risks:form.controlHint') }} />
             </div>
 
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <section className="p-4 rounded-xl border dark:border-slate-800 bg-blue-50/30 dark:bg-blue-900/10 space-y-2">
                 <h3 className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 tracking-wider">{t('risks:form.residualSection')}</h3>
                 {editingRisk?.residual_level ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge value={editingRisk.residual_level} label={levelLabels[editingRisk.residual_level]} />
                     <span className="text-xs text-gray-500">W{editingRisk.residual_likelihood} × A{editingRisk.residual_impact}</span>
+                    {editingRisk.residual_override && <span className="rounded-full px-1.5 text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">{t('risks:levels3.overridden')}</span>}
                   </div>
                 ) : <p className="text-xs text-gray-500 italic dark:text-gray-400">{t('risks:form.residualPending')}</p>}
+                {editingRisk?.residual_override && (
+                  <div className="text-[11px] text-gray-600 dark:text-slate-400 space-y-0.5">
+                    <p>{t('risks:levels3.overrideReason')}: {editingRisk.residual_override_reason}</p>
+                    <p>{t('risks:levels3.overrideBy', { name: editingRisk.residualOverrideBy?.name || '–', date: editingRisk.residual_override_at ? new Date(editingRisk.residual_override_at).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-GB') : '–' })}</p>
+                    {editingRisk.residual_calculated && <p>{t('risks:levels3.calculated', { l: editingRisk.residual_calculated.residual_likelihood, i: editingRisk.residual_calculated.residual_impact, level: editingRisk.residual_calculated.residual_level ? levelLabels[editingRisk.residual_calculated.residual_level] : '–' })}</p>}
+                  </div>
+                )}
+                {editId && canOverride && !editingRisk?.needs_reassessment && formScale && (
+                  overrideForm.open ? (
+                    <div className="space-y-2 pt-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        <Select label={t('risks:form.likelihood')} value={String(overrideForm.likelihood)} onChange={e => setOverrideForm({ ...overrideForm, likelihood: parseInt(e.target.value) })} options={stepOptions(formScale.likelihood_levels, formScale.likelihood_unit)} />
+                        <Select label={t('risks:form.impact')} value={String(overrideForm.impact)} onChange={e => setOverrideForm({ ...overrideForm, impact: parseInt(e.target.value) })} options={stepOptions(formScale.impact_levels, formScale.impact_unit)} />
+                      </div>
+                      <textarea className="w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg p-2 text-xs dark:text-white" rows={2} value={overrideForm.reason} onChange={e => setOverrideForm({ ...overrideForm, reason: e.target.value })} placeholder={t('risks:levels3.overrideReasonPlaceholder')} />
+                      <div className="flex gap-2">
+                        <Button type="button" size="sm" onClick={() => saveOverride(true)} disabled={!overrideForm.reason.trim()}>{t('risks:levels3.overrideSave')}</Button>
+                        <Button type="button" size="sm" variant="secondary" onClick={() => setOverrideForm({ ...overrideForm, open: false })}>{t('risks:buttons.cancel')}</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button type="button" className="text-[11px] text-blue-700 dark:text-blue-300 hover:underline" onClick={() => setOverrideForm({ ...overrideForm, open: true })}>{editingRisk?.residual_override ? t('risks:levels3.overrideChange') : t('risks:levels3.override')}</button>
+                      {editingRisk?.residual_override && <button type="button" className="text-[11px] text-red-600 dark:text-red-400 hover:underline" onClick={() => saveOverride(false)}>{t('risks:levels3.overrideRemove')}</button>}
+                    </div>
+                  )
+                )}
+              </section>
+              <section className="p-4 rounded-xl border dark:border-slate-800 bg-emerald-50/30 dark:bg-emerald-900/10 space-y-2">
+                <h3 className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400 tracking-wider">{t('risks:levels3.targetSection')}</h3>
+                {formScale && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select label={t('risks:form.likelihood')} value={form.target_likelihood === '' ? '' : String(form.target_likelihood)} onChange={e => setForm({ ...form, target_likelihood: e.target.value ? parseInt(e.target.value) : '' })} options={[{ value: '', label: t('risks:assessment.notRated') }, ...stepOptions(formScale.likelihood_levels, formScale.likelihood_unit)]} />
+                    <Select label={t('risks:form.impact')} value={form.target_impact === '' ? '' : String(form.target_impact)} onChange={e => setForm({ ...form, target_impact: e.target.value ? parseInt(e.target.value) : '' })} options={[{ value: '', label: t('risks:assessment.notRated') }, ...stepOptions(formScale.impact_levels, formScale.impact_unit)]} />
+                  </div>
+                )}
+                {editingRisk?.target_level && <Badge value={editingRisk.target_level} label={levelLabels[editingRisk.target_level]} />}
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('risks:levels3.targetHint')}</p>
               </section>
               <Input label={t('risks:form.nextReview')} type="date" value={form.review_date} onChange={e => setForm({ ...form, review_date: e.target.value })} />
             </div>

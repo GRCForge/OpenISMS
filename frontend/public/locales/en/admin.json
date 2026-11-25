@@ -289,7 +289,8 @@
     "users": "User management",
     "tokens": "API tokens",
     "backup": "Backup & restore",
-    "threat_intel": "Threat landscape"
+    "threat_intel": "Threat landscape",
+    "vulnerabilities": "Vulnerabilities"
   },
   "actions": {
     "view": "View",
@@ -332,7 +333,8 @@
     "upload": "Upload",
     "verify": "Verify integrity",
     "view_details": "View details",
-    "manage_methodology": "Manage risk methodology"
+    "manage_methodology": "Manage risk methodology",
+    "override_residual": "Override net risk"
   },
   "llm": {
     "title": "AI / LLM Configuration",
@@ -574,6 +576,8 @@
     "riskCount": "Risks",
     "createdBy": "Created",
     "system": "System",
-    "show": "Show"
+    "show": "Show",
+    "dimensions": "Impact dimensions",
+    "dimensionsHint": "Which dimensions of impact are rated separately (ISO 27005 clauses 7-8, BSI 200-3). The overall impact of a risk is the maximum of its rated dimensions. Without a selection impact stays a single value. A change creates a new methodology version."
   }
 }

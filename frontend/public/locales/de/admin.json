@@ -289,7 +289,8 @@
     "users": "Benutzerverwaltung",
     "tokens": "API-Token",
     "backup": "Backup & Restore",
-    "threat_intel": "Bedrohungslage"
+    "threat_intel": "Bedrohungslage",
+    "vulnerabilities": "Schwachstellen"
   },
   "actions": {
     "view": "Ansehen",
@@ -332,7 +333,8 @@
     "upload": "Hochladen",
     "verify": "Integrität prüfen",
     "view_details": "Details ansehen",
-    "manage_methodology": "Risikomethodik verwalten"
+    "manage_methodology": "Risikomethodik verwalten",
+    "override_residual": "Netto-Risiko überschreiben"
   },
   "llm": {
     "title": "AI / LLM Konfiguration",
@@ -574,6 +576,8 @@
     "riskCount": "Risiken",
     "createdBy": "Angelegt",
     "system": "System",
-    "show": "Anzeigen"
+    "show": "Anzeigen",
+    "dimensions": "Auswirkungsdimensionen",
+    "dimensionsHint": "Welche Dimensionen bei der Auswirkung getrennt bewertet werden (ISO 27005 Kap. 7–8, BSI 200-3). Die Gesamt-Auswirkung eines Risikos ist das Maximum der bewerteten Dimensionen. Ohne Auswahl bleibt es bei einem Gesamtwert. Eine Änderung legt eine neue Methodik-Version an."
   }
 }

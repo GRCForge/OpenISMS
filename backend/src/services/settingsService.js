@@ -16,7 +16,12 @@ const DEFAULT_PERMISSIONS = {
   // the other two stay in the handler, where they belong. edit_compliance names the
   // protected-field rule so it is at least visible and adjustable.
   assets:      { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff','dpo'], edit_basics: ['admin','owner','assessor','it-staff','dpo'], edit_compliance: ['admin','assessor','dpo'], edit_security: ['admin','owner','assessor','it-staff','dpo'], delete: ['admin'], cve: ['admin','assessor','it-staff'] },
-  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'], sign_off: ['admin','assessor','owner','management'], manage_methodology: ['admin'] },
+  risks:       { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin'], sign_off: ['admin','assessor','owner','management'], manage_methodology: ['admin'], override_residual: ['admin','assessor'] },
+  // Vulnerability register (3.7.0). Not readable by viewer/employee: CVE
+  // identifiers per asset describe the attack surface, like the CVE report
+  // behind assets.cve. Maintenance (incl. taking over CVE data) is IT and
+  // assessment work.
+  vulnerabilities: { view: ['admin','assessor','it-staff','dpo','owner','management'], manage: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
   incidents:   { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor','it-staff','dpo','owner'], edit: ['admin','assessor','it-staff','dpo','owner'], delete: ['admin','assessor'] },
   assessments: { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin','assessor'] },
   controls:    { view: ['admin','assessor','it-staff','dpo','owner','management','viewer','employee'], create: ['admin'], edit: ['admin','assessor','it-staff'], delete: ['admin'] },

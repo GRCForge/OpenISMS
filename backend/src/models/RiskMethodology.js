@@ -16,6 +16,7 @@ const sequelize = require('../config/database');
 //   risk_levels: [{ key: low|medium|high|critical, label_de, label_en, color, min_score, max_score }]
 //   appetite:    { default_max_level: key|null, categories: [{ category, max_level }] }
 //   acceptance:  [{ level, roles: [...], max_months: n|null }]
+//   impact_dimensions: [{ key, label_de, label_en, description }] (since 3.7.0)
 const RiskMethodology = sequelize.define('RiskMethodology', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   version: { type: DataTypes.INTEGER, allowNull: false, unique: true },
@@ -28,6 +29,9 @@ const RiskMethodology = sequelize.define('RiskMethodology', {
   risk_levels: { type: DataTypes.JSONB, allowNull: false },
   appetite: { type: DataTypes.JSONB, allowNull: false },
   acceptance: { type: DataTypes.JSONB, allowNull: false },
+  // Since 3.7.0: [{ key, label_de, label_en, description }], keys from the fixed
+  // catalogue in services/riskMethodology.js. NULL on older versions = none.
+  impact_dimensions: { type: DataTypes.JSONB, allowNull: true },
   change_note: { type: DataTypes.TEXT },
   created_by_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
   activated_at: { type: DataTypes.DATE },

@@ -142,6 +142,10 @@
     "threatIntel": {
       "label": "Threat landscape",
       "hint": "Advisories & sources"
+    },
+    "vulnerabilities": {
+      "label": "Vulnerabilities",
+      "hint": "Register & CVE takeover"
     }
   },
   "overdueReviews_one": "{{count}} overdue review",

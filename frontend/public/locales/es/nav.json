@@ -142,6 +142,10 @@
     "threatIntel": {
       "label": "Panorama de amenazas",
       "hint": "Avisos y fuentes"
+    },
+    "vulnerabilities": {
+      "label": "Vulnerabilidades",
+      "hint": "Registro y adopción de CVE"
     }
   },
   "overdueReviews_one": "{{count}} overdue review",

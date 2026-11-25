@@ -63,7 +63,8 @@
     "risk": "Risiko",
     "inherent": "Vererbt",
     "residual": "Restwert",
-    "status": "Status"
+    "status": "Status",
+    "target": "Ziel"
   },
   "notTreated": "Unbehandelt",
   "acceptedUntil": "Akzeptiert bis",
@@ -159,5 +160,117 @@
     "maxMonths_one": "Höchstens {{count}} Monat gültig.",
     "maxMonths_other": "Höchstens {{count}} Monate gültig.",
     "reassessFirst": "Vor der Freigabe nach der aktiven Methodik neu bewerten."
+  },
+  "categoriesAdmin": {
+    "inactive": "deaktiviert",
+    "title": "Risikokategorien",
+    "hint": "Gepflegte Liste der Risikokategorien. Der Schlüssel bleibt fest, weil Risiken und Methodik-Versionen darauf verweisen; Bezeichnungen, Reihenfolge und Aktiv-Status sind änderbar. Deaktivierte Kategorien werden für neue Risiken nicht mehr angeboten. Löschen geht nur, solange nichts darauf verweist.",
+    "key": "Schlüssel",
+    "order": "Reihenfolge",
+    "active": "Aktiv",
+    "risks": "Risiken",
+    "migrated": "übernommen",
+    "migratedHint": "Aus dem bisherigen Freitextfeld übernommen – Bezeichnungen bitte prüfen.",
+    "saved": "Gespeichert.",
+    "confirmDelete": "Risikokategorie „{{label}}“ löschen?",
+    "keyPlaceholder": "leer = aus der englischen Bezeichnung",
+    "add": "Kategorie anlegen"
+  },
+  "assessment": {
+    "likelihoodRationale": "Begründung der Wahrscheinlichkeit",
+    "impactRationale": "Begründung der Auswirkung",
+    "likelihoodRationalePlaceholder": "z. B. zwei Vorfälle im letzten Jahr, Angriffe auf die Branche bekannt",
+    "impactRationalePlaceholder": "z. B. Kundendaten betroffen, Meldepflicht nach DSGVO",
+    "rationaleHint": "Die Werte wurden geändert: Begründungen bitte aktualisieren (Pflicht).",
+    "impactFromDimensions": "Gesamt: {{value}} (Maximum der Dimensionen)",
+    "impactSingle": "Gesamt: {{value}} (keine Dimension bewertet)",
+    "maxPrinciple": "Maximumprinzip: Die Gesamt-Auswirkung ist die höchste bewertete Dimension.",
+    "dimensions": "Auswirkung je Dimension",
+    "notRated": "– nicht bewertet –",
+    "overallImpact": "Gesamt-Auswirkung (ohne Dimensionen)"
+  },
+  "dimensions": {
+    "confidentiality": "Vertraulichkeit",
+    "integrity": "Integrität",
+    "availability": "Verfügbarkeit",
+    "financial": "Finanziell",
+    "legal": "Rechtlich/regulatorisch",
+    "reputation": "Reputation",
+    "operational": "Operativ"
+  },
+  "scenarios": {
+    "title": "Risikoszenarien ({{count}})",
+    "hint": "Szenario = Asset(s) × Bedrohung × Schwachstelle (ISO 27005, BSI 200-3).",
+    "add": "Szenario",
+    "empty": "Keine Szenarien erfasst.",
+    "number": "Szenario {{n}}",
+    "assets": "Assets",
+    "threat": "Bedrohung",
+    "vulnerability": "Schwachstelle",
+    "none": "– keine –",
+    "description": "Kurzbeschreibung des Szenarios"
+  },
+  "levels3": {
+    "overridden": "überschrieben",
+    "overriddenShort": "manuell",
+    "overrideReason": "Begründung",
+    "overrideBy": "Überschrieben von {{name}} am {{date}}",
+    "calculated": "Berechnet wäre: W{{l}} × A{{i}} ({{level}})",
+    "override": "Netto-Risiko überschreiben",
+    "overrideChange": "Überschreibung ändern",
+    "overrideRemove": "Zurück zur Berechnung",
+    "overrideSave": "Überschreiben",
+    "overrideReasonPlaceholder": "Begründung (Pflicht), z. B. Wirksamkeit durch Pentest belegt",
+    "targetSection": "Zielrisiko (nach geplanter Behandlung)",
+    "targetHint": "Manuell: das Risiko, das nach Umsetzung des Behandlungsplans erwartet wird.",
+    "basis": "Ebene der Heatmap",
+    "gross": "Brutto",
+    "net": "Netto",
+    "target": "Ziel"
+  },
+  "vulns": {
+    "title": "Schwachstellen",
+    "subtitle": "{{count}} Schwachstellen im Register",
+    "importFromAsset": "Aus CVE-Daten übernehmen",
+    "new": "Neue Schwachstelle",
+    "edit": "Schwachstelle bearbeiten",
+    "searchPlaceholder": "Suche nach Titel, CVE, Kennung…",
+    "allSources": "Alle Quellen",
+    "allSeverities": "Alle Schweregrade",
+    "vulnerability": "Schwachstelle",
+    "severityLabel": "Schwere",
+    "assets": "Assets",
+    "risks": "Risiken",
+    "empty": "Noch keine Schwachstellen erfasst.",
+    "confirmDelete": "Schwachstelle {{ref}} löschen?",
+    "loadCvesError": "CVE-Daten konnten nicht geladen werden.",
+    "imported": "{{created}} neu angelegt, {{linked}} mit dem Asset verknüpft.",
+    "cveEntryHint": "Aus CVE-Daten übernommen: Die CVE-Kennung bleibt fest, Titel und Bewertung sind änderbar.",
+    "titleLabel": "Titel",
+    "usedIn": "Verwendet in Risikoszenarien:",
+    "hiddenRisks": "{{count}} weitere Risiken ohne Leserecht",
+    "importHint": "Asset wählen, dann die CVEs ankreuzen, die als Schwachstelle übernommen werden sollen. Es wird nichts automatisch übernommen; eine bereits erfasste CVE wird nur mit dem Asset verknüpft.",
+    "asset": "Asset",
+    "cvesOfAsset": "CVEs des Assets ({{count}})",
+    "noCves": "Für dieses Asset liegen keine CVE-Daten vor.",
+    "alreadyLinked": "bereits erfasst ({{ref}})",
+    "willLink": "erfasst als {{ref}} – wird mit dem Asset verknüpft",
+    "importSelected": "{{count}} übernehmen",
+    "severity": {
+      "critical": "Kritisch",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig",
+      "none": "Keine"
+    },
+    "status": {
+      "open": "Offen",
+      "mitigated": "Gemindert",
+      "closed": "Geschlossen"
+    },
+    "source": {
+      "manual": "Manuell",
+      "cve": "CVE"
+    }
   }
 }

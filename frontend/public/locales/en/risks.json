@@ -63,7 +63,8 @@
     "risk": "Risk",
     "inherent": "Inherent",
     "residual": "Residual",
-    "status": "Status"
+    "status": "Status",
+    "target": "Target"
   },
   "notTreated": "Untreated",
   "acceptedUntil": "Accepted until",
@@ -159,5 +160,117 @@
     "maxMonths_one": "Valid for at most {{count}} month.",
     "maxMonths_other": "Valid for at most {{count}} months.",
     "reassessFirst": "Reassess under the active methodology before signing off."
+  },
+  "categoriesAdmin": {
+    "inactive": "inactive",
+    "title": "Risk categories",
+    "hint": "Maintained list of risk categories. The key is fixed because risks and methodology versions refer to it; labels, order and active flag can change. Inactive categories are no longer offered for new risks. An entry can only be deleted while nothing refers to it.",
+    "key": "Key",
+    "order": "Order",
+    "active": "Active",
+    "risks": "Risks",
+    "migrated": "taken over",
+    "migratedHint": "Taken over from the former free-text field - please review the labels.",
+    "saved": "Saved.",
+    "confirmDelete": "Delete risk category \"{{label}}\"?",
+    "keyPlaceholder": "empty = from the English label",
+    "add": "Add category"
+  },
+  "assessment": {
+    "likelihoodRationale": "Likelihood rationale",
+    "impactRationale": "Impact rationale",
+    "likelihoodRationalePlaceholder": "e.g. two incidents last year, attacks on the sector known",
+    "impactRationalePlaceholder": "e.g. customer data affected, GDPR notification duty",
+    "rationaleHint": "The values changed: please update the rationale (mandatory).",
+    "impactFromDimensions": "Overall: {{value}} (maximum of the dimensions)",
+    "impactSingle": "Overall: {{value}} (no dimension rated)",
+    "maxPrinciple": "Maximum principle: the overall impact is the highest rated dimension.",
+    "dimensions": "Impact per dimension",
+    "notRated": "- not rated -",
+    "overallImpact": "Overall impact (without dimensions)"
+  },
+  "dimensions": {
+    "confidentiality": "Confidentiality",
+    "integrity": "Integrity",
+    "availability": "Availability",
+    "financial": "Financial",
+    "legal": "Legal/regulatory",
+    "reputation": "Reputation",
+    "operational": "Operational"
+  },
+  "scenarios": {
+    "title": "Risk scenarios ({{count}})",
+    "hint": "Scenario = asset(s) x threat x vulnerability (ISO 27005, BSI 200-3).",
+    "add": "Scenario",
+    "empty": "No scenarios recorded.",
+    "number": "Scenario {{n}}",
+    "assets": "Assets",
+    "threat": "Threat",
+    "vulnerability": "Vulnerability",
+    "none": "- none -",
+    "description": "Short description of the scenario"
+  },
+  "levels3": {
+    "overridden": "overridden",
+    "overriddenShort": "manual",
+    "overrideReason": "Rationale",
+    "overrideBy": "Overridden by {{name}} on {{date}}",
+    "calculated": "Calculated: L{{l}} x I{{i}} ({{level}})",
+    "override": "Override net risk",
+    "overrideChange": "Change override",
+    "overrideRemove": "Back to calculation",
+    "overrideSave": "Override",
+    "overrideReasonPlaceholder": "Rationale (mandatory), e.g. effectiveness proven by pentest",
+    "targetSection": "Target risk (after planned treatment)",
+    "targetHint": "Manual: the risk expected once the treatment plan is implemented.",
+    "basis": "Heatmap level",
+    "gross": "Gross",
+    "net": "Net",
+    "target": "Target"
+  },
+  "vulns": {
+    "title": "Vulnerabilities",
+    "subtitle": "{{count}} vulnerabilities in the register",
+    "importFromAsset": "Take over from CVE data",
+    "new": "New vulnerability",
+    "edit": "Edit vulnerability",
+    "searchPlaceholder": "Search title, CVE, reference...",
+    "allSources": "All sources",
+    "allSeverities": "All severities",
+    "vulnerability": "Vulnerability",
+    "severityLabel": "Severity",
+    "assets": "Assets",
+    "risks": "Risks",
+    "empty": "No vulnerabilities recorded yet.",
+    "confirmDelete": "Delete vulnerability {{ref}}?",
+    "loadCvesError": "Could not load CVE data.",
+    "imported": "{{created}} created, {{linked}} linked to the asset.",
+    "cveEntryHint": "Taken over from CVE data: the CVE id stays fixed, title and rating can change.",
+    "titleLabel": "Title",
+    "usedIn": "Used in risk scenarios:",
+    "hiddenRisks": "{{count}} more risks without read access",
+    "importHint": "Choose an asset, then tick the CVEs to take over as vulnerabilities. Nothing is taken over automatically; a CVE already registered is only linked to the asset.",
+    "asset": "Asset",
+    "cvesOfAsset": "CVEs of the asset ({{count}})",
+    "noCves": "There is no CVE data for this asset.",
+    "alreadyLinked": "already registered ({{ref}})",
+    "willLink": "registered as {{ref}} - will be linked to the asset",
+    "importSelected": "Take over {{count}}",
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "none": "None"
+    },
+    "status": {
+      "open": "Open",
+      "mitigated": "Mitigated",
+      "closed": "Closed"
+    },
+    "source": {
+      "manual": "Manual",
+      "cve": "CVE"
+    }
   }
 }

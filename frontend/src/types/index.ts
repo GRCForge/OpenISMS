@@ -168,6 +168,19 @@ export interface Risk {
   residual_likelihood?: number;
   residual_impact?: number;
   residual_level?: RiskLevel;
+  // 3.7.0: impact per dimension, assessment rationale, net-risk override, target risk
+  impact_dimensions?: Partial<Record<ImpactDimensionKey, number>> | null;
+  likelihood_rationale?: string | null;
+  impact_rationale?: string | null;
+  residual_override?: boolean;
+  residual_override_reason?: string | null;
+  residual_override_at?: string | null;
+  residualOverrideBy?: { id: number; name: string } | null;
+  residual_calculated?: { residual_likelihood: number; residual_impact: number; residual_level: RiskLevel | null };
+  target_likelihood?: number | null;
+  target_impact?: number | null;
+  target_level?: RiskLevel | null;
+  scenarios?: RiskScenario[];
   status: RiskStatus;
   // Risikomethodik (vom Server berechnet, siehe services/riskMethodology.js)
   methodology_id?: number | null;
@@ -296,6 +309,39 @@ export interface RiskScale {
   matrix: RiskMatrixCell[][];
   appetite: RiskAppetite;
   acceptance: RiskAcceptanceRule[];
+  impact_dimensions: ImpactDimensionDef[];
+}
+export type ImpactDimensionKey = 'confidentiality' | 'integrity' | 'availability' | 'financial' | 'legal' | 'reputation' | 'operational';
+export interface ImpactDimensionDef { key: ImpactDimensionKey; label_de: string; label_en: string; description: string | null; }
+export interface RiskCategory {
+  id: number; key: string; label_de: string; label_en: string; label_es: string | null;
+  description: string | null; active: boolean; sort_order: number; origin: 'manual' | 'seed' | 'migration'; risk_count: number;
+}
+export type VulnerabilitySeverity = 'critical' | 'high' | 'medium' | 'low' | 'none';
+export type VulnerabilityStatus = 'open' | 'mitigated' | 'closed';
+export interface Vulnerability {
+  id: number; ref: string | null; title: string; description: string | null;
+  source: 'manual' | 'cve'; cve_id: string | null; cvss_score: string | number | null;
+  severity: VulnerabilitySeverity | null; status: VulnerabilityStatus;
+  assets?: { id: number; name: string; type?: string }[];
+  createdBy?: { id: number; name: string } | null;
+  risk_count?: number;
+  risks?: { id: number; ref: string | null; title: string }[];
+  hidden_risk_count?: number;
+  created_at: string; updated_at: string;
+}
+export interface RiskScenario {
+  id?: number;
+  assets?: { id: number; name: string; type?: string }[];
+  threat?: { id: number; code?: string | null; title: string } | null;
+  vulnerability?: { id: number; ref: string | null; title: string; cve_id: string | null; severity: VulnerabilitySeverity | null; status: VulnerabilityStatus } | null;
+  threat_id?: number | null;
+  vulnerability_id?: number | null;
+  description: string | null;
+}
+export interface AssetCveEntry {
+  cve_id: string; severity: VulnerabilitySeverity | null; cvss_score: number | null; description: string | null; published: string | null;
+  vulnerability: { id: number; ref: string | null; title: string; status: VulnerabilityStatus; linked_to_asset: boolean } | null;
 }
 export interface RiskMethodologyVersion {
   id: number; version: number; name: string; status: 'active' | 'superseded';

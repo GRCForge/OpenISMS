@@ -1,6 +1,6 @@
 import api from './api';
 import i18n from '../i18n';
-import type { RiskScale, RiskScaleStep, RiskLevel, RiskLevelDef } from '../types';
+import type { RiskScale, RiskScaleStep, RiskLevel, RiskLevelDef, RiskCategory, ImpactDimensionDef } from '../types';
 
 /**
  * Helfer fuer die Risikomethodik. Skalen, Stufen und Schwellen kommen vom Server
@@ -66,3 +66,26 @@ export const stepOptions = (steps: RiskScaleStep[], unit?: string | null) =>
     const range = rangeText(s, unit);
     return { value: String(s.value), label: `${stepLabel(s)} (${s.value})${range ? ` · ${range}` : ''}` };
   });
+
+// ── Risk categories (taxonomy, /api/risks/categories) ──────────────────────
+// Labels exist in de/en/es; Spanish falls back to English.
+export const loadRiskCategories = async (includeInactive = true): Promise<RiskCategory[]> => {
+  const r = await api.get<RiskCategory[]>('/risks/categories', { params: { include_inactive: includeInactive } });
+  return Array.isArray(r.data) ? r.data : [];
+};
+
+export const categoryLabel = (cat?: RiskCategory | null, fallback?: string | null) => {
+  if (!cat) return fallback || '';
+  const lang = (i18n.language || '').toLowerCase();
+  if (lang.startsWith('de')) return cat.label_de || cat.label_en;
+  if (lang.startsWith('es')) return cat.label_es || cat.label_en;
+  return cat.label_en || cat.label_de;
+};
+
+export const dimensionLabel = (d?: ImpactDimensionDef | null) => (d ? (useGerman() ? d.label_de : d.label_en) || d.label_de : '');
+
+// Overall impact under the maximum principle; null when no dimension is rated.
+export const maxDimension = (dims: Partial<Record<string, number | null>> | null | undefined): number | null => {
+  const vals = Object.values(dims || {}).filter((v): v is number => typeof v === 'number' && v > 0);
+  return vals.length ? Math.max(...vals) : null;
+};
