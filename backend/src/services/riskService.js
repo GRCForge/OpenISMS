@@ -242,6 +242,9 @@ const decorate = async (rows, { detail = false } = {}) => {
     r.residual_calculated = computeResidual(r.likelihood, r.impact, controlLinks(r.controls), own);
   }
   await attachTreatment(out, { detail });
+  // Monitoring (3.9.0): next review, open reassessment flags, KRI breaches,
+  // acceptance expiry.
+  await require('./riskMonitoringService').attachMonitoring(out, { detail });
   return out;
 };
 
@@ -415,7 +418,13 @@ const lapseIfRaised = async (risk, beforeLevel, auditReq) => {
   return true;
 };
 
-const createRisk = async (body, user, auditReq) => {
+// Assessment history (3.9.0): each operation below runs as one history
+// operation - its saves become one row with the operation's trigger and user
+// (services/riskHistoryService.js). Lazy require: that service uses this one.
+const history = () => require('./riskHistoryService');
+
+const createRisk = (body, user, auditReq) => history().withHistory({ trigger: 'created', req: auditReq }, () => createRiskOp(body, user, auditReq));
+const createRiskOp = async (body, user, auditReq) => {
   const { Risk } = models();
   if (!body || !body.title) throw httpError(400, 'Titel ist erforderlich');
   const f = buildFields(body, { partial: false });
@@ -437,7 +446,11 @@ const createRisk = async (body, user, auditReq) => {
   return loadFull(risk.id);
 };
 
-const updateRisk = async (risk, body, user, auditReq, { partial = false } = {}) => {
+const updateRisk = (risk, body, user, auditReq, opts = {}) => {
+  const reassess = body?.reassess === true || body?.reassess === 'true';
+  return history().withHistory({ trigger: reassess ? 'reassessment' : 'assessment', req: auditReq }, () => updateRiskOp(risk, body, user, auditReq, opts));
+};
+const updateRiskOp = async (risk, body, user, auditReq, { partial = false } = {}) => {
   if (!canWriteRisk(user, risk)) throw httpError(403, 'Forbidden');
   const before = snapshot(risk);
   const beforeLevel = await levelOf(risk);
@@ -500,7 +513,8 @@ const updateRisk = async (risk, body, user, auditReq, { partial = false } = {}) 
  * (residual_override), carries who/when/why and is written to the audit log
  * together with the value the calculation gives at that moment.
  */
-const overrideResidual = async (risk, body, user, auditReq) => {
+const overrideResidual = (risk, body, user, auditReq) => history().withHistory({ trigger: 'residual_override', req: auditReq, note: typeof body?.reason === 'string' ? body.reason : null }, () => overrideResidualOp(risk, body, user, auditReq));
+const overrideResidualOp = async (risk, body, user, auditReq) => {
   if (!canWriteRisk(user, risk)) throw httpError(403, 'Forbidden');
   const src = pick(body || {}, ['override', 'residual_likelihood', 'residual_impact', 'reason']);
   if (typeof src.override !== 'boolean') throw httpError(400, 'override (true/false) angeben.');
@@ -569,7 +583,8 @@ const revokeRisk = async (risk, user, auditReq) => {
  * je Risiko protokolliert. Bei geaenderter Matrixgroesse ist eine
  * Einzelbewertung noetig (PUT mit reassess).
  */
-const carryOver = async (riskIds, auditReq) => {
+const carryOver = (riskIds, auditReq) => history().withHistory({ trigger: 'carry_over', req: auditReq }, () => carryOverOp(riskIds, auditReq));
+const carryOverOp = async (riskIds, auditReq) => {
   const { Risk } = models();
   const ids = [...new Set((Array.isArray(riskIds) ? riskIds : []).map(Number).filter(n => Number.isInteger(n) && n > 0))].slice(0, 500);
   if (!ids.length) throw httpError(400, 'Keine Risiken angegeben.');

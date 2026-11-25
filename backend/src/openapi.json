@@ -14248,6 +14248,370 @@
           }
         }
       }
+    },
+    "/risks/monitoring/summary": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "summary abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`."
+      }
+    },
+    "/risks/monitoring/trend": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "trend abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`."
+      }
+    },
+    "/risks/review-flags": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "review flags abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`."
+      }
+    },
+    "/risks/{id}/history": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "history abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/risks/{id}/review-flags": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "review flags abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/risks/{id}/review": {
+      "post": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "review anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.edit`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risks/{id}/kris": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "kris abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "kris anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.edit`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risks/{id}/kris/{kriId}": {
+      "put": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "kris aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.edit`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "kriId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (kriId)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "kris löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.edit`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "kriId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (kriId)"
+          }
+        ]
+      }
     }
   },
   "tags": [

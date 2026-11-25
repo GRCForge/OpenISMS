@@ -132,7 +132,13 @@ router.get('/', authenticate, requirePermission('dashboard','view','admin','owne
       .filter(r => ['high', 'critical'].includes(r.risk_level))
       .reduce((s, r) => s + parseInt(r.count), 0);
 
+    // Risk monitoring (3.9.0): counts only, like the risk distribution.
+    // A failure here must not take the dashboard down (null = not available).
+    const riskMonitoring = await require('../services/riskMonitoringService').monitoringSummary()
+      .catch(e => { console.error('[Dashboard] Risk monitoring figures failed:', String(e.message).replace(/[\r\n]+/g, ' ')); return null; });
+
     res.json({
+      riskMonitoring,
       stats: {
         totalAssets, activeAssets, overdueReminders,
         upcomingReminders: upcomingReminders.length,

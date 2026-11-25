@@ -7,6 +7,7 @@ const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
 const { notify } = require('../services/notifyService');
 const { escapeLike } = require('../utils/sqlUtils');
+const monitoring = require('../services/riskMonitoringService');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
@@ -105,6 +106,10 @@ const applyLinks = async (incident, body) => {
   if (Array.isArray(body.vvt_ids)) await incident.setVvtEntries(body.vvt_ids);
 };
 
+// Linked asset/risk ids before and after an update (for the reassessment
+// trigger: only newly linked ones count on a plain update).
+const { incidentLinkIds: linkIds, addedIncidentLinks: addedLinks } = monitoring;
+
 router.post('/', authenticate, requirePermission('incidents','create','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
   try {
     if (!req.body.title) return res.status(400).json({ error: 'Titel ist erforderlich' });
@@ -116,6 +121,8 @@ router.post('/', authenticate, requirePermission('incidents','create','admin','o
     await auditFromReq(req, 'create', 'incident', incident.id, incident.title, auditDetails);
     
     if (incident.assignee_id) await notifyAssignee(incident, req.user.id);
+    // Risks on the affected assets need reassessment (3.9.0).
+    await monitoring.onIncident(incident, { created: true }, req);
     const full = await Incident.findByPk(incident.id, { include: includeAll });
     res.status(201).json(full);
   } catch (e) { requestError(res, e, 'incidents'); }
@@ -133,9 +140,13 @@ router.put('/:id', authenticate, requirePermission('incidents','edit','admin','o
     const before = {};
     fields.forEach(f => before[f] = incident[f]);
     const prevAssignee = incident.assignee_id;
+    const prevSeverity = incident.severity;
+    const links = await linkIds(incident);
 
     await incident.update(buildFields(req.body));
     await applyLinks(incident, req.body);
+    // Raised severity or newly linked assets/risks -> reassessment (3.9.0).
+    await monitoring.onIncident(incident, { previousSeverity: prevSeverity, ...(await addedLinks(incident, links)) }, req);
     
     if (incident.assignee_id && String(prevAssignee) !== String(incident.assignee_id)) {
       await notifyAssignee(incident, req.user.id);

@@ -57,6 +57,11 @@ const Risk = sequelize.define('Risk', {
   status: { type: DataTypes.ENUM('open', 'in_treatment', 'accepted', 'closed'), defaultValue: 'open' },
   acceptance_document_id: { type: DataTypes.INTEGER },  // Nachweis-/Akzeptanz-Dokument
   review_date: { type: DataTypes.DATEONLY },
+  // Last assessment or confirmed periodic review (3.9.0). The next review is
+  // due after the review cycle of the risk level (methodology review_cycles),
+  // or on review_date if that is earlier (services/riskMonitoringService.js).
+  // Set on create; for risks from before 3.9.0 the upgrade takes updated_at.
+  last_reviewed_at: { type: DataTypes.DATE },
 
   // Risk-Owner Sign-off (NIS-2 Management-Haftung): digitaler Freigabestatus
   accepted_by_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },

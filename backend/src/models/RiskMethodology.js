@@ -32,6 +32,10 @@ const RiskMethodology = sequelize.define('RiskMethodology', {
   // Since 3.7.0: [{ key, label_de, label_en, description }], keys from the fixed
   // catalogue in services/riskMethodology.js. NULL on older versions = none.
   impact_dimensions: { type: DataTypes.JSONB, allowNull: true },
+  // Since 3.9.0: [{ level, months }] - periodic review cycle per risk level
+  // (months: 1-120 or null = no periodic review). NULL on older versions =
+  // the built-in default cycles (services/riskMethodology.js).
+  review_cycles: { type: DataTypes.JSONB, allowNull: true },
   change_note: { type: DataTypes.TEXT },
   created_by_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
   activated_at: { type: DataTypes.DATE },
