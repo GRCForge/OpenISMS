@@ -144,7 +144,7 @@ const userFromClaims = async (claims) => {
       active: true,
       sso_user: true,
     });
-    // Roles come from groups (v3.8.0): the new account joins the SSO default
+    // Roles come from groups (v3.10.0): the new account joins the SSO default
     // group, like an SSO login without matching claim mapping. An MCP login
     // does not evaluate claim mappings.
     if (general.ssoDefaultGroupId) {

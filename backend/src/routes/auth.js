@@ -326,7 +326,7 @@ router.post('/login/totp', async (req, res) => {
   }
 });
 
-// The own account plus the roles it holds through its groups (v3.8.0): the UI
+// The own account plus the roles it holds through its groups (v3.10.0): the UI
 // shows and hides by `roles`; `role` is the most privileged of them.
 router.get('/me', authenticate, (req, res) => res.json({ ...req.user.toJSON(), roles: req.user.roles || [], group_ids: req.user.groupIds || [] }));
 

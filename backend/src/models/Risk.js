@@ -34,6 +34,10 @@ const Risk = sequelize.define('Risk', {
   // Behandlung
   treatment: { type: DataTypes.ENUM('mitigate', 'accept', 'transfer', 'avoid'), defaultValue: 'mitigate' },
   treatment_plan: { type: DataTypes.TEXT },
+  // All treatment options of the risk (3.8.0), e.g. ["mitigate","transfer"].
+  // `treatment` stays the main option and is always part of the list. NULL:
+  // only the main option (all risks from before 3.8.0 - no conversion).
+  treatment_options: { type: DataTypes.JSONB, allowNull: true },
 
   // Net (current) risk with the implemented controls - calculated in
   // services/residual.js unless overridden with a rationale (residual_override).
@@ -53,11 +57,19 @@ const Risk = sequelize.define('Risk', {
   status: { type: DataTypes.ENUM('open', 'in_treatment', 'accepted', 'closed'), defaultValue: 'open' },
   acceptance_document_id: { type: DataTypes.INTEGER },  // Nachweis-/Akzeptanz-Dokument
   review_date: { type: DataTypes.DATEONLY },
+  // Last assessment or confirmed periodic review (3.9.0). The next review is
+  // due after the review cycle of the risk level (methodology review_cycles),
+  // or on review_date if that is earlier (services/riskMonitoringService.js).
+  // Set on create; for risks from before 3.9.0 the upgrade takes updated_at.
+  last_reviewed_at: { type: DataTypes.DATE },
 
   // Risk-Owner Sign-off (NIS-2 Management-Haftung): digitaler Freigabestatus
   accepted_by_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
   accepted_at: { type: DataTypes.DATE },
   accepted_until: { type: DataTypes.DATEONLY },
+  // Approved acceptance request behind the current acceptance (3.8.0). NULL for
+  // acceptances given before 3.8.0 - they stay valid as they are.
+  acceptance_request_id: { type: DataTypes.INTEGER },
 
   // Version der Risikomethodik, nach der dieses Risiko bewertet ist. Weicht sie
   // von der aktiven Version ab, steht das Risiko auf der Liste "neu zu

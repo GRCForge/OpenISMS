@@ -32,6 +32,8 @@ interface Draft {
   appetite: { default_max_level: RiskLevel | ''; categories: { category: string; max_level: RiskLevel }[] };
   acceptance: RiskAcceptanceRule[];
   impact_dimensions: ImpactDimensionDef[];
+  // 3.9.0: periodic review cycle per level in months (null = none)
+  review_cycles: { level: RiskLevel; months: number | null }[];
 }
 interface Issue { field: string; message: string; }
 interface ValidateResult { valid: boolean; unchanged: boolean; errors: Issue[]; warnings: Issue[]; preview: RiskScale | null; matrix_changed: boolean; risks_to_reassess: number; }
@@ -49,6 +51,7 @@ const toDraft = (s: RiskScale): Draft => ({
     return { level, roles: r ? [...r.roles] : ['admin'], max_months: r?.max_months ?? null };
   }),
   impact_dimensions: (s.impact_dimensions || []).map(d => ({ ...d })),
+  review_cycles: LEVELS.map(level => ({ level, months: s.review_cycles?.find(c => c.level === level)?.months ?? null })),
 });
 
 // Schwellen gleichmaessig ueber den Score verteilen (Verhaeltnis wie beim
@@ -345,6 +348,19 @@ export const RiskMethodologySettings: React.FC = () => {
               </table>
             </div>
             {fieldErrors('acceptance').map((e, i) => <p key={i} className="text-xs text-red-600 dark:text-red-400">{e.message}</p>)}
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold dark:text-white">{t('admin:riskMethodology.reviewCycles')}</h4>
+            <p className="text-xs text-gray-500 dark:text-slate-400">{t('admin:riskMethodology.reviewCyclesHint')}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {draft.review_cycles.map(c => (
+                <Input key={c.level} type="number" min={1} max={120} label={levelLabel(active, c.level)} aria-label={`${c.level} ${t('admin:riskMethodology.reviewCycles')}`}
+                  value={c.months ?? ''} disabled={!canManage} placeholder={t('admin:riskMethodology.noReview')}
+                  onChange={e => set({ review_cycles: draft.review_cycles.map(x => (x.level === c.level ? { ...x, months: e.target.value === '' ? null : Number(e.target.value) } : x)) })} />
+              ))}
+            </div>
+            {fieldErrors('review_cycles').map((e, i) => <p key={i} className="text-xs text-red-600 dark:text-red-400">{e.message}</p>)}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">

@@ -16,7 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { IconButton } from '../components/ui/IconButton';
 
-// Roles come from groups (v3.8.0): a user is assigned groups, never a role directly.
+// Roles come from groups (v3.10.0): a user is assigned groups, never a role directly.
 const emptyForm = { name: '', email: '', password: '', department: '', active: true, group_ids: [] as number[] };
 
 export const Users: React.FC = () => {

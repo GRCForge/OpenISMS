@@ -70,7 +70,7 @@ router.get('/', authenticate, requirePermission('users','view','admin','owner','
   } catch (e) { serverError(res, e, 'users'); }
 });
 
-// Group ids for a create/update request. `group_ids` is the way since v3.8.0;
+// Group ids for a create/update request. `group_ids` is the way since v3.10.0;
 // the former `role` / `custom_role_id` are still accepted and mean "the group
 // that carries this role" (created on demand), so existing scripts keep working.
 const requestedGroupIds = async (body) => {

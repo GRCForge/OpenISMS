@@ -1,86 +1,48 @@
-# OpenISMS v3.8.0 — roles and groups
+# OpenISMS v3.8.0 — risk treatment and acceptance workflow
 
-Feature release. Contains database migrations (run automatically on start). Every user keeps exactly the access they had. What changes is how access is granted: **roles are named sets of permissions, and users receive them only through groups**. A user can now hold several roles at once.
+Feature release. Contains database migrations (run automatically on start); no configuration changes. One behaviour change for scripts that sign off risks directly (see below).
 
-**Read before upgrading:** new users no longer get a role by default (see [Behaviour changes](#behaviour-changes)). Scripts that set `role` on users through the API still work, but the role now comes from group membership.
+Risk treatment becomes a plan that can be followed up and audited, and risk acceptance is put under the four-eyes principle (ISO/IEC 27001:2022 6.1.3 c–f and 8.3, ISO/IEC 27005:2022 clause 9).
 
-## New: roles as permission sets
+## New: risk treatment plan
 
-- A **role** is a named set of permission objects (module × action, e.g. `incidents.edit`). The eight built-in roles are predefined roles. Their permission sets are still the columns of the permission matrix (**Administration → Roles & permissions**). Custom roles keep their own sets.
-- Roles **add up (allow-only)**. If any of a user's roles allows an action, the user may perform it. A custom role that sets an action to `false` no longer takes it away from a user whose other roles allow it.
-- Write protection follows the same rule. A user is read-only only if **all** of their roles are read-only (`viewer`, `management`, `employee`).
+- **Measures per risk:** title, description, treatment option, responsible person or group, due date, status (planned, in progress, implemented, discarded — discarding needs a reason), one-off and recurring costs in EUR, link to an existing control and/or task. Measures are not deleted; they are discarded.
+- **Tasks:** one click creates a task from a measure (assignment, due date, priority from the risk level, notification). When the task is done, the measure is implemented — and the other way round; reopening and discarding are kept in step as well. Every change is audit-logged.
+- **Reminders:** overdue measures remind the responsible person or group once a day (in-app).
+- **Progress:** percentage implemented and overdue measures per risk, cost totals in the detail view; a hint when all measures are implemented but the net risk is still above the risk appetite.
+- **Several treatment options per risk** (for example mitigate + transfer); the existing option stays the main one. Existing risks are unchanged until the list is set.
+- **Overview:** new page *Risks → Treatment plan* with all measures across risks, responsible, due dates, overdue flags and costs, plus open risks without a measure — with Excel export (formula injection neutralised) as evidence for ISO 27001 6.1.3 e. Administrators, assessors and management see everything; others see their own risks and the measures they or their group are responsible for.
+- The free-text treatment plan is kept and shown; nothing is converted.
 
-## New: groups carry roles
+## New: risk acceptance with the four-eyes principle
 
-- Every group (**Administration → Groups**) can carry any combination of built-in and custom roles. Every member receives all roles of all their groups.
-- Groups without roles remain plain teams for task assignment and @-mentions. They grant nothing.
-- Roles are **never assigned directly** to a user. The user form now selects groups and shows the roles each group grants. The user list shows each user's groups and effective roles, and flags users without a role.
-- **Guard rails**
-  - Assigning roles to a group, deleting a group that carries roles, and changing the members of such a group require the permission `admin.roles` in addition to `groups.manage`.
-  - No change may leave the installation without an active administrator; such a change gets `409`. Administrators cannot take the administrator role away from themselves.
-  - Group role and membership changes are written to the audit log.
-- `users.role` remains as a cache of the most privileged role, for display and filters. It is `none` for users without a role. Access decisions no longer read it.
-
-## New: SSO grants groups
-
-- OIDC claim mappings now map an IdP claim to an **OpenISMS group**. **Every** matching mapping applies (before: only the first), so a user in several IdP groups receives the roles of all mapped groups.
-- **SSO default group** replaces the SSO default role (**Administration → General**). Users matching no mapping join it. Without a default group they have no role until an administrator adds them to a group.
-- Memberships granted by SSO are marked *SSO*. **Strict sync** now removes only those memberships, when no mapping grants them any more. Memberships added by hand are never touched, and the last administrator is never removed.
-- `OIDC_CLAIM_MAPPINGS` accepts `"group": "<group name>"`. `"role"` and `"custom_role"` keep working and mean the group that carries that role. If no such group exists, it is created on first use.
-
-## Migration (automatic, first start)
-
-The migration runs once, in a transaction, and keeps every user's effective access unchanged:
-
-- It creates one group per role in use: *Administrators*, *Assessors*, *Data Protection*, *IT Staff*, *Asset Owners*, *Management*, *Employees*, *Viewers*, and *Role: \<name\>* for custom roles. If a name is already taken, a suffix is added, e.g. *Administrators (2)*.
-- Every user joins the group of their former role. A custom role wins over the column role, as before.
-- OIDC claim mappings stored in the database now point to the matching group. The SSO default role becomes the SSO default group.
-- Existing groups are not changed and carry no roles.
-- The log shows `[Access] Migrated to group-based permissions: …`. The state is kept in the settings key `access_model`.
-
-**After the upgrade:** review **Administration → Groups**. If you had a team named like a role (e.g. "Administrators"), the role group carries a suffix, and you may want to rename one of them. You can now merge roles into fewer groups, e.g. one "ISMS team" group that carries both `assessor` and `dpo`.
-
-## Behaviour changes
-
-| Area | Before | Since 3.8.0 |
-|---|---|---|
-| New users (UI, API, import, SSO, MCP auto-provisioning) | Role `viewer` unless set | No role unless groups (or a legacy `role`) are given, or the SSO default group applies |
-| `POST/PUT /api/users` | `role`, `custom_role_id` | `group_ids` (replaces the user's groups). `role` / `custom_role_id` still work and add the user to the group carrying that role |
-| User import | Role column set `users.role` | Role column adds the user to the role's group |
-| Several roles | Not possible | Union of all roles from all groups |
-| SSO claim mappings | First match sets the role | Every match adds its group |
-| MCP `isms_delete_user` | Deleted the account | **Deactivates** the account, like the web UI |
-| User without any role | — | Only own account; on MCP only `isms_get_my_overview`, `isms_list_notifications` and own API tokens |
-
-## API
-
-- `GET /api/auth/me` and `GET /api/me/permissions` return `roles` (all effective base roles) and `group_ids`. `role` is the most privileged role (or `none`).
-- `GET /api/users` (admin) returns each user's `groups` (with `source`: `manual` / `sso`) and `access_roles`.
-- `GET/POST/PUT /api/groups` read and write `roles`: `[{ "system_role": "assessor" }, { "custom_role_id": 3 }]`. Members carry `source`.
-- `GET /api/admin/custom-roles` returns the `groups` that carry each role. `users_count` counts users through those groups.
-- `POST /api/admin/oidc-mappings` takes `group_id` (`role` / `custom_role_id` are still accepted and resolved to a group).
-- `PUT /api/admin/settings` and MCP `isms_update_settings` take `ssoDefaultGroupId` (`null` = none). `ssoDefaultRole` is still accepted and sets the default group to the group carrying that role.
+- Acceptance is **requested** with a justification, the requested validity and the residual risk (the level at the time of the request is recorded).
+- A person with acceptance authority under the risk methodology **who is not the requester** approves or rejects it; rejecting needs a reason. The requester can only withdraw.
+- The **risk owner confirms** the acceptance of the residual risk (ISO 27001 6.1.3 f); the confirmation is shown on the request.
+- If the risk level changes before the decision, the request can no longer be approved. A new request for an accepted risk renews the acceptance and supersedes the previous one; revocations and lapses are recorded on the request. One pending request per risk.
+- **Permissions:** new permission `risks.request_acceptance` (default: admin, assessor, IT staff, DPO, owner). Customised permission matrices should be reviewed.
 
 ## MCP
 
-- `isms_create_user` / `isms_update_user` take `group_ids`. `role` / `custom_role_id` still work, as above.
-- `isms_create_group` / `isms_update_group` take `roles`. `isms_list_groups` / `isms_get_group` return the roles a group carries.
-- `isms_list_users` filters by role through group membership. `isms_list_custom_roles` reports the carrying groups.
-- `isms_delete_user` deactivates instead of deleting.
-- The tool gate evaluates every role of the caller (allow-only), like the REST API.
+- 11 new tools: `isms_list_risk_treatment_items`, `isms_create_risk_treatment_item`, `isms_update_risk_treatment_item`, `isms_create_task_from_treatment_item`, `isms_get_risk_treatment_plan`, `isms_list_risk_acceptance_requests`, `isms_request_risk_acceptance`, `isms_approve_risk_acceptance`, `isms_reject_risk_acceptance`, `isms_withdraw_risk_acceptance`, `isms_confirm_risk_acceptance_as_owner` (236 tools).
+- `isms_create_risk` / `isms_update_risk` accept `treatment_options`; `isms_get_risk` returns measures and acceptance requests.
+
+## Changed behaviour
+
+- A direct sign-off (`PATCH /api/risks/{id}/signoff`, MCP `isms_signoff_risk`) now approves the pending acceptance request and returns **409** if there is none. Scripts that signed off directly must first request the acceptance (`POST /api/risks/{id}/acceptance-requests` or `isms_request_risk_acceptance`) as a different user.
+- Acceptances given before 3.8.0 stay valid.
+
+## API
+
+- `GET /api/risks/treatment-plan`, `GET /api/risks/acceptance-requests`
+- `/api/risks/{id}/treatment-items` (list, create, update, `{itemId}/task`)
+- `/api/risks/{id}/acceptance-requests` (list, create, `{requestId}/withdraw`, `/approve`, `/reject`, `/confirm-owner`)
 
 ## Migrations
 
-- New table `group_roles` (group, built-in role or custom role).
-- `group_members` gains `source` (`manual` / `sso`).
-- `oidc_claim_mappings` gains `group_id`.
-- `users.role` gains the value `none`, which is also the new default.
-
-## Outlook: phase 2
-
-Some rules still ask for a role rather than a permission: object visibility (e.g. contracts hidden from IT staff and viewers, owners seeing their own assets), the write protection of read-only roles, and the role lists that decide where the matrix says nothing. They now see the set of all of a user's roles. The next step turns them into permission objects as well, so that every decision is made by the permission sets alone.
+- New tables `risk_treatment_items` and `risk_acceptance_requests`; partial unique index for one pending request per risk.
+- `risks` gains `treatment_options` (NULL = main option only) and `acceptance_request_id`. Existing risks, free-text treatment plans and acceptances are not changed.
 
 ## CI
 
-- New check `scripts/test-group-access.js` in the Security & Quality workflow covers role helpers, allow-only decisions, the last-administrator guard and SSO group sync.
-- The database test `scripts/test-group-access-db.js` covers the migration and the guards on PostgreSQL and runs locally.
+- New check `scripts/test-risk-treatment.js` in the Security & Quality workflow. The database test `scripts/test-risk-treatment-db.js` needs PostgreSQL and runs locally.

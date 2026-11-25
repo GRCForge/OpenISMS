@@ -279,7 +279,7 @@ const OidcSettings: React.FC = () => {
   );
 };
 
-// Groups carry the roles (v3.8.0); SSO settings point at groups.
+// Groups carry the roles (v3.10.0); SSO settings point at groups.
 interface GroupOption { id: number; name: string; roles?: { system_role?: string; custom_role_id?: number; name?: string | null }[] }
 const groupLabel = (g: GroupOption, t: TFunction<'admin'>) => {
   const roles = (g.roles || []).map(r => (r.system_role ? t('roles.' + r.system_role + '_short', { defaultValue: r.system_role }) : (r.name || `#${r.custom_role_id}`)));

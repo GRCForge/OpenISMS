@@ -10,7 +10,7 @@ const OidcClaimMapping = sequelize.define('OidcClaimMapping', {
     allowNull: true,
   },
   custom_role_id: { type: DataTypes.INTEGER, allowNull: true },
-  // Since v3.8.0 a mapping grants membership in a group; role and
+  // Since v3.10.0 a mapping grants membership in a group; role and
   // custom_role_id are kept only so the migration can convert old mappings.
   group_id: { type: DataTypes.INTEGER, allowNull: true },
   priority: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },

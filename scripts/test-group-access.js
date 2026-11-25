@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * Group-based access (v3.8.0): roles reach users only through groups, and the
+ * Group-based access (v3.10.0): roles reach users only through groups, and the
  * roles of all groups add up (allow-only).
  *
  * Pure functions and services with mocked database and models — no DB, no

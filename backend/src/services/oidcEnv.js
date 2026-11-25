@@ -152,7 +152,7 @@ const mappingsAusUmgebung = () => {
     }
     const rolle = typeof eintrag.role === 'string' ? eintrag.role.trim() : '';
     const eigeneRolle = typeof eintrag.custom_role === 'string' ? eintrag.custom_role.trim() : '';
-    // Since v3.8.0 a mapping grants a group (by name). role and custom_role
+    // Since v3.10.0 a mapping grants a group (by name). role and custom_role
     // remain accepted and mean "the group that carries this role".
     const gruppe = typeof eintrag.group === 'string' ? eintrag.group.trim() : '';
     if ([rolle, eigeneRolle, gruppe].filter(Boolean).length !== 1) {

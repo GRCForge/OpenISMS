@@ -3,7 +3,7 @@
 
 /**
  * Integration test against a THROWAWAY Postgres database: migration to
- * group-based access (v3.8.0).
+ * group-based access (v3.10.0).
  *
  *   1. Data as in v3.7.0 (one role per user, a custom role, an existing team
  *      named like a role group, OIDC mappings by role and by custom role, SSO

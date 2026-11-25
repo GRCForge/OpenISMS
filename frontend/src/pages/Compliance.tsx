@@ -73,6 +73,8 @@ interface AuditFinding {
   capaTask?: Task | null;
   assignee_id?: number | null;
   assignee?: { id: number; name: string };
+  // 3.9.0: risk reference - linked risks are flagged for reassessment
+  risks?: { id: number; ref?: string; title: string }[];
 }
 
 interface UserTraining {
@@ -149,6 +151,7 @@ export const Compliance: React.FC = () => {
 
   // Users & Tasks for dropdowns
   const [users, setUsers] = useState<User[]>([]);
+  const [riskOptions, setRiskOptions] = useState<{ id: number; ref?: string; title: string }[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // Roadmap Sub-module states
@@ -165,7 +168,7 @@ export const Compliance: React.FC = () => {
   const [auditModal, setAuditModal] = useState(false);
   const [auditForm, setAuditForm] = useState({ title: '', scope: '', audit_type: 'internal', status: 'planned', auditor: '', start_date: '', end_date: '', report_link: '', notes: '' });
   const [findingModal, setFindingModal] = useState<number | null>(null);
-  const [findingForm, setFindingForm] = useState({ title: '', description: '', severity: 'observation', status: 'open', capa_task_id: '', assignee_id: '' });
+  const [findingForm, setFindingForm] = useState({ title: '', description: '', severity: 'observation', status: 'open', capa_task_id: '', assignee_id: '', risk_ids: [] as number[] });
 
   const [trainingModal, setTrainingModal] = useState(false);
   const [trainingForm, setTrainingForm] = useState({
@@ -302,6 +305,8 @@ export const Compliance: React.FC = () => {
   useEffect(() => {
     loadStats();
     api.get('/users').then(r => setUsers(r.data)).catch(() => {});
+    // Risk reference of findings (3.9.0); roles without risks.view just cannot pick one.
+    api.get('/risks').then(r => setRiskOptions(Array.isArray(r.data) ? r.data.map((x: any) => ({ id: x.id, ref: x.ref, title: x.title })) : [])).catch(() => setRiskOptions([]));
     api.get('/tasks').then(r => setTasks(r.data)).catch(() => {});
   }, []);
 
@@ -393,7 +398,7 @@ export const Compliance: React.FC = () => {
       };
       await api.post(`/compliance/audits/${findingModal}/findings`, payload);
       setFindingModal(null);
-      setFindingForm({ title: '', description: '', severity: 'observation', status: 'open', capa_task_id: '', assignee_id: '' });
+      setFindingForm({ title: '', description: '', severity: 'observation', status: 'open', capa_task_id: '', assignee_id: '', risk_ids: [] });
       loadAudits();
       toast.success(t('toasts.findingCreateSuccess'));
     } catch (err: any) {
@@ -999,6 +1004,9 @@ export const Compliance: React.FC = () => {
                         <Td>
                           <p className="font-semibold text-xs text-gray-900 dark:text-white">{finding.title}</p>
                           <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1 dark:text-gray-400">{finding.description}</p>
+                          {(finding.risks || []).length > 0 && (
+                            <p className="text-[10px] text-blue-700 dark:text-blue-300 mt-0.5">{t('findingModal.linkedRisks')}: {(finding.risks || []).map(r => r.ref || `#${r.id}`).join(', ')}</p>
+                          )}
                         </Td>
                         <Td>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
@@ -1379,6 +1387,21 @@ export const Compliance: React.FC = () => {
             <Select label={t('table.severity')} value={findingForm.severity} onChange={e => setFindingForm({ ...findingForm, severity: e.target.value as any })} options={[{ value: 'major', label: t('findingModal.severityOptions.major') }, { value: 'minor', label: t('findingModal.severityOptions.minor') }, { value: 'observation', label: t('findingModal.severityOptions.observation') }]} />
             <Select label={t('findingModal.assigneeLabel')} value={findingForm.assignee_id} onChange={e => setFindingForm({ ...findingForm, assignee_id: e.target.value })} options={[{ value: '', label: t('nobody') }, ...users.filter(u => u.active).map(u => ({ value: String(u.id), label: u.name }))]} />
           </div>
+          {riskOptions.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('findingModal.risksLabel', { count: findingForm.risk_ids.length })}</span>
+              <div className="max-h-32 overflow-y-auto border dark:border-slate-700 rounded-xl p-2 bg-white dark:bg-slate-900/50">
+                {riskOptions.map(r => (
+                  <label key={r.id} className="flex items-center gap-2 px-2 py-0.5 text-xs dark:text-slate-300 cursor-pointer">
+                    <input type="checkbox" className="w-3.5 h-3.5 rounded text-blue-600" checked={findingForm.risk_ids.includes(r.id)}
+                      onChange={() => setFindingForm(f => ({ ...f, risk_ids: f.risk_ids.includes(r.id) ? f.risk_ids.filter(x => x !== r.id) : [...f.risk_ids, r.id] }))} />
+                    <span className="truncate"><span className="font-mono text-gray-500 mr-1">{r.ref}</span>{r.title}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('findingModal.risksHint')}</p>
+            </div>
+          )}
           <Select label={t('findingModal.capaTaskLabel')} value={findingForm.capa_task_id} onChange={e => setFindingForm({ ...findingForm, capa_task_id: e.target.value })} options={[{ value: '', label: t('findingModal.noTaskLabel') }, ...tasks.filter(t => t.status !== 'done').map(t => ({ value: String(t.id), label: t.title }))]} />
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setFindingModal(null)} className="flex-1 justify-center">{t('cancel')}</Button>

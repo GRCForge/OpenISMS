@@ -26,7 +26,7 @@ const User = sequelize.define('User', {
     },
   },
   password_hash: { type: DataTypes.STRING(255), allowNull: false },
-  // Since v3.8.0 roles come from groups (models/GroupRole.js). This column is a
+  // Since v3.10.0 roles come from groups (models/GroupRole.js). This column is a
   // derived cache of the user's most privileged role — kept in sync by
   // services/accessService.js — for display, queries and the remaining
   // role-based rules. 'none' = the user belongs to no group carrying a role and

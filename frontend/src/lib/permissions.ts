@@ -1,6 +1,6 @@
 import type { User, UserRole } from '../types';
 
-// Since v3.8.0 roles reach a user through groups and a user can hold several
+// Since v3.10.0 roles reach a user through groups and a user can hold several
 // (`user.roles`). `user.role` is the most privileged of them, kept for display.
 // These helpers ask the same question the backend asks: does ANY role qualify?
 // Presentation only — the server decides on every request.

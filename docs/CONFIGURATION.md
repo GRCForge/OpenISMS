@@ -243,7 +243,7 @@ the first SSO login a user is created (unless auto-provisioning is off), and
 the profile picture from the `picture` claim is synced on every login. Local
 login stays available for accounts that are not linked to SSO.
 
-Since v3.8.0 SSO hands out **group memberships**, not roles: every matching
+Since v3.10.0 SSO hands out **group memberships**, not roles: every matching
 claim mapping adds the user to its group (marked *SSO* in the UI), and the user
 receives the roles of all their groups. Without a match the user joins the SSO
 default group; without a default group they have no role until an

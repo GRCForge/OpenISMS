@@ -46,7 +46,7 @@ router.put('/settings', requirePermission('admin','settings','admin'), async (re
     if (appName !== undefined) patch.appName = appName;
     if (reviewIntervalMonths !== undefined) patch.reviewIntervalMonths = parseInt(reviewIntervalMonths) || 12;
     if (ssoAutoProvision !== undefined) patch.ssoAutoProvision = !!ssoAutoProvision;
-    // The group new SSO users join (v3.8.0); null/'' = none. A legacy
+    // The group new SSO users join (v3.10.0); null/'' = none. A legacy
     // ssoDefaultRole means the group carrying that role.
     Object.assign(patch, await require('../services/ssoGroupSync').ssoDefaultGroupPatch({ ssoDefaultGroupId, ssoDefaultRole }));
     if (ssoAllowedDomains !== undefined) patch.ssoAllowedDomains = String(ssoAllowedDomains).toLowerCase().trim();
@@ -116,7 +116,7 @@ router.post('/permissions/reset', requirePermission('admin','permissions','admin
 router.get('/custom-roles', requirePermission('admin','roles','admin'), async (req, res) => {
   try {
     const roles = await CustomRole.findAll({ order: [['name', 'ASC']] });
-    // Since v3.8.0 a role reaches users through groups: report the groups that
+    // Since v3.10.0 a role reaches users through groups: report the groups that
     // carry it and the number of users who hold it through them.
     const { QueryTypes } = require('sequelize');
     const sequelize = require('../config/database');
@@ -250,7 +250,7 @@ router.post('/oidc-mappings', requirePermission('admin','sso','admin'), async (r
     }
     const { claim_path, claim_value, group_id, role, custom_role_id, priority } = req.body || {};
     if (!claim_path?.trim() || !claim_value?.trim()) return res.status(400).json({ error: 'claim_path und claim_value erforderlich' });
-    // Since v3.8.0 a mapping grants a group. role / custom_role_id are still
+    // Since v3.10.0 a mapping grants a group. role / custom_role_id are still
     // accepted and resolved to the group carrying that role.
     let groupId = null;
     const access = require('../services/accessService');

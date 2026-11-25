@@ -1,6 +1,8 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { Asset, Assessment, Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, User, Task, Training } = require('../models');
+const { Asset, Assessment, Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, User, Task, Training, Risk } = require('../models');
+const monitoring = require('../services/riskMonitoringService');
+const { requestError } = require('../utils/httpError');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { onlyRoles } = require('../services/accessService');
 const { auditFromReq } = require('../services/auditService');
@@ -171,7 +173,8 @@ router.get('/audits', authenticate, requirePermission('compliance_audits','view'
           as: 'findings',
           include: [
             { model: User, as: 'assignee', attributes: ['id', 'name'] },
-            { model: Task, as: 'capaTask', attributes: ['id', 'title', 'status'] }
+            { model: Task, as: 'capaTask', attributes: ['id', 'title', 'status'] },
+            { model: Risk, as: 'risks', attributes: ['id', 'ref', 'title'], through: { attributes: [] } },
           ]
         }
       ],
@@ -241,23 +244,40 @@ router.delete('/audits/:id', authenticate, requirePermission('compliance_audits'
   } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
 });
 
+// Risk reference of a finding (3.9.0): a list of existing risk ids, or
+// undefined when not sent (links unchanged).
+const findingRiskIds = async (raw) => {
+  if (raw === undefined || raw === null) return undefined;
+  const bad = () => Object.assign(new Error('risk_ids: Liste bestehender Risiko-Kennungen erwartet.'), { status: 400 });
+  if (!Array.isArray(raw) || raw.length > 100) throw bad();
+  const ids = [...new Set(raw.map(Number))];
+  if (ids.some(n => !Number.isInteger(n) || n <= 0)) throw bad();
+  if (ids.length && await Risk.count({ where: { id: ids } }) !== ids.length) throw bad();
+  return ids;
+};
+
 router.post('/audits/:id/findings', authenticate, requirePermission('compliance_audits','create_findings','admin','assessor'), async (req, res) => {
   try {
     const audit = await Audit.findByPk(req.params.id);
     if (!audit) return res.status(404).json({ error: 'Audit nicht gefunden' });
     
     const { title, description, severity, status, assignee_id } = req.body;
+    const riskIds = await findingRiskIds(req.body?.risk_ids);
     const finding = await AuditFinding.create({ title, description, severity, status, assignee_id, audit_id: audit.id });
+    if (riskIds) await finding.setRisks(riskIds);
     
     await auditFromReq(req, 'create', 'audit_finding', finding.id, finding.title, {
       audit_id: audit.id,
       description: finding.description,
       severity: finding.severity,
       status: finding.status,
-      assignee_id: finding.assignee_id
+      assignee_id: finding.assignee_id,
+      risk_ids: riskIds || [],
     });
+    // A finding with a risk reference flags those risks for reassessment (3.9.0).
+    if (riskIds && riskIds.length) await monitoring.onAuditFinding(finding, riskIds, req);
     res.status(201).json(finding);
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Interner Serverfehler' }); }
+  } catch (e) { requestError(res, e, 'compliance-findings'); }
 });
 
 router.put('/findings/:id', authenticate, requirePermission('compliance_audits','edit_findings','admin','owner','assessor','it-staff','dpo'), async (req, res) => {
@@ -274,7 +294,10 @@ router.put('/findings/:id', authenticate, requirePermission('compliance_audits',
       assignee_id: item.assignee_id
     };
     const { title, description, severity, status, capa_task_id, assignee_id } = req.body;
+    const riskIds = await findingRiskIds(req.body?.risk_ids);
+    const prevRiskIds = (await item.getRisks({ attributes: ['id'], joinTableAttributes: [] })).map(r => r.id);
     await item.update({ title, description, severity, status, capa_task_id, assignee_id });
+    if (riskIds) await item.setRisks(riskIds);
     const after = {
       audit_id: item.audit_id,
       title: item.title,
@@ -284,9 +307,13 @@ router.put('/findings/:id', authenticate, requirePermission('compliance_audits',
       capa_task_id: item.capa_task_id,
       assignee_id: item.assignee_id
     };
+    if (riskIds) { before.risk_ids = prevRiskIds; after.risk_ids = riskIds; }
     await auditFromReq(req, 'update', 'audit_finding', item.id, item.title, { before, after });
+    // Newly linked risks need reassessment (3.9.0).
+    const added = riskIds ? riskIds.filter(id => !prevRiskIds.includes(id)) : [];
+    if (added.length) await monitoring.onAuditFinding(item, added, req);
     res.json(item);
-  } catch (e) { console.error('[Compliance] PUT /findings/:id', e); res.status(500).json({ error: 'Interner Serverfehler' }); }
+  } catch (e) { requestError(res, e, 'compliance-findings'); }
 });
 
 router.delete('/findings/:id', authenticate, requirePermission('compliance_audits','delete_findings','admin','assessor'), async (req, res) => {

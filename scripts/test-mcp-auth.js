@@ -67,7 +67,7 @@ let oidcCfg = { enabled: true, issuer: ISSUER, clientId: 'openisms', scopes: 'op
 const mock = (rel, exports) => {
   Module._cache[require.resolve(path.join(SRC, rel))] = { id: rel, loaded: true, exports };
 };
-// Roles come from groups (v3.8.0) via a database query in attachAccess; here
+// Roles come from groups (v3.10.0) via a database query in attachAccess; here
 // each mocked user holds exactly the role in its record.
 const realAccess = require(path.join(SRC, 'services', 'accessService'));
 mock('services/accessService', {

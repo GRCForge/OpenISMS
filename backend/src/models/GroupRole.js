@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-// A role a group carries. Since v3.8.0 roles reach a user only through the
+// A role a group carries. Since v3.10.0 roles reach a user only through the
 // groups the user belongs to; a user's effective permissions are the union of
 // the permission sets of all roles of all their groups (allow-only, no deny).
 //

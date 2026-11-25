@@ -16,7 +16,7 @@ const { startReminderService } = require('./services/reminderService');
 const { runTaskAutomation } = require('./services/taskAutomationService');
 const { seedCatalog } = require('./services/catalogSeed');
 const cron = require('node-cron');
-const { withJobLock } = require('./utils/jobLock');
+const { withJobLock, withJobSlot, dailySlot } = require('./utils/jobLock');
 const { Op } = require('sequelize');
 
 const compression = require('compression');
@@ -686,6 +686,25 @@ const start = async () => {
       if (seeded > 0) console.log(`[DB] ${seeded} Risikokategorie(n) angelegt (Standardliste)`);
       if (migrated > 0) console.log(`[DB] ${migrated} Risikokategorie(n) aus dem bisherigen Freitextfeld übernommen`);
     }
+    // One pending acceptance request per risk (3.8.0, four-eyes principle).
+    // A failure is reported, not swallowed: the service also checks before
+    // inserting, the index closes the gap between two concurrent requests.
+    await require('./services/riskAcceptanceService').ensureIndexes()
+      .catch(e => console.error('[DB] Partial unique index on risk_acceptance_requests could not be created:', String(e.message).replace(/[\r\n]+/g, ' ')));
+    // Risk monitoring (3.9.0, idempotent): one open reassessment flag per risk
+    // and trigger type (partial unique index); a starting history entry
+    // ("baseline_at_upgrade") from the current assessment for every risk
+    // without history, and last_reviewed_at from updated_at for risks from
+    // before 3.9.0. Failures are reported, not swallowed; the start goes on.
+    await require('./services/riskMonitoringService').ensureIndexes()
+      .catch(e => console.error('[DB] Partial unique index on risk_review_flags could not be created:', String(e.message).replace(/[\r\n]+/g, ' ')));
+    try {
+      const { baseline, last_reviewed_set: reviewed } = await require('./services/riskHistoryService').ensureBaseline();
+      if (baseline > 0) console.log(`[DB] ${baseline} Risiko/Risiken: Anfangseintrag im Bewertungsverlauf angelegt (baseline at upgrade)`);
+      if (reviewed > 0) console.log(`[DB] ${reviewed} Risiko/Risiken: letzte Bewertung aus updated_at übernommen`);
+    } catch (e) {
+      console.error('[DB] Risk assessment history baseline failed:', String(e.message).replace(/[\r\n]+/g, ' '));
+    }
     // One vulnerability per CVE identifier.
     await require('./services/vulnerabilityService').ensureIndexes()
       .catch(e => console.error('[DB] Eindeutiger Index auf vulnerabilities.cve_id konnte nicht angelegt werden - vermutlich doppelte CVE-Einträge:', String(e.message).replace(/[\r\n]+/g, ' ')));
@@ -813,7 +832,7 @@ const start = async () => {
       }
     }
 
-    // Group-based access (v3.8.0): roles reach users only through groups. The
+    // Group-based access (v3.10.0): roles reach users only through groups. The
     // one-time migration turns every user's former role into a group membership
     // (including the administrator seeded just above on a fresh install). A
     // failure stops the start: without it nobody would have any role.
@@ -865,6 +884,20 @@ const start = async () => {
     const { runTaskAutomation } = require('./services/taskAutomationService');
     withJobLock('task-automation', () => runTaskAutomation());
     cron.schedule('0 3 * * *', () => withJobLock('task-automation', () => runTaskAutomation()));
+
+    // Risk monitoring (3.9.0): overdue periodic reviews -> reassessment flag
+    // and task for the risk owner; KRIs re-evaluated. On start and daily at
+    // 06:30, at most once per day across all instances (job_runs slot).
+    const runRiskMonitoring = () => withJobSlot('risk-monitoring', dailySlot(), async () => {
+      try {
+        const r = await require('./services/riskMonitoringService').runDailyMonitoring();
+        console.log(`[RiskMonitoring] ${r.risks} risk(s): ${r.overdue} review(s) overdue, ${r.flagged} new flag event(s), ${r.cleared} cleared; ${r.kris} KRI(s), ${r.kri_breaches} breached`);
+      } catch (e) {
+        console.error('[RiskMonitoring] Daily run failed:', String(e.message).replace(/[\r\n]+/g, ' '));
+      }
+    }).catch(e => console.error('[RiskMonitoring] Job slot failed:', String(e.message).replace(/[\r\n]+/g, ' ')));
+    runRiskMonitoring();
+    cron.schedule('30 6 * * *', runRiskMonitoring);
 
     // Nightly CVE refresh: query NVD / Shodan for all active technical assets (02:30 AM)
     cron.schedule('30 2 * * *', () => withJobLock('cve-refresh', async () => {

@@ -222,16 +222,97 @@ REST API, never over MCP.
 - Linked to assets, threats (BSI elementary threats and custom threats) and
   controls with an effectiveness rating; only implemented controls lower the
   residual likelihood
-- Risk owner, treatment plan, risk templates
-- **Risk acceptance** as a management sign-off with an expiry date; acceptances
-  expiring within 30 days are flagged and mailed, expired ones turn red. A
-  sign-off can be revoked. The status "accepted" is only set through the
-  sign-off, never through the edit form, an import or an MCP update
+- Risk owner, treatment plan (free text), risk templates
+- **Treatment options** (ISO 27001 6.1.3 b): several per risk (for example
+  mitigate + transfer); the main option stays as before and is always part of
+  the list. Risks from before 3.8.0 keep their single option
+- **Structured risk treatment plan** (ISO 27001 6.1.3 c–e, 8.3; ISO 27005
+  clause 9): measures per risk with title, description, option, responsible
+  person *or* group, due date, status (planned, in progress, implemented,
+  discarded — discarded only with a reason), one-off and recurring costs in
+  EUR and a link to an existing control and/or task. The free-text plan stays
+  visible and is not converted. Every change is in the audit log; the record
+  rights are those for editing the risk
+- **Task from a measure:** one click creates a task (assignee or group, due
+  date, priority from the risk level, notification). The status stays in step:
+  task done → measure implemented, reopened → in progress; measure implemented
+  → task done, discarded → open task cancelled — logged each time. Overdue
+  measures remind the responsible person (or group) once a day
+- **Progress per risk:** share of implemented measures (discarded ones do not
+  count), overdue measures and — in the detail view — the cost totals. If all
+  measures are implemented but the net risk is still above the risk appetite,
+  the risk shows a hint
+- **Risk treatment plan overview** (Risks → Treatment plan): all measures with
+  risk, level, responsible, due date, status, overdue flag, costs, control and
+  task, plus the open risks without any active measure; Excel export with
+  formula injection neutralised. Evidence for ISO 27001 6.1.3 e. Admin,
+  assessor and management see everything, others their own risks and the
+  measures they (or their group) are responsible for
+- **Risk acceptance with the four-eyes principle** (ISO 27001 6.1.3 f, ISO
+  27005 9.6): whoever may edit the risk requests the acceptance (permission
+  `risks.request_acceptance`) with a justification, the requested validity and
+  the residual risk; the level at that moment is stored with the request. A
+  person with acceptance authority under the methodology who is **not** the
+  requester approves or rejects it (with a reason); the requester can
+  withdraw it. If the level changes before the decision, the request can no
+  longer be approved. The risk owner confirms the acceptance of the residual
+  risk — the confirmation is shown on the request. One open request per risk.
+  The sign-off (`PATCH /api/risks/:id/signoff`, `isms_signoff_risk`) now
+  approves the open request. Acceptances given before 3.8.0 stay valid as they
+  are
+- **Risk acceptance** has an expiry date; acceptances expiring within 30 days
+  are flagged in the register and notified in-app and by e-mail to the risk
+  owner and the approver (once 30 days ahead, once on expiry, again after a
+  renewal); expired ones turn red. A sign-off can be revoked;
+  the request then records why the acceptance ended (revoked, lapsed,
+  superseded by a renewal). The status "accepted" is only set through an
+  approved request, never through the edit form, an import or an MCP update
 - If the decisive level of an accepted risk rises (for example after a
   reassessment), the acceptance lapses and the change is logged
 - Flags and filters for risks above the risk appetite and for risks that need
   reassessment
 - The risk matrix (heatmap) works as a click filter; CSV and Excel export
+
+### Risk monitoring and review (ISO 27005 clause 10, ISO 27001 8.2/9.1, NIS-2 Art. 21)
+- **Assessment history:** every change of the gross, net or target
+  assessment — values, levels, methodology version, trigger (created,
+  assessment, reassessment, carry-over, net-risk override, net risk
+  recalculated after a control change, confirmed review), user and time — is
+  kept as an immutable entry. Every write path is covered (form, API, MCP,
+  import, threat advisory, methodology carry-over); the several saves of one
+  operation become one entry. On upgrade, every existing risk gets a starting
+  entry from its current assessment, marked "baseline at upgrade"
+- **History per risk:** chart of the gross, net and target score over time
+  and the list of entries in the risk form
+- **Trend heat map** (Risks → Monitoring): compares the assessments valid at
+  two dates — the matrix at both dates, how many risks moved from which cell
+  to which, level transitions, improved/worsened/unchanged/new; net or gross
+- **Periodic review:** the methodology defines a review cycle per risk level
+  (default: critical 3, high 6, medium 12, low 24 months; changing it creates
+  a new methodology version). The next review is due that many months after
+  the last assessment or confirmed review, or on the review date of the risk
+  if that is earlier. Overdue reviews are flagged and become a task for the
+  risk owner (with an in-app notification). Confirming a review needs a note
+  and is recorded in the history
+- **Triggers for reassessment:** a new or raised incident on an asset of the
+  risk (direct link or risk scenario), a new audit finding linked to the
+  risk, a threat advisory assessed as relevant or critical with confirmed
+  affected assets, a new critical or high CVE on an asset of the risk (nightly
+  and manual CVE refresh) and a KRI breach flag the risk "needs reassessment"
+  with the reason and create a task for the risk owner. At most one open flag
+  and one open task per risk and trigger type; further events are appended.
+  The assessment itself is never changed automatically. A done task or a
+  confirmed review resolves the flag
+- **Key risk indicators (KRIs):** existing KPIs are linked to a risk with a
+  threshold and a direction (above/below); every new measurement and a daily
+  run evaluate them. A breach flags the risk once per breach
+- **Reassessment list** with reasons, events and tasks, filters and Excel
+  export (admin, assessor and management see all risks, others their own);
+  register flags and filters for "needs reassessment", "review overdue",
+  "KRI breached" and expiring/expired acceptances
+- **Dashboard and management report:** trend (last 90 days), overdue
+  reviews, KRI breaches, risks above appetite, open reassessments by trigger,
+  expiring and expired acceptances
 
 ### Risk methodology (ISO 27005 clauses 6/7, ISO 31000 6.3.4, ISO 27001 6.1.2 a)
 Administration → Risk methodology defines how risks are assessed:
@@ -250,6 +331,9 @@ Administration → Risk methodology defines how risks are assessed:
   risk category list plus an optional default. The residual risk counts (the inherent risk where
   there is no residual); risks above it are flagged in the register, the API
   and the MCP tools
+- **Review cycle:** per level, the months after which a risk is due for its
+  periodic review (empty = no periodic review); versions from before 3.9.0
+  use the default cycles
 - **Acceptance authority:** per level, the roles allowed to accept a risk and
   the maximum validity of an acceptance in months. The server enforces it for
   the web interface, the API and the MCP tool `isms_signoff_risk`; without a
@@ -437,9 +521,11 @@ and acted on.
 These live as tabs under **Compliance**.
 
 - **Audits:** internal and external audits, findings with severity and
-  remediation, corrective actions (CAPA) as tasks, audit documents
+  remediation, corrective actions (CAPA) as tasks, audit documents; a
+  finding can reference risks, which are then flagged for reassessment
 - **KPIs:** manual KPIs with target value, unit and frequency, measurement
-  history and target line in the management report
+  history and target line in the management report; a KPI can serve as key
+  risk indicator for risks (threshold and direction per risk)
 - **Training and awareness:** training catalogue, training records per user,
   bulk import of participants from CSV/XLSX (`name`, `email`, `department`,
   `completed`), mandatory-training flag, expiry reminders. Employees see their
@@ -614,7 +700,9 @@ and after values. Each entry carries an HMAC-SHA256 signature, and
 | 04:00 | Removal of expired API tokens |
 | 05:15 | Threat feed refresh (sources with auto-fetch) |
 | 07:45 | Threat source review reminders |
-| 08:00 | Expiring risk acceptances and trainings |
+| on start and 06:30 | Risk monitoring: overdue periodic reviews (flag and task for the risk owner), KRI evaluation — once a day across all instances |
+| 08:00 | Expiring risk acceptances (assets and risk register, once a day across instances for the register) and trainings |
+| on start and 08:00 | Overdue risk treatment measures (in-app reminder to the responsible person or group, once a day) |
 
 ---
 

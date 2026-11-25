@@ -236,7 +236,7 @@ router.get('/callback', async (req, res) => {
         name,
         email,
         password_hash: await User.hashPassword(crypto.randomBytes(24).toString('hex')),
-        // Roles come from groups (v3.8.0); the claim mappings or the SSO
+        // Roles come from groups (v3.10.0); the claim mappings or the SSO
         // default group below decide which ones.
         role: 'none',
         active: true,

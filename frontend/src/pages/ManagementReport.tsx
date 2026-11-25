@@ -14,6 +14,7 @@ import {
   Area, ReferenceLine,
 } from 'recharts';
 import api from '../lib/api';
+import { RiskMonitoringCard } from '../components/risks/RiskMonitoringCard';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -296,6 +297,14 @@ export const ManagementReport: React.FC = () => {
       { [colKey]: t('excel.summary.mttr', 'MTTR (Tage)'),                  [colVal]: trends?.autoKpis?.mttr_days ?? '–', [colNote]: t('excel.summary.last90days', 'letzte 90 Tage') },
       { [colKey]: t('excel.summary.taskCompletionRate', 'Aufgaben-Erledigungsrate'),     [colVal]: `${trends?.autoKpis?.task_completion_rate ?? 0}%`, [colNote]: '' },
       { [colKey]: t('excel.summary.activeVvt', 'VVT-Einträge aktiv'),           [colVal]: activeVvt.length, [colNote]: t('excel.summary.dsfaRequired', { count: dsfaRequired.length, defaultValue: `${dsfaRequired.length} DSFA-pflichtig` }) },
+      ...(trends?.riskMonitoring ? [
+        { [colKey]: t('excel.summary.rmOverdueReviews'), [colVal]: trends.riskMonitoring.overdue_reviews, [colNote]: '' },
+        { [colKey]: t('excel.summary.rmKriBreaches'), [colVal]: trends.riskMonitoring.kri_breaches, [colNote]: '' },
+        { [colKey]: t('excel.summary.rmAppetite'), [colVal]: trends.riskMonitoring.appetite_exceeded, [colNote]: '' },
+        { [colKey]: t('excel.summary.rmReassessments'), [colVal]: trends.riskMonitoring.open_reassessments, [colNote]: '' },
+        { [colKey]: t('excel.summary.rmAcceptances'), [colVal]: `${trends.riskMonitoring.acceptances_expiring} / ${trends.riskMonitoring.acceptances_expired}`, [colNote]: '' },
+        { [colKey]: t('excel.summary.rmTrend'), [colVal]: trends.riskMonitoring.trend ? `${trends.riskMonitoring.trend.improved} / ${trends.riskMonitoring.trend.worsened}` : '–', [colNote]: t('excel.summary.rmTrendNote', { days: trends.riskMonitoring.trend?.days ?? 90 }) },
+      ] : []),
       { [colKey]: t('excel.summary.reportDate', 'Berichtsdatum'),                [colVal]: format(new Date(), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale }), [colNote]: '' },
     ];
 
@@ -462,6 +471,8 @@ export const ManagementReport: React.FC = () => {
                 color="bg-teal-600" icon={BookOpen} />
             </div>
           </div>
+
+          <RiskMonitoringCard summary={trends?.riskMonitoring} />
 
           {/* 3 Donuts */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

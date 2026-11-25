@@ -12,7 +12,7 @@
 // Vorrangregel wie bei den uebrigen OIDC-Feldern, aus denselben Gruenden
 // (siehe services/oidcEnv.js).
 //
-// Since v3.8.0 a mapping grants membership in a group (roles reach users only
+// Since v3.10.0 a mapping grants membership in a group (roles reach users only
 // through groups). An entry may still name a role or custom role; it then means
 // the group that carries that role (services/accessService.js), created on
 // demand.

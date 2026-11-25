@@ -72,7 +72,7 @@ Changes that need attention when you upgrade across them:
 
 | Version | What to know |
 |---|---|
-| **3.8.0** | Database migrations. Roles now reach users only through groups; the first start creates one group per role in use and keeps everyone's access. New users get **no role** unless they are added to a group (or SSO puts them in the default group). MCP `isms_delete_user` deactivates instead of deleting. Review **Administration → Groups** afterwards — see [Release Notes v3.8.0](Release-Notes-v3.8.0) |
+| **3.10.0** | Database migrations. Roles now reach users only through groups; the first start creates one group per role in use and keeps everyone's access. New users get **no role** unless they are added to a group (or SSO puts them in the default group). MCP `isms_delete_user` deactivates instead of deleting. Review **Administration → Groups** afterwards — see [Release Notes v3.10.0](Release-Notes-v3.10.0) |
 | **3.5.1** | API clients that send a token in the query string (`?token=`, `?api_key=`, `?access_token=`, `?key=`) on normal REST calls now get `401`. Send it in the `Authorization: Bearer` header. Server-sent event streams and MCP are unaffected |
 | **3.5.0** | Database migrations. Existing BSI requirements are attached to a new default information domain; status data is kept |
 | **3.4.0** | Database migrations. The built-in BSI excerpt becomes a versioned catalogue. New optional variable `BSI_CATALOG_URL_HOSTS` |

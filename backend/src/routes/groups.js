@@ -12,7 +12,7 @@ const {
 
 router.use(authenticate);
 
-// Groups are teams (task assignment, @-mentions) and, since v3.8.0, the only way
+// Groups are teams (task assignment, @-mentions) and, since v3.10.0, the only way
 // roles reach users: a group carries roles, its members receive them.
 const groupInclude = [
   { model: User, as: 'members', attributes: ['id', 'name', 'email', 'role'], through: { attributes: ['source'] } },

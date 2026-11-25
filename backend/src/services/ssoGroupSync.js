@@ -1,4 +1,4 @@
-// Group memberships granted by SSO (v3.8.0).
+// Group memberships granted by SSO (v3.10.0).
 //
 // On every SSO login the claim mappings decide which groups the IdP grants.
 // The user joins each of them (source 'sso'). Without a matching mapping the
@@ -65,7 +65,7 @@ const applySsoGroups = async ({ userId, grantedGroupIds, general, mappingsConfig
 };
 
 // Settings input -> patch for the SSO default group. ssoDefaultRole (the
-// setting before v3.8.0) is still accepted from API and MCP clients and means
+// setting before v3.10.0) is still accepted from API and MCP clients and means
 // the group carrying that role, created on demand.
 const ssoDefaultGroupPatch = async ({ ssoDefaultGroupId, ssoDefaultRole } = {}) => {
   const { Group } = require('../models');

@@ -370,7 +370,7 @@ router.post('/process', authenticate, requirePermission('import','access','admin
           }
         }
 
-        // Roles reach users only through groups (v3.8.0): the role column puts
+        // Roles reach users only through groups (v3.10.0): the role column puts
         // the imported user into the group that carries that role.
         if (type === 'user') {
           const access = require('../services/accessService');

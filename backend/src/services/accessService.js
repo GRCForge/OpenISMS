@@ -1,4 +1,4 @@
-// Group-based access (v3.8.0).
+// Group-based access (v3.10.0).
 //
 // A role is a named set of permission objects (module.action). Roles reach a
 // user only through groups: a group carries roles (models/GroupRole.js), a user

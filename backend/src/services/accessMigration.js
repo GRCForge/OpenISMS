@@ -1,6 +1,6 @@
-// One-time migration to group-based access (v3.8.0).
+// One-time migration to group-based access (v3.10.0).
 //
-// Before v3.8.0 every user had exactly one role (users.role), optionally
+// Before v3.10.0 every user had exactly one role (users.role), optionally
 // pinned by a custom role (users.custom_role_id). Since then roles reach a user
 // only through groups (services/accessService.js). This migration keeps every
 // user's access exactly as it was:
@@ -40,7 +40,7 @@ const ensureGroupBasedAccess = async ({ log = console } = {}) => {
       if (!roleGroups[role]) {
         const g = await createRoleGroup(ROLE_GROUP_NAMES[role], { system_role: role }, {
           transaction: t,
-          description: `Created by the migration to group-based permissions (v3.8.0). Carries the built-in role "${role}".`,
+          description: `Created by the migration to group-based permissions (v3.10.0). Carries the built-in role "${role}".`,
         });
         roleGroups[role] = g.id;
         counts.groups++;
@@ -51,7 +51,7 @@ const ensureGroupBasedAccess = async ({ log = console } = {}) => {
       if (!customGroups[cr.id]) {
         const g = await createRoleGroup(`Role: ${cr.name}`, { custom_role_id: cr.id }, {
           transaction: t,
-          description: `Created by the migration to group-based permissions (v3.8.0). Carries the custom role "${cr.name}".`,
+          description: `Created by the migration to group-based permissions (v3.10.0). Carries the custom role "${cr.name}".`,
         });
         customGroups[cr.id] = g.id;
         counts.groups++;
@@ -99,7 +99,7 @@ const ensureGroupBasedAccess = async ({ log = console } = {}) => {
     if (general.ssoAutoProvision || roleGroups[general.ssoDefaultRole]) {
       if (!roleGroups[general.ssoDefaultRole]) {
         const g = await createRoleGroup(ROLE_GROUP_NAMES[general.ssoDefaultRole], { system_role: general.ssoDefaultRole }, {
-          description: `Created by the migration to group-based permissions (v3.8.0). Carries the built-in role "${general.ssoDefaultRole}".`,
+          description: `Created by the migration to group-based permissions (v3.10.0). Carries the built-in role "${general.ssoDefaultRole}".`,
         });
         roleGroups[general.ssoDefaultRole] = g.id;
         counts.groups++;

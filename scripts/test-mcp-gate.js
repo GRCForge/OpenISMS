@@ -4,7 +4,7 @@
 /**
  * Verifies that MCP tool gating follows the same contract as the REST API's
  * requirePermission: each role of the user is asked and one that allows is
- * enough (allow-only union, since v3.8.0 roles come from groups). A role's
+ * enough (allow-only union, since v3.10.0 roles come from groups). A role's
  * permission set decides where it says something, the tool's role list where it
  * does not, and a custom role's own set replaces its base role's column.
  *

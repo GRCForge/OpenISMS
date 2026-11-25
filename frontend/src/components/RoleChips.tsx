@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CustomRole, RoleRef, UserRole } from '../types';
 
-// Roles are named sets of permissions. Since v3.8.0 they reach users only
+// Roles are named sets of permissions. Since v3.10.0 they reach users only
 // through groups: a group carries roles, its members receive all of them.
 
 export const BUILTIN_ROLES: UserRole[] = ['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'employee', 'viewer'];

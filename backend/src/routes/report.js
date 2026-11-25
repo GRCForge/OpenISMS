@@ -154,6 +154,11 @@ router.get('/trends', async (req, res) => {
 
     // (manual KPIs fetched in the parallel batch above)
 
+    // Risk monitoring (3.9.0): trend, overdue reviews, KRI breaches, appetite
+    // breaches, open reassessments, expiring acceptances.
+    const riskMonitoring = await require('../services/riskMonitoringService').monitoringSummary()
+      .catch(e => { console.error('[Report] Risk monitoring figures failed:', String(e.message).replace(/[\r\n]+/g, ' ')); return null; });
+
     res.json({
       monthly,
       riskDistribution: riskDist,
@@ -174,6 +179,7 @@ router.get('/trends', async (req, res) => {
         total_assets: totalAssets,
         open_incidents: openIncidents,
       },
+      riskMonitoring,
       kpis: kpis.map(k => ({
         id: k.id, title: k.title, target: k.target,
         current_value: k.current_value, status: k.status,

@@ -129,6 +129,16 @@ const checkExpiringAcceptances = async () => {
   } catch (e) {
     console.error('[Reminders] Error checking acceptance expiry:', e.message);
   }
+  // Acceptances in the risk register (3.9.0): 30 days ahead and on expiry, to
+  // the risk owner and the approver, in-app and by e-mail. Once a day across
+  // instances; the notices themselves are deduplicated per stage and date.
+  try {
+    const { withJobSlot, dailySlot } = require('../utils/jobLock');
+    const r = await withJobSlot('risk-acceptance-expiry', dailySlot(), () => require('./riskMonitoringService').checkExpiringRiskAcceptances());
+    if (r && !r.skipped && r.notified > 0) console.log(`[Reminders] Risk register: ${r.risks} expiring/expired acceptance(s), ${r.notified} notice(s), ${r.mailed} e-mail(s)`);
+  } catch (e) {
+    console.error('[Reminders] Error checking risk acceptance expiry:', String(e.message).replace(/[\r\n]+/g, ' '));
+  }
 };
 
 const checkExpiringTrainings = async () => {
@@ -207,6 +217,17 @@ const checkExpiringTrainings = async () => {
   }
 };
 
+// Overdue risk treatment items (3.8.0): remind the responsible person or the
+// members of the responsible group once a day.
+const checkOverdueTreatmentItems = async () => {
+  try {
+    const { overdue, notified } = await require('./riskTreatmentService').checkOverdueItems();
+    if (notified > 0) console.log(`[Reminders] ${overdue} overdue risk treatment item(s), ${notified} notification(s)`);
+  } catch (e) {
+    console.error('[Reminders] Error checking overdue risk treatment items:', String(e.message).replace(/[\r\n]+/g, ' '));
+  }
+};
+
 const startReminderService = () => {
   // Run daily at midnight
   cron.schedule('0 0 * * *', checkOverdueReminders);
@@ -214,11 +235,14 @@ const startReminderService = () => {
   cron.schedule('0 8 * * *', checkExpiringAcceptances);
   // Run daily at 08:00 — check for training expirations
   cron.schedule('0 8 * * *', checkExpiringTrainings);
+  // Run daily at 08:00 — overdue risk treatment items
+  cron.schedule('0 8 * * *', checkOverdueTreatmentItems);
   
   // Run once on startup
   checkOverdueReminders();
   checkExpiringAcceptances();
   checkExpiringTrainings();
+  checkOverdueTreatmentItems();
   console.log('[Reminders] Service started');
 };
 

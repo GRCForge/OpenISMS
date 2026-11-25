@@ -179,6 +179,14 @@ export interface Risk {
   inherent_level?: RiskLevel;
   treatment: RiskTreatment;
   treatment_plan?: string;
+  // 3.8.0: several treatment options (main option included), structured plan,
+  // acceptance workflow (four-eyes principle)
+  treatment_options?: RiskTreatment[];
+  treatment_progress?: RiskTreatmentProgress;
+  treatmentItems?: RiskTreatmentItem[];
+  acceptanceRequests?: RiskAcceptanceRequest[];
+  acceptance_pending_request_id?: number | null;
+  acceptance_request_id?: number | null;
   residual_likelihood?: number;
   residual_impact?: number;
   residual_level?: RiskLevel;
@@ -217,8 +225,188 @@ export interface Risk {
   acceptedBy?: { id: number; name: string };
   accepted_at?: string;
   accepted_until?: string;
+  // 3.9.0: risk monitoring (computed by the server, services/riskMonitoringService.js)
+  last_reviewed_at?: string | null;
+  review_cycle_months?: number | null;
+  next_review_due?: string | null;
+  next_review_source?: 'cycle' | 'review_date' | null;
+  review_overdue?: boolean;
+  review_flags_open?: number;
+  review_flag_types?: RiskReviewTrigger[];
+  needs_review?: boolean;
+  kri_count?: number;
+  kri_breached?: number;
+  acceptance_expiring?: boolean;
+  acceptance_expired?: boolean;
+  acceptance_days_left?: number | null;
+  openReviewFlags?: RiskReviewFlag[];
   created_at: string;
   updated_at: string;
+}
+
+// ── Risk monitoring (3.9.0) ──────────────────────────────────────────────────
+export type RiskReviewTrigger = 'incident' | 'audit_finding' | 'threat_advisory' | 'cve' | 'kri' | 'review_overdue';
+export type RiskHistoryTrigger = 'baseline_at_upgrade' | 'created' | 'assessment' | 'reassessment' | 'carry_over' | 'residual_override' | 'residual_recalculated' | 'review' | 'system';
+export interface RiskReviewFlag {
+  id: number;
+  risk_id: number;
+  trigger_type: RiskReviewTrigger;
+  status: 'open' | 'resolved';
+  source_type?: string | null;
+  source_id?: number | null;
+  reason: string;
+  occurrences?: { source_type: string | null; source_id: number | null; reason: string; at: string }[];
+  occurrence_count: number;
+  last_occurred_at?: string | null;
+  task_id?: number | null;
+  task?: { id: number; title: string; status: string; due_date?: string | null } | null;
+  resolved_at?: string | null;
+  resolvedBy?: { id: number; name: string } | null;
+  resolution?: string | null;
+  resolution_note?: string | null;
+  created_at: string;
+  risk?: { id: number; ref?: string; title: string; status: RiskStatus; owner?: { id: number; name: string } | null; effective_level: RiskLevel | null; appetite_exceeded: boolean };
+}
+export interface RiskHistoryEntry {
+  id: number;
+  risk_id: number;
+  recorded_at: string;
+  trigger: RiskHistoryTrigger;
+  trigger_detail?: string | null;
+  user_id?: number | null;
+  user_name?: string | null;
+  user?: { id: number; name: string } | null;
+  methodology_version?: number | null;
+  likelihood: number | null;
+  impact: number | null;
+  inherent_level: RiskLevel | null;
+  residual_likelihood: number | null;
+  residual_impact: number | null;
+  residual_level: RiskLevel | null;
+  residual_override: boolean;
+  target_likelihood: number | null;
+  target_impact: number | null;
+  target_level: RiskLevel | null;
+  inherent_score: number | null;
+  residual_score: number | null;
+  target_score: number | null;
+  changed_fields: string[];
+  note?: string | null;
+}
+export interface RiskKri {
+  id: number;
+  risk_id: number;
+  kpi_id: number;
+  kpi?: { id: number; title: string; target: string; current_value?: string | null; status?: string } | null;
+  threshold: number;
+  direction: 'above' | 'below';
+  note?: string | null;
+  breached: boolean;
+  breached_at?: string | null;
+  breach_value?: number | null;
+  breach_count: number;
+  last_value?: number | null;
+  last_measured_at?: string | null;
+}
+export interface RiskTrend {
+  from: string; to: string; basis: 'residual' | 'inherent';
+  likelihood_size: number; impact_size: number;
+  cells_from: { likelihood: number; impact: number; count: number }[];
+  cells_to: { likelihood: number; impact: number; count: number }[];
+  moves: { from: { likelihood: number; impact: number; level: RiskLevel | null }; to: { likelihood: number; impact: number; level: RiskLevel | null }; count: number }[];
+  level_transitions: { from_level: RiskLevel | null; to_level: RiskLevel | null; count: number }[];
+  summary: { compared: number; improved: number; worsened: number; unchanged: number; moved_cell: number; new_since: number; no_data: number };
+}
+export interface RiskMonitoringSummary {
+  generated_at: string;
+  open_risks: number;
+  by_level: Record<RiskLevel, number>;
+  trend: (RiskTrend['summary'] & { from: string; to: string; days: number; level_transitions: RiskTrend['level_transitions'] }) | null;
+  overdue_reviews: number;
+  reviews_due_30_days: number;
+  kri_breaches: number;
+  appetite_exceeded: number;
+  open_reassessments: number;
+  open_reassessment_flags: number;
+  open_reassessments_by_trigger: Record<RiskReviewTrigger, number>;
+  methodology_reassessment: number;
+  acceptances_expiring: number;
+  acceptances_expired: number;
+}
+
+export type RiskTreatmentItemStatus = 'planned' | 'in_progress' | 'implemented' | 'discarded';
+export interface RiskTreatmentItem {
+  id: number;
+  risk_id: number;
+  title: string;
+  description?: string | null;
+  treatment_option: RiskTreatment;
+  responsible_user_id?: number | null;
+  responsible_group_id?: number | null;
+  responsibleUser?: { id: number; name: string } | null;
+  responsibleGroup?: { id: number; name: string } | null;
+  due_date?: string | null;
+  status: RiskTreatmentItemStatus;
+  status_reason?: string | null;
+  completed_at?: string | null;
+  cost_once?: string | number | null;
+  cost_recurring?: string | number | null;
+  control_id?: number | null;
+  control?: { id: number; code?: string; title: string; status: string } | null;
+  task_id?: number | null;
+  task?: { id: number; title: string; status: string; due_date?: string | null; completed_at?: string | null } | null;
+  sort_order?: number;
+  overdue?: boolean;
+}
+export interface RiskTreatmentProgress {
+  total: number;
+  planned: number;
+  in_progress: number;
+  implemented: number;
+  discarded: number;
+  overdue: number;
+  percent: number | null;
+  all_implemented: boolean;
+  complete_above_appetite: boolean;
+  cost_once_total?: number;
+  cost_recurring_total?: number;
+}
+export type RiskAcceptanceRequestStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
+export interface RiskAcceptanceRequest {
+  id: number;
+  risk_id: number;
+  status: RiskAcceptanceRequestStatus;
+  justification: string;
+  residual_risk_description?: string | null;
+  requested_until?: string | null;
+  residual_level?: RiskLevel | null;
+  residual_likelihood?: number | null;
+  residual_impact?: number | null;
+  requested_by_id?: number | null;
+  requestedBy?: { id: number; name: string } | null;
+  requested_at: string;
+  decided_by_id?: number | null;
+  decidedBy?: { id: number; name: string } | null;
+  decided_at?: string | null;
+  decision_reason?: string | null;
+  approved_until?: string | null;
+  owner_confirmed: boolean;
+  ownerConfirmedBy?: { id: number; name: string } | null;
+  owner_confirmed_at?: string | null;
+  ended_at?: string | null;
+  end_reason?: string | null;
+}
+export interface RiskTreatmentPlanItem extends Omit<RiskTreatmentItem, 'cost_once' | 'cost_recurring'> {
+  cost_once: number | null;
+  cost_recurring: number | null;
+  overdue: boolean;
+  risk: { id: number; ref?: string; title: string; status: RiskStatus; category?: string; owner?: { id: number; name: string } | null; treatment: RiskTreatment; treatment_options: RiskTreatment[]; effective_level: RiskLevel | null; appetite_max_level: RiskLevel | null; appetite_exceeded: boolean };
+}
+export interface RiskTreatmentPlan {
+  generated_at: string;
+  summary: { items: number; risks: number; planned: number; in_progress: number; implemented: number; discarded: number; overdue: number; cost_once_total: number; cost_recurring_total: number; risks_without_plan: number };
+  items: RiskTreatmentPlanItem[];
+  risks_without_plan: { id: number; ref?: string; title: string; status: RiskStatus; owner?: { id: number; name: string } | null; treatment: RiskTreatment; effective_level: RiskLevel | null; appetite_exceeded: boolean }[];
 }
 
 export type ControlStatus = 'implemented' | 'planned' | 'not_applicable';
@@ -324,6 +512,8 @@ export interface RiskScale {
   appetite: RiskAppetite;
   acceptance: RiskAcceptanceRule[];
   impact_dimensions: ImpactDimensionDef[];
+  // 3.9.0: periodic review cycle per level (months, null = none)
+  review_cycles?: { level: RiskLevel; months: number | null }[];
 }
 export type ImpactDimensionKey = 'confidentiality' | 'integrity' | 'availability' | 'financial' | 'legal' | 'reputation' | 'operational';
 export interface ImpactDimensionDef { key: ImpactDimensionKey; label_de: string; label_en: string; description: string | null; }
@@ -579,6 +769,8 @@ export interface DashboardData {
   assetsByType: { type: string; count: string }[];
   recentActivity: AuditLog[];
   frameworkCoverage: { iso27001: number; nis2: number; gdpr: number; total: number };
+  // 3.9.0: risk monitoring figures (null when not available)
+  riskMonitoring?: RiskMonitoringSummary | null;
 }
 
 export type SubjectRequestType = 'access' | 'rectification' | 'erasure' | 'restriction' | 'portability' | 'objection' | 'withdraw_consent';

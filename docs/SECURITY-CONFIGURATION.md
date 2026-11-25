@@ -55,7 +55,7 @@ list of environment variables see [CONFIGURATION.md](CONFIGURATION.md).
 - [ ] Configure SSO, if available, with a domain allow-list and a default
       group with the `viewer` role (or none)
 - [ ] Review the role-carrying groups (**Administration → Groups**); after an
-      upgrade to v3.8.0, check the groups the migration created
+      upgrade to v3.10.0, check the groups the migration created
 - [ ] Review the permission matrix (**Administration → Roles & permissions**)
 - [ ] Disable modules you do not use (**Administration → Modules**)
 - [ ] Set the audit log retention to what your retention policy requires
@@ -175,7 +175,7 @@ database, or pin clients to an instance with sticky sessions.
 
 ## 4. Roles and permissions
 
-Since v3.8.0 access is built from three parts:
+Since v3.10.0 access is built from three parts:
 
 - **Permission objects** — one per module and action, e.g. `incidents.edit`.
 - **Roles** — named sets of permission objects: the eight built-in roles and
@@ -255,13 +255,13 @@ and custom roles. Groups without roles are plain teams for task assignment and
 `users.role` is kept as a cache of the most privileged role for display and
 filtering (`none` if the user has no role). Access decisions never read it.
 
-### Upgrading to v3.8.0
+### Upgrading to v3.10.0
 The first start migrates automatically and keeps every user's access as it was:
 one group per role in use (*Administrators*, *Assessors*, …, *Role: <custom
 role>*), every user in the group of their former role, OIDC mappings and the SSO
 default role moved to groups. Existing groups are left untouched and carry no
 roles. Review the new groups afterwards — see
-[RELEASE-NOTES-v3.8.0.md](RELEASE-NOTES-v3.8.0.md).
+[RELEASE-NOTES-v3.10.0.md](RELEASE-NOTES-v3.10.0.md).
 
 ### Recommendations
 - Keep the number of administrators small; give everyday ISMS work the

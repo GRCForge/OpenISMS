@@ -22,6 +22,12 @@ const RiskControl = require('./RiskControl');
 const RiskMethodology = require('./RiskMethodology');
 const RiskCategory = require('./RiskCategory');
 const RiskScenario = require('./RiskScenario');
+const RiskTreatmentItem = require('./RiskTreatmentItem');
+const RiskAcceptanceRequest = require('./RiskAcceptanceRequest');
+const RiskAssessmentHistory = require('./RiskAssessmentHistory');
+const RiskKri = require('./RiskKri');
+const RiskReviewFlag = require('./RiskReviewFlag');
+const JobRun = require('./JobRun');
 const Vulnerability = require('./Vulnerability');
 const Incident = require('./Incident');
 const VvtEntry = require('./VvtEntry');
@@ -193,6 +199,90 @@ Vulnerability.hasMany(RiskScenario, { as: 'scenarios', foreignKey: 'vulnerabilit
 RiskScenario.belongsToMany(Asset, { through: 'risk_scenario_assets', as: 'assets', foreignKey: 'scenario_id', otherKey: 'asset_id' });
 Asset.belongsToMany(RiskScenario, { through: 'risk_scenario_assets', as: 'riskScenarios', foreignKey: 'asset_id', otherKey: 'scenario_id' });
 Risk.belongsTo(User, { as: 'residualOverrideBy', foreignKey: 'residual_override_by_id' });
+
+// Risk treatment plan and acceptance workflow (3.8.0). Both go with their risk
+// (CASCADE). A deleted control, task, user or group does not take the item or
+// request with it (SET NULL); the audit log keeps who did what.
+Risk.hasMany(RiskTreatmentItem, { as: 'treatmentItems', foreignKey: 'risk_id', onDelete: 'CASCADE', hooks: true });
+RiskTreatmentItem.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskTreatmentItem.belongsTo(User, { as: 'responsibleUser', foreignKey: 'responsible_user_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(Group, { as: 'responsibleGroup', foreignKey: 'responsible_group_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(Control, { as: 'control', foreignKey: 'control_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(Task, { as: 'task', foreignKey: 'task_id', onDelete: 'SET NULL' });
+RiskTreatmentItem.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id', onDelete: 'SET NULL' });
+Risk.hasMany(RiskAcceptanceRequest, { as: 'acceptanceRequests', foreignKey: 'risk_id', onDelete: 'CASCADE', hooks: true });
+RiskAcceptanceRequest.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskAcceptanceRequest.belongsTo(User, { as: 'requestedBy', foreignKey: 'requested_by_id', onDelete: 'SET NULL' });
+RiskAcceptanceRequest.belongsTo(User, { as: 'decidedBy', foreignKey: 'decided_by_id', onDelete: 'SET NULL' });
+RiskAcceptanceRequest.belongsTo(User, { as: 'ownerConfirmedBy', foreignKey: 'owner_confirmed_by_id', onDelete: 'SET NULL' });
+
+// A task created from a treatment item keeps the item status in step (task
+// done -> item implemented, logged). Every write path of tasks - REST, MCP,
+// reminders, automation - runs through these hooks; bulk updates included.
+// Lazy require: the service needs the models.
+Task.addHook('afterUpdate', 'riskTreatmentSync', async (task, options) => {
+  await require('../services/riskTreatmentService').onTaskUpdated(task, options);
+});
+Task.addHook('afterBulkUpdate', 'riskTreatmentSync', async (options) => {
+  await require('../services/riskTreatmentService').onTasksBulkUpdated(options);
+});
+
+// Risk monitoring (3.9.0). History, KRIs and review flags go with their risk
+// (CASCADE); a deleted KPI takes its KRI links with it. A deleted task or user
+// does not take a flag with it (SET NULL).
+Risk.hasMany(RiskAssessmentHistory, { as: 'assessmentHistory', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskAssessmentHistory.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskAssessmentHistory.belongsTo(User, { as: 'user', foreignKey: 'user_id', onDelete: 'SET NULL' });
+RiskAssessmentHistory.belongsTo(RiskMethodology, { as: 'methodology', foreignKey: 'methodology_id', onDelete: 'SET NULL' });
+Risk.hasMany(RiskKri, { as: 'kris', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskKri.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskKri.belongsTo(Kpi, { as: 'kpi', foreignKey: 'kpi_id', onDelete: 'CASCADE' });
+Kpi.hasMany(RiskKri, { as: 'riskLinks', foreignKey: 'kpi_id', onDelete: 'CASCADE' });
+RiskKri.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id', onDelete: 'SET NULL' });
+Risk.hasMany(RiskReviewFlag, { as: 'reviewFlags', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskReviewFlag.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskReviewFlag.belongsTo(Task, { as: 'task', foreignKey: 'task_id', onDelete: 'SET NULL' });
+RiskReviewFlag.belongsTo(User, { as: 'resolvedBy', foreignKey: 'resolved_by_id', onDelete: 'SET NULL' });
+
+// Assessment history: every save of a risk - form, MCP, import, carry-over,
+// threat advisory - is compared with its previous values; a change of the
+// gross, net or target assessment becomes one immutable history row
+// (services/riskHistoryService.js). Registered after the methodology hook, so
+// the levels it computes are part of the comparison. Errors are logged there,
+// never thrown: the risk save itself has happened.
+Risk.addHook('beforeCreate', 'riskMonitoring', (risk) => {
+  if (!risk.last_reviewed_at) risk.last_reviewed_at = new Date();
+  // The ref hook (models/Risk.js) saves again inside afterCreate; that save is
+  // part of the creation, not a change (riskHistoryService.onRiskUpdated).
+  risk._historyCreating = true;
+});
+Risk.addHook('afterCreate', 'riskHistory', async (risk, options) => {
+  await require('../services/riskHistoryService').onRiskCreated(risk, options);
+});
+Risk.addHook('afterUpdate', 'riskHistory', async (risk, options) => {
+  await require('../services/riskHistoryService').onRiskUpdated(risk, options);
+});
+// A reassessment task of a review flag that is done resolves the flag
+// (services/riskMonitoringService.js). Same write paths as above.
+Task.addHook('afterUpdate', 'riskReviewFlagSync', async (task, options) => {
+  await require('../services/riskMonitoringService').onTaskUpdated(task, options);
+});
+Task.addHook('afterBulkUpdate', 'riskReviewFlagSync', async (options) => {
+  await require('../services/riskMonitoringService').onTasksBulkUpdated(options);
+});
+// KRI evaluation on every new KPI measurement (REST and MCP) and on new CVEs
+// found for an asset (nightly refresh and manual refresh alike).
+KpiMeasurement.addHook('afterCreate', 'riskKri', async (measurement) => {
+  await require('../services/riskMonitoringService').onKpiMeasurement(measurement);
+});
+Asset.addHook('afterUpdate', 'riskCveTrigger', async (asset, options) => {
+  await require('../services/riskMonitoringService').onAssetUpdated(asset, options);
+});
+
+// Audit findings with a risk reference (3.9.0): a new finding linked to a
+// risk flags it for reassessment.
+AuditFinding.belongsToMany(Risk, { through: 'audit_finding_risks', as: 'risks', foreignKey: 'audit_finding_id', otherKey: 'risk_id' });
+Risk.belongsToMany(AuditFinding, { through: 'audit_finding_risks', as: 'auditFindings', foreignKey: 'risk_id', otherKey: 'audit_finding_id' });
 
 // Sicherheitsvorfaelle (Incident Management)
 Incident.belongsTo(User, { as: 'reporter', foreignKey: 'reporter_id' });
@@ -398,7 +488,7 @@ Asset.belongsToMany(ThreatAdvisory, { through: ThreatAdvisoryAsset, as: 'advisor
 module.exports = {
   sequelize, User, Asset, Assessment, Reminder, AuditLog, Document, Comment,
   Vendor, VendorContact, Policy, PolicyVersion, Setting, Risk, Notification,
-  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, RiskMethodology, RiskCategory, RiskScenario, Vulnerability, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
+  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, RiskMethodology, RiskCategory, RiskScenario, RiskTreatmentItem, RiskAcceptanceRequest, RiskAssessmentHistory, RiskKri, RiskReviewFlag, JobRun, Vulnerability, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,

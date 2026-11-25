@@ -37,7 +37,8 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // 5x5, Labels wie dort, Schwellen 1-4 / 5-9 / 10-14 / 15-25. Kein Appetit
 // (nichts wird markiert), Akzeptanz wie bisher durch admin, assessor und owner
 // ohne Hoechstdauer. Eine Installation verhaelt sich nach dem Upgrade also
-// genauso wie vorher, bis jemand die Methodik bewusst aendert.
+// genauso wie vorher, bis jemand die Methodik bewusst aendert. Since 3.9.0 the
+// profile also carries review cycles per level (periodic review reminders).
 const lvl = (value, label_de, label_en) => ({ value, label_de, label_en, description: null, range_min: null, range_max: null });
 const DEFAULT_PROFILE = Object.freeze({
   name: 'Standard 5×5 (ISO 27005)',
@@ -67,7 +68,28 @@ const DEFAULT_PROFILE = Object.freeze({
   acceptance: LEVEL_KEYS.map(level => ({ level, roles: ['admin', 'assessor', 'owner'], max_months: null })),
   // No impact dimensions: impact is a single overall value, as up to 3.6.0.
   impact_dimensions: [],
+  // Periodic review cycle per level in months (3.9.0).
+  review_cycles: [
+    { level: 'low', months: 24 },
+    { level: 'medium', months: 12 },
+    { level: 'high', months: 6 },
+    { level: 'critical', months: 3 },
+  ],
 });
+
+// Review cycles of a version; versions from before 3.9.0 (NULL) use the
+// built-in default cycles, so periodic review works right after the upgrade.
+// Changing them creates a new version like every other criterion.
+const DEFAULT_REVIEW_CYCLES = DEFAULT_PROFILE.review_cycles;
+const reviewCyclesOf = (profile) => {
+  const raw = profile && Array.isArray(profile.review_cycles) ? profile.review_cycles : null;
+  if (!raw) return DEFAULT_REVIEW_CYCLES.map(c => ({ ...c }));
+  return LEVEL_KEYS.map(level => {
+    const hit = raw.find(c => c && c.level === level);
+    return { level, months: hit && Number.isInteger(hit.months) ? hit.months : null };
+  });
+};
+const reviewMonthsFor = (profile, level) => (reviewCyclesOf(profile).find(c => c.level === level) || {}).months ?? null;
 
 // Impact dimensions (ISO 27005:2022 7.2 / 8.3.3, BSI 200-3 damage scenarios).
 // The keys are a fixed catalogue; a methodology version decides which of them
@@ -84,7 +106,7 @@ const DIMENSION_CATALOG = Object.freeze([
 ]);
 const DIMENSION_KEYS = DIMENSION_CATALOG.map(d => d.key);
 
-const CONTENT_FIELDS = ['name', 'likelihood_unit', 'impact_unit', 'likelihood_levels', 'impact_levels', 'risk_levels', 'appetite', 'acceptance', 'impact_dimensions'];
+const CONTENT_FIELDS = ['name', 'likelihood_unit', 'impact_unit', 'likelihood_levels', 'impact_levels', 'risk_levels', 'appetite', 'acceptance', 'impact_dimensions', 'review_cycles'];
 
 // Versions created before 3.7.0 have no impact_dimensions (NULL) - same as none.
 const dimensionsOf = (profile) => (profile && Array.isArray(profile.impact_dimensions) ? profile.impact_dimensions : []);
@@ -273,8 +295,33 @@ const validateProfile = (input) => {
     }
   }
 
+  // Review cycles (3.9.0): per level 1 to MAX_MONTHS months or empty (no
+  // periodic review). Not sent at all: the default cycles.
+  let review_cycles;
+  if (src.review_cycles === undefined || src.review_cycles === null) {
+    review_cycles = DEFAULT_REVIEW_CYCLES.map(c => ({ ...c }));
+  } else if (!Array.isArray(src.review_cycles)) {
+    err('review_cycles', 'Prüfzyklen müssen eine Liste sein.');
+    review_cycles = DEFAULT_REVIEW_CYCLES.map(c => ({ ...c }));
+  } else {
+    const rawCycles = src.review_cycles.filter(isObj);
+    if (rawCycles.some(c => !LEVEL_KEYS.includes(c.level))) err('review_cycles', `Prüfzyklen: nur die Stufen ${LEVEL_KEYS.join(', ')} sind möglich.`);
+    review_cycles = LEVEL_KEYS.map(level => {
+      const hits = rawCycles.filter(c => c.level === level);
+      if (hits.length > 1) err(`review_cycles.${level}`, `Prüfzyklus „${level}“ ist mehrfach angegeben.`);
+      const v = hits[0] ? hits[0].months : null;
+      if (v === undefined || v === null || v === '') return { level, months: null };
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 1 || n > MAX_MONTHS) {
+        err(`review_cycles.${level}`, `Prüfzyklus „${level}“: 1 bis ${MAX_MONTHS} Monate oder leer.`);
+        return { level, months: null };
+      }
+      return { level, months: n };
+    });
+  }
+
   return {
-    profile: { name, likelihood_unit, impact_unit, likelihood_levels, impact_levels, risk_levels, appetite: { default_max_level, categories }, acceptance, impact_dimensions },
+    profile: { name, likelihood_unit, impact_unit, likelihood_levels, impact_levels, risk_levels, appetite: { default_max_level, categories }, acceptance, impact_dimensions, review_cycles },
     errors,
     warnings,
   };
@@ -340,6 +387,7 @@ const scaleInfo = (profileRow = DEFAULT_PROFILE) => {
     appetite: p.appetite,
     acceptance: p.acceptance,
     impact_dimensions: dimensionsOf(p),
+    review_cycles: reviewCyclesOf(p),
   };
 };
 
@@ -349,7 +397,7 @@ const stable = (v) => {
   if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
   return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
 };
-const contentOf = (p, f) => (f === 'impact_dimensions' ? dimensionsOf(p) : (p[f] ?? null));
+const contentOf = (p, f) => (f === 'impact_dimensions' ? dimensionsOf(p) : f === 'review_cycles' ? reviewCyclesOf(p) : (p[f] ?? null));
 const sameContent = (a, b) => CONTENT_FIELDS.every(f => stable(contentOf(a, f)) === stable(contentOf(b, f)));
 
 // ── Datenbank ────────────────────────────────────────────────────────────────
@@ -697,7 +745,7 @@ const checkAcceptance = async (risk, user, validUntil) => {
 };
 
 module.exports = {
-  LEVEL_KEYS, ROLES, MIN_SIZE, MAX_SIZE, DEFAULT_PROFILE, DIMENSION_CATALOG, DIMENSION_KEYS, dimensionsOf, normalizeDimensions, appetiteCategoryErrors,
+  LEVEL_KEYS, ROLES, MIN_SIZE, MAX_SIZE, DEFAULT_PROFILE, DEFAULT_REVIEW_CYCLES, reviewCyclesOf, reviewMonthsFor, DIMENSION_CATALOG, DIMENSION_KEYS, dimensionsOf, normalizeDimensions, appetiteCategoryErrors,
   validateProfile, computeLevel, buildMatrix, scaleInfo, sameContent, rank,
   getProfile, getActiveProfile, getBaselineProfile, profileForRisk, ensureDefaultProfile, saveNewVersion, listVersions, invalidate,
   applyToRisk, effectiveLevel, appetiteLimit, assess, decorateRisks, decorateRisk, checkAcceptance, addMonths, normalizeDate, todayStr,
