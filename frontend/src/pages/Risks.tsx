@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { Plus, ShieldAlert, Grid3x3, Trash2, AlertTriangle, CheckCircle, ShieldCheck, Download, FileSpreadsheet, ChevronRight, Search, Shield, FolderOpen, FileText, Flag, RefreshCcw, ListChecks, Hourglass } from 'lucide-react';
+import { Plus, ShieldAlert, Grid3x3, Trash2, AlertTriangle, CheckCircle, ShieldCheck, Download, FileSpreadsheet, ChevronRight, Search, Shield, FolderOpen, FileText, Flag, RefreshCcw, ListChecks, Hourglass, Activity, CalendarClock, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useKeyShortcut } from '../hooks/useKeyShortcut';
 import { format } from 'date-fns';
@@ -10,6 +10,7 @@ import api from '../lib/api';
 import type { Risk, Asset, User, Threat, Control, RiskLevel, RiskTreatment, RiskStatus, Template, RiskScale, RiskCategory, Vulnerability, ImpactDimensionKey, Group } from '../types';
 import { TreatmentItems } from '../components/risks/TreatmentItems';
 import { AcceptanceWorkflow } from '../components/risks/AcceptanceWorkflow';
+import { RiskMonitoringPanel } from '../components/risks/RiskMonitoringPanel';
 import { RiskHeatmap } from '../components/risks/RiskHeatmap';
 import type { HeatmapCellRef } from '../components/risks/RiskHeatmap';
 import { loadActiveScale, loadScaleVersion, levelLabel, stepOptions, loadRiskCategories, categoryLabel, dimensionLabel, maxDimension } from '../lib/riskMethodology';
@@ -64,7 +65,7 @@ const RiskFlags: React.FC<{ r: Risk }> = ({ r }) => {
   const { t } = useTranslation('risks');
   const progress = r.treatment_progress;
   const showProgress = !!progress && progress.total > 0;
-  if (!r.appetite_exceeded && !r.needs_reassessment && !r.acceptance_pending_request_id && !showProgress) return null;
+  if (!r.appetite_exceeded && !r.needs_reassessment && !r.acceptance_pending_request_id && !showProgress && !r.needs_review && !r.review_overdue && !r.kri_breached && !r.acceptance_expiring && !r.acceptance_expired) return null;
   return (
     <span className="flex flex-wrap gap-1 mt-1">
       {showProgress && (
@@ -85,6 +86,31 @@ const RiskFlags: React.FC<{ r: Risk }> = ({ r }) => {
       {r.needs_reassessment && (
         <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
           <RefreshCcw size={9} />{t('methodology.needsReassessmentShort', { version: r.methodology_version })}
+        </span>
+      )}
+      {r.needs_review && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" title={(r.review_flag_types || []).map(x => t(`monitoring.trigger.${x}`)).join(', ')}>
+          <Activity size={9} />{t('monitoring.badgeReview')}
+        </span>
+      )}
+      {r.review_overdue && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+          <CalendarClock size={9} />{t('monitoring.badgeOverdue')}
+        </span>
+      )}
+      {!!r.kri_breached && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+          <Gauge size={9} />{t('monitoring.badgeKri', { count: r.kri_breached })}
+        </span>
+      )}
+      {r.acceptance_expiring && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+          <Hourglass size={9} />{t('monitoring.badgeAcceptanceExpiring', { days: r.acceptance_days_left })}
+        </span>
+      )}
+      {r.acceptance_expired && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-red-600 text-white">
+          <Hourglass size={9} />{t('monitoring.badgeAcceptanceExpired')}
         </span>
       )}
     </span>
@@ -234,6 +260,10 @@ export const Risks: React.FC = () => {
     if (levelFilter && r.inherent_level !== levelFilter) return false;
     if (flagFilter === 'appetite' && !r.appetite_exceeded) return false;
     if (flagFilter === 'reassess' && !r.needs_reassessment) return false;
+    if (flagFilter === 'review' && !r.needs_review) return false;
+    if (flagFilter === 'overdue' && !r.review_overdue) return false;
+    if (flagFilter === 'kri' && !r.kri_breached) return false;
+    if (flagFilter === 'acceptance' && !r.acceptance_expiring && !r.acceptance_expired) return false;
     if (heatCell) {
       const v = valuesOn(r, heatBasis);
       if (r.needs_reassessment || v.l !== heatCell.likelihood || v.i !== heatCell.impact) return false;
@@ -255,6 +285,12 @@ export const Risks: React.FC = () => {
   }, [risks, heatBasis]);
   const reassessCount = useMemo(() => risks.filter(r => r.needs_reassessment).length, [risks]);
   const appetiteCount = useMemo(() => risks.filter(r => r.appetite_exceeded).length, [risks]);
+  const monitorCounts = useMemo(() => ({
+    review: risks.filter(r => r.needs_review).length,
+    overdue: risks.filter(r => r.review_overdue).length,
+    kri: risks.filter(r => r.kri_breached).length,
+    acceptance: risks.filter(r => r.acceptance_expiring || r.acceptance_expired).length,
+  }), [risks]);
   const resetFilters = () => { setSearch(''); setStatusFilter(''); setCategoryFilter(''); setLevelFilter(''); setFlagFilter(''); setHeatCell(null); };
 
   const defaultCategory = () => (categories.find(c => c.key === 'it_security' && c.active) || categories.find(c => c.active))?.key || '';
@@ -413,6 +449,10 @@ export const Risks: React.FC = () => {
     [t('risks:form.nextReview')]: r.review_date ? format(new Date(r.review_date), 'dd.MM.yyyy', { locale: dateFnsLocale }) : '',
     [t('risks:methodology.versionColumn')]: r.methodology_version ?? '',
     [t('risks:methodology.appetiteExceeded')]: r.appetite_exceeded ? t('risks:methodology.yes') : '',
+    [t('risks:monitoring.nextReview')]: r.next_review_due ? format(new Date(r.next_review_due), 'dd.MM.yyyy', { locale: dateFnsLocale }) : '',
+    [t('risks:monitoring.badgeOverdue')]: r.review_overdue ? t('risks:methodology.yes') : '',
+    [t('risks:monitoring.badgeReview')]: (r.review_flag_types || []).map(x => t(`risks:monitoring.trigger.${x}`)).join(', '),
+    [t('risks:monitoring.filterKri')]: r.kri_breached ? String(r.kri_breached) : '',
   }));
 
   useKeyShortcut('n', openNew, { disabled: loading || editId !== null });
@@ -437,6 +477,7 @@ export const Risks: React.FC = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/risks/treatment-plan" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700"><ListChecks size={14} />{t('risks:plan.open')}</Link>
+          <Link to="/risks/monitoring" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700"><Activity size={14} />{t('risks:monitoring.open')}</Link>
           <Button variant="secondary" size="sm" onClick={() => exportToCSV(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`)}><Download size={14} />CSV</Button>
           <Button variant="secondary" size="sm" onClick={() => void exportToExcel(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`, 'Risiken')}><FileSpreadsheet size={14} />Excel</Button>
           {canWrite && <Button onClick={openNew}><Plus size={16} />{t('risks:new')}</Button>}
@@ -460,7 +501,7 @@ export const Risks: React.FC = () => {
               <Select className="w-40" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allStatus') }, ...Object.entries(statusLabels).map(([v, l]) => ({ value: v, label: l }))]} />
               <Select className="w-40" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allCategories') }, ...Object.entries(categoryLabels).map(([v, l]) => ({ value: v, label: l }))]} />
               <Select className="w-40" value={levelFilter} onChange={e => setLevelFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allLevels') }, ...Object.entries(levelLabels).map(([v, l]) => ({ value: v, label: l }))]} />
-              <Select className="w-48" value={flagFilter} onChange={e => setFlagFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allFlags') }, { value: 'appetite', label: `${t('risks:methodology.appetiteExceeded')} (${appetiteCount})` }, { value: 'reassess', label: `${t('risks:methodology.needsReassessment')} (${reassessCount})` }]} />
+              <Select className="w-48" value={flagFilter} onChange={e => setFlagFilter(e.target.value)} options={[{ value: '', label: t('risks:filters.allFlags') }, { value: 'appetite', label: `${t('risks:methodology.appetiteExceeded')} (${appetiteCount})` }, { value: 'reassess', label: `${t('risks:methodology.needsReassessment')} (${reassessCount})` }, { value: 'review', label: `${t('risks:monitoring.filterReview')} (${monitorCounts.review})` }, { value: 'overdue', label: `${t('risks:monitoring.filterOverdue')} (${monitorCounts.overdue})` }, { value: 'kri', label: `${t('risks:monitoring.filterKri')} (${monitorCounts.kri})` }, { value: 'acceptance', label: `${t('risks:monitoring.filterAcceptance')} (${monitorCounts.acceptance})` }]} />
             </FilterBar>
 
             <Card className="!border-0 shadow-none">
@@ -552,7 +593,7 @@ export const Risks: React.FC = () => {
                             <div className="flex flex-col gap-1">
                               <span className="text-xs font-medium dark:text-slate-400">{statusLabels[r.status]}</span>
                               {r.status === 'accepted' && r.accepted_until && (
-                                <span className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1"><ShieldCheck size={10} />{t('risks:acceptedUntil')} {format(new Date(r.accepted_until), 'dd.MM.yy', { locale: dateFnsLocale })}</span>
+                                <span className={`text-[10px] flex items-center gap-1 ${r.acceptance_expired ? 'text-red-600 dark:text-red-400 font-semibold' : r.acceptance_expiring ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}><ShieldCheck size={10} />{t('risks:acceptedUntil')} {format(new Date(r.accepted_until), 'dd.MM.yy', { locale: dateFnsLocale })}</span>
                               )}
                             </div>
                           </Td>
@@ -947,6 +988,11 @@ export const Risks: React.FC = () => {
                 canRequest={can('risks', 'request_acceptance', hasWriteAccess(user?.role))}
                 canSignOff={can('risks', 'sign_off', ['admin', 'assessor', 'owner', 'management'].includes(user?.role || ''))}
                 levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onRevoke={revokeSignoff} onChanged={reloadDetail} />
+            )}
+
+            {editId && detail && (
+              <RiskMonitoringPanel risk={detail} canEdit={can('risks', 'edit', hasWriteAccess(user?.role))}
+                levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onChanged={reloadDetail} />
             )}
           </div>
 

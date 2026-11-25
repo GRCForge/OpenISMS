@@ -579,6 +579,9 @@
     "system": "System",
     "show": "Show",
     "dimensions": "Impact dimensions",
-    "dimensionsHint": "Which dimensions of impact are rated separately (ISO 27005 clauses 7-8, BSI 200-3). The overall impact of a risk is the maximum of its rated dimensions. Without a selection impact stays a single value. A change creates a new methodology version."
+    "dimensionsHint": "Which dimensions of impact are rated separately (ISO 27005 clauses 7-8, BSI 200-3). The overall impact of a risk is the maximum of its rated dimensions. Without a selection impact stays a single value. A change creates a new methodology version.",
+    "reviewCycles": "Review cycle per risk level (months)",
+    "reviewCyclesHint": "A risk of this level is due for review this many months after its last assessment or review; empty = no periodic review. A change creates a new version.",
+    "noReview": "none"
   }
 }

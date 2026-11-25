@@ -288,7 +288,10 @@
     "assigneeLabel": "Responsible Person",
     "capaTaskLabel": "Linked CAPA Action (Task)",
     "noTaskLabel": "— Do not link a task —",
-    "submitBtn": "Log Deviation"
+    "submitBtn": "Log Deviation",
+    "linkedRisks": "Riesgos",
+    "risksLabel": "Riesgos relacionados ({{count}})",
+    "risksHint": "Los riesgos vinculados se marcan para reevaluación; el propietario del riesgo recibe una tarea."
   },
   "masterTrainingModal": {
     "editTitle": "Edit Training Course",

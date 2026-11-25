@@ -20,6 +20,7 @@ const AssetDetail = lazy(() => import('./pages/AssetDetail').then(m => ({ defaul
 const Topology = lazy(() => import('./pages/Topology').then(m => ({ default: m.Topology })));
 const Risks = lazy(() => import('./pages/Risks').then(m => ({ default: m.Risks })));
 const RiskTreatmentPlan = lazy(() => import('./pages/RiskTreatmentPlan').then(m => ({ default: m.RiskTreatmentPlan })));
+const RiskMonitoring = lazy(() => import('./pages/RiskMonitoring').then(m => ({ default: m.RiskMonitoring })));
 const Vulnerabilities = lazy(() => import('./pages/Vulnerabilities').then(m => ({ default: m.Vulnerabilities })));
 const Controls = lazy(() => import('./pages/Controls').then(m => ({ default: m.Controls })));
 const Incidents = lazy(() => import('./pages/Incidents').then(m => ({ default: m.Incidents })));
@@ -76,6 +77,7 @@ const App: React.FC = () => (
               <Route path="graph" element={<Graph />} />
               <Route path="risks" element={<Risks />} />
               <Route path="risks/treatment-plan" element={<RiskTreatmentPlan />} />
+              <Route path="risks/monitoring" element={<RiskMonitoring />} />
               <Route path="vulnerabilities" element={<Vulnerabilities />} />
               <Route path="controls" element={<Controls />} />
               <Route path="incidents" element={<Incidents />} />

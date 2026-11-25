@@ -11,6 +11,7 @@ import api from '../lib/api';
 import type { DashboardData, RiskLevel, Classification } from '../types';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { RiskMonitoringCard } from '../components/risks/RiskMonitoringCard';
 import { Link } from 'react-router';
 import { Skeleton, SkeletonStatCard, SkeletonCard } from '../components/ui/Skeleton';
 
@@ -166,6 +167,8 @@ export const Dashboard: React.FC = () => {
         <StatCard label={t('dashboard:stats.compliance')} value={`${data.stats.compliancePct}%`} icon={CheckCircle} color={data.stats.compliancePct >= 80 ? 'bg-green-500' : data.stats.compliancePct >= 50 ? 'bg-yellow-500' : 'bg-orange-500'} sub={t('dashboard:stats.frameworkCoverage')} />
         <StatCard label={t('dashboard:stats.assessed')} value={`${totalRisk} / ${data.stats.totalAssets}`} icon={TrendingUp} color="bg-purple-500" sub={t('dashboard:stats.assetsAssessed', { total: data.stats.totalAssets })} />
       </div>
+
+      <RiskMonitoringCard summary={data.riskMonitoring} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

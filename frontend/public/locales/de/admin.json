@@ -579,6 +579,9 @@
     "system": "System",
     "show": "Anzeigen",
     "dimensions": "Auswirkungsdimensionen",
-    "dimensionsHint": "Welche Dimensionen bei der Auswirkung getrennt bewertet werden (ISO 27005 Kap. 7–8, BSI 200-3). Die Gesamt-Auswirkung eines Risikos ist das Maximum der bewerteten Dimensionen. Ohne Auswahl bleibt es bei einem Gesamtwert. Eine Änderung legt eine neue Methodik-Version an."
+    "dimensionsHint": "Welche Dimensionen bei der Auswirkung getrennt bewertet werden (ISO 27005 Kap. 7–8, BSI 200-3). Die Gesamt-Auswirkung eines Risikos ist das Maximum der bewerteten Dimensionen. Ohne Auswahl bleibt es bei einem Gesamtwert. Eine Änderung legt eine neue Methodik-Version an.",
+    "reviewCycles": "Prüfzyklus je Risikostufe (Monate)",
+    "reviewCyclesHint": "Nach so vielen Monaten seit der letzten Bewertung oder Prüfung ist ein Risiko der Stufe erneut zu prüfen; leer = keine periodische Prüfung. Eine Änderung legt eine neue Version an.",
+    "noReview": "keine"
   }
 }
