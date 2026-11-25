@@ -65,9 +65,29 @@ const DEFAULT_PROFILE = Object.freeze({
   ],
   appetite: { default_max_level: null, categories: [] },
   acceptance: LEVEL_KEYS.map(level => ({ level, roles: ['admin', 'assessor', 'owner'], max_months: null })),
+  // No impact dimensions: impact is a single overall value, as up to 3.6.0.
+  impact_dimensions: [],
 });
 
-const CONTENT_FIELDS = ['name', 'likelihood_unit', 'impact_unit', 'likelihood_levels', 'impact_levels', 'risk_levels', 'appetite', 'acceptance'];
+// Impact dimensions (ISO 27005:2022 7.2 / 8.3.3, BSI 200-3 damage scenarios).
+// The keys are a fixed catalogue; a methodology version decides which of them
+// apply and may rename them. The overall impact of a risk is the maximum of the
+// rated dimensions (maximum principle, BSI 200-2 8.2.1).
+const DIMENSION_CATALOG = Object.freeze([
+  { key: 'confidentiality', label_de: 'Vertraulichkeit', label_en: 'Confidentiality' },
+  { key: 'integrity', label_de: 'Integrität', label_en: 'Integrity' },
+  { key: 'availability', label_de: 'Verfügbarkeit', label_en: 'Availability' },
+  { key: 'financial', label_de: 'Finanziell', label_en: 'Financial' },
+  { key: 'legal', label_de: 'Rechtlich/regulatorisch', label_en: 'Legal/regulatory' },
+  { key: 'reputation', label_de: 'Reputation', label_en: 'Reputation' },
+  { key: 'operational', label_de: 'Operativ', label_en: 'Operational' },
+]);
+const DIMENSION_KEYS = DIMENSION_CATALOG.map(d => d.key);
+
+const CONTENT_FIELDS = ['name', 'likelihood_unit', 'impact_unit', 'likelihood_levels', 'impact_levels', 'risk_levels', 'appetite', 'acceptance', 'impact_dimensions'];
+
+// Versions created before 3.7.0 have no impact_dimensions (NULL) - same as none.
+const dimensionsOf = (profile) => (profile && Array.isArray(profile.impact_dimensions) ? profile.impact_dimensions : []);
 
 const httpError = (status, message, extra) => Object.assign(new Error(message), { status }, extra ? { extra } : {});
 const rank = (key) => LEVEL_KEYS.indexOf(key);
@@ -226,8 +246,35 @@ const validateProfile = (input) => {
     acceptance.push({ level, roles, max_months });
   }
 
+  // Impact dimensions: keys only from the fixed catalogue, order of the
+  // catalogue, labels default to the catalogue labels.
+  const impact_dimensions = [];
+  if (src.impact_dimensions !== undefined && src.impact_dimensions !== null) {
+    if (!Array.isArray(src.impact_dimensions)) {
+      err('impact_dimensions', 'Auswirkungsdimensionen müssen eine Liste sein.');
+    } else {
+      const rawDims = src.impact_dimensions.filter(isObj);
+      if (rawDims.length !== src.impact_dimensions.length) err('impact_dimensions', 'Auswirkungsdimensionen: ungültiger Eintrag.');
+      const unknownDims = rawDims.filter(d => !DIMENSION_KEYS.includes(d.key));
+      if (unknownDims.length) err('impact_dimensions', `Nur die Dimensionen ${DIMENSION_KEYS.join(', ')} sind möglich.`);
+      for (const cat of DIMENSION_CATALOG) {
+        const hits = rawDims.filter(d => d.key === cat.key);
+        if (hits.length === 0) continue;
+        if (hits.length > 1) err('impact_dimensions', `Dimension „${cat.key}“ ist mehrfach angegeben.`);
+        const o = hits[0];
+        const f = `impact_dimensions.${cat.key}`;
+        impact_dimensions.push({
+          key: cat.key,
+          label_de: text(o.label_de, LIMITS.label, `${f}.label_de`, false, `Dimension „${cat.key}“: Bezeichnung (de)`) || cat.label_de,
+          label_en: text(o.label_en, LIMITS.label, `${f}.label_en`, false, `Dimension „${cat.key}“: Bezeichnung (en)`) || cat.label_en,
+          description: text(o.description, LIMITS.description, `${f}.description`, false, `Dimension „${cat.key}“: Kriterium`),
+        });
+      }
+    }
+  }
+
   return {
-    profile: { name, likelihood_unit, impact_unit, likelihood_levels, impact_levels, risk_levels, appetite: { default_max_level, categories }, acceptance },
+    profile: { name, likelihood_unit, impact_unit, likelihood_levels, impact_levels, risk_levels, appetite: { default_max_level, categories }, acceptance, impact_dimensions },
     errors,
     warnings,
   };
@@ -292,6 +339,7 @@ const scaleInfo = (profileRow = DEFAULT_PROFILE) => {
     matrix: buildMatrix(p),
     appetite: p.appetite,
     acceptance: p.acceptance,
+    impact_dimensions: dimensionsOf(p),
   };
 };
 
@@ -301,7 +349,8 @@ const stable = (v) => {
   if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
   return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
 };
-const sameContent = (a, b) => CONTENT_FIELDS.every(f => stable(a[f] ?? null) === stable(b[f] ?? null));
+const contentOf = (p, f) => (f === 'impact_dimensions' ? dimensionsOf(p) : (p[f] ?? null));
+const sameContent = (a, b) => CONTENT_FIELDS.every(f => stable(contentOf(a, f)) === stable(contentOf(b, f)));
 
 // ── Datenbank ────────────────────────────────────────────────────────────────
 
@@ -395,6 +444,18 @@ const ensureDefaultProfile = async () => {
   return { created, reactivated, attached, active: remember(active), baseline };
 };
 
+// Appetite rows must name an existing entry of the risk category taxonomy
+// (services/riskCategoryService.js). Inactive entries are allowed: a category
+// that is no longer assigned to new risks may still carry existing ones.
+const appetiteCategoryErrors = async (profile) => {
+  const cats = (profile?.appetite?.categories || []).map(c => c.category);
+  if (!cats.length) return [];
+  const known = new Set((await models().RiskCategory.findAll({ attributes: ['key'], raw: true })).map(r => r.key));
+  return cats
+    .map((c, idx) => (known.has(c) ? null : { field: `appetite.categories[${idx}].category`, message: `Appetit: Kategorie „${c}“ ist nicht in der Liste der Risikokategorien.` }))
+    .filter(Boolean);
+};
+
 /**
  * Neue Version speichern und aktivieren. Die bisherige bleibt lesbar
  * (status superseded); Risiken bleiben an ihr, bis sie neu bewertet werden.
@@ -402,6 +463,8 @@ const ensureDefaultProfile = async () => {
 const saveNewVersion = async (input, user, { changeNote } = {}) => {
   const { RiskMethodology, sequelize } = models();
   const { profile, errors, warnings } = validateProfile(input);
+  // Risk appetite hangs on entries of the risk category taxonomy.
+  errors.push(...await appetiteCategoryErrors(profile));
   if (errors.length) throw httpError(400, errors[0].message, { errors, warnings });
   let note = null;
   if (changeNote !== undefined && changeNote !== null && String(changeNote).trim() !== '') {
@@ -483,13 +546,61 @@ const applyToRisk = async (risk, options = {}) => {
   const p = profile || DEFAULT_PROFILE;
   const { likelihood: L, impact: I } = sizes(p);
   checkRange(risk.likelihood, L, 'Wahrscheinlichkeit', p.version);
+
+  // Impact dimensions: only those the risk's version enables, each on the
+  // impact scale. With at least one rated dimension the overall impact is
+  // their maximum; without any, impact stays the single overall value.
+  const dims = normalizeDimensions(risk.impact_dimensions, p, I);
+  risk.impact_dimensions = dims;
+  if (dims) risk.impact = Math.max(...Object.values(dims));
+
   checkRange(risk.impact, I, 'Auswirkung', p.version);
   checkRange(risk.residual_likelihood, L, 'Netto-Wahrscheinlichkeit', p.version);
   checkRange(risk.residual_impact, I, 'Netto-Auswirkung', p.version);
+  checkRange(risk.target_likelihood, L, 'Ziel-Wahrscheinlichkeit', p.version);
+  checkRange(risk.target_impact, I, 'Ziel-Auswirkung', p.version);
+  if ((risk.target_likelihood == null) !== (risk.target_impact == null)) {
+    throw httpError(400, 'Zielrisiko: Wahrscheinlichkeit und Auswirkung gemeinsam angeben oder beide leer lassen.');
+  }
+  if (risk.residual_override && (risk.residual_likelihood == null || risk.residual_impact == null)) {
+    throw httpError(400, 'Überschriebenes Netto-Risiko braucht Wahrscheinlichkeit und Auswirkung.');
+  }
   risk.inherent_level = computeLevel(risk.likelihood, risk.impact, p);
   if (risk.residual_likelihood != null && risk.residual_impact != null) {
     risk.residual_level = computeLevel(risk.residual_likelihood, risk.residual_impact, p);
   }
+  risk.target_level = risk.target_likelihood != null && risk.target_impact != null
+    ? computeLevel(risk.target_likelihood, risk.target_impact, p)
+    : null;
+};
+
+/**
+ * Impact dimension values of a risk against its methodology version. Returns
+ * a fresh object built from the fixed catalogue (never from the input's keys),
+ * or null when no dimension is rated.
+ */
+const normalizeDimensions = (raw, profile, impactSize) => {
+  if (raw === null || raw === undefined) return null;
+  if (!isObj(raw)) throw httpError(400, 'Auswirkungsdimensionen: Objekt { dimension: Wert } erwartet.');
+  const enabled = dimensionsOf(profile).map(d => d.key);
+  const foreign = Object.keys(raw).filter(k => !DIMENSION_KEYS.includes(k));
+  if (foreign.length) throw httpError(400, `Unbekannte Auswirkungsdimension. Möglich: ${DIMENSION_KEYS.join(', ')}.`);
+  const out = {};
+  let rated = 0;
+  for (const key of DIMENSION_KEYS) {
+    const v = raw[key];
+    if (v === null || v === undefined || v === '') continue;
+    if (!enabled.includes(key)) {
+      throw httpError(400, `Die Dimension „${key}“ ist in der Risikomethodik Version ${profile.version ?? '–'} nicht vorgesehen.`);
+    }
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 1 || n > impactSize) {
+      throw httpError(400, `Auswirkung „${key}“ muss zwischen 1 und ${impactSize} liegen (Risikomethodik Version ${profile.version ?? '–'}).`);
+    }
+    out[key] = n;
+    rated++;
+  }
+  return rated ? out : null;
 };
 
 // Stufe, an der Appetit und Akzeptanz gemessen werden: Netto vor Brutto.
@@ -586,7 +697,7 @@ const checkAcceptance = async (risk, user, validUntil) => {
 };
 
 module.exports = {
-  LEVEL_KEYS, ROLES, MIN_SIZE, MAX_SIZE, DEFAULT_PROFILE,
+  LEVEL_KEYS, ROLES, MIN_SIZE, MAX_SIZE, DEFAULT_PROFILE, DIMENSION_CATALOG, DIMENSION_KEYS, dimensionsOf, normalizeDimensions, appetiteCategoryErrors,
   validateProfile, computeLevel, buildMatrix, scaleInfo, sameContent, rank,
   getProfile, getActiveProfile, getBaselineProfile, profileForRisk, ensureDefaultProfile, saveNewVersion, listVersions, invalidate,
   applyToRisk, effectiveLevel, appetiteLimit, assess, decorateRisks, decorateRisk, checkAcceptance, addMonths, normalizeDate, todayStr,

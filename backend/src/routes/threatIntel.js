@@ -418,7 +418,8 @@ router.post('/advisories/:id/to-risk', authenticate, requirePermission('threat_i
         advisory.url ? `Quelle: ${advisory.url}` : '',
         `Hergeleitet aus Warnmeldung ${advisory.ref || advisory.id}.`,
       ].filter(Boolean).join('\n\n').slice(0, 5000),
-      category: 'Bedrohungslage',
+      // Entry of the risk category taxonomy; recreated if it was removed.
+      category: await require('../services/riskCategoryService').ensureThreatLandscape(),
       owner_id: req.body?.owner_id || req.user.id,
       likelihood,
       impact,

@@ -1,6 +1,6 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { Risk, Task } = require('../models');
+const { Risk, Task, RiskCategory } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
@@ -8,6 +8,7 @@ const { auditFromReq } = require('../services/auditService');
 const { escapeLike } = require('../utils/sqlUtils');
 const rm = require('../services/riskMethodology');
 const riskService = require('../services/riskService');
+const categories = require('../services/riskCategoryService');
 
 const router = express.Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
@@ -52,6 +53,7 @@ router.get('/methodology/versions', authenticate, requirePermission('risks', 'vi
 router.post('/methodology/validate', authenticate, requirePermission('risks', 'manage_methodology', 'admin'), async (req, res) => {
   try {
     const { profile, errors, warnings } = rm.validateProfile(req.body?.profile ?? req.body);
+    errors.push(...await rm.appetiteCategoryErrors(profile));
     const active = await rm.getActiveProfile();
     const unchanged = !!active && rm.sameContent(active, profile);
     const affected = errors.length || unchanged ? 0 : await Risk.count();
@@ -100,18 +102,59 @@ router.get('/reassessment', authenticate, requirePermission('risks', 'view', 'ad
   try { res.json(await riskService.listForReassessment()); } catch (e) { serverError(res, e, 'risks'); }
 });
 
+// ── Risk categories (taxonomy) ───────────────────────────────────────────────
+// Reading follows risks.view (the form needs the list); maintaining the list is
+// part of the risk criteria and follows risks.manage_methodology.
+
+router.get('/categories', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try { res.json(await categories.list({ includeInactive: req.query.include_inactive !== 'false' })); } catch (e) { serverError(res, e, 'risk-categories'); }
+});
+
+router.post('/categories', authenticate, requirePermission('risks', 'manage_methodology', 'admin'), async (req, res) => {
+  try {
+    const row = await categories.create(req.body || {});
+    await auditFromReq(req, 'create', 'risk_category', row.id, row.key, { key: row.key, label_de: row.label_de, label_en: row.label_en, label_es: row.label_es, active: row.active });
+    res.status(201).json(row);
+  } catch (e) { requestError(res, e, 'risk-categories'); }
+});
+
+router.put('/categories/:id', authenticate, requirePermission('risks', 'manage_methodology', 'admin'), async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const row = await RiskCategory.findByPk(id);
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    const { before, after } = await categories.update(row, req.body || {});
+    await auditFromReq(req, 'update', 'risk_category', row.id, row.key, { before, after });
+    res.json(after);
+  } catch (e) { requestError(res, e, 'risk-categories'); }
+});
+
+router.delete('/categories/:id', authenticate, requirePermission('risks', 'manage_methodology', 'admin'), async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const row = await RiskCategory.findByPk(id);
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    const before = await categories.remove(row);
+    await auditFromReq(req, 'delete', 'risk_category', before.id, before.key, before);
+    res.json({ message: 'Risk category deleted' });
+  } catch (e) { requestError(res, e, 'risk-categories'); }
+});
+
 // ── Risikoregister ───────────────────────────────────────────────────────────
 
 router.get('/', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
   try {
-    const { status, treatment, level, search } = req.query;
+    const { status, treatment, level, search, category } = req.query;
     const where = {};
     setFilter(where, 'status', status);
     setFilter(where, 'treatment', treatment);
     setFilter(where, 'inherent_level', level);
+    setFilter(where, 'category', category);
     if (search) where.title = { [Op.iLike]: `%${escapeLike(search)}%` };
     const risks = await Risk.findAll({ where, include: riskService.includeAll(), order: [['created_at', 'DESC']] });
-    let out = await rm.decorateRisks(risks);
+    let out = await riskService.decorate(risks);
     if (req.query.appetite_exceeded === 'true') out = out.filter(r => r.appetite_exceeded);
     if (req.query.needs_reassessment === 'true') out = out.filter(r => r.needs_reassessment);
     res.json(out);
@@ -122,11 +165,11 @@ router.get('/:id', authenticate, requirePermission('risks', 'view', 'admin', 'ow
   try {
     const id = parseId(req.params.id);
     if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
-    const risk = await Risk.findByPk(id, { include: riskService.includeAll() });
+    const risk = await Risk.findByPk(id, { include: riskService.includeDetail() });
     if (!risk) return res.status(404).json({ error: 'Not found' });
     // Authorization: only admin, assessor or the risk owner can view the detail.
     if (!riskService.canViewRisk(req.user, risk)) return res.status(403).json({ error: 'Forbidden' });
-    res.json(await rm.decorateRisk(risk));
+    res.json((await riskService.decorate([risk]))[0]);
   } catch (e) { serverError(res, e, 'risks'); }
 });
 
@@ -158,6 +201,19 @@ router.patch('/:id/signoff', authenticate, requirePermission('risks', 'sign_off'
     const risk = await Risk.findByPk(id);
     if (!risk) return res.status(404).json({ error: 'Not found' });
     res.json(await riskService.signoffRisk(risk, req.user, req.body?.valid_until, req));
+  } catch (e) { requestError(res, e, 'risks'); }
+});
+
+// Override the calculated net risk with a rationale (or return to the
+// calculation). Separate permission: the calculation is the default, deviating
+// from it is a decision of its own. Record rights as for editing.
+router.patch('/:id/residual-override', authenticate, requirePermission('risks', 'override_residual', 'admin', 'assessor'), async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Ungültige Kennung.' });
+    const risk = await Risk.findByPk(id);
+    if (!risk) return res.status(404).json({ error: 'Not found' });
+    res.json(await riskService.overrideResidual(risk, req.body || {}, req.user, req));
   } catch (e) { requestError(res, e, 'risks'); }
 });
 

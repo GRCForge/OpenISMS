@@ -228,6 +228,7 @@ app.use('/api/report', require('./routes/report'));
 app.use('/api/reminders', require('./routes/reminders'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/risks', require('./routes/risks'));
+app.use('/api/vulnerabilities', require('./routes/vulnerabilities'));
 app.use('/api/controls/:controlId/requirements', require('./routes/controlRequirements'));
 app.use('/api/controls', require('./routes/controls'));
 app.use('/api/threats', require('./routes/threats'));
@@ -676,6 +677,18 @@ const start = async () => {
       if (reactivated) console.warn(`[DB] Keine aktive Risikomethodik gefunden - Version ${active.version} wieder aktiv gesetzt`);
       if (attached > 0) console.log(`[DB] ${attached} Risiko/Risiken der Methodik-Version 1 zugeordnet`);
     }
+    // Risk category taxonomy (3.7.0, idempotent): on the first run the former
+    // form values become entries; every value in risks.category or in a
+    // methodology appetite without an entry becomes one. Risks are not changed.
+    // A failure stops the start: without the list no risk could be saved.
+    {
+      const { seeded, migrated } = await require('./services/riskCategoryService').ensureCategories();
+      if (seeded > 0) console.log(`[DB] ${seeded} Risikokategorie(n) angelegt (Standardliste)`);
+      if (migrated > 0) console.log(`[DB] ${migrated} Risikokategorie(n) aus dem bisherigen Freitextfeld übernommen`);
+    }
+    // One vulnerability per CVE identifier.
+    await require('./services/vulnerabilityService').ensureIndexes()
+      .catch(e => console.error('[DB] Eindeutiger Index auf vulnerabilities.cve_id konnte nicht angelegt werden - vermutlich doppelte CVE-Einträge:', String(e.message).replace(/[\r\n]+/g, ' ')));
 
     // Eine Modellierung je (Verbund, Zielobjekt oder Verbund selbst, Modul).
     // UNIQUE ueber target_object_id allein griffe bei NULL nicht (siehe models/BsiModeling.js).

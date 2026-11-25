@@ -84,6 +84,17 @@ const TOOL_GATES = {
   'isms_signoff_risk': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner', 'management'] },
   'isms_revoke_risk_signoff': { perm: ['risks', 'sign_off'], requiredRoles: ['admin', 'assessor', 'owner', 'management'] },
   'isms_delete_risk': { perm: ['risks', 'delete'], requiredRoles: ['admin'], needsWrite: true },
+  // Same matrix entries as PATCH /api/risks/:id/residual-override and the
+  // category routes; record rights in services/riskService.js.
+  'isms_override_risk_residual': { perm: ['risks', 'override_residual'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_create_risk_category': { perm: ['risks', 'manage_methodology'], requiredRoles: ['admin'], needsWrite: true },
+  'isms_update_risk_category': { perm: ['risks', 'manage_methodology'], requiredRoles: ['admin'], needsWrite: true },
+  // Vulnerability register: like routes/vulnerabilities.js.
+  'isms_list_vulnerabilities': { perm: ['vulnerabilities', 'view'], requiredRoles: ['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management'] },
+  'isms_create_vulnerability': { perm: ['vulnerabilities', 'manage'], requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_update_vulnerability': { perm: ['vulnerabilities', 'manage'], requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  'isms_delete_vulnerability': { perm: ['vulnerabilities', 'delete'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_import_asset_cves_as_vulnerabilities': { perm: ['vulnerabilities', 'manage'], requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
   'isms_create_threat': { perm: ['threats', 'create'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
   // --- Management Reviews ---
   'isms_create_review_signoff': { perm: ['review', 'sign_off'], requiredRoles: ['admin', 'assessor'], needsWrite: true },
@@ -284,6 +295,7 @@ const TOOL_GATES = {
   'isms_get_review_signoffs': { perm: ['review', 'view'] },
   'isms_get_risk': { perm: ['risks', 'view'] },
   'isms_get_risk_methodology': { perm: ['risks', 'view'] },
+  'isms_list_risk_categories': { perm: ['risks', 'view'] },
   'isms_get_task': { perm: ['tasks', 'view'] },
   'isms_get_task_stats': { perm: ['tasks', 'view'] },
   'isms_list_api_tokens': { perm: ['tokens', 'view'] },
@@ -1152,14 +1164,16 @@ server.tool(
     search:  z.string().optional().describe('Search in title/description'),
     appetite_exceeded:  z.boolean().optional().describe('Only risks above the risk appetite of their category'),
     needs_reassessment: z.boolean().optional().describe('Only risks assessed under an older methodology version'),
+    category: z.string().optional().describe('Filter by risk category key (see isms_list_risk_categories)'),
     limit:   z.number().int().min(1).max(200).default(50),
   },
-  async ({ status, level, search, appetite_exceeded, needs_reassessment, limit }) => {
+  async ({ status, level, search, appetite_exceeded, needs_reassessment, category, limit }) => {
     const { Risk, User } = getModels();
     const { escapeLike } = require('../utils/sqlUtils');
-    const { decorateRisks } = require('../services/riskMethodology');
+    const { decorate: decorateRisks } = require('../services/riskService');
     const where = {};
     if (status) where.status = status;
+    if (category) where.category = category;
     if (level) where.residual_level = level;
     if (search) where[Op.or] = [
       { title: { [Op.iLike]: `%${escapeLike(search)}%` } },
@@ -1181,31 +1195,37 @@ server.tool(
 
 server.tool(
   'isms_get_risk',
-  'Get full details of a single risk including linked controls, threats, assets, sign-off status, methodology version and risk appetite check.',
+  'Get full details of a single risk including linked controls, threats, assets, risk scenarios (asset(s) x threat x vulnerability), impact dimensions, assessment rationale, gross/net/target level, net-risk override, sign-off status, methodology version and risk appetite check.',
   {
     id: z.number().int().describe('Risk ID'),
   },
   async ({ id }, { mcpUser }) => {
     const { Risk } = getModels();
     const riskService = require('../services/riskService');
-    const risk = await Risk.findByPk(id, { include: riskService.includeAll() });
+    const risk = await Risk.findByPk(id, { include: riskService.includeDetail() });
     if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
     // Wie GET /api/risks/:id: Detail nur fuer admin, assessor und den Risiko-Owner.
     if (!riskService.canViewRisk(mcpUser, risk)) return { content: [{ type: 'text', text: 'Zugriff verweigert: Nur admin, assessor oder der Risiko-Owner sehen das Risiko im Detail.' }], isError: true };
-    const out = await require('../services/riskMethodology').decorateRisk(risk);
+    const out = (await riskService.decorate([risk]))[0];
     return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
   }
 );
 
 server.tool(
   'isms_create_risk',
-  'Add a new risk to the risk register. Likelihood and impact are values on the scales of the active risk methodology (see isms_get_risk_methodology; 3 to 6 levels).',
+  'Add a new risk to the risk register. Likelihood and impact are values on the scales of the active risk methodology (see isms_get_risk_methodology; 3 to 6 levels). A rationale for likelihood and for impact is mandatory. If the methodology defines impact dimensions, impact_dimensions may rate them; the overall impact is then their maximum. category must be a key from isms_list_risk_categories.',
   {
     title:                z.string().min(1),
     description:          z.string().optional(),
-    category:             z.string().optional(),
+    category:             z.string().optional().describe('Risk category key (isms_list_risk_categories)'),
     inherent_likelihood:  z.number().int().min(1).max(6),
-    inherent_impact:      z.number().int().min(1).max(6),
+    inherent_impact:      z.number().int().min(1).max(6).describe('Overall impact; ignored when impact_dimensions rates at least one dimension'),
+    likelihood_rationale: z.string().min(1).describe('Why this likelihood (mandatory)'),
+    impact_rationale:     z.string().min(1).describe('Why this impact (mandatory)'),
+    impact_dimensions:    z.record(z.string(), z.number().int().min(1).max(6).nullable()).optional().describe('Impact per dimension, e.g. {"confidentiality":4,"financial":2}; only dimensions of the active methodology'),
+    target_likelihood:    z.number().int().min(1).max(6).optional().describe('Target risk after planned treatment (together with target_impact)'),
+    target_impact:        z.number().int().min(1).max(6).optional(),
+    scenarios:            z.array(z.object({ asset_ids: z.array(z.number().int()).optional(), threat_id: z.number().int().nullable().optional(), vulnerability_id: z.number().int().nullable().optional(), description: z.string().optional() })).optional().describe('Risk scenarios: asset(s) x threat x vulnerability'),
     treatment:            z.enum(['mitigate','accept','transfer','avoid']).default('mitigate'),
     treatment_plan:       z.string().optional(),
     owner_id:             z.number().int().optional(),
@@ -1224,7 +1244,7 @@ server.tool(
 
 server.tool(
   'isms_update_risk',
-  'Update an existing risk in the risk register including likelihood, impact, treatment, and linked controls/assets. Values are on the scale of the methodology version the risk is assessed under; set reassess=true (with likelihood and impact on the active scale) to move a risk to the active methodology version. Status "accepted" is only set via isms_signoff_risk.',
+  'Update an existing risk in the risk register including likelihood, impact, impact dimensions, target risk, scenarios, treatment, and linked controls/assets. Values are on the scale of the methodology version the risk is assessed under; set reassess=true (with likelihood, impact and both rationales on the active scale) to move a risk to the active methodology version. Changing likelihood or impact requires likelihood_rationale / impact_rationale in the same call. Status "accepted" is only set via isms_signoff_risk; the net risk is overridden via isms_override_risk_residual.',
   {
     id:             z.number().int().describe('Risk ID'),
     title:          z.string().optional(),
@@ -1233,6 +1253,12 @@ server.tool(
     owner_id:       z.number().int().optional(),
     likelihood:     z.number().int().min(1).max(6).optional(),
     impact:         z.number().int().min(1).max(6).optional(),
+    likelihood_rationale: z.string().optional().describe('Mandatory whenever likelihood changes'),
+    impact_rationale:     z.string().optional().describe('Mandatory whenever impact or an impact dimension changes'),
+    impact_dimensions:    z.record(z.string(), z.number().int().min(1).max(6).nullable()).nullable().optional().describe('Impact per dimension (replaces all); null clears'),
+    target_likelihood:    z.number().int().min(1).max(6).nullable().optional(),
+    target_impact:        z.number().int().min(1).max(6).nullable().optional(),
+    scenarios:            z.array(z.object({ asset_ids: z.array(z.number().int()).optional(), threat_id: z.number().int().nullable().optional(), vulnerability_id: z.number().int().nullable().optional(), description: z.string().optional() })).optional().describe('Risk scenarios, replaces all'),
     treatment:      z.enum(['mitigate', 'accept', 'transfer', 'avoid']).optional(),
     treatment_plan: z.string().optional(),
     status:         z.enum(['open', 'in_treatment', 'accepted', 'closed']).optional(),
@@ -1310,6 +1336,184 @@ server.tool(
     await risk.destroy();
 
     return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: `Risk "${risk.title}" (ID: ${id}) deleted.` }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_override_risk_residual',
+  'Override the calculated net (residual) risk of a risk with a rationale, or return to the calculation (override=false). The calculation from implemented controls stays the default; an override is marked, audit-logged with the calculated value, and reported as residual_calculated.',
+  {
+    id:                  z.number().int().describe('Risk ID'),
+    override:            z.boolean().describe('true = set manual net values, false = back to calculation'),
+    residual_likelihood: z.number().int().min(1).max(6).optional(),
+    residual_impact:     z.number().int().min(1).max(6).optional(),
+    reason:              z.string().optional().describe('Rationale (mandatory when override=true)'),
+  },
+  async ({ id, ...body }, { mcpUser }) => {
+    try {
+      const { Risk } = getModels();
+      const risk = await Risk.findByPk(id);
+      if (!risk) return { content: [{ type: 'text', text: 'Risk not found' }], isError: true };
+      const out = await require('../services/riskService').overrideResidual(risk, body, mcpUser, mcpReq(mcpUser));
+      return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_list_risk_categories',
+  'List the risk category taxonomy (key, labels de/en/es, active, number of risks). Risks and the risk appetite refer to the key.',
+  {
+    include_inactive: z.boolean().optional().default(true),
+  },
+  async ({ include_inactive }) => {
+    const out = await require('../services/riskCategoryService').list({ includeInactive: include_inactive });
+    return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+  }
+);
+
+server.tool(
+  'isms_create_risk_category',
+  'Add an entry to the risk category taxonomy. The key (a-z, 0-9, _) is derived from the English label if omitted and never changes afterwards.',
+  {
+    key:         z.string().optional(),
+    label_de:    z.string().min(1),
+    label_en:    z.string().min(1),
+    label_es:    z.string().optional(),
+    description: z.string().optional(),
+    sort_order:  z.number().int().min(0).optional(),
+  },
+  async (args, { mcpUser }) => {
+    try {
+      const row = await require('../services/riskCategoryService').create(args);
+      await require('../services/auditService').auditFromReq(mcpReq(mcpUser), 'create', 'risk_category', row.id, row.key, { key: row.key, label_de: row.label_de, label_en: row.label_en, label_es: row.label_es, active: row.active });
+      return { content: [{ type: 'text', text: JSON.stringify(row, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_update_risk_category',
+  'Change labels, description, order or active flag of a risk category. The key cannot be changed; deactivated categories are no longer offered for new risks.',
+  {
+    id:          z.number().int().describe('Category ID'),
+    label_de:    z.string().optional(),
+    label_en:    z.string().optional(),
+    label_es:    z.string().optional(),
+    description: z.string().optional(),
+    active:      z.boolean().optional(),
+    sort_order:  z.number().int().min(0).optional(),
+  },
+  async ({ id, ...body }, { mcpUser }) => {
+    try {
+      const { RiskCategory } = getModels();
+      const row = await RiskCategory.findByPk(id);
+      if (!row) return { content: [{ type: 'text', text: 'Risk category not found' }], isError: true };
+      const { before, after } = await require('../services/riskCategoryService').update(row, body);
+      await require('../services/auditService').auditFromReq(mcpReq(mcpUser), 'update', 'risk_category', row.id, row.key, { before, after });
+      return { content: [{ type: 'text', text: JSON.stringify(after, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+// ─── Vulnerabilities ─────────────────────────────────────────────────────────
+// Same functions as routes/vulnerabilities.js (services/vulnerabilityService.js).
+
+server.tool(
+  'isms_list_vulnerabilities',
+  'List vulnerabilities from the vulnerability register (manual or taken over from asset CVE data) with linked assets and the number of risks whose scenarios use them.',
+  {
+    status:   z.enum(['open', 'mitigated', 'closed']).optional(),
+    source:   z.enum(['manual', 'cve']).optional(),
+    severity: z.enum(['critical', 'high', 'medium', 'low', 'none']).optional(),
+    asset_id: z.number().int().optional(),
+    search:   z.string().optional().describe('Search in title, CVE id, description'),
+    limit:    z.number().int().min(1).max(500).default(100),
+  },
+  async (args) => {
+    try {
+      const out = await require('../services/vulnerabilityService').listVulnerabilities({ ...args, asset_id: args.asset_id === undefined ? undefined : String(args.asset_id) });
+      return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_create_vulnerability',
+  'Record a vulnerability manually (title, description, severity, CVSS, related assets). CVEs from asset data are taken over with isms_import_asset_cves_as_vulnerabilities.',
+  {
+    title:       z.string().min(1),
+    description: z.string().optional(),
+    severity:    z.enum(['critical', 'high', 'medium', 'low', 'none']).optional(),
+    cvss_score:  z.number().min(0).max(10).optional(),
+    asset_ids:   z.array(z.number().int()).optional(),
+  },
+  async (args, { mcpUser }) => {
+    try {
+      const out = await require('../services/vulnerabilityService').createVulnerability(args, mcpUser, mcpReq(mcpUser));
+      return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_update_vulnerability',
+  'Update a vulnerability (title, description, status, severity, CVSS, related assets). The CVE id of a CVE entry cannot be changed.',
+  {
+    id:          z.number().int(),
+    title:       z.string().optional(),
+    description: z.string().optional(),
+    status:      z.enum(['open', 'mitigated', 'closed']).optional(),
+    severity:    z.enum(['critical', 'high', 'medium', 'low', 'none']).nullable().optional(),
+    cvss_score:  z.number().min(0).max(10).nullable().optional(),
+    asset_ids:   z.array(z.number().int()).optional().describe('Replaces all related assets'),
+  },
+  async ({ id, ...body }, { mcpUser }) => {
+    try {
+      const { Vulnerability } = getModels();
+      const v = await Vulnerability.findByPk(id);
+      if (!v) return { content: [{ type: 'text', text: 'Vulnerability not found' }], isError: true };
+      const out = await require('../services/vulnerabilityService').updateVulnerability(v, body, mcpReq(mcpUser), { partial: true });
+      return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_delete_vulnerability',
+  'Delete a vulnerability. Refused while it is used in a risk scenario (set status closed instead).',
+  {
+    id: z.number().int(),
+  },
+  async ({ id }, { mcpUser }) => {
+    try {
+      const { Vulnerability } = getModels();
+      const v = await Vulnerability.findByPk(id);
+      if (!v) return { content: [{ type: 'text', text: 'Vulnerability not found' }], isError: true };
+      await require('../services/vulnerabilityService').deleteVulnerability(v, mcpReq(mcpUser));
+      return { content: [{ type: 'text', text: JSON.stringify({ success: true, id }, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
+  }
+);
+
+server.tool(
+  'isms_import_asset_cves_as_vulnerabilities',
+  'Take over selected CVEs from the CVE data of an asset (nightly CVE run) as vulnerabilities. Only the named CVE ids are taken over; without cve_ids the tool lists the CVEs of the asset and whether each is already registered. A CVE already registered gets the asset added.',
+  {
+    asset_id: z.number().int(),
+    cve_ids:  z.array(z.string()).max(100).optional().describe('CVE identifiers to take over (CVE-YYYY-NNNN)'),
+  },
+  async ({ asset_id, cve_ids }, { mcpUser }) => {
+    try {
+      const svc = require('../services/vulnerabilityService');
+      if (!cve_ids || cve_ids.length === 0) {
+        const out = await svc.assetCves(asset_id);
+        if (!out) return { content: [{ type: 'text', text: 'Asset not found' }], isError: true };
+        return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+      }
+      const out = await svc.importAssetCves(asset_id, cve_ids, mcpUser, mcpReq(mcpUser));
+      return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    } catch (e) { return mcpRiskError(e); }
   }
 );
 

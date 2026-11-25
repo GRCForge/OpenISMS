@@ -363,6 +363,11 @@ router.post('/process', authenticate, requirePermission('import','access','admin
           delete data.accepted_by_id;
           delete data.accepted_at;
           delete data.accepted_until;
+          // Category: key or label of an entry of the risk category list;
+          // unknown values fail the row instead of creating entries.
+          if (Object.prototype.hasOwnProperty.call(data, 'category')) {
+            data.category = await require('../services/riskCategoryService').resolveImportValue(data.category);
+          }
         }
 
         await config.model.create(data);

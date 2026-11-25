@@ -20,6 +20,9 @@ const ThreatAdvisory = require('./ThreatAdvisory');
 const ThreatAdvisoryAsset = require('./ThreatAdvisoryAsset');
 const RiskControl = require('./RiskControl');
 const RiskMethodology = require('./RiskMethodology');
+const RiskCategory = require('./RiskCategory');
+const RiskScenario = require('./RiskScenario');
+const Vulnerability = require('./Vulnerability');
 const Incident = require('./Incident');
 const VvtEntry = require('./VvtEntry');
 const Task = require('./Task');
@@ -172,6 +175,23 @@ Risk.belongsToMany(Threat, { through: 'risk_threats', as: 'threats', foreignKey:
 Threat.belongsToMany(Risk, { through: 'risk_threats', as: 'risks', foreignKey: 'threat_id' });
 Risk.belongsToMany(Control, { through: RiskControl, as: 'controls', foreignKey: 'risk_id', otherKey: 'control_id' });
 Control.belongsToMany(Risk, { through: RiskControl, as: 'risks', foreignKey: 'control_id', otherKey: 'risk_id' });
+
+// Vulnerabilities and risk scenarios (3.7.0): a scenario is asset(s) x threat x
+// vulnerability. Scenarios go with their risk (CASCADE). A threat or
+// vulnerability in use is not deleted silently: the vulnerability service
+// refuses (409) and threats have no delete route; SET NULL is the fallback for
+// anything that bypasses both.
+Vulnerability.belongsTo(User, { as: 'createdBy', foreignKey: 'created_by_id' });
+Vulnerability.belongsToMany(Asset, { through: 'vulnerability_assets', as: 'assets', foreignKey: 'vulnerability_id', otherKey: 'asset_id' });
+Asset.belongsToMany(Vulnerability, { through: 'vulnerability_assets', as: 'vulnerabilities', foreignKey: 'asset_id', otherKey: 'vulnerability_id' });
+Risk.hasMany(RiskScenario, { as: 'scenarios', foreignKey: 'risk_id', onDelete: 'CASCADE', hooks: true });
+RiskScenario.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'CASCADE' });
+RiskScenario.belongsTo(Threat, { as: 'threat', foreignKey: 'threat_id', onDelete: 'SET NULL' });
+RiskScenario.belongsTo(Vulnerability, { as: 'vulnerability', foreignKey: 'vulnerability_id', onDelete: 'SET NULL' });
+Vulnerability.hasMany(RiskScenario, { as: 'scenarios', foreignKey: 'vulnerability_id' });
+RiskScenario.belongsToMany(Asset, { through: 'risk_scenario_assets', as: 'assets', foreignKey: 'scenario_id', otherKey: 'asset_id' });
+Asset.belongsToMany(RiskScenario, { through: 'risk_scenario_assets', as: 'riskScenarios', foreignKey: 'asset_id', otherKey: 'scenario_id' });
+Risk.belongsTo(User, { as: 'residualOverrideBy', foreignKey: 'residual_override_by_id' });
 
 // Sicherheitsvorfaelle (Incident Management)
 Incident.belongsTo(User, { as: 'reporter', foreignKey: 'reporter_id' });
@@ -372,7 +392,7 @@ Asset.belongsToMany(ThreatAdvisory, { through: ThreatAdvisoryAsset, as: 'advisor
 module.exports = {
   sequelize, User, Asset, Assessment, Reminder, AuditLog, Document, Comment,
   Vendor, VendorContact, Policy, PolicyVersion, Setting, Risk, Notification,
-  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, RiskMethodology, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
+  Control, Threat, ThreatSource, ThreatAdvisory, ThreatAdvisoryAsset, RiskControl, RiskMethodology, RiskCategory, RiskScenario, Vulnerability, Incident, VvtEntry, Task, DataFlow, PasskeyCredential, ApiToken,
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
