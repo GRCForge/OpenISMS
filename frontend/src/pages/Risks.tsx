@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { Plus, ShieldAlert, Grid3x3, Trash2, AlertTriangle, CheckCircle, ShieldCheck, Download, FileSpreadsheet, ChevronRight, Search, Shield, FolderOpen, FileText, Flag, RefreshCcw } from 'lucide-react';
+import { Plus, ShieldAlert, Grid3x3, Trash2, AlertTriangle, CheckCircle, ShieldCheck, Download, FileSpreadsheet, ChevronRight, Search, Shield, FolderOpen, FileText, Flag, RefreshCcw, ListChecks, Hourglass } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useKeyShortcut } from '../hooks/useKeyShortcut';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import i18n from '../i18n';
 import api from '../lib/api';
-import type { Risk, Asset, User, Threat, Control, RiskLevel, RiskTreatment, RiskStatus, Template, RiskScale, RiskCategory, Vulnerability, ImpactDimensionKey } from '../types';
+import type { Risk, Asset, User, Threat, Control, RiskLevel, RiskTreatment, RiskStatus, Template, RiskScale, RiskCategory, Vulnerability, ImpactDimensionKey, Group } from '../types';
+import { TreatmentItems } from '../components/risks/TreatmentItems';
+import { AcceptanceWorkflow } from '../components/risks/AcceptanceWorkflow';
 import { RiskHeatmap } from '../components/risks/RiskHeatmap';
 import type { HeatmapCellRef } from '../components/risks/RiskHeatmap';
 import { loadActiveScale, loadScaleVersion, levelLabel, stepOptions, loadRiskCategories, categoryLabel, dimensionLabel, maxDimension } from '../lib/riskMethodology';
@@ -32,6 +34,8 @@ interface ScenarioForm { asset_ids: number[]; threat_id: number | null; vulnerab
 const emptyRisk = {
   title: '', description: '', category: 'it_security', owner_id: '',
   likelihood: 3, impact: 3, treatment: 'mitigate' as RiskTreatment, treatment_plan: '',
+  // 3.8.0: all treatment options (the main option is always part of it)
+  treatment_options: [] as RiskTreatment[],
   status: 'open' as RiskStatus, review_date: '',
   asset_ids: [] as number[], threat_ids: [] as number[],
   controls: [] as { id: number; effectiveness: number }[],
@@ -58,9 +62,21 @@ const valuesOn = (r: Risk, basis: LevelBasis): { l: number | null; i: number | n
 // Kennzeichen aus der Risikomethodik: Appetit ueberschritten, neu zu bewerten.
 const RiskFlags: React.FC<{ r: Risk }> = ({ r }) => {
   const { t } = useTranslation('risks');
-  if (!r.appetite_exceeded && !r.needs_reassessment) return null;
+  const progress = r.treatment_progress;
+  const showProgress = !!progress && progress.total > 0;
+  if (!r.appetite_exceeded && !r.needs_reassessment && !r.acceptance_pending_request_id && !showProgress) return null;
   return (
     <span className="flex flex-wrap gap-1 mt-1">
+      {showProgress && (
+        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium ${progress!.overdue > 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'}`}>
+          <ListChecks size={9} />{progress!.percent ?? 0} %{progress!.overdue > 0 ? ` · ${progress!.overdue} ${t('items.overdue')}` : ''}
+        </span>
+      )}
+      {r.acceptance_pending_request_id && (
+        <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+          <Hourglass size={9} />{t('acceptanceFlow.pendingBadge')}
+        </span>
+      )}
       {r.appetite_exceeded && (
         <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" title={t('methodology.appetiteTitle', { level: r.appetite_max_level })}>
           <Flag size={9} />{t('methodology.appetiteExceeded')}
@@ -146,7 +162,9 @@ export const Risks: React.FC = () => {
   const [form, setForm] = useState({ ...emptyRisk });
   const [saving, setSaving] = useState(false);
   const [controlSearch, setControlSearch] = useState('');
-  const [signoffUntil, setSignoffUntil] = useState('');
+  // Detail of the risk being edited (scenarios, treatment items, acceptance requests).
+  const [detail, setDetail] = useState<Risk | null>(null);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const [assetSearch, setAssetSearch] = useState('');
@@ -195,6 +213,7 @@ export const Risks: React.FC = () => {
     api.get('/threats').then(r => setThreats(r.data)).catch(() => setThreats([]));
     api.get('/controls').then(r => setAllControls(r.data)).catch(() => setAllControls([]));
     api.get('/templates?category=risk').then(r => setTemplates(r.data)).catch(() => setTemplates([]));
+    api.get('/groups').then(r => setGroups(Array.isArray(r.data) ? r.data : [])).catch(() => setGroups([]));
     loadActiveScale().then(setScale).catch(() => setScale(null));
     loadRiskCategories().then(setCategories).catch(() => setCategories([]));
     // Only roles with vulnerabilities.view get the list; others just cannot pick one.
@@ -241,6 +260,7 @@ export const Risks: React.FC = () => {
   const defaultCategory = () => (categories.find(c => c.key === 'it_security' && c.active) || categories.find(c => c.active))?.key || '';
   const openNew = () => {
     setEditId(null);
+    setDetail(null);
     setFormScale(scale);
     setForm({ ...emptyRisk, category: defaultCategory() });
     setOrigValues(null);
@@ -259,6 +279,7 @@ export const Risks: React.FC = () => {
       owner_id: r.owner_id ? String(r.owner_id) : '',
       likelihood: r.likelihood, impact: r.impact,
       treatment: r.treatment || 'mitigate', treatment_plan: r.treatment_plan || '',
+      treatment_options: r.treatment_options && r.treatment_options.length ? r.treatment_options : [r.treatment || 'mitigate'],
       status: r.status, review_date: r.review_date ? r.review_date.split('T')[0] : '',
       asset_ids: (r.assets || []).map(a => a.id),
       threat_ids: (r.threats || []).map(t => t.id),
@@ -273,8 +294,11 @@ export const Risks: React.FC = () => {
     });
     setOrigValues({ likelihood: r.likelihood, impact: r.impact, dims: JSON.stringify(r.impact_dimensions || {}) });
     setOverrideForm({ open: false, likelihood: r.residual_likelihood || 1, impact: r.residual_impact || 1, reason: '' });
-    // Scenarios are only in the detail view (record rights are checked there).
+    // Scenarios, treatment items and acceptance requests are only in the
+    // detail view (record rights are checked there).
+    setDetail(null);
     api.get(`/risks/${r.id}`).then(d => {
+      setDetail(d.data || null);
       const sc = (d.data?.scenarios || []) as NonNullable<Risk['scenarios']>;
       setForm(f => ({ ...f, scenarios: sc.map(x => ({ asset_ids: (x.assets || []).map(a => a.id), threat_id: x.threat?.id ?? null, vulnerability_id: x.vulnerability?.id ?? null, description: x.description || '' })) }));
     }).catch(() => { /* list data stays usable */ });
@@ -344,17 +368,17 @@ export const Risks: React.FC = () => {
     try { await api.delete(`/risks/${r.id}`); load(); } catch (err: any) { toast.error(err.response?.data?.error || t('risks:toast.errorDelete')); }
   };
 
-  const doSignoff = async () => {
+  // After a change to treatment items or the acceptance workflow: reload the
+  // detail and the register (progress, flags, status).
+  const reloadDetail = () => {
     if (!editId) return;
-    try {
-      await api.patch(`/risks/${editId}/signoff`, { valid_until: signoffUntil || null });
-      setSignoffUntil(''); load();
-    } catch (err: any) { toast.error(err.response?.data?.error || t('risks:toast.errorSignoff')); }
+    api.get(`/risks/${editId}`).then(d => setDetail(d.data || null)).catch(() => { /* keep the last state */ });
+    load();
   };
 
   const revokeSignoff = async () => {
     if (!editId || !confirm(t('risks:confirm.revokeSignoff'))) return;
-    try { await api.patch(`/risks/${editId}/revoke`); load(); } catch { toast.error(t('risks:toast.errorDelete')); }
+    try { await api.patch(`/risks/${editId}/revoke`); reloadDetail(); } catch { toast.error(t('risks:toast.errorDelete')); }
   };
 
   const toggleAsset = (id: number) => setForm(f => ({ ...f, asset_ids: f.asset_ids.includes(id) ? f.asset_ids.filter(x => x !== id) : [...f.asset_ids, id] }));
@@ -381,6 +405,8 @@ export const Risks: React.FC = () => {
     [t('risks:levels3.overridden')]: r.residual_override ? t('risks:methodology.yes') : '',
     [t('risks:table.target')]: r.target_level ? levelLabels[r.target_level] : '',
     [t('risks:form.treatment')]: treatmentLabels[r.treatment || 'mitigate'],
+    [t('risks:treatmentOptions.label')]: (r.treatment_options || [r.treatment || 'mitigate']).map(o => treatmentLabels[o]).join(', '),
+    [t('risks:plan.sumImplemented')]: r.treatment_progress && r.treatment_progress.percent != null ? `${r.treatment_progress.percent} %` : '',
     [t('risks:table.status')]: statusLabels[r.status],
     [t('risks:form.acceptedBy', { name: '' }).trim()]: r.acceptedBy?.name || '',
     [t('risks:acceptedUntil')]: r.accepted_until ? format(new Date(r.accepted_until), 'dd.MM.yyyy', { locale: dateFnsLocale }) : '',
@@ -410,6 +436,7 @@ export const Risks: React.FC = () => {
           <p className="text-gray-500 dark:text-slate-400 text-sm">{t('risks:subtitle', { count: risks.length })}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link to="/risks/treatment-plan" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700"><ListChecks size={14} />{t('risks:plan.open')}</Link>
           <Button variant="secondary" size="sm" onClick={() => exportToCSV(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`)}><Download size={14} />CSV</Button>
           <Button variant="secondary" size="sm" onClick={() => void exportToExcel(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`, 'Risiken')}><FileSpreadsheet size={14} />Excel</Button>
           {canWrite && <Button onClick={openNew}><Plus size={16} />{t('risks:new')}</Button>}
@@ -808,9 +835,34 @@ export const Risks: React.FC = () => {
             <Select label={t('risks:table.status')} value={form.status} onChange={e => setForm({ ...form, status: e.target.value as RiskStatus })} options={statusOptions} />
 
             <div className="md:col-span-2 flex flex-col gap-1">
+              <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:treatmentOptions.label')}</span>
+              <div className="flex flex-wrap gap-3">
+                {(Object.keys(treatmentLabels) as RiskTreatment[]).map(o => {
+                  const isMain = o === form.treatment;
+                  const checked = isMain || form.treatment_options.includes(o);
+                  return (
+                    <label key={o} className={`flex items-center gap-1.5 text-sm dark:text-slate-300 ${isMain ? 'opacity-70' : 'cursor-pointer'}`}>
+                      <input type="checkbox" className="w-4 h-4 rounded text-blue-600" checked={checked} disabled={isMain}
+                        onChange={() => setForm(f => ({ ...f, treatment_options: f.treatment_options.includes(o) ? f.treatment_options.filter(x => x !== o) : [...f.treatment_options, o] }))} />
+                      {treatmentLabels[o]}
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('risks:treatmentOptions.hint')}</p>
+            </div>
+
+            <div className="md:col-span-2 flex flex-col gap-1">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:form.treatmentPlan')}</label>
               <textarea className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl p-3 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-hidden" rows={2} value={form.treatment_plan} onChange={e => setForm({ ...form, treatment_plan: e.target.value })} />
             </div>
+
+            {editId ? (
+              <TreatmentItems risk={detail} canEdit={canWrite} users={users} groups={groups} controls={allControls}
+                levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onChanged={reloadDetail} />
+            ) : (
+              <p className="md:col-span-2 text-xs text-gray-500 italic dark:text-gray-400">{t('risks:items.saveFirst')}</p>
+            )}
 
             <div className="md:col-span-2 space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('risks:form.linkedControls', { count: form.controls.length })}</label>
@@ -890,33 +942,11 @@ export const Risks: React.FC = () => {
               <Input label={t('risks:form.nextReview')} type="date" value={form.review_date} onChange={e => setForm({ ...form, review_date: e.target.value })} />
             </div>
 
-            {editId && (
-              <div className="md:col-span-2 p-4 rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/50 dark:bg-green-900/10 space-y-3">
-                <h3 className="text-xs font-bold uppercase text-green-700 dark:text-green-400 flex items-center gap-1.5"><ShieldCheck size={13} /> {t('risks:form.signoff')}</h3>
-                {editingRisk?.acceptedBy ? (
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">
-                      <p className="dark:text-slate-300 font-medium">{t('risks:form.acceptedBy', { name: editingRisk.acceptedBy.name })}</p>
-                      <p className="text-xs text-gray-500">{t('risks:form.acceptedAt', { date: editingRisk.accepted_at ? new Date(editingRisk.accepted_at).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-GB') : '–' })}{editingRisk.accepted_until ? ` ${t('risks:form.acceptedUntil', { date: new Date(editingRisk.accepted_until).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-GB') })}` : ''}</p>
-                    </div>
-                    <button type="button" onClick={revokeSignoff} className="text-xs text-red-600 dark:text-red-400 hover:underline font-bold uppercase">{t('risks:form.revokeSignoff')}</button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                  {acceptanceRule && (
-                    <p className="text-[11px] text-gray-600 dark:text-slate-400">
-                      {t('risks:acceptance.rule', { level: levelLabels[acceptanceRule.level], roles: acceptanceRule.roles.join(', ') })}
-                      {acceptanceRule.max_months ? ` ${t('risks:acceptance.maxMonths', { count: acceptanceRule.max_months })}` : ''}
-                    </p>
-                  )}
-                  {editingRisk?.needs_reassessment && <p className="text-[11px] text-amber-700 dark:text-amber-400">{t('risks:acceptance.reassessFirst')}</p>}
-                  <div className="flex items-end gap-4">
-                    <div className="flex-1"><Input label={t('risks:form.signoffDate')} type="date" value={signoffUntil} onChange={e => setSignoffUntil(e.target.value)} /></div>
-                    <Button type="button" variant="secondary" className="bg-white dark:bg-slate-900" onClick={doSignoff} disabled={!!editingRisk?.needs_reassessment}><ShieldCheck size={14} />{t('risks:form.digitalSignoff')}</Button>
-                  </div>
-                  </div>
-                )}
-              </div>
+            {editId && detail && (
+              <AcceptanceWorkflow risk={detail} user={user} rule={acceptanceRule}
+                canRequest={can('risks', 'request_acceptance', hasWriteAccess(user?.role))}
+                canSignOff={can('risks', 'sign_off', ['admin', 'assessor', 'owner', 'management'].includes(user?.role || ''))}
+                levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onRevoke={revokeSignoff} onChanged={reloadDetail} />
             )}
           </div>
 

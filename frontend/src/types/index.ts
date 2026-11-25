@@ -165,6 +165,14 @@ export interface Risk {
   inherent_level?: RiskLevel;
   treatment: RiskTreatment;
   treatment_plan?: string;
+  // 3.8.0: several treatment options (main option included), structured plan,
+  // acceptance workflow (four-eyes principle)
+  treatment_options?: RiskTreatment[];
+  treatment_progress?: RiskTreatmentProgress;
+  treatmentItems?: RiskTreatmentItem[];
+  acceptanceRequests?: RiskAcceptanceRequest[];
+  acceptance_pending_request_id?: number | null;
+  acceptance_request_id?: number | null;
   residual_likelihood?: number;
   residual_impact?: number;
   residual_level?: RiskLevel;
@@ -205,6 +213,81 @@ export interface Risk {
   accepted_until?: string;
   created_at: string;
   updated_at: string;
+}
+
+export type RiskTreatmentItemStatus = 'planned' | 'in_progress' | 'implemented' | 'discarded';
+export interface RiskTreatmentItem {
+  id: number;
+  risk_id: number;
+  title: string;
+  description?: string | null;
+  treatment_option: RiskTreatment;
+  responsible_user_id?: number | null;
+  responsible_group_id?: number | null;
+  responsibleUser?: { id: number; name: string } | null;
+  responsibleGroup?: { id: number; name: string } | null;
+  due_date?: string | null;
+  status: RiskTreatmentItemStatus;
+  status_reason?: string | null;
+  completed_at?: string | null;
+  cost_once?: string | number | null;
+  cost_recurring?: string | number | null;
+  control_id?: number | null;
+  control?: { id: number; code?: string; title: string; status: string } | null;
+  task_id?: number | null;
+  task?: { id: number; title: string; status: string; due_date?: string | null; completed_at?: string | null } | null;
+  sort_order?: number;
+  overdue?: boolean;
+}
+export interface RiskTreatmentProgress {
+  total: number;
+  planned: number;
+  in_progress: number;
+  implemented: number;
+  discarded: number;
+  overdue: number;
+  percent: number | null;
+  all_implemented: boolean;
+  complete_above_appetite: boolean;
+  cost_once_total?: number;
+  cost_recurring_total?: number;
+}
+export type RiskAcceptanceRequestStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
+export interface RiskAcceptanceRequest {
+  id: number;
+  risk_id: number;
+  status: RiskAcceptanceRequestStatus;
+  justification: string;
+  residual_risk_description?: string | null;
+  requested_until?: string | null;
+  residual_level?: RiskLevel | null;
+  residual_likelihood?: number | null;
+  residual_impact?: number | null;
+  requested_by_id?: number | null;
+  requestedBy?: { id: number; name: string } | null;
+  requested_at: string;
+  decided_by_id?: number | null;
+  decidedBy?: { id: number; name: string } | null;
+  decided_at?: string | null;
+  decision_reason?: string | null;
+  approved_until?: string | null;
+  owner_confirmed: boolean;
+  ownerConfirmedBy?: { id: number; name: string } | null;
+  owner_confirmed_at?: string | null;
+  ended_at?: string | null;
+  end_reason?: string | null;
+}
+export interface RiskTreatmentPlanItem extends Omit<RiskTreatmentItem, 'cost_once' | 'cost_recurring'> {
+  cost_once: number | null;
+  cost_recurring: number | null;
+  overdue: boolean;
+  risk: { id: number; ref?: string; title: string; status: RiskStatus; category?: string; owner?: { id: number; name: string } | null; treatment: RiskTreatment; treatment_options: RiskTreatment[]; effective_level: RiskLevel | null; appetite_max_level: RiskLevel | null; appetite_exceeded: boolean };
+}
+export interface RiskTreatmentPlan {
+  generated_at: string;
+  summary: { items: number; risks: number; planned: number; in_progress: number; implemented: number; discarded: number; overdue: number; cost_once_total: number; cost_recurring_total: number; risks_without_plan: number };
+  items: RiskTreatmentPlanItem[];
+  risks_without_plan: { id: number; ref?: string; title: string; status: RiskStatus; owner?: { id: number; name: string } | null; treatment: RiskTreatment; effective_level: RiskLevel | null; appetite_exceeded: boolean }[];
 }
 
 export type ControlStatus = 'implemented' | 'planned' | 'not_applicable';
