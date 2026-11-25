@@ -334,7 +334,8 @@
     "verify": "Verify integrity",
     "view_details": "View details",
     "manage_methodology": "Manage risk methodology",
-    "override_residual": "Override net risk"
+    "override_residual": "Override net risk",
+    "request_acceptance": "Request risk acceptance"
   },
   "llm": {
     "title": "AI / LLM Configuration",

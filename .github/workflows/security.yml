@@ -260,6 +260,7 @@ jobs:
           node scripts/test-request-error.js
           node scripts/test-risk-methodology.js
           node scripts/test-risk-assessment.js
+          node scripts/test-risk-treatment.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

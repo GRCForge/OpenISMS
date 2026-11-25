@@ -222,11 +222,49 @@ REST API, never over MCP.
 - Linked to assets, threats (BSI elementary threats and custom threats) and
   controls with an effectiveness rating; only implemented controls lower the
   residual likelihood
-- Risk owner, treatment plan, risk templates
-- **Risk acceptance** as a management sign-off with an expiry date; acceptances
-  expiring within 30 days are flagged and mailed, expired ones turn red. A
-  sign-off can be revoked. The status "accepted" is only set through the
-  sign-off, never through the edit form, an import or an MCP update
+- Risk owner, treatment plan (free text), risk templates
+- **Treatment options** (ISO 27001 6.1.3 b): several per risk (for example
+  mitigate + transfer); the main option stays as before and is always part of
+  the list. Risks from before 3.8.0 keep their single option
+- **Structured risk treatment plan** (ISO 27001 6.1.3 c–e, 8.3; ISO 27005
+  clause 9): measures per risk with title, description, option, responsible
+  person *or* group, due date, status (planned, in progress, implemented,
+  discarded — discarded only with a reason), one-off and recurring costs in
+  EUR and a link to an existing control and/or task. The free-text plan stays
+  visible and is not converted. Every change is in the audit log; the record
+  rights are those for editing the risk
+- **Task from a measure:** one click creates a task (assignee or group, due
+  date, priority from the risk level, notification). The status stays in step:
+  task done → measure implemented, reopened → in progress; measure implemented
+  → task done, discarded → open task cancelled — logged each time. Overdue
+  measures remind the responsible person (or group) once a day
+- **Progress per risk:** share of implemented measures (discarded ones do not
+  count), overdue measures and — in the detail view — the cost totals. If all
+  measures are implemented but the net risk is still above the risk appetite,
+  the risk shows a hint
+- **Risk treatment plan overview** (Risks → Treatment plan): all measures with
+  risk, level, responsible, due date, status, overdue flag, costs, control and
+  task, plus the open risks without any active measure; Excel export with
+  formula injection neutralised. Evidence for ISO 27001 6.1.3 e. Admin,
+  assessor and management see everything, others their own risks and the
+  measures they (or their group) are responsible for
+- **Risk acceptance with the four-eyes principle** (ISO 27001 6.1.3 f, ISO
+  27005 9.6): whoever may edit the risk requests the acceptance (permission
+  `risks.request_acceptance`) with a justification, the requested validity and
+  the residual risk; the level at that moment is stored with the request. A
+  person with acceptance authority under the methodology who is **not** the
+  requester approves or rejects it (with a reason); the requester can
+  withdraw it. If the level changes before the decision, the request can no
+  longer be approved. The risk owner confirms the acceptance of the residual
+  risk — the confirmation is shown on the request. One open request per risk.
+  The sign-off (`PATCH /api/risks/:id/signoff`, `isms_signoff_risk`) now
+  approves the open request. Acceptances given before 3.8.0 stay valid as they
+  are
+- **Risk acceptance** has an expiry date; acceptances expiring within 30 days
+  are flagged and mailed, expired ones turn red. A sign-off can be revoked;
+  the request then records why the acceptance ended (revoked, lapsed,
+  superseded by a renewal). The status "accepted" is only set through an
+  approved request, never through the edit form, an import or an MCP update
 - If the decisive level of an accepted risk rises (for example after a
   reassessment), the acceptance lapses and the change is logged
 - Flags and filters for risks above the risk appetite and for risks that need
@@ -610,6 +648,7 @@ and after values. Each entry carries an HMAC-SHA256 signature, and
 | 05:15 | Threat feed refresh (sources with auto-fetch) |
 | 07:45 | Threat source review reminders |
 | 08:00 | Expiring risk acceptances and trainings |
+| on start and 08:00 | Overdue risk treatment measures (in-app reminder to the responsible person or group, once a day) |
 
 ---
 

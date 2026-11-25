@@ -334,7 +334,8 @@
     "verify": "Verificar integridad",
     "view_details": "Ver detalles",
     "manage_methodology": "Gestionar metodología de riesgos",
-    "override_residual": "Sobrescribir riesgo neto"
+    "override_residual": "Sobrescribir riesgo neto",
+    "request_acceptance": "Solicitar aceptación de riesgos"
   },
   "llm": {
     "title": "AI / LLM Configuration",

@@ -57,6 +57,15 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   const owner = await mkUser('owner', 'owner');
   const boss = await mkUser('boss', 'management');
   const it = await mkUser('it', 'it-staff');
+  // Since 3.8.0 a sign-off approves a pending acceptance request (four-eyes
+  // principle): a separate requester files it first, then the checks below run
+  // unchanged against the approval.
+  const requester = await mkUser('requester', 'admin');
+  const acc8 = require(path.join(SRC, 'services', 'riskAcceptanceService'));
+  const signoff = async (risk, u, until, r) => {
+    if (!(await acc8.pendingRequest(risk.id))) await acc8.requestAcceptance(risk, { justification: 'Test' }, requester, { user: requester });
+    return svc.signoffRisk(await m.Risk.findByPk(risk.id), u, until, r);
+  };
   await sequelize.query(`
     INSERT INTO risks (ref, title, category, owner_id, likelihood, impact, inherent_level, treatment, residual_likelihood, residual_impact, residual_level, status, accepted_by_id, accepted_at, accepted_until, created_at, updated_at) VALUES
     ('R-0001', 'Alt niedrig', 'it_security', ${owner.id}, 1, 2, 'low', 'mitigate', 1, 2, 'low', 'open', NULL, NULL, NULL, '2026-01-01', '2026-01-02'),
@@ -102,9 +111,9 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
 
   console.log('\nFreigabe nach Standardprofil (wie bisher):');
   const r1 = await m.Risk.findByPk(1);
-  eq('owner, eigenes Risiko → ok, keine Hoechstdauer', await (async () => { const x = await svc.signoffRisk(r1, owner, null, { user: owner }); return [x.status, x.accepted_until]; })(), ['accepted', null]);
-  eq('it-staff → 403 (Datensatz)', await status(svc.signoffRisk(await m.Risk.findByPk(3), it, null, { user: it })), 403);
-  eq('management → 403 (Standardprofil erlaubt nur admin/assessor/owner)', await status(svc.signoffRisk(await m.Risk.findByPk(3), boss, null, { user: boss })), 403);
+  eq('owner, eigenes Risiko → ok, keine Hoechstdauer', await (async () => { const x = await signoff(r1, owner, null, { user: owner }); return [x.status, x.accepted_until]; })(), ['accepted', null]);
+  eq('it-staff → 403 (Datensatz)', await status(signoff(await m.Risk.findByPk(3), it, null, { user: it })), 403);
+  eq('management → 403 (Standardprofil erlaubt nur admin/assessor/owner)', await status(signoff(await m.Risk.findByPk(3), boss, null, { user: boss })), 403);
   eq('Status accepted per Bearbeiten → 400', await status(svc.updateRisk(await m.Risk.findByPk(3), { ...R, title: 'Alt kritisch', status: 'accepted', likelihood: 5, impact: 5 }, admin, { user: admin })), 400);
 
   console.log('\nNeue Version 3x3:');
@@ -141,7 +150,7 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   eq('Liste "neu zu bewerten": alle 30, Matrixgroesse geaendert', [list.length, list.every(r => r.needs_reassessment && r.matrix_changed && r.methodology_version === 1)], [30, true]);
   const r4 = (await rm.decorateRisks([await m.Risk.findByPk(4)]))[0];
   eq('Altlast 4x4 bleibt an Version 1 mit Stufe high', [r4.methodology_id, r4.inherent_level, r4.likelihood, r4.impact], [V1, 'high', 4, 4]);
-  eq('Freigabe an alter Version → 409', await status(svc.signoffRisk(await m.Risk.findByPk(3), admin, null, { user: admin })), 409);
+  eq('Freigabe an alter Version → 409', await status(signoff(await m.Risk.findByPk(3), admin, null, { user: admin })), 409);
   const r3 = await m.Risk.findByPk(3);
   eq('Bearbeiten ohne Neubewertung: Werte nach Version 1 (5 erlaubt)', await (async () => { const x = await svc.updateRisk(r3, { ...R, title: 'Alt kritisch', likelihood: 5, impact: 4 }, admin, { user: admin }); return [x.methodology_version, x.inherent_level]; })(), [1, 'critical']);
   eq('Neubewertung ohne Werte → 400', await status(svc.updateRisk(await m.Risk.findByPk(3), { ...R, title: 'Alt kritisch', reassess: true }, admin, { user: admin })), 400);
@@ -164,10 +173,10 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
 
   console.log('\nAkzeptanzbefugnis und Hoechstdauer (Version 2):');
   const opsRisk = await m.Risk.findByPk(ops.id);
-  eq('critical: admin → 403 (nur management)', await status(svc.signoffRisk(opsRisk, admin, null, { user: admin })), 403);
-  eq('critical: owner (eigenes Risiko) → 403', await status(svc.signoffRisk(opsRisk, owner, null, { user: owner })), 403);
-  eq('critical: Datum ueber 3 Monate → 400', await status(svc.signoffRisk(opsRisk, boss, rm.addMonths(rm.todayStr(), 4), { user: boss })), 400);
-  const acc = await svc.signoffRisk(opsRisk, boss, null, { user: boss });
+  eq('critical: admin → 403 (nur management)', await status(signoff(opsRisk, admin, null, { user: admin })), 403);
+  eq('critical: owner (eigenes Risiko) → 403', await status(signoff(opsRisk, owner, null, { user: owner })), 403);
+  eq('critical: Datum ueber 3 Monate → 400', await status(signoff(opsRisk, boss, rm.addMonths(rm.todayStr(), 4), { user: boss })), 400);
+  const acc = await signoff(opsRisk, boss, null, { user: boss });
   eq('critical: management ohne Datum → akzeptiert bis heute + 3 Monate', [acc.status, acc.accepted_by_id, acc.accepted_until], ['accepted', boss.id, rm.addMonths(rm.todayStr(), 3)]);
   const accLog = await m.AuditLog.findOne({ where: { entity_type: 'risk', entity_id: ops.id, action: 'acknowledge' }, order: [['id', 'DESC']] });
   eq('Freigabe im Audit-Log mit Stufe, Version, Regel', [accLog.details.level, accLog.details.methodology_version, accLog.details.allowed_roles, accLog.details.max_months], ['critical', 2, ['management'], 3]);
@@ -175,7 +184,7 @@ const oldComputeLevel = (l, i) => { const s = l * i; return s <= 4 ? 'low' : s <
   eq('Zuruecknehmen durch assessor (darf critical nicht akzeptieren) → 403', await status(svc.revokeRisk(await m.Risk.findByPk(ops.id), assessor, { user: assessor })), 403);
   eq('Zuruecknehmen durch den Akzeptierenden → ok', (await svc.revokeRisk(await m.Risk.findByPk(ops.id), boss, { user: boss })).status, 'in_treatment');
   const lowRisk = await svc.createRisk({ ...R, title: 'klein', category: 'it_security', owner_id: owner.id, likelihood: 1, impact: 2 }, admin, { user: admin });
-  const lowAcc = await svc.signoffRisk(await m.Risk.findByPk(lowRisk.id), owner, null, { user: owner });
+  const lowAcc = await signoff(await m.Risk.findByPk(lowRisk.id), owner, null, { user: owner });
   eq('low: owner darf, 24 Monate', [lowAcc.status, lowAcc.accepted_until], ['accepted', rm.addMonths(rm.todayStr(), 24)]);
   const raised = await svc.updateRisk(await m.Risk.findByPk(lowRisk.id), { ...R, title: 'klein', status: 'accepted', likelihood: 3, impact: 2 }, owner, { user: owner });
   eq('Stufe steigt (low → high): Akzeptanz erlischt, protokolliert', [raised.status, raised.accepted_by_id, raised.accepted_until], ['in_treatment', null, null]);

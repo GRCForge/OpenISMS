@@ -24,17 +24,42 @@ const models = () => require('../models');
 const { httpError } = rm;
 
 const FIELDS = ['title', 'description', 'category', 'owner_id', 'likelihood', 'impact', 'treatment', 'treatment_plan', 'status', 'review_date', 'acceptance_document_id',
-  'impact_dimensions', 'likelihood_rationale', 'impact_rationale', 'target_likelihood', 'target_impact'];
+  'impact_dimensions', 'likelihood_rationale', 'impact_rationale', 'target_likelihood', 'target_impact', 'treatment_options'];
 const TREATMENTS = ['mitigate', 'accept', 'transfer', 'avoid'];
 const STATUSES = ['open', 'in_treatment', 'accepted', 'closed'];
 const SNAPSHOT = ['title', 'description', 'category', 'owner_id', 'likelihood', 'impact', 'impact_dimensions', 'inherent_level', 'likelihood_rationale', 'impact_rationale',
   'residual_likelihood', 'residual_impact', 'residual_level', 'residual_override', 'target_likelihood', 'target_impact', 'target_level',
-  'treatment', 'status', 'review_date', 'methodology_id', 'accepted_by_id', 'accepted_until'];
+  'treatment', 'treatment_options', 'status', 'review_date', 'methodology_id', 'accepted_by_id', 'accepted_until', 'acceptance_request_id'];
 const RATIONALE_MAX = 4000;
 const MAX_SCENARIOS = 50;
 const MAX_SCENARIO_ASSETS = 50;
 const CLEAR_OVERRIDE = { residual_override: false, residual_override_reason: null, residual_override_by_id: null, residual_override_at: null };
-const CLEAR_ACCEPTANCE = { accepted_by_id: null, accepted_at: null, accepted_until: null };
+const CLEAR_ACCEPTANCE = { accepted_by_id: null, accepted_at: null, accepted_until: null, acceptance_request_id: null };
+
+// Treatment options (3.8.0): several per risk, the main option (`treatment`)
+// always among them. Values only from the fixed list, in its order - nothing
+// from the input is copied.
+const normalizeOptions = (v) => {
+  if (v === undefined || v === null || v === '') return null;
+  if (!Array.isArray(v)) throw httpError(400, 'treatment_options muss eine Liste sein.');
+  if (v.some(x => typeof x !== 'string' || !TREATMENTS.includes(x))) throw httpError(400, `Ungültige Behandlungsoption. Möglich: ${TREATMENTS.join(', ')}.`);
+  const out = TREATMENTS.filter(t => v.includes(t));
+  return out.length ? out : null;
+};
+const optionsOf = (risk) => {
+  const list = Array.isArray(risk?.treatment_options) ? risk.treatment_options.filter(t => TREATMENTS.includes(t)) : [];
+  const main = risk?.treatment || 'mitigate';
+  return TREATMENTS.filter(t => t === main || list.includes(t));
+};
+// Keep the stored list consistent with the main option. Only touches the
+// column when the list was sent or already exists (NULL stays NULL).
+const applyOptions = (f, existing) => {
+  const main = f.treatment !== undefined ? f.treatment : (existing?.treatment || 'mitigate');
+  let list = f.treatment_options !== undefined ? f.treatment_options : (existing?.treatment_options ?? null);
+  if (list === null && f.treatment_options === undefined) return;
+  list = list || [];
+  f.treatment_options = TREATMENTS.filter(t => t === main || list.includes(t));
+};
 
 const includeAll = () => {
   const { User, Asset, Threat, Control, Document, VvtEntry, Incident } = models();
@@ -72,7 +97,32 @@ const includeScenarios = () => {
     ],
   };
 };
-const includeDetail = () => [...includeAll(), includeScenarios()];
+// Treatment items and acceptance requests (3.8.0) - detail view only, like the
+// scenarios: the register list is readable by more roles and carries only the
+// progress summary (decorate), without costs.
+const includeTreatment = () => {
+  const { RiskTreatmentItem, RiskAcceptanceRequest, User, Group, Control, Task } = models();
+  return [
+    {
+      model: RiskTreatmentItem, as: 'treatmentItems', separate: true, order: [['sort_order', 'ASC'], ['id', 'ASC']],
+      include: [
+        { model: User, as: 'responsibleUser', attributes: ['id', 'name'] },
+        { model: Group, as: 'responsibleGroup', attributes: ['id', 'name'] },
+        { model: Control, as: 'control', attributes: ['id', 'code', 'title', 'status'] },
+        { model: Task, as: 'task', attributes: ['id', 'title', 'status', 'due_date', 'completed_at'] },
+      ],
+    },
+    {
+      model: RiskAcceptanceRequest, as: 'acceptanceRequests', separate: true, order: [['requested_at', 'DESC'], ['id', 'DESC']],
+      include: [
+        { model: User, as: 'requestedBy', attributes: ['id', 'name'] },
+        { model: User, as: 'decidedBy', attributes: ['id', 'name'] },
+        { model: User, as: 'ownerConfirmedBy', attributes: ['id', 'name'] },
+      ],
+    },
+  ];
+};
+const includeDetail = () => [...includeAll(), includeScenarios(), ...includeTreatment()];
 
 const snapshot = (risk) => Object.fromEntries(SNAPSHOT.map(f => [f, risk[f] ?? null]));
 const toInt = (v) => { const n = parseInt(v, 10); return Number.isInteger(n) ? n : null; };
@@ -134,6 +184,7 @@ const buildFields = (body, { partial = false, existing = null } = {}) => {
   setIfSent('impact_rationale', rationale('Begründung der Auswirkung'));
   setIfSent('target_likelihood', v => toInt(v));
   setIfSent('target_impact', v => toInt(v));
+  setIfSent('treatment_options', normalizeOptions);
   if (f.title !== undefined && (!f.title || !String(f.title).trim())) throw httpError(400, 'Titel ist erforderlich');
   if (f.treatment !== undefined && !TREATMENTS.includes(f.treatment)) throw httpError(400, 'Ungültige Behandlung.');
   if (f.status !== undefined && !STATUSES.includes(f.status)) throw httpError(400, 'Ungültiger Status.');
@@ -183,17 +234,69 @@ const calculatedResidual = async (risk) => {
  * net risk, the value the calculation would give - so the deviation stays
  * visible wherever the override is shown.
  */
-const decorate = async (rows) => {
+const decorate = async (rows, { detail = false } = {}) => {
   const out = await rm.decorateRisks(rows);
   for (const r of out) {
     if (!r.residual_override || !Array.isArray(r.controls)) continue;
     const own = await rm.profileForRisk(r);
     r.residual_calculated = computeResidual(r.likelihood, r.impact, controlLinks(r.controls), own);
   }
+  await attachTreatment(out, { detail });
   return out;
 };
 
-const loadFull = async (id) => (await decorate([await models().Risk.findByPk(id, { include: includeDetail() })]))[0];
+// ── Treatment progress (3.8.0) ──────────────────────────────────────────────
+//
+// Share of implemented items (discarded ones do not count), overdue items and
+// - detail only - the cost totals. complete_above_appetite: every item is
+// implemented, but the net risk is still above the appetite of the category,
+// so the plan does not reach the target (ISO 27001 6.1.3, ISO 27005 9.5).
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const money = (v) => (v === null || v === undefined || v === '' ? 0 : Math.round(Number(v) * 100));
+const treatmentProgress = (items, appetiteExceeded, { detail = false } = {}) => {
+  const today = todayStr();
+  const count = (s) => items.filter(i => i.status === s).length;
+  const active = items.filter(i => i.status !== 'discarded');
+  const implemented = count('implemented');
+  const allImplemented = active.length > 0 && implemented === active.length;
+  const out = {
+    total: items.length,
+    planned: count('planned'),
+    in_progress: count('in_progress'),
+    implemented,
+    discarded: count('discarded'),
+    overdue: active.filter(i => i.status !== 'implemented' && i.due_date && String(i.due_date).slice(0, 10) < today).length,
+    percent: active.length ? Math.round((implemented / active.length) * 100) : null,
+    all_implemented: allImplemented,
+    complete_above_appetite: allImplemented && !!appetiteExceeded,
+  };
+  if (detail) {
+    out.cost_once_total = active.reduce((s, i) => s + money(i.cost_once), 0) / 100;
+    out.cost_recurring_total = active.reduce((s, i) => s + money(i.cost_recurring), 0) / 100;
+  }
+  return out;
+};
+
+const attachTreatment = async (out, { detail = false } = {}) => {
+  const ids = out.map(r => r && r.id).filter(Boolean);
+  if (!ids.length) return;
+  const { RiskTreatmentItem, RiskAcceptanceRequest } = models();
+  const [items, pending] = await Promise.all([
+    RiskTreatmentItem.findAll({ where: { risk_id: ids }, attributes: ['risk_id', 'status', 'due_date', 'cost_once', 'cost_recurring'], raw: true }),
+    RiskAcceptanceRequest.findAll({ where: { risk_id: ids, status: 'pending' }, attributes: ['id', 'risk_id'], raw: true }),
+  ]);
+  const byRisk = new Map();
+  for (const i of items) { if (!byRisk.has(i.risk_id)) byRisk.set(i.risk_id, []); byRisk.get(i.risk_id).push(i); }
+  const pendingByRisk = new Map(pending.map(p => [p.risk_id, p.id]));
+  for (const r of out) {
+    if (!r) continue;
+    r.treatment_options = optionsOf(r);
+    r.treatment_progress = treatmentProgress(byRisk.get(r.id) || [], r.appetite_exceeded, { detail });
+    r.acceptance_pending_request_id = pendingByRisk.get(r.id) ?? null;
+  }
+};
+
+const loadFull = async (id) => (await decorate([await models().Risk.findByPk(id, { include: includeDetail() })], { detail: true }))[0];
 
 // ── Rationale (ISO 27005:2022 8.3) ──────────────────────────────────────────
 //
@@ -289,13 +392,24 @@ const notifyOwner = async (risk, actor) => {
 // Stufe vor/nach einer Aenderung, berechnet nach der Version des Risikos.
 const levelOf = async (risk) => rm.effectiveLevel(risk, await rm.profileForRisk(risk));
 
+// When an acceptance given through a request ends, the request records why
+// (revoked, lapsed, superseded) - its decision stays as it was.
+const endAcceptanceRequest = async (risk, reason) => {
+  if (!risk.acceptance_request_id) return;
+  await models().RiskAcceptanceRequest.update(
+    { ended_at: new Date(), end_reason: reason },
+    { where: { id: risk.acceptance_request_id, status: 'approved', ended_at: null } },
+  );
+};
+
 // Akzeptanz erlischt, wenn die massgebliche Stufe steigt: akzeptiert war ein
 // geringeres Risiko, und die Befugnis kann fuer die neue Stufe fehlen.
 const lapseIfRaised = async (risk, beforeLevel, auditReq) => {
   if (risk.status !== 'accepted') return false;
   const after = await levelOf(risk);
   if (!(rm.rank(after) > rm.rank(beforeLevel))) return false;
-  const prev = { accepted_by_id: risk.accepted_by_id, accepted_until: risk.accepted_until };
+  const prev = { accepted_by_id: risk.accepted_by_id, accepted_until: risk.accepted_until, acceptance_request_id: risk.acceptance_request_id ?? null };
+  await endAcceptanceRequest(risk, 'lapsed');
   await risk.update({ status: 'in_treatment', ...CLEAR_ACCEPTANCE });
   await auditFromReq(auditReq, 'update', 'risk', risk.id, risk.title, { action: 'acceptance_lapsed', reason: 'level_increased', from_level: beforeLevel, to_level: after, previous: prev });
   return true;
@@ -306,6 +420,7 @@ const createRisk = async (body, user, auditReq) => {
   if (!body || !body.title) throw httpError(400, 'Titel ist erforderlich');
   const f = buildFields(body, { partial: false });
   f.category = await categories.checkForRisk(f.category, undefined);
+  applyOptions(f, null);
   requireRationale(null, f, body);
   const scenarios = await parseScenarios(body.scenarios);
   const risk = await Risk.create(f);
@@ -313,7 +428,7 @@ const createRisk = async (body, user, auditReq) => {
   if (scenarios) await replaceScenarios(risk.id, scenarios);
   await recomputeResidual(risk);
   await auditFromReq(auditReq, 'create', 'risk', risk.id, risk.title, {
-    level: risk.inherent_level, treatment: risk.treatment, methodology_id: risk.methodology_id, category: risk.category,
+    level: risk.inherent_level, treatment: risk.treatment, treatment_options: risk.treatment_options ?? null, methodology_id: risk.methodology_id, category: risk.category,
     likelihood: risk.likelihood, impact: risk.impact, impact_dimensions: risk.impact_dimensions,
     likelihood_rationale: risk.likelihood_rationale, impact_rationale: risk.impact_rationale,
     target_level: risk.target_level, ...(scenarios ? { scenarios } : {}),
@@ -351,8 +466,12 @@ const updateRisk = async (risk, body, user, auditReq, { partial = false } = {}) 
     reassess = { from_version: own.version ?? null, to_version: active.version, override_cleared: !!risk.residual_override };
   }
   requireRationale(risk, f, body, { reassess: !!reassess });
+  applyOptions(f, risk);
   const beforeScenarios = scenarios ? await scenarioSnapshot(risk.id) : null;
-  if (risk.status === 'accepted' && f.status && f.status !== 'accepted') Object.assign(f, CLEAR_ACCEPTANCE);
+  if (risk.status === 'accepted' && f.status && f.status !== 'accepted') {
+    await endAcceptanceRequest(risk, 'status_changed');
+    Object.assign(f, CLEAR_ACCEPTANCE);
+  }
 
   await risk.update(f);
   await applyLinks(risk, body || {});
@@ -414,15 +533,16 @@ const overrideResidual = async (risk, body, user, auditReq) => {
   return lapsed ? { ...out, acceptance_lapsed: true } : out;
 };
 
-const signoffRisk = async (risk, user, validUntil, auditReq) => {
+// Since 3.8.0 a sign-off is the approval of a pending acceptance request
+// (four-eyes principle, services/riskAcceptanceService.js). Without a pending
+// request there is nothing to approve. Acceptances given before stay valid.
+const signoffRisk = async (risk, user, validUntil, auditReq, { requestId = null, note } = {}) => {
   if (!user?.id) throw httpError(403, 'Forbidden');
   if (!canSignoffRecord(user, risk)) throw httpError(403, 'Forbidden');
-  const { level, rule, accepted_until, methodology_version } = await rm.checkAcceptance(risk, user, validUntil);
-  await risk.update({ status: 'accepted', accepted_by_id: user.id, accepted_at: new Date(), accepted_until });
-  await auditFromReq(auditReq, 'acknowledge', 'risk', risk.id, risk.title, {
-    accepted_until, level, methodology_version, allowed_roles: rule.roles, max_months: rule.max_months,
-  });
-  return loadFull(risk.id);
+  const acc = require('./riskAcceptanceService');
+  const reqRow = await acc.pendingRequest(risk.id, requestId);
+  if (!reqRow) throw httpError(409, 'Kein offener Akzeptanzantrag: Die Akzeptanz zuerst beantragen (Vier-Augen-Prinzip), dann freigeben.');
+  return acc.approveRequest(risk, reqRow, user, { valid_until: validUntil, note }, auditReq);
 };
 
 // Zuruecknehmen darf, wer akzeptiert hat, admin, oder wer diese Stufe selbst
@@ -436,7 +556,8 @@ const revokeRisk = async (risk, user, auditReq) => {
     const rule = (active.acceptance || []).find(a => a.level === level);
     if (!rule || !rule.roles.includes(user.role)) throw httpError(403, 'Die Freigabe darf nur zurücknehmen, wer sie erteilt hat oder diese Stufe akzeptieren darf.');
   }
-  const prev = { accepted_by_id: risk.accepted_by_id, accepted_at: risk.accepted_at, accepted_until: risk.accepted_until };
+  const prev = { accepted_by_id: risk.accepted_by_id, accepted_at: risk.accepted_at, accepted_until: risk.accepted_until, acceptance_request_id: risk.acceptance_request_id ?? null };
+  await endAcceptanceRequest(risk, 'revoked');
   await risk.update({ status: 'in_treatment', ...CLEAR_ACCEPTANCE });
   await auditFromReq(auditReq, 'update', 'risk', risk.id, risk.title, { action: 'revoke_signoff', previous: prev });
   return loadFull(risk.id);
@@ -498,7 +619,26 @@ const listForReassessment = async () => {
   return decorate(rows);
 };
 
+// Treatment plan and acceptance workflow (3.8.0): one entry point for REST and
+// MCP. The rules live in riskTreatmentService.js / riskAcceptanceService.js;
+// lazy requires because both use this module.
+const treatment = () => require('./riskTreatmentService');
+const acceptance = () => require('./riskAcceptanceService');
+
 module.exports = {
-  FIELDS, includeAll, includeDetail, includeScenarios, decorate, overrideResidual, requireRationale, parseScenarios, canWriteRisk, canViewRisk, canSignoffRecord, buildFields,
+  FIELDS, TREATMENTS, includeAll, includeDetail, includeScenarios, includeTreatment, decorate, overrideResidual, requireRationale, parseScenarios, canWriteRisk, canViewRisk, canSignoffRecord, buildFields,
   createRisk, updateRisk, signoffRisk, revokeRisk, carryOver, listForReassessment, recomputeResidual, loadFull,
+  levelOf, endAcceptanceRequest, normalizeOptions, optionsOf, applyOptions, treatmentProgress, CLEAR_ACCEPTANCE,
+  listTreatmentItems: (...a) => treatment().listItems(...a),
+  createTreatmentItem: (...a) => treatment().createItem(...a),
+  updateTreatmentItem: (...a) => treatment().updateItem(...a),
+  createTaskForTreatmentItem: (...a) => treatment().createTaskForItem(...a),
+  treatmentPlan: (...a) => treatment().listPlan(...a),
+  requestAcceptance: (...a) => acceptance().requestAcceptance(...a),
+  approveAcceptance: (...a) => acceptance().approveRequest(...a),
+  rejectAcceptance: (...a) => acceptance().rejectRequest(...a),
+  withdrawAcceptance: (...a) => acceptance().withdrawRequest(...a),
+  confirmAcceptanceAsOwner: (...a) => acceptance().confirmAsOwner(...a),
+  listAcceptanceRequests: (...a) => acceptance().listRequests(...a),
+  findAcceptanceRequest: (...a) => acceptance().findRequest(...a),
 };
