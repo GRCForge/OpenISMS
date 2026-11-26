@@ -12,7 +12,7 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.12.0",
+    "@anthropic-ai/sdk": "^1.13.0",
     "@google/generative-ai": "^0.24.1",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@simplewebauthn/server": "^14.1.0",
@@ -32,7 +32,7 @@
     "multer": "^2.4.0",
     "node-cron": "^4.6.0",
     "nodemailer": "^10.6.1",
-    "openai": "^7.62.0",
+    "openai": "^7.63.0",
     "openid-client": "^6.9.1",
     "otplib": "^13.6.0",
     "passport": "^0.7.0",
@@ -44,7 +44,7 @@
     "rotating-file-stream": "^4.0.0",
     "saxes": "^6.0.0",
     "sequelize": "^6.37.8",
-    "swagger-ui-dist": "^5.35.1",
+    "swagger-ui-dist": "^5.36.0",
     "web-push": "^4.0.0",
     "zod": "^4.6.7"
   },
