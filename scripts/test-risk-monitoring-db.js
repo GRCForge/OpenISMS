@@ -72,6 +72,9 @@ const daysFromToday = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate()
   const owner = await mkUser('owner', 'owner');
   const other = await mkUser('other', 'owner');
   const mgmt = await mkUser('mgmt', 'management');
+  // Since 3.10.0 roles come from groups; the startup migration puts these
+  // users into the groups of their roles, as it would on an upgrade.
+  await require(path.join(SRC, 'services', 'accessMigration')).ensureGroupBasedAccess({ log: { log: () => {} } });
   const req = (u) => ({ user: { id: u.id, name: u.name, role: u.role } });
   const R = { likelihood_rationale: 'Observed twice.', impact_rationale: 'Customer data.' };
   const upd = (risk, body, u = admin) => svc.updateRisk(risk, body, u, req(u), { partial: true });

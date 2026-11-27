@@ -26,14 +26,19 @@
     "color": "Farbe",
     "cancel": "Abbrechen",
     "save": "Speichern",
-    "saving": "Speichern..."
+    "saving": "Speichern...",
+    "roles": "Rollen für Mitglieder",
+    "rolesHint": "Mitglieder erhalten jede ausgewählte Rolle. Leer lassen für ein reines Team (Aufgaben, @-Erwähnungen).",
+    "rolesNoPermission": "Rollen ändern erfordert die Berechtigung „admin.roles“."
   },
   "members": {
     "modalTitle": "Mitglieder: {{name}}",
     "empty": "Noch keine Mitglieder",
     "remove": "Entfernen",
     "addTitle": "Mitglied hinzufügen",
-    "selectUser": "Benutzer auswählen..."
+    "selectUser": "Benutzer auswählen...",
+    "grantsRoles": "Diese Gruppe vergibt Rollen — Mitglieder hinzufügen oder entfernen ändert deren Berechtigungen.",
+    "ssoHint": "Per SSO-Claim-Mapping zugewiesen"
   },
   "confirm": {
     "delete": "Gruppe \"{{name}} \"wirklich löschen?"
@@ -47,5 +52,7 @@
     "memberAdded": "Mitglied hinzugefügt",
     "memberRemoved": "Mitglied entfernt",
     "error": "Fehler"
-  }
+  },
+  "rolesIntro": "Gruppen tragen Rollen: Jedes Mitglied erhält alle Rollen all seiner Gruppen. Berechtigungen werden kombiniert — was eine Rolle erlaubt, ist erlaubt.",
+  "noRoles": "Keine Rollen (nur Team)"
 }

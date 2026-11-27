@@ -28,6 +28,7 @@ const { Op, QueryTypes } = require('sequelize');
 const { pick } = require('../utils/massAssignment');
 const { auditFromReq } = require('./auditService');
 const { notify } = require('./notifyService');
+const { hasRole } = require('./accessService');
 const rm = require('./riskMethodology');
 
 const { httpError } = rm;
@@ -456,7 +457,7 @@ const listFlags = async (user, query = {}) => {
     if (!Number.isInteger(id) || id <= 0) throw httpError(400, 'Ungültige Kennung.');
     where.risk_id = id;
   }
-  const riskWhere = PRIVILEGED.includes(user.role) ? {} : { owner_id: user.id };
+  const riskWhere = hasRole(user, PRIVILEGED) ? {} : { owner_id: user.id };
   const rows = await RiskReviewFlag.findAll({
     where,
     include: [

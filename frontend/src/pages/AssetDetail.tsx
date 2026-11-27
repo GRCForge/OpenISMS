@@ -33,7 +33,7 @@ import { InfoTooltip } from '../components/ui/InfoTooltip';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { usePermissions } from '../contexts/PermissionsContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasRole, onlyRoles, hasWriteAccess } from '../lib/permissions';
 import { DocumentAnalysisModal } from '../components/DocumentAnalysisModal';
 import { Skeleton, SkeletonDetailHeader } from '../components/ui/Skeleton';
 
@@ -115,10 +115,10 @@ export const AssetDetail: React.FC = () => {
 
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = hasWriteAccess(user);
   const { can } = usePermissions();
   const ANALYSIS_ROLES = ['admin', 'assessor', 'it-staff', 'dpo'];
-  const canViewAnalysis = can('document_analysis', 'view', ANALYSIS_ROLES.includes(user?.role || ''));
+  const canViewAnalysis = can('document_analysis', 'view', hasRole(user, ANALYSIS_ROLES));
   const { isEnabled } = useModules();
   const toast = useToast();
   const [asset, setAsset] = useState<Asset | any>(null);
@@ -521,15 +521,16 @@ export const AssetDetail: React.FC = () => {
   const activeUsers = users.filter(u => u.active);
   
   // Permissions
-  const isViewer = !hasWriteAccess(user?.role);
-  const isItStaff = user?.role === 'it-staff';
-  const isDpo = user?.role === 'dpo';
-  const isAssessor = user?.role === 'admin' || user?.role === 'assessor';
-  const canEdit = user?.role === 'admin' || user?.role === 'assessor' || isItStaff || isDpo || user?.id === asset.owner_id || user?.id === asset.assessor_id;
+  const isViewer = !hasWriteAccess(user);
+  const isItStaff = hasRole(user, 'it-staff');
+  const isDpo = hasRole(user, 'dpo');
+  const isAssessor = hasRole(user, 'admin') || hasRole(user, 'assessor');
+  const canEdit = hasRole(user, 'admin') || hasRole(user, 'assessor') || isItStaff || isDpo || user?.id === asset.owner_id || user?.id === asset.assessor_id;
   const canAssess = isAssessor;
 
   const safeFrameworks = Array.isArray(asset.frameworks) ? asset.frameworks : [];
-  const isRestricted = user?.role === 'it-staff' || !hasWriteAccess(user?.role);
+  // Contracts are hidden from IT staff and read-only roles — any other role lifts that.
+  const isRestricted = onlyRoles(user, 'it-staff', 'viewer', 'management', 'employee');
   const visiblePolicies = (asset.policies as any[] || []).filter(p => !isRestricted || p.category !== 'contract');
   const visibleDocs = documents.filter(d => !isRestricted || d.category !== 'contract');
 
@@ -1430,7 +1431,7 @@ export const AssetDetail: React.FC = () => {
                             {canViewAnalysis && (
                               <Button size="sm" variant="secondary" onClick={() => setAnalysisDoc(doc)} title={t('documentanalysis:start_button')}><Bot size={14} /></Button>
                             )}
-                            {!isViewer && (user?.role === 'admin' || user?.id === doc.uploader?.id) && (
+                            {!isViewer && (hasRole(user, 'admin') || user?.id === doc.uploader?.id) && (
                               <Button size="sm" variant="danger" title={t('detail.deleteLabel')} onClick={async () => { if (confirm(t('detail.deleteFileConfirm'))) { await api.delete(`/assets/${id}/documents/${doc.id}`); loadDocs(); } }}><Trash2 size={14}/></Button>
                             )}
                           </div>
@@ -1492,7 +1493,7 @@ export const AssetDetail: React.FC = () => {
                                <button onClick={() => setReplyingTo(c)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('detail.comments.reply')}</button>
                              </div>
                           </div>
-                          {!isViewer && (user?.role === 'admin' || user?.id === c.user_id) && (
+                          {!isViewer && (hasRole(user, 'admin') || user?.id === c.user_id) && (
                             <button onClick={async () => { if(confirm(t('detail.deleteCommentConfirm'))) { await api.delete(`/assets/${id}/comments/${c.id}`); loadComments(); } }} className="text-gray-500 hover:text-red-500 transition-colors self-start dark:text-gray-400"><Trash2 size={14}/></button>
                           )}
                        </div>
@@ -1513,7 +1514,7 @@ export const AssetDetail: React.FC = () => {
                                     <MarkdownText text={reply.content} />
                                  </div>
                                </div>
-                               {!isViewer && (user?.role === 'admin' || user?.id === reply.user_id) && (
+                               {!isViewer && (hasRole(user, 'admin') || user?.id === reply.user_id) && (
                                   <button onClick={async () => { if(confirm(t('detail.deleteReplyConfirm'))) { await api.delete(`/assets/${id}/comments/${reply.id}`); loadComments(); } }} className="text-gray-300 hover:text-red-500 transition-colors self-start"><Trash2 size={12}/></button>
                                )}
                              </div>

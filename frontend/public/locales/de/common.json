@@ -83,7 +83,8 @@
     "owner": "Asset-Besitzer",
     "viewer": "Gast (schreibgeschützt)",
     "management": "Management",
-    "employee": "Mitarbeiter"
+    "employee": "Mitarbeiter",
+    "none": "Keine Rolle"
   },
   "frameworks": {
     "iso27001": "ISO 27001",

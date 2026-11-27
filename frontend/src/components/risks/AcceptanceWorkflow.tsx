@@ -6,6 +6,7 @@ import type { Risk, RiskAcceptanceRule, User } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../../contexts/ToastContext';
+import { hasRole } from '../../lib/permissions';
 
 // Risk acceptance with the four-eyes principle (3.8.0, ISO 27001 6.1.3 f):
 // request -> approve/reject by someone else with acceptance authority; the
@@ -105,7 +106,7 @@ export const AcceptanceWorkflow: React.FC<Props> = ({ risk, user, canRequest, ca
             : <p className="text-amber-700 dark:text-amber-400">{t('acceptanceFlow.ownerPending')}</p>}
           <div className="flex flex-wrap gap-2">
             {!pending.owner_confirmed && isOwner && <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={() => confirmOwner(pending.id)}><UserCheck size={12} />{t('acceptanceFlow.confirmOwner')}</Button>}
-            {(ownRequest || user?.role === 'admin') && <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={withdraw}><Undo2 size={12} />{t('acceptanceFlow.withdraw')}</Button>}
+            {(ownRequest || hasRole(user, 'admin')) && <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={withdraw}><Undo2 size={12} />{t('acceptanceFlow.withdraw')}</Button>}
           </div>
           {ownRequest && <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('acceptanceFlow.ownSelf')}</p>}
           {canSignOff && !ownRequest && (

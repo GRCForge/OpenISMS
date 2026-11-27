@@ -20,11 +20,11 @@
  * accepted_until) without a request; nothing is migrated.
  */
 
-const { Op } = require('sequelize');
 const { pick } = require('../utils/massAssignment');
 const { auditFromReq } = require('./auditService');
 const { notify } = require('./notifyService');
 const rm = require('./riskMethodology');
+const { hasRole, findUserIdsWithRole } = require('./accessService');
 
 const { httpError } = rm;
 const models = () => require('../models');
@@ -101,9 +101,10 @@ const notifyMany = async (userIds, actor, title, content) => {
 // the level. Bounded - a notification, not a mailing list.
 const approverIds = async (roles) => {
   if (!roles || !roles.length) return [];
-  const { User } = models();
-  const rows = await User.findAll({ where: { role: { [Op.in]: roles }, active: true }, attributes: ['id'], limit: 50, order: [['id', 'ASC']] });
-  return rows.map(u => u.id);
+  // Roles come from groups (v3.10.0): every active holder of any of the roles.
+  const ids = new Set();
+  for (const r of roles) for (const id of await findUserIdsWithRole(r)) ids.add(id);
+  return [...ids].sort((a, b) => a - b).slice(0, 50);
 };
 
 const requestAcceptance = async (risk, body, user, auditReq) => {
@@ -206,7 +207,7 @@ const approveRequest = async (risk, reqRow, user, body, auditReq) => {
 const requireAuthority = async (user, level) => {
   const active = (await rm.getActiveProfile()) || rm.DEFAULT_PROFILE;
   const rule = ruleFor(active, level);
-  if (!rule || !rule.roles.includes(user.role)) {
+  if (!rule || !hasRole(user, rule.roles)) {
     throw httpError(403, `Über Anträge dieser Stufe entscheiden nur folgende Rollen: ${(rule?.roles || []).join(', ') || '–'}.`);
   }
 };
@@ -234,7 +235,7 @@ const withdrawRequest = async (risk, reqRow, user, body, auditReq) => {
   if (!user?.id) throw httpError(403, 'Forbidden');
   if (!reqRow || reqRow.risk_id !== risk.id) throw httpError(404, 'Not found');
   if (reqRow.status !== 'pending') throw httpError(409, 'Der Antrag ist nicht mehr offen.');
-  if (reqRow.requested_by_id !== user.id && user.role !== 'admin') throw httpError(403, 'Zurückziehen kann nur, wer den Antrag gestellt hat.');
+  if (reqRow.requested_by_id !== user.id && !hasRole(user, 'admin')) throw httpError(403, 'Zurückziehen kann nur, wer den Antrag gestellt hat.');
   const note = text('Anmerkung')(pick(body || {}, DECISION_FIELDS).note);
   await reqRow.update({ status: 'withdrawn', decided_by_id: user.id, decided_at: new Date(), decision_reason: note });
   await auditFromReq(auditReq, 'update', 'risk_acceptance_request', reqRow.id, risk.ref || risk.title, { action: 'withdrawn', risk_id: risk.id, note });

@@ -16,6 +16,7 @@ import { exportToCSV, exportToExcel } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { IconButton } from '../components/ui/IconButton';
+import { hasRole } from '../lib/permissions';
 
 const riskOrder: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 
@@ -243,7 +244,7 @@ export const Assessments: React.FC = () => {
               <FolderOpen className="text-purple-500 dark:text-purple-400" size={18} />
               <h2 className="text-sm font-semibold dark:text-white">{t('templates.title')}</h2>
             </div>
-            {user?.role !== 'viewer' && user?.role !== 'management' && ['admin', 'it-staff', 'assessor'].includes(user?.role || '') && (
+            {hasRole(user, ['admin', 'it-staff', 'assessor']) && (
               <Link to="/policies?tab=templates" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('templates.manage')}</Link>
             )}
           </CardHeader>

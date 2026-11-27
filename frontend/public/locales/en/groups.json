@@ -26,14 +26,19 @@
     "color": "Color",
     "cancel": "Cancel",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "roles": "Roles granted to members",
+    "rolesHint": "Members receive every selected role. Leave empty for a pure team (tasks, @mentions).",
+    "rolesNoPermission": "Changing roles requires the permission \"admin.roles\"."
   },
   "members": {
     "modalTitle": "Members: {{name}}",
     "empty": "No members yet",
     "remove": "Remove",
     "addTitle": "Add member",
-    "selectUser": "Select user..."
+    "selectUser": "Select user...",
+    "grantsRoles": "This group grants roles — adding or removing members changes their permissions.",
+    "ssoHint": "Assigned by SSO claim mapping"
   },
   "confirm": {
     "delete": "Really delete group \"{{name}}\"?"
@@ -47,5 +52,7 @@
     "memberAdded": "Member added",
     "memberRemoved": "Member removed",
     "error": "Error"
-  }
+  },
+  "rolesIntro": "Groups carry roles: every member receives all roles of all their groups. Permissions combine — what any role allows is allowed.",
+  "noRoles": "No roles (team only)"
 }

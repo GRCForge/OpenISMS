@@ -92,7 +92,8 @@
     "owner": "Asset Owner",
     "viewer": "Guest (Read-only)",
     "management": "Management",
-    "employee": "Employee"
+    "employee": "Employee",
+    "none": "No role"
   },
 
   "frameworks": {

@@ -2,6 +2,7 @@ const express = require('express');
 const { Op, fn, col } = require('sequelize');
 const { Incident, Asset, User, Risk, Vendor, VvtEntry, Task } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { rolesOf } = require('../services/accessService');
 const { serverError, requestError } = require('../utils/httpError');
 const { setFilter } = require('../utils/queryFilters');
 const { auditFromReq } = require('../services/auditService');
@@ -29,21 +30,35 @@ const includeAll = [
   { model: VvtEntry, as: 'vvtEntries', attributes: ['id', 'name'], through: { attributes: [] } },
 ];
 
+// Incident scope per role: admin and assessor see every incident, the DPO data
+// breaches (GDPR), everyone else security incidents. With several roles the
+// scopes add up.
+const incidentScope = (user) => {
+  const scope = { all: false, security: false, gdpr: false };
+  for (const r of rolesOf(user)) {
+    if (r === 'admin' || r === 'assessor') scope.all = true;
+    else if (r === 'dpo') scope.gdpr = true;
+    else scope.security = true;
+  }
+  if (!scope.all && !scope.gdpr) scope.security = true;
+  return scope;
+};
+
 const getAccessWhere = (user) => {
   const base = { deleted: false };
-  if (['admin', 'assessor'].includes(user.role)) return base;
-  if (user.role === 'it-staff') return { ...base, is_security_incident: true };
-  if (user.role === 'dpo') return { ...base, is_gdpr_incident: true };
+  const scope = incidentScope(user);
+  if (scope.all) return base;
+  if (scope.security && scope.gdpr) return { ...base, [Op.or]: [{ is_security_incident: true }, { is_gdpr_incident: true }] };
+  if (scope.gdpr) return { ...base, is_gdpr_incident: true };
   return { ...base, is_security_incident: true };
 };
 
 // Single source of truth for per-record access — used by read AND write paths so
 // a scoped role cannot reach an out-of-scope incident via update.
 const canAccessIncident = (user, incident) => {
-  const access = getAccessWhere(user);
-  if (access.is_security_incident && !incident.is_security_incident) return false;
-  if (access.is_gdpr_incident && !incident.is_gdpr_incident) return false;
-  return true;
+  const scope = incidentScope(user);
+  if (scope.all) return true;
+  return (scope.security && !!incident.is_security_incident) || (scope.gdpr && !!incident.is_gdpr_incident);
 };
 
 router.get('/stats', authenticate, requirePermission('incidents','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {

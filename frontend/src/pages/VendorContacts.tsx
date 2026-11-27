@@ -12,7 +12,7 @@ import { Modal } from '../components/ui/Modal';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 const emptyContact = { name: '', email: '', phone: '', role: '', notes: '', vendor_id: '' };
@@ -21,9 +21,9 @@ const emptyVendor = { name: '', type: 'software' as any };
 export const VendorContacts: React.FC = () => {
   const { t } = useTranslation('vendorcontacts');
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = hasWriteAccess(user);
   const toast = useToast();
-  const canEdit = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'it-staff';
+  const canEdit = hasRole(user, 'admin') || hasRole(user, 'owner') || hasRole(user, 'it-staff');
 
   const typeOptions = [
     { value: 'software', label: t('types.software') },
@@ -204,7 +204,7 @@ export const VendorContacts: React.FC = () => {
                     {canEdit && (
                       <>
                         <IconButton label={t('common:actions.edit')} onClick={() => { setEditContact(c); setForm({ name: c.name, email: c.email || '', phone: c.phone || '', role: c.role || '', notes: c.notes || '', vendor_id: String(c.vendor_id) }); setIsNewVendor(false); setModalOpen(true); }}><Pencil size={14}/></IconButton>
-                        {user?.role === 'admin' && <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deleteContact(c.vendor_id, c.id)}><Trash2 size={14}/></IconButton>}
+                        {hasRole(user, 'admin') && <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deleteContact(c.vendor_id, c.id)}><Trash2 size={14}/></IconButton>}
                       </>
                     )}
                   </div>

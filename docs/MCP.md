@@ -320,7 +320,7 @@ Other IdPs need the equivalent: an access token whose `aud` contains
 - An MCP login never changes the account.
 - Unknown users are **not** created unless `MCP_OAUTH_AUTO_PROVISION=true`
   **and** SSO auto-provisioning is on **and** the token says
-  `email_verified=true`. They then get the SSO default role.
+  `email_verified=true`. They then join the SSO default group (if one is set) and get its roles.
 
 In Keycloak the `email` client scope puts `email_verified` into the access
 token; the user's e-mail must be marked as verified there.
@@ -334,11 +334,23 @@ Each tool is mapped to a module and action of the permission matrix (for
 example `risks.create`). On every call OpenISMS checks, in this order:
 
 1. **Module switch** — a tool of a disabled module answers with an error.
-2. **Permission matrix** — where the matrix defines the action, it decides.
-   Where it says nothing, the role list the REST endpoint uses decides. A
-   failed lookup denies.
-3. **Write protection** — the roles `viewer`, `management` and `employee` stay
-   read-only, whatever the matrix says.
+2. **Permission matrix** — evaluated for each of the user's roles (they come
+   from the user's groups, see
+   [SECURITY-CONFIGURATION.md](SECURITY-CONFIGURATION.md#4-roles-and-permissions)).
+   The call is allowed if any role allows it: where a role's permission set
+   defines the action, it decides for that role; where it says nothing, the role
+   list the REST endpoint uses decides. A failed lookup denies.
+3. **Write protection** — a user whose roles are all read-only (`viewer`,
+   `management`, `employee`) stays read-only, whatever the matrix says.
+
+A user without any role (in no role-carrying group) can only use the
+self-service tools: `isms_get_my_overview`, `isms_list_notifications` and their
+own API tokens.
+
+User administration follows the web UI: `isms_delete_user` deactivates an
+account instead of removing it, roles are granted by group membership
+(`group_ids` on the user tools, `roles` on the group tools), and the last active
+administrator can never be removed.
 
 Administrative tools (users, permissions, settings, custom roles, automation)
 require the matching admin permissions. Some field-level rules apply inside a
@@ -773,13 +785,13 @@ that module is enabled.
 | Tool | Type | Description |
 |---|---|---|
 | `isms_list_users` | R | List all users. |
-| `isms_list_groups` | R | List all groups/teams with their members. |
+| `isms_list_groups` | R | List all groups/teams with their members and the roles each group carries (roles reach users only through groups). |
 | `isms_create_user` | W | Create a new user account (admin only). |
-| `isms_update_user` | W | Update user details, role, department, or active status (admin only). |
-| `isms_delete_user` | D | Deactivate / delete a user account (admin only). |
-| `isms_get_group` | R | Get details of a group / team including its members. |
-| `isms_create_group` | W | Create a new team / group for task assignments and notifications (admin only). |
-| `isms_update_group` | W | Update group name, description, or color (admin only). |
+| `isms_update_user` | W | Update user details, group memberships, department, or active status (admin only). group_ids replaces the user's groups. |
+| `isms_delete_user` | D | Deactivate a user account (admin only). |
+| `isms_get_group` | R | Get details of a group / team including its members and the roles it carries. |
+| `isms_create_group` | W | Create a group (admin only). |
+| `isms_update_group` | W | Update group name, description, color, or the roles it carries (admin only). roles replaces the group's roles. |
 | `isms_delete_group` | D | Delete a group (admin only). |
 | `isms_add_group_member` | W | Add a user as member to a group (admin only). |
 | `isms_remove_group_member` | D | Remove a user from a group (admin only). |
@@ -804,7 +816,7 @@ that module is enabled.
 | `isms_update_settings` | W | Update general system settings (admin only). |
 | `isms_get_permissions` | R | Get the role permissions matrix mapping system actions to roles. |
 | `isms_update_permissions` | W | Update the role permissions matrix (admin only). |
-| `isms_list_custom_roles` | R | List custom user roles and their assigned permission matrices. |
+| `isms_list_custom_roles` | R | List custom roles (named permission sets) with their permission matrices, the groups that carry them and how many users hold them through those groups. |
 | `isms_create_custom_role` | W | Create a custom user role with specific permissions (admin only). |
 | `isms_update_custom_role` | W | Update a custom user role (admin only). |
 | `isms_delete_custom_role` | D | Delete a custom role (admin only). |

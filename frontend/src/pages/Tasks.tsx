@@ -16,7 +16,7 @@ import { FilterBar } from '../components/ui/FilterBar';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 const statusMeta: Record<TaskStatus, { color: string; icon: React.FC<any> }> = {
@@ -48,7 +48,7 @@ export const Tasks: React.FC = () => {
   const dateFnsLocale = i18n.language === 'de' ? de : enUS;
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canWrite = can('tasks', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('tasks', 'create', hasWriteAccess(user));
   const toast = useToast();
 
   const statusLabels: Record<TaskStatus, string> = {
@@ -303,7 +303,7 @@ export const Tasks: React.FC = () => {
           <p className="text-gray-500 dark:text-slate-400 text-sm">{t('tasks:subtitle', { count: tasks.length })}</p>
         </div>
         <div className="flex gap-2">
-          {user?.role === 'admin' && (
+          {hasRole(user, 'admin') && (
             orphanCount !== null && orphanCount > 0 ? (
               <Button variant="danger" size="sm" onClick={purgeOrphans} disabled={orphanLoading}>
                 <Trash2 size={14} />
@@ -394,7 +394,7 @@ export const Tasks: React.FC = () => {
             <CheckCircle2 size={14} />
             {t('tasks:bulk.markDone')}
           </Button>
-          {(user?.role === 'admin') && (
+          {(hasRole(user, 'admin')) && (
             <Button
               size="sm"
               variant="danger"
@@ -513,7 +513,7 @@ export const Tasks: React.FC = () => {
                   </div>
                   <div className="flex gap-1 shrink-0">
                     {canWrite && <IconButton label={t('common:actions.edit')} onClick={() => openEdit(t2)}><Pencil size={14} /></IconButton>}
-                    {canWrite && (user?.role === 'admin' || t2.created_by_id === user?.id) && (
+                    {canWrite && (hasRole(user, 'admin') || t2.created_by_id === user?.id) && (
                       <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => handleDelete(t2.id)}><Trash2 size={14} /></IconButton>
                     )}
                   </div>

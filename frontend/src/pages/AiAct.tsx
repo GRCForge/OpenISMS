@@ -15,7 +15,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 const riskCategoryColors: Record<AiRiskCategory, string> = {
@@ -59,8 +59,8 @@ export const AiAct: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('ai_act', 'create', hasWriteAccess(user?.role));
-  const canDelete = can('ai_act', 'delete', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('ai_act', 'create', hasWriteAccess(user));
+  const canDelete = can('ai_act', 'delete', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const [items, setItems] = useState<AiActItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);

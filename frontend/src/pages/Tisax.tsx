@@ -15,7 +15,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 type TisaxStatus = 'preparation' | 'requested' | 'scheduled' | 'audit_done' | 'label_received';
@@ -69,8 +69,8 @@ const RequirementsTab: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('tisax', 'create', hasWriteAccess(user?.role));
-  const canManage = can('tisax', 'edit', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('tisax', 'create', hasWriteAccess(user));
+  const canManage = can('tisax', 'edit', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const reqStatusLabels: Record<ReqStatus, string> = {
     open: t('reqStatus.open'),
@@ -355,8 +355,8 @@ export const Tisax: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('tisax', 'create', hasWriteAccess(user?.role));
-  const canManage = can('tisax', 'delete', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('tisax', 'create', hasWriteAccess(user));
+  const canManage = can('tisax', 'delete', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const statusLabels: Record<TisaxStatus, string> = {
     preparation: t('status.preparation'),

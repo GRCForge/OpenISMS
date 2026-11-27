@@ -67,6 +67,18 @@ let oidcCfg = { enabled: true, issuer: ISSUER, clientId: 'openisms', scopes: 'op
 const mock = (rel, exports) => {
   Module._cache[require.resolve(path.join(SRC, rel))] = { id: rel, loaded: true, exports };
 };
+// Roles come from groups (v3.10.0) via a database query in attachAccess; here
+// each mocked user holds exactly the role in its record.
+const realAccess = require(path.join(SRC, 'services', 'accessService'));
+mock('services/accessService', {
+  ...realAccess,
+  attachAccess: async (u) => {
+    const grants = realAccess.isBuiltinRole(u.role) ? [{ system_role: u.role }] : [];
+    Object.defineProperty(u, 'accessGrants', { value: grants, enumerable: false, configurable: true, writable: true });
+    Object.defineProperty(u, 'roles', { value: realAccess.rolesOfGrants(grants), enumerable: false, configurable: true, writable: true });
+    return u;
+  },
+});
 mock('models', {
   User: {
     findOne: async ({ where }) => USERS.find((u) => u.email === where.email) || null,

@@ -14,7 +14,8 @@
     "lastLogin": "Last Login",
     "twoFactor": "2FA",
     "authentication": "Authentication",
-    "status": "Status"
+    "status": "Status",
+    "groupsAndRoles": "Grupos y roles"
   },
   "roleLabels": {
     "admin": "Administrator",
@@ -77,7 +78,11 @@
     "deactivated": "Deactivated",
     "saving": "Saving...",
     "saveChanges": "Save Changes",
-    "createUser": "Create User"
+    "createUser": "Create User",
+    "groups": "Grupos",
+    "groupsHint": "Los usuarios reciben roles solo a través de sus grupos. Cada grupo muestra los roles que otorga.",
+    "noGroupsYet": "Aún no hay grupos. Cree grupos con roles en Administración → Grupos.",
+    "groupWithoutRoles": "sin roles (solo equipo)"
   },
   "resetPw": {
     "title": "Reset Password",
@@ -103,5 +108,12 @@
     "deactivate": "Deactivate",
     "resetPassword": "Reset Password",
     "deleteUser": "Delete User"
+  },
+  "noGroups": "Sin grupos",
+  "groupFromSso": "Asignado por SSO",
+  "noRole": "Sin rol — sin acceso",
+  "rolePicker": {
+    "builtin": "Roles integrados",
+    "custom": "Roles personalizados"
   }
 }

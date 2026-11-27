@@ -67,7 +67,8 @@
     "dpo": "Datenschutzbeauftragter",
     "owner": "Asset-Besitzer",
     "viewer": "Gast",
-    "employee": "Mitarbeiter"
+    "employee": "Mitarbeiter",
+    "none": "Keine Rolle"
   },
   "toast": {
     "contestSuccess": "Wettbewerb erfolgreich eingereicht.",

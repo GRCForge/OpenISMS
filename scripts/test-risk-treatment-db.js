@@ -66,6 +66,9 @@ const daysFromToday = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate()
   const it = await mkUser('it', 'it-staff');
   const mgmt = await mkUser('mgmt', 'management');
   const viewer = await mkUser('viewer', 'viewer');
+  // Since 3.10.0 roles come from groups; the startup migration puts these
+  // users into the groups of their roles, as it would on an upgrade.
+  await require(path.join(SRC, 'services', 'accessMigration')).ensureGroupBasedAccess({ log: { log: () => {} } });
   const req = (u) => ({ user: u });
   const lastAudit = async (type, id) => m.AuditLog.findOne({ where: { entity_type: type, entity_id: id }, order: [['id', 'DESC']] });
   const R = { likelihood_rationale: 'Observed twice.', impact_rationale: 'Customer data.' };

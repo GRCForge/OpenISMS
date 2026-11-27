@@ -255,9 +255,9 @@ function assetVisible(actor, asset) {
 // Dazu die Matrix: Ist assets.view fuer den Benutzer ausdruecklich entzogen,
 // ist kein Asset sichtbar - auch nicht als Zielobjekt.
 async function assetFilter(actor) {
-  const { can } = require('./permissionService');
-  const verdict = await can(actor, 'assets', 'view');
-  if (verdict === false) return () => false;
+  const { decide } = require('./permissionService');
+  const { BUILTIN_ROLES } = require('./accessService');
+  if (!(await decide(actor, 'assets', 'view', BUILTIN_ROLES))) return () => false;
   return (asset) => !!asset && assetVisible(actor, asset);
 }
 function seesAllAssets(actor) {

@@ -11,6 +11,7 @@ import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
 import { IconButton } from '../components/ui/IconButton';
+import { hasRole } from '../lib/permissions';
 
 const STATUS_COLORS: Record<SubjectRequestStatus, string> = {
   received: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -105,8 +106,8 @@ export const SubjectRequests: React.FC = () => {
     extended: t('status.extended'),
   };
 
-  const canWrite = can('subject_requests', 'create', user?.role === 'admin' || user?.role === 'dpo');
-  const canDelete = can('subject_requests', 'delete', user?.role === 'admin');
+  const canWrite = can('subject_requests', 'create', hasRole(user, 'admin') || hasRole(user, 'dpo'));
+  const canDelete = can('subject_requests', 'delete', hasRole(user, 'admin'));
 
   const load = useCallback(async () => {
     try {

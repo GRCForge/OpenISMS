@@ -71,9 +71,12 @@
     "review_interval": "Default Review Interval (months)",
     "sso_default_role": "Default Role for New SSO Users",
     "sso_autoprovision": "Automatically create new SSO users (Auto-Provisioning)",
-    "sso_strict_role_sync": "Sincronizar estrictamente los roles desde el proveedor de identidad",
-    "sso_strict_role_sync_hint": "Los usuarios que no coincidan con ninguna asignación de claims se restablecen al rol predeterminado de SSO al iniciar sesión, de modo que eliminar un grupo en el proveedor de identidad también revoca el acceso aquí. Esto afecta también a los roles asignados manualmente; el último administrador activo nunca se degrada.",
-    "saved": " Saved"
+    "sso_strict_role_sync": "Sincronizar estrictamente los grupos SSO con el proveedor de identidad",
+    "sso_strict_role_sync_hint": "Al iniciar sesión se eliminan las membresías asignadas por SSO que ningún mapeo de claims otorga ya. Las membresías añadidas manualmente se conservan; el último administrador activo nunca se elimina.",
+    "saved": " Saved",
+    "sso_default_group": "Grupo predeterminado para usuarios SSO",
+    "sso_default_group_none": "— Ninguno (sin acceso hasta asignarlo) —",
+    "sso_default_group_hint": "Los usuarios SSO sin mapeo de claims coincidente se unen a este grupo y reciben sus roles."
   },
   "roles": {
     "admin": "Administrador",
@@ -115,7 +118,7 @@
   },
   "custom_roles": {
     "title": "Custom Roles",
-    "description": "Define custom role names that you can assign directly to users in user management or use for OIDC group mapping. Each role inherits the permissions of a base role.",
+    "description": "Los roles personalizados son conjuntos de permisos con nombre. Asígnelos a grupos — los miembros del grupo reciben el rol. Cada rol parte de un rol base y puede definir sus propios permisos.",
     "no_roles": "No custom roles defined yet.",
     "name_header": "Name",
     "base_role_header": "Base Role",
@@ -130,12 +133,14 @@
     "error": "Error",
     "own_permissions": "Define dedicated permissions for this role",
     "own_permissions_hint": "Without dedicated permissions the base role applies. Actions not listed here keep following the base role.",
-    "edit_title": "Edit role: {{name}}"
+    "edit_title": "Edit role: {{name}}",
+    "carried_by": "Otorgado mediante: {{groups}}",
+    "no_groups": "No asignado a ningún grupo"
   },
   "oidc_mappings": {
     "title": "OIDC Claim Mappings",
-    "description": "During SSO login, OIDC claims (e.g., groups, roles) are checked against these mappings. The first match (highest priority) sets the user's role.",
-    "no_mappings": "No mappings configured — SSO users receive the default SSO role.",
+    "description": "Durante el inicio de sesión SSO, los claims OIDC (p. ej. groups, roles) se comparan con estos mapeos. Cada mapeo coincidente añade al usuario a su grupo; el usuario recibe los roles de todos esos grupos.",
+    "no_mappings": "No hay mapeos configurados — los usuarios SSO se unen al grupo SSO predeterminado.",
     "claim_path": "Claim Path",
     "claim_value": "Claim Value",
     "role": "→ Role",
@@ -154,7 +159,11 @@
     "env_managed_notice": "Estas asignaciones provienen de {{variable}}. Mientras esa variable esté definida, solo se aplica esta lista: las asignaciones guardadas aquí no se leen.",
     "env_managed_row": "Definido mediante el entorno",
     "env_error_title": "Las asignaciones del entorno no son utilizables.",
-    "env_error_effect": "Actualmente NO se aplica ninguna asignación, ni siquiera las de la base de datos. Quien inicie sesión recibirá el rol SSO predeterminado."
+    "env_error_effect": "Actualmente NO se aplica ningún mapeo — ni siquiera los de la base de datos. Quien inicie sesión se une al grupo SSO predeterminado.",
+    "group": "→ Grupo",
+    "group_label": "Grupo",
+    "group_missing": "Falta el grupo",
+    "group_without_roles": "sin roles"
   },
   "rbac": {
     "title": "Adjust Permissions",

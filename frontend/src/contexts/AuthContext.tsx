@@ -37,6 +37,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', data.token);
     setUser(data.user);
+    // The login response names one role; /auth/me adds all roles the user holds
+    // through groups, which the UI needs to show what the API allows.
+    try { setUser((await api.get('/auth/me')).data); } catch { /* keep data.user */ }
   };
 
   const loginWithToken = async (token: string) => {

@@ -1,14 +1,11 @@
-const { CustomRole } = require('../models');
 const { getPermissions } = require('./settingsService');
 
-// Resolving permissions happens on every guarded request, so both the global
-// matrix and the custom-role matrices are cached briefly rather than hitting the
-// settings and custom_roles tables each time. Mirrors middleware/modules.js.
+// Resolving permissions happens on every guarded request, so the global matrix
+// is cached briefly rather than hitting the settings table each time (the roles
+// of a user are cached in services/accessService.js). Mirrors middleware/modules.js.
 const CACHE_TTL_MS = 30 * 1000;
 let globalCache = null;
 let globalCacheAt = 0;
-let roleCache = null;
-let roleCacheAt = 0;
 
 const getGlobalMatrix = async () => {
   const now = Date.now();
@@ -18,55 +15,97 @@ const getGlobalMatrix = async () => {
   return globalCache;
 };
 
-const getCustomRoleMatrices = async () => {
-  const now = Date.now();
-  if (roleCache && now - roleCacheAt < CACHE_TTL_MS) return roleCache;
-  const roles = await CustomRole.findAll({ attributes: ['id', 'permissions'] });
-  roleCache = Object.fromEntries(roles.map(r => [r.id, r.permissions || null]));
-  roleCacheAt = now;
-  return roleCache;
-};
-
 const invalidatePermissionCache = () => {
   globalCache = null;
-  roleCache = null;
+  require('./accessService').invalidateAccessCache();
 };
 
-// The effective matrix for a user, normalised to { module: { action: boolean } }.
-// A custom role with its own matrix replaces the global one outright — the admin
-// chose to define that role fully. Without one, the global matrix is projected
-// through the user's role, which is the custom role's base_role when assigned.
-const resolvePermissions = async (user) => {
-  if (!user) return {};
-  if (user.custom_role_id) {
-    const matrices = await getCustomRoleMatrices();
-    const own = matrices[user.custom_role_id];
-    if (own && typeof own === 'object') return own;
-  }
-  const global = await getGlobalMatrix();
-  // The global matrix merges admin-supplied overrides from the settings table, so
-  // its keys get the same treatment as a custom role's before being written.
+// One role's view of the global matrix: { module: { action: boolean } }.
+const projectGlobal = (global, role) => {
   const result = Object.create(null);
-  for (const [module, actions] of Object.entries(global)) {
+  for (const [module, actions] of Object.entries(global || {})) {
     if (!isSafeKey(module) || !actions || typeof actions !== 'object') continue;
     const projected = Object.create(null);
     for (const [action, roles] of Object.entries(actions)) {
       if (!isSafeKey(action)) continue;
-      projected[action] = Array.isArray(roles) && roles.includes(user.role);
+      projected[action] = Array.isArray(roles) && roles.includes(role);
     }
-    result[module] = { ...projected };
+    result[module] = projected;
   }
-  return { ...result };
+  return result;
 };
 
-// true / false when the matrix decides, undefined when it says nothing about this
-// module+action. Callers must treat undefined as "not my call" and fall back to
-// whatever check the route already had, so an entry missing from a custom role's
-// matrix cannot silently deny access to a module added after the role was written.
+// The permission set of one role (a grant, see services/accessService.js):
+// a system role is its column of the global matrix; a custom role is its own
+// set, or — without one — the column of its base role.
+const matrixOfGrant = (global, grant) => {
+  if (grant.system_role) return projectGlobal(global, grant.system_role);
+  if (grant.permissions && typeof grant.permissions === 'object') return grant.permissions;
+  return projectGlobal(global, grant.base_role);
+};
+
+const grantsOf = async (user) => {
+  if (!user) return [];
+  if (!Array.isArray(user.accessGrants)) await require('./accessService').attachAccess(user);
+  return user.accessGrants || [];
+};
+
+// The decision for one module.action, role by role, allow-only:
+//   - a role whose set says true allows
+//   - a role whose set says nothing allows when its base role is among
+//     fallbackRoles — the role list the route carried before the matrix existed,
+//     so a module added after a custom role was written cannot lock it out
+//   - nothing else allows; a user without roles is denied
+const decide = async (user, module, action, fallbackRoles = []) => {
+  const grants = await grantsOf(user);
+  if (grants.length === 0) return false;
+  const global = await getGlobalMatrix();
+  const { baseRoleOf } = require('./accessService');
+  for (const g of grants) {
+    const entry = matrixOfGrant(global, g)?.[module]?.[action];
+    if (entry === true) return true;
+    if (entry === undefined && fallbackRoles.includes(baseRoleOf(g))) return true;
+  }
+  return false;
+};
+
+// The effective matrix of a user, merged across roles (true wins over false;
+// actions no role defines are left out). For display — the UI hides what the
+// user cannot do — and for /api/me/permissions. Access decisions use decide().
+const resolvePermissions = async (user) => {
+  const grants = await grantsOf(user);
+  const global = await getGlobalMatrix();
+  const merged = Object.create(null);
+  for (const g of grants) {
+    for (const [module, actions] of Object.entries(matrixOfGrant(global, g) || {})) {
+      if (!isSafeKey(module) || !actions || typeof actions !== 'object') continue;
+      if (!merged[module]) merged[module] = Object.create(null);
+      for (const [action, value] of Object.entries(actions)) {
+        if (!isSafeKey(action) || typeof value !== 'boolean') continue;
+        merged[module][action] = merged[module][action] === true || value;
+      }
+    }
+  }
+  const out = {};
+  for (const [m, a] of Object.entries(merged)) out[m] = { ...a };
+  return out;
+};
+
+// true when a role allows, false when every role that speaks says no,
+// undefined when no role defines module+action. Kept for callers that combine
+// it with a role check of their own; new code should call decide().
 const can = async (user, module, action) => {
-  const matrix = await resolvePermissions(user);
-  const entry = matrix?.[module]?.[action];
-  return typeof entry === 'boolean' ? entry : undefined;
+  const grants = await grantsOf(user);
+  const global = await getGlobalMatrix();
+  let sawFalse = false;
+  let sawUndefined = false;
+  for (const g of grants) {
+    const entry = matrixOfGrant(global, g)?.[module]?.[action];
+    if (entry === true) return true;
+    if (entry === false) sawFalse = true; else sawUndefined = true;
+  }
+  if (sawUndefined || !sawFalse) return undefined;
+  return false;
 };
 
 // Module and action names are identifiers the admin UI picks from, never free
@@ -98,4 +137,4 @@ const sanitizeMatrix = (input) => {
   return Object.keys(out).length ? { ...out } : null;
 };
 
-module.exports = { resolvePermissions, can, invalidatePermissionCache, sanitizeMatrix };
+module.exports = { resolvePermissions, can, decide, invalidatePermissionCache, sanitizeMatrix, projectGlobal, matrixOfGrant };

@@ -15,7 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
 import { useModules } from '../contexts/ModulesContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 
 // Maps controls.framework value → module key in ModulesContext
 const FW_TO_MODULE: Record<string, string> = { iso27001: 'iso27001', nis2: 'nis2', bsi: 'bsi_grundschutz' };
@@ -32,8 +32,8 @@ export const Controls: React.FC = () => {
   const toast = useToast();
   const { isEnabled } = useModules();
   const { t } = useTranslation(['controls', 'common']);
-  const canWrite = can('controls', 'create', hasWriteAccess(user?.role));
-  const canDelete = can('controls', 'delete', user?.role === 'admin');
+  const canWrite = can('controls', 'create', hasWriteAccess(user));
+  const canDelete = can('controls', 'delete', hasRole(user, 'admin'));
 
   const fwLabels: Record<string, string> = {
     iso27001: t('common:frameworks.iso27001'),

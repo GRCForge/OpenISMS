@@ -23,6 +23,7 @@ import { exportToMultiSheetExcel } from '../lib/export';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import type { ReviewSignOff } from '../types';
+import { hasRole } from '../lib/permissions';
 
 const RISK_COLORS: Record<string, string> = {
   critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#10b981',
@@ -141,7 +142,7 @@ export const ManagementReport: React.FC = () => {
   const [signOffNotes,     setSignOffNotes]     = useState('');
   const [signOffSaving,    setSignOffSaving]    = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'details'>('overview');
-  const canSignOff = user?.role === 'admin' || user?.role === 'assessor';
+  const canSignOff = hasRole(user, 'admin') || hasRole(user, 'assessor');
 
   const [refreshing, setRefreshing] = useState(false);
 

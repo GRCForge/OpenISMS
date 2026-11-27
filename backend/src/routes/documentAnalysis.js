@@ -1,6 +1,7 @@
 const express = require('express');
 const { apiLimiter, heavyLimiter } = require('../middleware/rateLimiter');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { onlyRoles } = require('../services/accessService');
 const { serverError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const { runAnalysis } = require('../services/documentAnalysisService');
@@ -22,7 +23,7 @@ const parsePositiveInt = (value) => {
 // it-staff and viewer roles must not access contract documents (mirrors
 // canAccessContract() in documents.js). Only applies to subject_type 'document' —
 // policies.js has no equivalent per-category restriction on its own downloads.
-const canAccessContract = (user) => user.role !== 'it-staff' && user.role !== 'viewer';
+const canAccessContract = (user) => !onlyRoles(user, 'it-staff', 'viewer');
 
 // One shared router implementation for both Documents and Policies, mounted
 // separately for each so subject_type is fixed by which mount was hit rather

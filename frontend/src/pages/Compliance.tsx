@@ -98,7 +98,7 @@ export const Compliance: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('compliance_kpis', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('compliance_kpis', 'create', hasWriteAccess(user));
 
   const riskLabels: Record<RiskLevel, string> = {
     low: t('riskLevels.low'),

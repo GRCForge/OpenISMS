@@ -21,6 +21,7 @@ const { pick } = require('../utils/massAssignment');
 const { auditFromReq } = require('./auditService');
 const { notify } = require('./notifyService');
 const rm = require('./riskMethodology');
+const { hasRole } = require('./accessService');
 
 const { httpError } = rm;
 const models = () => require('../models');
@@ -224,11 +225,8 @@ const updateItem = async (risk, item, body, user, auditReq) => {
 
 // Same rule as POST /api/tasks: the matrix decides, its default otherwise.
 const canCreateTask = async (user) => {
-  const { can } = require('./permissionService');
-  const verdict = await can(user, 'tasks', 'create');
-  if (verdict === false) return false;
-  if (verdict === true) return true;
-  return TASK_CREATE_ROLES.includes(user?.role);
+  const { decide } = require('./permissionService');
+  return decide(user, 'tasks', 'create', TASK_CREATE_ROLES);
 };
 
 /**
@@ -354,7 +352,7 @@ const listPlan = async (user, query = {}) => {
     where.status = where.status ? where.status : { [Op.in]: ['planned', 'in_progress'] };
     where.due_date = { [Op.lt]: today };
   }
-  const privileged = PRIVILEGED_PLAN.includes(user.role);
+  const privileged = hasRole(user, PRIVILEGED_PLAN);
   const groupIds = privileged ? [] : (await GroupMember.findAll({ where: { user_id: user.id }, attributes: ['group_id'] })).map(g => g.group_id);
   const rows = await RiskTreatmentItem.findAll({
     where,

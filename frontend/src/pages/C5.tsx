@@ -71,7 +71,7 @@ export const C5: React.FC = () => {
   const { t } = useTranslation('c5');
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canWrite = can('c5', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('c5', 'create', hasWriteAccess(user));
   const [items, setItems] = useState<C5Item[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);

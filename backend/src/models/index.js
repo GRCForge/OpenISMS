@@ -73,6 +73,7 @@ const UserTraining = require('./UserTraining');
 const Training = require('./Training');
 const Group = require('./Group');
 const GroupMember = require('./GroupMember');
+const GroupRole = require('./GroupRole');
 const PushSubscription = require('./PushSubscription');
 const VendorTriageRun = require('./VendorTriageRun');
 const VendorFinding = require('./VendorFinding');
@@ -314,6 +315,10 @@ User.belongsToMany(Group, { through: GroupMember, as: 'groups', foreignKey: 'use
 GroupMember.belongsTo(Group, { foreignKey: 'group_id' });
 GroupMember.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
 Group.hasMany(GroupMember, { as: 'groupMembers', foreignKey: 'group_id', onDelete: 'CASCADE' });
+Group.hasMany(GroupRole, { as: 'groupRoles', foreignKey: 'group_id', onDelete: 'CASCADE' });
+GroupRole.belongsTo(Group, { foreignKey: 'group_id' });
+GroupRole.belongsTo(CustomRole, { as: 'customRole', foreignKey: 'custom_role_id' });
+CustomRole.hasMany(GroupRole, { as: 'groupRoles', foreignKey: 'custom_role_id', onDelete: 'CASCADE' });
 
 // Tasks associations
 Task.belongsTo(User, { as: 'assignee', foreignKey: 'assigned_to_id' });
@@ -425,6 +430,7 @@ C5Criterion.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' })
 User.belongsTo(CustomRole, { as: 'customRole', foreignKey: 'custom_role_id' });
 CustomRole.hasMany(User, { as: 'users', foreignKey: 'custom_role_id' });
 OidcClaimMapping.belongsTo(CustomRole, { as: 'customRole', foreignKey: 'custom_role_id' });
+OidcClaimMapping.belongsTo(Group, { as: 'group', foreignKey: 'group_id' });
 CustomRole.hasMany(OidcClaimMapping, { as: 'mappings', foreignKey: 'custom_role_id' });
 
 // KPI associations
@@ -489,7 +495,7 @@ module.exports = {
   Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, BsiInformationDomain, BsiTargetObject, BsiModeling, BsiRequirementDocument, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
-  Group, GroupMember, PushSubscription,
+  Group, GroupMember, GroupRole, PushSubscription,
   VendorTriageRun, VendorFinding,
   DocumentAnalysisRun, DocumentAnalysisFinding,
   ControlRequirement, BcmProcessAsset,

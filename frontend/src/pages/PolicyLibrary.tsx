@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasRole, onlyRoles, hasWriteAccess } from '../lib/permissions';
 import { DocumentAnalysisModal } from '../components/DocumentAnalysisModal';
 import { IconButton } from '../components/ui/IconButton';
 
@@ -68,11 +68,11 @@ export const PolicyLibrary: React.FC = () => {
   const { t } = useTranslation(['policylibrary', 'documentanalysis']);
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canWrite = can('policies', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('policies', 'create', hasWriteAccess(user));
   const toast = useToast();
-  const canEdit = can('policies', 'edit', user?.role === 'admin' || user?.role === 'assessor' || user?.role === 'dpo');
+  const canEdit = can('policies', 'edit', hasRole(user, 'admin') || hasRole(user, 'assessor') || hasRole(user, 'dpo'));
   const ANALYSIS_ROLES = ['admin', 'assessor', 'it-staff', 'dpo'];
-  const canViewAnalysis = can('document_analysis', 'view', ANALYSIS_ROLES.includes(user?.role || ''));
+  const canViewAnalysis = can('document_analysis', 'view', hasRole(user, ANALYSIS_ROLES));
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'templates' ? 'templates' : 'documents';
@@ -314,7 +314,8 @@ export const PolicyLibrary: React.FC = () => {
     !controlSearch || `${c.code || ''} ${c.title}`.toLowerCase().includes(controlSearch.toLowerCase())
   ), [controls, controlSearch]);
 
-  const isRestricted = user?.role === 'it-staff' || (user?.role === 'viewer' || user?.role === 'management');
+  // Contracts are hidden from IT staff, viewers and management — any other role lifts that.
+  const isRestricted = onlyRoles(user, 'it-staff', 'viewer', 'management');
 
   const filtered = policies.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) || p.code?.toLowerCase().includes(search.toLowerCase());
@@ -470,7 +471,7 @@ export const PolicyLibrary: React.FC = () => {
                         {canEdit && (
                           <>
                             <Button size="sm" variant="secondary" onClick={() => openEdit(policy)} title={t('editTooltip')}><Pencil size={14} /></Button>
-                            {user?.role === 'admin' && <Button size="sm" variant="secondary" onClick={() => deletePolicy(policy.id)} className="text-red-500 hover:bg-red-50" title={t('deleteTooltip')}><Trash2 size={14} /></Button>}
+                            {hasRole(user, 'admin') && <Button size="sm" variant="secondary" onClick={() => deletePolicy(policy.id)} className="text-red-500 hover:bg-red-50" title={t('deleteTooltip')}><Trash2 size={14} /></Button>}
                           </>
                         )}
                       </div>
@@ -522,7 +523,7 @@ export const PolicyLibrary: React.FC = () => {
                       
                       <div className="flex gap-1">
                         <IconButton label={t('downloadTooltip')} onClick={() => handleDownloadTemplate(template.id, template.original_name)}><Download size={14} /></IconButton>
-                        {user?.role === 'admin' && (
+                        {hasRole(user, 'admin') && (
                           <IconButton label={t('deleteTooltip')} variant="danger" onClick={() => deleteTemplate(template.id, template.title)}><Trash2 size={14} /></IconButton>
                         )}
                       </div>

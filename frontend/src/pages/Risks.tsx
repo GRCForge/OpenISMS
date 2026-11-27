@@ -27,7 +27,7 @@ import { exportToCSV, exportToExcel } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 interface ScenarioForm { asset_ids: number[]; threat_id: number | null; vulnerability_id: number | null; description: string; }
@@ -164,8 +164,8 @@ export const Risks: React.FC = () => {
   const { user } = useAuth();
 
   const { can } = usePermissions();
-  const canWrite = can('risks', 'create', hasWriteAccess(user?.role));
-  const canOverride = can('risks', 'override_residual', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('risks', 'create', hasWriteAccess(user));
+  const canOverride = can('risks', 'override_residual', hasRole(user, 'admin') || hasRole(user, 'assessor'));
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [heatBasis, setHeatBasis] = useState<LevelBasis>('gross');
   // Values the risk had when the form opened - a change makes the rationale mandatory.
@@ -672,7 +672,7 @@ export const Risks: React.FC = () => {
                 <FolderOpen className="text-orange-500 dark:text-orange-400" size={18} />
                 <h2 className="text-sm font-semibold dark:text-white">{t('risks:templates.title')}</h2>
               </div>
-              {user?.role !== 'viewer' && user?.role !== 'management' && ['admin', 'it-staff', 'assessor'].includes(user?.role || '') && (
+              {hasRole(user, ['admin', 'it-staff', 'assessor']) && (
                 <Link to="/policies?tab=templates" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('risks:templates.manage')}</Link>
               )}
             </CardHeader>
@@ -985,13 +985,13 @@ export const Risks: React.FC = () => {
 
             {editId && detail && (
               <AcceptanceWorkflow risk={detail} user={user} rule={acceptanceRule}
-                canRequest={can('risks', 'request_acceptance', hasWriteAccess(user?.role))}
-                canSignOff={can('risks', 'sign_off', ['admin', 'assessor', 'owner', 'management'].includes(user?.role || ''))}
+                canRequest={can('risks', 'request_acceptance', hasWriteAccess(user))}
+                canSignOff={can('risks', 'sign_off', hasRole(user, ['admin', 'assessor', 'owner', 'management']))}
                 levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onRevoke={revokeSignoff} onChanged={reloadDetail} />
             )}
 
             {editId && detail && (
-              <RiskMonitoringPanel risk={detail} canEdit={can('risks', 'edit', hasWriteAccess(user?.role))}
+              <RiskMonitoringPanel risk={detail} canEdit={can('risks', 'edit', hasWriteAccess(user))}
                 levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onChanged={reloadDetail} />
             )}
           </div>

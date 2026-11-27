@@ -80,7 +80,7 @@ and glossary pages.
 | **Reporting** | Dashboard, ISMS health score, 12-month trends, management review sign-off, Excel export |
 | **Relationship analysis** | Impact, evidence paths and connections across all modules (Apache AGE) |
 | **Collaboration** | Tasks for users and groups, automated recurring tasks, reminders, e-mail and browser push |
-| **Administration** | 8 roles plus custom roles, editable permission matrix, module switches, signed audit log, backup and restore |
+| **Administration** | Roles as permission sets (8 built-in plus custom), granted through groups that combine roles, editable permission matrix, module switches, signed audit log, backup and restore |
 | **Access** | Password + TOTP, passkeys (WebAuthn), SSO via any OIDC provider, API tokens, REST API with OpenAPI, MCP server |
 | **UX** | English, German, Spanish · installable PWA · command palette · mobile layout |
 

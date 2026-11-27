@@ -71,9 +71,12 @@
     "review_interval": "Standard-Überprüfungsintervall (Monate)",
     "sso_default_role": "Standardrolle für neue SSO-Benutzer",
     "sso_autoprovision": "Neue SSO-Benutzer automatisch erstellen (Auto-Bereitstellung)",
-    "sso_strict_role_sync": "Rollen strikt aus dem Identity Provider synchronisieren",
-    "sso_strict_role_sync_hint": "Benutzer, auf die keine Claim-Zuordnung passt, werden bei der Anmeldung auf die SSO-Standardrolle zurückgesetzt. Damit entzieht das Entfernen einer Gruppe im Identity Provider auch hier die Rechte. Betrifft auch manuell vergebene Rollen; der letzte aktive Administrator wird nie herabgestuft.",
-    "saved": " Gespeichert"
+    "sso_strict_role_sync": "SSO-Gruppen strikt mit dem Identity Provider abgleichen",
+    "sso_strict_role_sync_hint": "Beim Login werden per SSO zugewiesene Gruppenmitgliedschaften entfernt, die kein Claim-Mapping mehr vergibt. Manuell hinzugefügte Mitgliedschaften bleiben; der letzte aktive Administrator wird nie entfernt.",
+    "saved": " Gespeichert",
+    "sso_default_group": "Standardgruppe für SSO-Benutzer",
+    "sso_default_group_none": "— Keine (kein Zugriff bis zur Zuweisung) —",
+    "sso_default_group_hint": "SSO-Benutzer ohne passendes Claim-Mapping kommen in diese Gruppe und erhalten ihre Rollen."
   },
   "roles": {
     "admin": "Administrator",
@@ -115,7 +118,7 @@
   },
   "custom_roles": {
     "title": "Benutzerdefinierte Rollen",
-    "description": "Definieren Sie benutzerdefinierte Rollennamen, die Sie direkt Benutzern in der Benutzerverwaltung zuweisen oder für die OIDC-Gruppenzuordnung verwenden können. Jede Rolle erbt die Berechtigungen einer Basisrolle.",
+    "description": "Eigene Rollen sind benannte Sammlungen von Berechtigungen. Weisen Sie sie Gruppen zu — die Mitglieder der Gruppe erhalten die Rolle. Jede Rolle startet von einer Basisrolle und kann eigene Berechtigungen festlegen.",
     "no_roles": "Noch keine benutzerdefinierten Rollen definiert.",
     "name_header": "Name",
     "base_role_header": "Basisrolle",
@@ -130,12 +133,14 @@
     "error": "Fehler",
     "own_permissions": "Eigene Berechtigungen für diese Rolle festlegen",
     "own_permissions_hint": "Ohne eigene Berechtigungen gelten die Rechte der Basisrolle. Aktionen, die hier nicht aufgeführt sind, richten sich weiterhin nach der Basisrolle.",
-    "edit_title": "Rolle bearbeiten: {{name}}"
+    "edit_title": "Rolle bearbeiten: {{name}}",
+    "carried_by": "Vergeben über: {{groups}}",
+    "no_groups": "Keiner Gruppe zugewiesen"
   },
   "oidc_mappings": {
     "title": "OIDC Anspruchszuordnungen",
-    "description": "Während des SSO-Logins werden OIDC-Ansprüche (z.B. Gruppen, Rollen) gegen diese Zuordnungen überprüft. Die erste Übereinstimmung (höchste Priorität) legt die Rolle des Benutzers fest.",
-    "no_mappings": "Keine Zuordnungen konfiguriert — SSO-Benutzer erhalten die Standard-SSO-Rolle.",
+    "description": "Beim SSO-Login werden OIDC-Claims (z. B. groups, roles) mit diesen Mappings abgeglichen. Jedes passende Mapping fügt den Benutzer seiner Gruppe hinzu; der Benutzer erhält die Rollen all dieser Gruppen.",
+    "no_mappings": "Keine Mappings konfiguriert — SSO-Benutzer kommen in die SSO-Standardgruppe.",
     "claim_path": "Pfad einfordern",
     "claim_value": "Wert beanspruchen",
     "role": "→ Rolle",
@@ -154,7 +159,11 @@
     "env_managed_notice": "Diese Zuordnungen gibt {{variable}} vor. Solange die Variable gesetzt ist, gilt ausschließlich diese Liste — die hier gespeicherten Zuordnungen werden nicht gelesen.",
     "env_managed_row": "Über die Umgebung gesetzt",
     "env_error_title": "Die Zuordnungen aus der Umgebung sind unbrauchbar.",
-    "env_error_effect": "Es greift derzeit KEINE Zuordnung — auch nicht die in der Datenbank. Wer sich anmeldet, bekommt die Standard-SSO-Rolle."
+    "env_error_effect": "Derzeit gilt KEIN Mapping — auch nicht die aus der Datenbank. Wer sich anmeldet, kommt in die SSO-Standardgruppe.",
+    "group": "→ Gruppe",
+    "group_label": "Gruppe",
+    "group_missing": "Gruppe fehlt",
+    "group_without_roles": "keine Rollen"
   },
   "rbac": {
     "title": "Berechtigungen anpassen",

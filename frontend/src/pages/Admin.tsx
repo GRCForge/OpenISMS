@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Users as UsersIcon, History, KeyRound, Settings as SettingsIcon, CheckCircle2, XCircle, Copy, Loader2, ShieldCheck, Wrench, Trash2, Lock, RefreshCw, BookOpen, ExternalLink, Database, Download, Upload, AlertTriangle, FileArchive, Mail, Send, Wifi, Puzzle, Shield, Zap, Bot, LifeBuoy, Target, Car, Radar, Radio, AlertOctagon, Tag, Gauge } from 'lucide-react';
 import api from '../lib/api';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
@@ -278,16 +279,25 @@ const OidcSettings: React.FC = () => {
   );
 };
 
+// Groups carry the roles (v3.10.0); SSO settings point at groups.
+interface GroupOption { id: number; name: string; roles?: { system_role?: string; custom_role_id?: number; name?: string | null }[] }
+const groupLabel = (g: GroupOption, t: TFunction<'admin'>) => {
+  const roles = (g.roles || []).map(r => (r.system_role ? t('roles.' + r.system_role + '_short', { defaultValue: r.system_role }) : (r.name || `#${r.custom_role_id}`)));
+  return roles.length ? `${g.name} (${roles.join(', ')})` : `${g.name} — ${t('oidc_mappings.group_without_roles')}`;
+};
+
 // ---------------- Allgemeine Einstellungen ----------------
-interface GeneralState { appName: string; reviewIntervalMonths: number; ssoAutoProvision: boolean; ssoDefaultRole: string; ssoStrictRoleSync: boolean; }
+interface GeneralState { appName: string; reviewIntervalMonths: number; ssoAutoProvision: boolean; ssoDefaultGroupId: number | null; ssoStrictRoleSync: boolean; }
 
 const GeneralSettings: React.FC = () => {
   const { t } = useTranslation('admin');
   const [s, setS] = useState<GeneralState | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [groups, setGroups] = useState<GroupOption[]>([]);
 
   useEffect(() => { api.get('/admin/settings').then(r => setS(r.data)).catch(() => setS(null)); }, []);
+  useEffect(() => { api.get('/groups').then(r => setGroups(r.data)).catch(() => setGroups([])); }, []);
   if (!s) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   const save = async () => {
@@ -302,17 +312,14 @@ const GeneralSettings: React.FC = () => {
       <CardBody className="space-y-5 max-w-2xl">
         <Input label={t('general.app_name')} value={s.appName} onChange={e => setS({ ...s, appName: e.target.value })} />
         <Input label={t('general.review_interval')} type="number" value={String(s.reviewIntervalMonths)} onChange={e => setS({ ...s, reviewIntervalMonths: parseInt(e.target.value) || 12 })} />
-        <Select label={t('general.sso_default_role')} value={s.ssoDefaultRole} onChange={e => setS({ ...s, ssoDefaultRole: e.target.value })}
-          options={[
-            { value: 'admin', label: t('roles.admin') },
-            { value: 'assessor', label: t('roles.assessor') },
-            { value: 'it-staff', label: t('roles.it-staff') },
-            { value: 'dpo', label: t('roles.dpo') },
-            { value: 'owner', label: t('roles.owner') },
-            { value: 'management', label: t('roles.management') },
-            { value: 'viewer', label: t('roles.viewer') },
-            { value: 'employee', label: t('roles.employee') }
-          ]} />
+        <div>
+          <Select label={t('general.sso_default_group')} value={s.ssoDefaultGroupId ? String(s.ssoDefaultGroupId) : ''}
+            onChange={e => setS({ ...s, ssoDefaultGroupId: e.target.value ? parseInt(e.target.value) : null })}>
+            <option value="">{t('general.sso_default_group_none')}</option>
+            {groups.map(g => <option key={g.id} value={String(g.id)}>{groupLabel(g, t)}</option>)}
+          </Select>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{t('general.sso_default_group_hint')}</p>
+        </div>
         <label className="flex items-center gap-3 p-3 rounded-lg border bg-gray-50 dark:bg-slate-800/40 dark:border-slate-700 cursor-pointer">
           <input type="checkbox" checked={s.ssoAutoProvision} onChange={e => setS({ ...s, ssoAutoProvision: e.target.checked })} className="w-4 h-4 rounded text-blue-600" />
           <span className="text-sm font-medium dark:text-slate-200">{t('general.sso_autoprovision')}</span>
@@ -459,10 +466,10 @@ const SecuritySettings: React.FC = () => {
 // ---------------- RBAC / Rollen & Rechte ----------------
 // ---- Custom Roles ----
 type PermMatrix = Record<string, Record<string, boolean>>;
-interface CustomRoleItem { id: number; name: string; description: string | null; base_role: string; users_count?: number; permissions?: PermMatrix | null; }
+interface CustomRoleItem { id: number; name: string; description: string | null; base_role: string; users_count?: number; permissions?: PermMatrix | null; groups?: { id: number; name: string; members: number }[]; }
 // id ist optional: Eintraege aus OIDC_CLAIM_MAPPINGS stehen in keiner Tabelle
 // und haben deshalb keine. Sie sind dann auch nicht loeschbar.
-interface OidcMappingItem { id?: number; claim_path: string; claim_value: string; role: string | null; custom_role_id: number | null; priority: number; customRole?: { id: number; name: string; base_role: string } | null; }
+interface OidcMappingItem { id?: number; claim_path: string; claim_value: string; role?: string | null; custom_role_id?: number | null; group_id?: number | null; group_name?: string | null; priority: number; customRole?: { id: number; name: string; base_role: string } | null; group?: { id: number; name: string } | null; }
 
 const BASE_ROLES = ['admin', 'assessor', 'dpo', 'employee', 'it-staff', 'management', 'owner', 'viewer'] as const;
 
@@ -565,6 +572,11 @@ const CustomRolesEditor: React.FC = () => {
                         <td className="px-4 py-2 font-medium dark:text-white">
                           {r.name}
                           {!!r.users_count && <span className="ml-2 text-xs font-normal text-gray-500 dark:text-slate-400">{t('custom_roles.users_count', { count: r.users_count })}</span>}
+                          <span className="block text-[11px] font-normal text-gray-500 dark:text-slate-400 mt-0.5">
+                            {r.groups && r.groups.length
+                              ? t('custom_roles.carried_by', { groups: r.groups.map(g => g.name).join(', ') })
+                              : t('custom_roles.no_groups')}
+                          </span>
                         </td>
                         <td className="px-4 py-2"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{t('roles.' + r.base_role + '_short', { defaultValue: r.base_role })}</span></td>
                         <td className="px-4 py-2 text-gray-500 dark:text-slate-400 text-xs hidden sm:table-cell">{r.description || '—'}</td>
@@ -636,8 +648,8 @@ const CustomRolesEditor: React.FC = () => {
 const OidcMappingsEditor: React.FC = () => {
   const { t } = useTranslation('admin');
   const [mappings, setMappings] = useState<OidcMappingItem[]>([]);
-  const [customRoles, setCustomRoles] = useState<CustomRoleItem[]>([]);
-  const [form, setForm] = useState({ claim_path: '', claim_value: '', role: 'viewer', custom_role_id: '', priority: '0', use_custom: false });
+  const [groups, setGroups] = useState<GroupOption[]>([]);
+  const [form, setForm] = useState({ claim_path: '', claim_value: '', group_id: '', priority: '0' });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   // Ob die Liste aus OIDC_CLAIM_MAPPINGS stammt, steht in GET /admin/oidc —
@@ -647,23 +659,21 @@ const OidcMappingsEditor: React.FC = () => {
   const load = async () => {
     const [m, r, o] = await Promise.all([
       api.get('/admin/oidc-mappings'),
-      api.get('/admin/custom-roles'),
+      api.get('/groups'),
       api.get('/admin/oidc'),
     ]);
-    setMappings(m.data); setCustomRoles(r.data);
+    setMappings(m.data); setGroups(r.data);
     setEnv({ fromEnv: !!o.data.mappingsFromEnv, variable: o.data.mappingsVariable, error: o.data.mappingsError });
   };
   useEffect(() => { load().catch(() => {}); }, []);
 
   const add = async () => {
-    if (!form.claim_path.trim() || !form.claim_value.trim()) return;
+    if (!form.claim_path.trim() || !form.claim_value.trim() || !form.group_id) return;
     setSaving(true); setMsg('');
     try {
-      const body: Record<string, unknown> = { claim_path: form.claim_path.trim(), claim_value: form.claim_value.trim(), priority: parseInt(form.priority) || 0 };
-      if (form.use_custom && form.custom_role_id) body.custom_role_id = parseInt(form.custom_role_id);
-      else body.role = form.role;
+      const body = { claim_path: form.claim_path.trim(), claim_value: form.claim_value.trim(), group_id: parseInt(form.group_id), priority: parseInt(form.priority) || 0 };
       await api.post('/admin/oidc-mappings', body);
-      setForm({ claim_path: '', claim_value: '', role: 'viewer', custom_role_id: '', priority: '0', use_custom: false });
+      setForm({ claim_path: '', claim_value: '', group_id: '', priority: '0' });
       await load(); setMsg(t('oidc_mappings.added'));
     } catch (e: any) { setMsg(e.response?.data?.error || t('custom_roles.error')); }
     finally { setSaving(false); }
@@ -716,7 +726,7 @@ const OidcMappingsEditor: React.FC = () => {
                 <tr>
                   <th className="text-left px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('oidc_mappings.claim_path')}</th>
                   <th className="text-left px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('oidc_mappings.claim_value')}</th>
-                  <th className="text-left px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('oidc_mappings.role')}</th>
+                  <th className="text-left px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('oidc_mappings.group')}</th>
                   <th className="text-center px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('oidc_mappings.prio')}</th>
                   <th className="px-4 py-2 w-10"></th>
                 </tr>
@@ -731,10 +741,16 @@ const OidcMappingsEditor: React.FC = () => {
                     <td className="px-4 py-2 font-mono text-xs text-blue-700 dark:text-blue-300">{m.claim_path}</td>
                     <td className="px-4 py-2 font-mono text-xs">{m.claim_value}</td>
                     <td className="px-4 py-2">
-                      {m.customRole
-                        ? <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">{m.customRole.name} <span className="opacity-60">({t('roles.' + m.customRole.base_role + '_short', { defaultValue: m.customRole.base_role })})</span></span>
-                        : <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{t('roles.' + (m.role || '') + '_short', { defaultValue: m.role || '' })}</span>
-                      }
+                      {(() => {
+                        const gid = m.group?.id ?? m.group_id;
+                        const g = groups.find(x => x.id === gid);
+                        const name = m.group?.name || m.group_name || g?.name;
+                        if (name) return <span className="whitespace-nowrap text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" title={g ? groupLabel(g, t) : undefined}>{name}</span>;
+                        // Legacy entries (role / custom role without a group) still resolve server-side.
+                        if (m.customRole) return <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">{m.customRole.name}</span>;
+                        if (m.role) return <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{t('roles.' + m.role + '_short', { defaultValue: m.role })}</span>;
+                        return <span className="text-xs text-red-600 dark:text-red-400">{t('oidc_mappings.group_missing')}</span>;
+                      })()}
                     </td>
                     <td className="px-4 py-2 text-center text-xs text-gray-500">{m.priority}</td>
                     <td className="px-4 py-2">
@@ -759,24 +775,12 @@ const OidcMappingsEditor: React.FC = () => {
             <Input label={t('oidc_mappings.claim_value')} placeholder="security-admins" value={form.claim_value} onChange={e => setForm(f => ({ ...f, claim_value: e.target.value }))} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-slate-400">
-                <input type="checkbox" className="rounded" checked={form.use_custom} onChange={e => setForm(f => ({ ...f, use_custom: e.target.checked }))} />
-                {t('oidc_mappings.use_custom_role')}
-              </label>
-              {form.use_custom ? (
-                <Select label={t('oidc_mappings.custom_role_label')} value={form.custom_role_id} onChange={e => setForm(f => ({ ...f, custom_role_id: e.target.value }))}>
-                  <option value="">{t('oidc_mappings.select_placeholder')}</option>
-                  {customRoles.map(r => <option key={r.id} value={String(r.id)}>{r.name} ({t('roles.' + r.base_role + '_short', { defaultValue: r.base_role })})</option>)}
-                </Select>
-              ) : (
-                <Select label={t('oidc_mappings.standard_role_label')} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
-                  {BASE_ROLES.map(r => <option key={r} value={r}>{t('roles.' + r, { defaultValue: r })}</option>)}
-                </Select>
-              )}
-            </div>
+            <Select label={t('oidc_mappings.group_label')} value={form.group_id} onChange={e => setForm(f => ({ ...f, group_id: e.target.value }))}>
+              <option value="">{t('oidc_mappings.select_placeholder')}</option>
+              {groups.map(g => <option key={g.id} value={String(g.id)}>{groupLabel(g, t)}</option>)}
+            </Select>
             <Input label={t('oidc_mappings.priority_label')} type="number" value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} />
-            <Button onClick={add} disabled={saving || !form.claim_path.trim() || !form.claim_value.trim()}>
+            <Button onClick={add} disabled={saving || !form.claim_path.trim() || !form.claim_value.trim() || !form.group_id}>
               {saving ? t('oidc_mappings.adding') : t('oidc_mappings.add_btn')}
             </Button>
           </div>
