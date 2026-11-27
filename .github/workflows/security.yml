@@ -102,7 +102,10 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "$EVENT_NAME" == "push" ]]; then
+          # workflow_dispatch wie push: main-catchup.yml startet so die Laeufe nach
+          # Dependabot-Auto-Merges nach. Mit leerem HEAD_REF fiel der Dispatch in
+          # den letzten Zweig, Smoke-Test und Frontend-Build liefen auf main nie.
+          if [[ "$EVENT_NAME" == "push" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
             echo "run_security=true" >> "$GITHUB_OUTPUT"
             echo "run_build=true" >> "$GITHUB_OUTPUT"
             echo "run_audit=true" >> "$GITHUB_OUTPUT"

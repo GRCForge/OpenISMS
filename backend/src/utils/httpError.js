@@ -49,7 +49,11 @@ function serverError(res, err, context = 'API') {
 
 const PROGRAMMING_ERRORS = new Set(['TypeError', 'ReferenceError', 'SyntaxError', 'RangeError', 'EvalError', 'URIError']);
 
-const sanitizeForLog = (value) => String(value).replace(/[\r\n]+/g, ' ');
+// Zeilenumbrueche entfernen (Log-Injection). Bewusst `replace(/\n|\r/g, '')`:
+// CodeQL (js/log-injection) erkennt nur ein replace, das `\n` durch '' ersetzt,
+// als Bereinigung; `/[\r\n]+/g, ' '` blieb als Befund offen (#279, #280).
+// Stack-Zeilen beginnen mit Leerzeichen und bleiben dadurch lesbar getrennt.
+const sanitizeForLog = (value) => String(value).replace(/\n|\r/g, '');
 
 const isSequelizeError = (err) => typeof err?.name === 'string' && err.name.startsWith('Sequelize');
 

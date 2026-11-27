@@ -1159,7 +1159,8 @@ const mcpRiskError = (e) => {
     return { content: [{ type: 'text', text: e.message }], isError: true };
   }
   if (e && typeof e.name === 'string' && e.name.startsWith('Sequelize')) {
-    console.error('[MCP] Risiko:', String(e.message).replace(/[\r\n]+/g, ' '));
+    // '' statt ' ': nur so erkennt CodeQL js/log-injection die Bereinigung (#282).
+    console.error('[MCP] Risiko:', String(e.message).replace(/\n|\r/g, ''));
     return { content: [{ type: 'text', text: 'Ungültige Eingabe.' }], isError: true };
   }
   throw e;
