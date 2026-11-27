@@ -4,8 +4,8 @@
 
 | Version | Supported |
 |---|---|
-| 3.3.x (latest release) | ✅ |
-| < 3.3 | ❌ |
+| 3.9.x (latest release) | ✅ |
+| < 3.9 | ❌ |
 
 Only the latest release receives security patches. Update to it before you
 report an issue, and check whether it is already fixed there.
