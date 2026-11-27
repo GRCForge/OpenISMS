@@ -49,15 +49,22 @@ interface CheckEntry {
   cost_recurring: number | null;
   notes: string | null;
   last_review_date: string | null;
+  realization_priority?: 'high' | 'medium' | 'low' | null;
   documents: { id: number; original_name: string }[];
   controls: { id: number; code: string; title: string }[];
 }
 interface Bucket { total: number; fulfillment: number | null; cost_once: number; cost_recurring: number; implemented: number; in_progress: number; not_implemented: number; not_applicable: number; not_started: number }
 interface Summary { total: Bucket; by_module: (Bucket & { module_id: string; module_title: string | null })[]; by_target: (Bucket & { target_object_id: number | null; target_name: string | null })[] }
+export interface AdditionalMeasure {
+  treatment_item_id: number; risk_id: number; risk_ref: string | null; risk_title: string | null; title: string;
+  treatment_option: string; status: string; responsible: Ref | null; responsible_group: Ref | null; due_date: string | null;
+  cost_once: number | null; cost_recurring: number | null; in_realization_plan: boolean; realization_measure_id: number | null; realization_priority: string | null;
+}
 interface CheckData {
   domain: { id: number; name: string; protection_approach: string };
   levels: string[];
   entries: CheckEntry[];
+  additional_requirements?: { target_object_id: number; target_name: string; target_type: string; measures: AdditionalMeasure[] }[];
   unmodeled: { entry_id: number; target_object_id: number | null; target_name: string | null; req_id: string; title: string; implementation_status: CheckStatus; retired: boolean }[];
 }
 
@@ -68,7 +75,7 @@ interface Props {
 
 const emptyForm = {
   implementation_status: 'not_started' as CheckStatus, justification: '', responsible_id: '', responsible_group_id: '',
-  due_date: '', cost_once: '', cost_recurring: '', notes: '', last_review_date: '', document_ids: [] as number[], control_ids: [] as number[],
+  due_date: '', cost_once: '', cost_recurring: '', notes: '', last_review_date: '', realization_priority: '', document_ids: [] as number[], control_ids: [] as number[],
 };
 
 const apiError = (err: unknown, fallback: string) =>
@@ -140,7 +147,7 @@ export const BsiCheckPanel: React.FC<Props> = ({ domain, canEdit }) => {
       implementation_status: e.implementation_status, justification: e.justification || '',
       responsible_id: e.responsible ? String(e.responsible.id) : '', responsible_group_id: e.responsible_group ? String(e.responsible_group.id) : '',
       due_date: e.due_date || '', cost_once: e.cost_once == null ? '' : String(e.cost_once), cost_recurring: e.cost_recurring == null ? '' : String(e.cost_recurring),
-      notes: e.notes || '', last_review_date: e.last_review_date || '',
+      notes: e.notes || '', last_review_date: e.last_review_date || '', realization_priority: e.realization_priority || '',
       document_ids: e.documents.map(d => d.id), control_ids: e.controls.map(c => c.id),
     });
     if (domain) {
@@ -168,6 +175,7 @@ export const BsiCheckPanel: React.FC<Props> = ({ domain, canEdit }) => {
         cost_recurring: form.cost_recurring === '' ? null : form.cost_recurring,
         notes: form.notes || null,
         last_review_date: form.last_review_date || null,
+        realization_priority: form.realization_priority || null,
         document_ids: form.document_ids,
         // Nur mitschicken, wenn sich etwas geaendert hat: Massnahmen zuordnen braucht controls.edit.
         ...(JSON.stringify([...form.control_ids].sort()) !== JSON.stringify(edit.controls.map(c => c.id).sort()) ? { control_ids: form.control_ids } : {}),
@@ -284,6 +292,29 @@ export const BsiCheckPanel: React.FC<Props> = ({ domain, canEdit }) => {
         </CardBody></Card>
       )}
 
+      {data && (data.additional_requirements || []).length > 0 && (
+        <Card><CardBody className="space-y-2">
+          <h3 className="font-semibold dark:text-white">{t('check.additionalTitle')}</h3>
+          <p className="text-xs text-gray-500 dark:text-slate-400">{t('check.additionalHint')}</p>
+          <Table>
+            <Thead><tr><Th>{t('check.target')}</Th><Th>{t('riskAnalysis.risk')}</Th><Th>{t('riskAnalysis.measure')}</Th><Th>{t('table.status')}</Th><Th>{t('check.responsible')}</Th><Th>{t('check.dueDate')}</Th><Th>{t('riskAnalysis.inPlan')}</Th></tr></Thead>
+            <Tbody>
+              {(data.additional_requirements || []).flatMap(a => a.measures.map(m => (
+                <tr key={`${a.target_object_id}-${m.treatment_item_id}`}>
+                  <Td className="text-sm dark:text-slate-200">{a.target_name}</Td>
+                  <Td className="text-xs dark:text-slate-300">{m.risk_ref}</Td>
+                  <Td className="text-sm dark:text-slate-200">{m.title}</Td>
+                  <Td className="text-xs dark:text-slate-300">{t(`riskAnalysis.itemStatus.${m.status}`)}</Td>
+                  <Td className="text-xs dark:text-slate-300">{m.responsible?.name || m.responsible_group?.name || '–'}</Td>
+                  <Td className="text-xs dark:text-slate-300">{m.due_date || '–'}</Td>
+                  <Td className="text-xs dark:text-slate-300">{m.in_realization_plan ? t('riskAnalysis.yes') : t('riskAnalysis.no')}</Td>
+                </tr>
+              )))}
+            </Tbody>
+          </Table>
+        </CardBody></Card>
+      )}
+
       {data && data.unmodeled.length > 0 && (
         <Card><CardBody className="space-y-2">
           <h3 className="font-semibold dark:text-white flex items-center gap-2"><AlertTriangle size={16} className="text-amber-500" />{t('check.unmodeledTitle', { count: data.unmodeled.length })}</h3>
@@ -318,6 +349,8 @@ export const BsiCheckPanel: React.FC<Props> = ({ domain, canEdit }) => {
             <Input type="date" label={t('modal.lastReview')} value={form.last_review_date} disabled={!canEdit} onChange={e => setForm({ ...form, last_review_date: e.target.value })} />
             <Input type="number" min={0} step="0.01" label={t('check.costOnce')} value={form.cost_once} disabled={!canEdit} onChange={e => setForm({ ...form, cost_once: e.target.value })} />
             <Input type="number" min={0} step="0.01" label={t('check.costRecurring')} value={form.cost_recurring} disabled={!canEdit} onChange={e => setForm({ ...form, cost_recurring: e.target.value })} />
+            <Select label={t('realization.priority')} value={form.realization_priority} disabled={!canEdit} onChange={e => setForm({ ...form, realization_priority: e.target.value })}
+              options={[{ value: '', label: t('realization.prioritySuggested') }, ...(['high', 'medium', 'low'] as const).map(p => ({ value: p, label: t(`realization.priorities.${p}`) }))]} />
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">{t('check.evidence')}</span>

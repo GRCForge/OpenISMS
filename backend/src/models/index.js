@@ -60,6 +60,9 @@ const BsiInformationDomain = require('./BsiInformationDomain');
 const BsiTargetObject = require('./BsiTargetObject');
 const BsiModeling = require('./BsiModeling');
 const BsiRequirementDocument = require('./BsiRequirementDocument');
+const BsiRiskAnalysisTarget = require('./BsiRiskAnalysisTarget');
+const BsiRiskAnalysisThreat = require('./BsiRiskAnalysisThreat');
+const BsiRealizationMeasure = require('./BsiRealizationMeasure');
 const Nis2Measure = require('./Nis2Measure');
 const Nis2SelfCheckItem = require('./Nis2SelfCheckItem');
 const C5Criterion = require('./C5Criterion');
@@ -420,6 +423,28 @@ BsiRequirement.belongsTo(Group, { as: 'responsibleGroup', foreignKey: 'responsib
 // wird nur ueber eigene, auditierte Loeschwege entfernt).
 BsiRequirement.belongsToMany(Document, { through: BsiRequirementDocument, as: 'evidence', foreignKey: 'requirement_id', otherKey: 'document_id' });
 Document.belongsToMany(BsiRequirement, { through: BsiRequirementDocument, as: 'bsiRequirements', foreignKey: 'document_id', otherKey: 'requirement_id' });
+// Risk analysis per BSI-Standard 200-3 (3.10.0). Selection rows and threat
+// overview rows belong to a target object of a domain; RESTRICT like the check
+// entries: a target object with analysis data stays in its domain
+// (bsiDomainService.removeTargetObject). Threats have no delete route
+// (RESTRICT as a backstop). A deleted risk leaves the overview row without
+// risk (SET NULL) - a new classification then creates a new risk.
+BsiRiskAnalysisTarget.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRiskAnalysisTarget.belongsTo(BsiTargetObject, { as: 'targetObject', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRiskAnalysisTarget.belongsTo(User, { as: 'updatedBy', foreignKey: 'updated_by_id', constraints: false });
+BsiTargetObject.hasOne(BsiRiskAnalysisTarget, { as: 'riskAnalysis', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRiskAnalysisThreat.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRiskAnalysisThreat.belongsTo(BsiTargetObject, { as: 'targetObject', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiTargetObject.hasMany(BsiRiskAnalysisThreat, { as: 'riskAnalysisThreats', foreignKey: 'target_object_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRiskAnalysisThreat.belongsTo(Threat, { as: 'threat', foreignKey: 'threat_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRiskAnalysisThreat.belongsTo(Risk, { as: 'risk', foreignKey: 'risk_id', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+BsiRiskAnalysisThreat.belongsTo(User, { as: 'assessedBy', foreignKey: 'assessed_by_id', constraints: false });
+BsiRiskAnalysisThreat.belongsTo(User, { as: 'classifiedBy', foreignKey: 'classified_by_id', constraints: false });
+// Realisation plan (A.6): treatment items taken over into a domain's plan.
+BsiRealizationMeasure.belongsTo(BsiInformationDomain, { as: 'domain', foreignKey: 'domain_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BsiRealizationMeasure.belongsTo(RiskTreatmentItem, { as: 'treatmentItem', foreignKey: 'treatment_item_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+RiskTreatmentItem.hasMany(BsiRealizationMeasure, { as: 'realizationLinks', foreignKey: 'treatment_item_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+BsiRealizationMeasure.belongsTo(User, { as: 'addedBy', foreignKey: 'added_by_id', constraints: false });
 Nis2Measure.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'responsible', foreignKey: 'responsible_id' });
 Nis2SelfCheckItem.belongsTo(User, { as: 'answeredBy', foreignKey: 'answered_by_id' });
@@ -492,7 +517,7 @@ module.exports = {
   Template, DiscoveredSoftware, SubjectRequest, PolicyAcknowledgment, ReviewSignOff, LegalRequirement,
   PentestProject, PentestFinding, TisaxAssessment, TisaxRequirement, DoraThirdParty, DoraResilienceTest,
   AiSystem, BcmProcess, BcmExercise, Dsfa,
-  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, BsiInformationDomain, BsiTargetObject, BsiModeling, BsiRequirementDocument, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
+  Iso27001Control, BsiRequirement, BsiCatalog, BsiCatalogModule, BsiCatalogRequirement, BsiInformationDomain, BsiTargetObject, BsiModeling, BsiRequirementDocument, BsiRiskAnalysisTarget, BsiRiskAnalysisThreat, BsiRealizationMeasure, Nis2Measure, Nis2SelfCheckItem, C5Criterion,
   CustomRole, OidcClaimMapping,
   Kpi, KpiMeasurement, Audit, AuditFinding, UserTraining, Training,
   Group, GroupMember, GroupRole, PushSubscription,

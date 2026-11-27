@@ -266,6 +266,7 @@ jobs:
           node scripts/test-risk-treatment.js
           node scripts/test-risk-monitoring.js
           node scripts/test-group-access.js
+          node scripts/test-bsi-risk-analysis.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only

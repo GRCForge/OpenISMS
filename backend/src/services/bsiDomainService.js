@@ -440,6 +440,11 @@ async function removeTargetObject(domainId, id, actor) {
     // Checkdaten (Status, Begruendung, Nachweise) werden nie implizit verworfen.
     const checked = await BsiRequirement.count({ where: { target_object_id: row.id }, transaction });
     if (checked > 0) throw new DomainError(409, `Zum Zielobjekt sind ${checked} Eintraege des IT-Grundschutz-Checks erfasst; es bleibt im Verbund`);
+    // Risk analysis data (BSI 200-3, 3.10.0) is never dropped implicitly either.
+    const { BsiRiskAnalysisTarget, BsiRiskAnalysisThreat } = getModels();
+    const analysed = await BsiRiskAnalysisThreat.count({ where: { target_object_id: row.id }, transaction })
+      + await BsiRiskAnalysisTarget.count({ where: { target_object_id: row.id }, transaction });
+    if (analysed > 0) throw new DomainError(409, 'Zum Zielobjekt sind Daten der Risikoanalyse (BSI-Standard 200-3) erfasst; es bleibt im Verbund');
     const snapshot = { asset_id: row.asset_id, target_type: row.target_type, notes: row.notes };
     await row.destroy({ transaction });
     return { domain, snapshot, asset: briefAsset(row.asset), id: row.id };

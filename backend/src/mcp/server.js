@@ -159,6 +159,17 @@ const TOOL_GATES = {
   // IT-Grundschutz-Check: wie GET/PUT /api/bsi-grundschutz/domains/:id/check.
   'isms_get_bsi_check': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
   'isms_set_bsi_check_status': { perm: ['bsi_grundschutz', 'edit'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  // Risk analysis per BSI 200-3 and realisation plan (3.10.0): same matrix
+  // entries as the routes in routes/bsi-domains.js; risks.create/edit, record
+  // rights and visibility in services/bsiRiskAnalysisService.js.
+  'isms_get_bsi_risk_analysis': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  'isms_set_bsi_risk_analysis_target': { perm: ['bsi_grundschutz', 'risk_analysis'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_assess_bsi_threat': { perm: ['bsi_grundschutz', 'risk_analysis'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_classify_bsi_threat': { perm: ['bsi_grundschutz', 'risk_analysis'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_get_bsi_realization_plan': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  // Report catalogue: metadata and download paths only, no binary data. Each
+  // entry is filtered by the permission of its download endpoint.
+  'isms_list_reports': { perm: ['reports', 'view'] },
   // --- Bedrohungslage / Threat Intelligence ---
   'isms_list_threat_sources': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
   'isms_list_threat_advisories': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
@@ -5068,6 +5079,7 @@ server.tool(
     last_review_date: z.string().nullable().optional().describe('YYYY-MM-DD'),
     document_ids: z.array(z.number().int().positive()).max(200).optional().describe('Evidence document IDs (replaces the list)'),
     control_ids: z.array(z.number().int().positive()).max(200).optional().describe('Control IDs (replaces the list)'),
+    realization_priority: z.enum(['high', 'medium', 'low']).nullable().optional().describe('Priority in the realisation plan (A.6); null = suggested from the requirement level'),
   },
   async ({ domain_id, ...body }, { mcpUser }) => bsiDomainResult(async () => {
     if (body.implementation_status !== undefined) body.implementation_status = normalizeBsiStatus(body.implementation_status);
@@ -5083,6 +5095,140 @@ server.tool(
     }
     return r.row;
   })
+);
+
+// ─── BSI 200-3 risk analysis, realisation plan, reports (3.10.0) ────────────
+// Same service functions as routes/bsi-domains.js; the service writes the
+// signed audit entries (auditFromReq with the MCP user).
+const bsiRiskAnalysis = require('../services/bsiRiskAnalysisService');
+const bsiAnalysisResult = async (fn) => {
+  try {
+    return { content: [{ type: 'text', text: JSON.stringify(await fn(), null, 2) }] };
+  } catch (e) {
+    if (e instanceof bsiDomains.DomainError || e instanceof bsiCheck.CheckError || e instanceof bsiRiskAnalysis.RiskAnalysisError) {
+      return { content: [{ type: 'text', text: e.message }], isError: true };
+    }
+    return mcpRiskError(e);
+  }
+};
+
+server.tool(
+  'isms_get_bsi_risk_analysis',
+  'Read the risk analysis per BSI-Standard 200-3 of an information domain. Without target_object_id: every target object with protection need (from the CIA assessment of its asset: 1-3 normal, 4 high, 5 very high), the reasons why a risk analysis is needed (high_protection_need, no_module, scenario_not_covered), manual decision and progress. With target_object_id: the threat overview (47 elementary threats plus additional threats) with relevance, coverage by the modelled modules (always manual - the catalogues carry no threat mapping), the risk created from each classification and the additional measures from the treatment plans.',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID (see isms_list_bsi_domains)'),
+    target_object_id: z.number().int().positive().optional().describe('Target object ID for the threat overview'),
+    only_relevant: z.boolean().default(false).describe('Threat overview: only threats assessed as relevant or with a risk'),
+  },
+  async ({ domain_id, target_object_id, only_relevant }, { mcpUser }) => bsiAnalysisResult(async () => {
+    if (!target_object_id) return bsiRiskAnalysis.getAnalysis(domain_id, mcpUser);
+    const a = await bsiRiskAnalysis.getTargetAnalysis(domain_id, target_object_id, mcpUser);
+    return only_relevant ? { ...a, threats: a.threats.filter(t => t.relevant === true || t.has_risk) } : a;
+  })
+);
+
+server.tool(
+  'isms_set_bsi_risk_analysis_target',
+  'Add a target object to the BSI 200-3 risk analysis or remove it by hand (decision include/exclude with decision_reason; auto = the computed criteria decide), mark an operating scenario the modules do not cover (scenario_not_covered with scenario_note), or set the progress (open/in_progress/completed).',
+  {
+    domain_id: z.number().int().positive(),
+    target_object_id: z.number().int().positive(),
+    decision: z.enum(['auto', 'include', 'exclude']).optional(),
+    decision_reason: z.string().max(10000).nullable().optional().describe('Mandatory for include/exclude'),
+    scenario_not_covered: z.boolean().optional(),
+    scenario_note: z.string().max(10000).nullable().optional().describe('Mandatory when scenario_not_covered is true'),
+    status: z.enum(['open', 'in_progress', 'completed']).optional(),
+  },
+  async ({ domain_id, target_object_id, ...body }, { mcpUser }) => bsiAnalysisResult(() => bsiRiskAnalysis.setTargetDecision(domain_id, target_object_id, body, mcpUser, mcpReq(mcpUser)))
+);
+
+server.tool(
+  'isms_assess_bsi_threat',
+  'Assess a threat in the threat overview of a target object (BSI 200-3 ch. 4): relevant (true/false), coverage by the modelled modules (unknown/covered/partially/not_covered) with notes. To add an additional threat: threat_id of an existing non-elementary threat with add_additional=true, or new_threat (creating a threat needs threats.create). The target object must be selected for the risk analysis.',
+  {
+    domain_id: z.number().int().positive(),
+    target_object_id: z.number().int().positive(),
+    threat_id: z.number().int().positive().optional().describe('Threat ID (elementary threats: source bsi_elementar)'),
+    add_additional: z.boolean().default(false).describe('Add threat_id as an additional threat to the overview'),
+    new_threat: z.object({ title: z.string().min(1).max(255), code: z.string().max(20).optional(), description: z.string().max(10000).optional() }).optional(),
+    relevant: z.boolean().nullable().optional(),
+    relevance_note: z.string().max(10000).nullable().optional(),
+    coverage: z.enum(['unknown', 'covered', 'partially', 'not_covered']).optional(),
+    coverage_note: z.string().max(10000).nullable().optional(),
+  },
+  async ({ domain_id, target_object_id, threat_id, add_additional, new_threat, ...assessment }, { mcpUser }) => bsiAnalysisResult(async () => {
+    const req = mcpReq(mcpUser);
+    let id = threat_id;
+    const adding = !!(new_threat || add_additional);
+    if (adding) {
+      if (!new_threat && !threat_id) throw new bsiRiskAnalysis.RiskAnalysisError(400, 'threat_id oder new_threat angeben');
+      const row = await bsiRiskAnalysis.addAdditionalThreat(domain_id, target_object_id, new_threat ? { ...new_threat, relevance_note: assessment.relevance_note } : { threat_id, relevance_note: assessment.relevance_note }, mcpUser, req);
+      id = row.threat_id;
+    }
+    if (!id) throw new bsiRiskAnalysis.RiskAnalysisError(400, 'threat_id angeben');
+    const fields = Object.fromEntries(Object.entries(assessment).filter(([, v]) => v !== undefined));
+    if (Object.keys(fields).length) await bsiRiskAnalysis.setThreatAssessment(domain_id, target_object_id, id, fields, mcpUser, req);
+    else if (!adding) throw new bsiRiskAnalysis.RiskAnalysisError(400, 'Keine Aenderung angegeben');
+    const a = await bsiRiskAnalysis.getTargetAnalysis(domain_id, target_object_id, mcpUser);
+    return a.threats.find(t => t.threat.id === id) || null;
+  })
+);
+
+server.tool(
+  'isms_classify_bsi_threat',
+  'Classify a relevant threat of a target object (BSI 200-3 ch. 5): frequency (likelihood) x impact on the scales of the active risk methodology, both with a rationale. The first classification creates a risk in the register (scenario: asset of the target object x threat; owner defaults to the asset owner); later classifications update that risk - never a second one. Treat the risk via its treatment plan (isms_create_risk_treatment_item).',
+  {
+    domain_id: z.number().int().positive(),
+    target_object_id: z.number().int().positive(),
+    threat_id: z.number().int().positive(),
+    likelihood: z.number().int().min(1).max(6).describe('Frequency on the likelihood scale of the active methodology'),
+    impact: z.number().int().min(1).max(6),
+    likelihood_rationale: z.string().min(1).max(4000),
+    impact_rationale: z.string().min(1).max(4000),
+    impact_dimensions: z.record(z.string(), z.number().int().min(1).max(6).nullable()).optional(),
+    owner_id: z.number().int().positive().optional().describe('Risk owner (default: owner of the asset)'),
+    category: z.string().optional().describe('Risk category key (isms_list_risk_categories)'),
+  },
+  async ({ domain_id, target_object_id, threat_id, ...body }, { mcpUser }) => bsiAnalysisResult(() => bsiRiskAnalysis.classifyThreat(domain_id, target_object_id, threat_id, body, mcpUser, mcpReq(mcpUser)))
+);
+
+server.tool(
+  'isms_get_bsi_realization_plan',
+  'Realisation plan of an information domain (BSI reference document A.6): every requirement of the IT-Grundschutz-Check with status nein or teilweise, plus the additional measures from the risk analysis taken over into the plan - with responsible, due date, costs and priority (set, or suggested: B high / S medium / H low; measures from the risk level). Sorted by priority and due date, with a summary.',
+  {
+    domain_id: z.number().int().positive(),
+    priority: z.enum(['high', 'medium', 'low']).optional(),
+    limit: z.number().int().min(1).max(2000).default(500),
+  },
+  async ({ domain_id, priority, limit }, { mcpUser }) => bsiAnalysisResult(async () => {
+    const plan = await bsiRiskAnalysis.getRealizationPlan(domain_id, mcpUser);
+    const items = priority ? plan.items.filter(i => i.priority === priority) : plan.items;
+    return { domain: plan.domain, generated_at: plan.generated_at, summary: plan.summary, total_items: items.length, items: items.slice(0, limit) };
+  })
+);
+
+server.tool(
+  'isms_list_reports',
+  'List the reports that can be downloaded as DOCX or PDF: risk report, risk treatment plan (ISO 27001 6.1.3 e) and, per information domain, the BSI reference documents A.1-A.6. Returns metadata and download paths only (no file content); download with GET <path>?format=docx|pdf using the same authentication as the REST API. Only reports the caller may download are listed.',
+  {},
+  async (_args, { mcpUser }) => {
+    try {
+      const { can } = require('../services/permissionService');
+      const { getModules } = require('../middleware/modules');
+      const ok = async (module, action, fallback) => { const v = await can(mcpUser, module, action); return v === true || (v !== false && fallback.includes(mcpUser?.role)); };
+      const viewers = ['admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'];
+      const reportsSvc = require('../services/reportService');
+      const bsiOn = !!(await getModules()).bsi_grundschutz && await ok('bsi_grundschutz', 'view', viewers);
+      const catalog = reportsSvc.reportCatalog(bsiOn ? await bsiDomains.listDomains() : []);
+      if (!(await ok('risks', 'view', viewers))) catalog.risk_reports = [];
+      const base = (process.env.APP_URL || '').replace(/\/+$/, '');
+      if (/^https?:\/\/[^\s/]+$/.test(base)) {
+        for (const r of catalog.risk_reports) r.url = `${base}${r.path}`;
+        for (const d of catalog.bsi_reference_documents) for (const r of d.documents) r.url = `${base}${r.path}`;
+      }
+      return mcpJson(catalog);
+    } catch (e) { return mcpRiskError(e); }
+  }
 );
 
 server.tool(
