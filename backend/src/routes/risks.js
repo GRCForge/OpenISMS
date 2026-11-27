@@ -13,8 +13,11 @@ const categories = require('../services/riskCategoryService');
 const monitoring = require('../services/riskMonitoringService');
 const riskHistory = require('../services/riskHistoryService');
 
+const reports = require('../services/reportService');
+const render = require('../services/reportRender');
+
 const router = express.Router();
-const { apiLimiter } = require('../middleware/rateLimiter');
+const { apiLimiter, heavyLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 
 const parseId = (v) => { const n = Number(v); return Number.isInteger(n) && n > 0 ? n : null; };
@@ -185,6 +188,32 @@ router.get('/monitoring/trend', authenticate, requirePermission('risks', 'view',
 // Reassessment list with reasons. Filters: status (open|resolved|all), trigger_type, risk_id.
 router.get('/review-flags', authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
   try { res.json(await monitoring.listFlags(req.user, pick(req.query, ['status', 'trigger_type', 'risk_id']))); } catch (e) { requestError(res, e, 'risk-monitoring'); }
+});
+
+// ── Reports as DOCX / PDF (3.10.0) ──────────────────────────────────────────
+// Before '/:id'. ?format=docx|pdf. Rights as for the lists the reports are
+// built from: the register (risks.view) and, for the treatment plan and the
+// reassessment reasons, the record rights in the services. Every download is
+// written to the audit log.
+
+const REPORT_BUILDERS = Object.freeze({
+  'risk-report': { build: (u) => reports.buildRiskReport(u), file: 'risikobericht', entity: 'risk_report' },
+  'treatment-plan': { build: (u) => reports.buildTreatmentPlanReport(u), file: 'risikobehandlungsplan', entity: 'risk_treatment_plan_report' },
+});
+
+router.get('/reports/:report', heavyLimiter, authenticate, requirePermission('risks', 'view', 'admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), async (req, res) => {
+  try {
+    const name = Object.keys(REPORT_BUILDERS).find(k => k === req.params.report);
+    if (!name) return res.status(404).json({ error: 'Not found' });
+    const format = req.query.format === 'pdf' ? 'pdf' : req.query.format === 'docx' || req.query.format === undefined ? 'docx' : null;
+    if (!format) return res.status(400).json({ error: 'format muss docx oder pdf sein' });
+    const def = REPORT_BUILDERS[name];
+    const doc = await def.build(req.user);
+    const buffer = await render.render(doc, format);
+    const filename = render.safeFilename(def.file, '', format);
+    await auditFromReq(req, 'export', def.entity, null, doc.title, { format, filename, bytes: buffer.length });
+    render.sendDocument(res, buffer, format, filename);
+  } catch (e) { requestError(res, e, 'risk-reports'); }
 });
 
 // ── Risikoregister ───────────────────────────────────────────────────────────

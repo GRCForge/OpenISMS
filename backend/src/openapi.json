@@ -14612,6 +14612,631 @@
           }
         ]
       }
+    },
+    "/risks/reports/{report}": {
+      "get": {
+        "tags": [
+          "Risiken"
+        ],
+        "summary": "reports abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `risks.view`.",
+        "parameters": [
+          {
+            "name": "report",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (report)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/risk-analysis": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "risk analysis abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/risk-analysis/{targetId}": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "risk analysis abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (targetId)"
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "risk analysis aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.risk_analysis` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (targetId)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/risk-analysis/{targetId}/threats": {
+      "post": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "threats anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.risk_analysis` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (targetId)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/risk-analysis/{targetId}/threats/{threatId}": {
+      "put": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "threats aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.risk_analysis` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (targetId)"
+          },
+          {
+            "name": "threatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (threatId)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/risk-analysis/{targetId}/threats/{threatId}/classify": {
+      "post": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "classify anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.risk_analysis` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (targetId)"
+          },
+          {
+            "name": "threatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (threatId)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/realization-plan": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "realization plan abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/realization-plan/export": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "export abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/realization-plan/measures": {
+      "post": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "measures anlegen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.risk_analysis` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/realization-plan/measures/{measureId}": {
+      "put": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "measures aktualisieren",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "400": {
+            "description": "Ungültige Eingabe"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.risk_analysis` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "measureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (measureId)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "measures löschen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.risk_analysis` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "measureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (measureId)"
+          }
+        ]
+      }
+    },
+    "/bsi-grundschutz/domains/{id}/reports/{doc}": {
+      "get": {
+        "tags": [
+          "BSI Grundschutz"
+        ],
+        "summary": "reports abrufen",
+        "x-generated": true,
+        "responses": {
+          "200": {
+            "description": "Erfolg"
+          },
+          "401": {
+            "description": "Nicht authentifiziert"
+          },
+          "403": {
+            "description": "Berechtigung fehlt"
+          },
+          "404": {
+            "description": "Nicht gefunden"
+          }
+        },
+        "description": "Erfordert die Berechtigung `bsi_grundschutz.view` und das aktivierte Modul `bsi_grundschutz`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (id)"
+          },
+          {
+            "name": "doc",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bezeichner (doc)"
+          }
+        ]
+      }
     }
   },
   "tags": [

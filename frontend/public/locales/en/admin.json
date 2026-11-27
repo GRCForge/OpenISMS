@@ -320,6 +320,7 @@
     "manage": "Manage",
     "manage_catalog": "Manage catalogues",
     "manage_domain": "Manage information domains",
+    "risk_analysis": "Edit risk analysis (BSI 200-3)",
     "measure": "Record measurements",
     "permissions": "Permissions",
     "restore": "Restore",
