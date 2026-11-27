@@ -293,6 +293,14 @@ jobs:
             require('./src/routes/bsi-grundschutz');
             require('./src/routes/bsi-domains');
             require('./src/services/bsiCheckService');
+            require('./src/services/bsiRiskAnalysisService');
+            require('./src/services/reportService');
+            require('./src/services/reportRender');
+            require('docx'); require('pdfmake');
+            require('./src/services/accessService');
+            require('./src/services/accessMigration');
+            require('./src/routes/risks');
+            require('./src/mcp/server');
             require('./src/middleware/auth');
             require('helmet'); require('express-rate-limit'); require('express-session');
             console.log('Backend modules loaded successfully');

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, FileSpreadsheet, ListChecks, AlertTriangle, CheckCircle, Euro } from 'lucide-react';
+import { ArrowLeft, FileSpreadsheet, FileText, ListChecks, AlertTriangle, CheckCircle, Euro } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import type { RiskLevel, RiskScale, RiskTreatmentPlan as Plan, RiskTreatmentItemStatus } from '../types';
@@ -10,7 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Badge } from '../components/ui/Badge';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
-import { exportToMultiSheetExcel } from '../lib/export';
+import { exportToMultiSheetExcel, downloadReport, type ReportFormat } from '../lib/export';
 import { useToast } from '../contexts/ToastContext';
 
 // Risk treatment plan across all risks (3.8.0) - evidence for ISO 27001
@@ -27,7 +27,15 @@ export const RiskTreatmentPlan: React.FC = () => {
   const [status, setStatus] = useState('');
   const [overdue, setOverdue] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reportBusy, setReportBusy] = useState<ReportFormat | null>(null);
   const lang = i18n.language;
+  // Treatment plan as DOCX/PDF (3.10.0), rendered and audit-logged by the server.
+  const planReport = async (f: ReportFormat) => {
+    setReportBusy(f);
+    try { await downloadReport('/risks/reports/treatment-plan', f, 'risikobehandlungsplan'); }
+    catch { toast.error(t('risks:reports.error')); }
+    finally { setReportBusy(null); }
+  };
   const eur = useMemo(() => new Intl.NumberFormat(lang === 'de' ? 'de-DE' : lang === 'es' ? 'es-ES' : 'en-GB', { style: 'currency', currency: 'EUR' }), [lang]);
   const lvl = (k?: RiskLevel | null) => (k ? levelLabel(scale, k, t(`risks:levels.${k}`)) : '–');
 
@@ -88,7 +96,14 @@ export const RiskTreatmentPlan: React.FC = () => {
           <h1 className="text-2xl font-bold dark:text-white flex items-center gap-2"><ListChecks size={22} />{t('risks:plan.title')}</h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm">{t('risks:plan.subtitle')}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={exportExcel} disabled={!plan || (plan.items.length === 0 && plan.risks_without_plan.length === 0)}><FileSpreadsheet size={14} />Excel</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" size="sm" onClick={exportExcel} disabled={!plan || (plan.items.length === 0 && plan.risks_without_plan.length === 0)}><FileSpreadsheet size={14} />Excel</Button>
+          {(['docx', 'pdf'] as const).map(f => (
+            <Button key={f} variant="secondary" size="sm" title={t('risks:reports.hint')} disabled={reportBusy !== null} onClick={() => void planReport(f)}>
+              <FileText size={14} />{reportBusy === f ? t('risks:reports.loading') : `${t('risks:reports.treatmentPlan')} ${f.toUpperCase()}`}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {s && (

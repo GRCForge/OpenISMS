@@ -5213,9 +5213,12 @@ server.tool(
   {},
   async (_args, { mcpUser }) => {
     try {
-      const { can } = require('../services/permissionService');
+      // Same decision as requirePermission on the download routes: role by
+      // role through the user's groups (v3.10.0), fallback roles where the
+      // matrix says nothing.
+      const { decide } = require('../services/permissionService');
       const { getModules } = require('../middleware/modules');
-      const ok = async (module, action, fallback) => { const v = await can(mcpUser, module, action); return v === true || (v !== false && fallback.includes(mcpUser?.role)); };
+      const ok = (module, action, fallback) => decide(mcpUser, module, action, fallback);
       const viewers = ['admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'];
       const reportsSvc = require('../services/reportService');
       const bsiOn = !!(await getModules()).bsi_grundschutz && await ok('bsi_grundschutz', 'view', viewers);

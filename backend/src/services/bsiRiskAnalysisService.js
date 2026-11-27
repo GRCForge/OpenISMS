@@ -161,16 +161,18 @@ const THREAT_CREATE_FALLBACK = ['admin'];
 // (riskTreatmentService.listPlan).
 const PRIVILEGED_PLAN = ['admin', 'assessor', 'management'];
 
+// Roles come from the actor's groups (services/accessService.js, v3.10.0):
+// role by role, allow-only, fallback roles where the matrix says nothing.
 async function allowed(actor, module, action, fallback) {
-  const { can } = require('./permissionService');
-  const v = await can(actor, module, action);
-  return v === true || (v !== false && fallback.includes(actor?.role));
+  const { decide } = require('./permissionService');
+  return decide(actor, module, action, fallback);
 }
 
 /** Filter for treatment items: privileged roles, risk owner, responsible user or group member. */
 async function itemFilter(actor) {
   if (!actor?.id) return () => false;
-  if (PRIVILEGED_PLAN.includes(actor.role)) return () => true;
+  const { hasRole } = require('./accessService');
+  if (hasRole(actor, PRIVILEGED_PLAN)) return () => true;
   const { GroupMember } = getModels();
   const groups = new Set((await GroupMember.findAll({ where: { user_id: actor.id }, attributes: ['group_id'], raw: true })).map(g => g.group_id));
   return (item, risk) => !!risk && (risk.owner_id === actor.id || item.responsible_user_id === actor.id || (item.responsible_group_id != null && groups.has(item.responsible_group_id)));

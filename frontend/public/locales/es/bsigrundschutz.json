@@ -118,7 +118,9 @@
   "tabs": {
     "requirements": "Requisitos",
     "domain": "Ámbito de información",
-    "check": "Comprobación IT-Grundschutz"
+    "check": "Comprobación IT-Grundschutz",
+    "riskAnalysis": "Análisis de riesgos (200-3)",
+    "realization": "Plan de realización"
   },
   "domain": {
     "select": "Ámbito de información",
@@ -216,6 +218,145 @@
       "basis": "Protección básica: se comprueban los requisitos básicos (B) de los módulos modelados.",
       "standard": "Protección estándar: se comprueban los requisitos básicos y estándar (B, S).",
       "kern": "Protección esencial: se comprueban los requisitos básicos, estándar y de protección elevada (B, S, H)."
+    },
+    "additionalTitle": "Requisitos adicionales del análisis de riesgos",
+    "additionalHint": "Medidas de los planes de tratamiento de los riesgos clasificados para un objeto en el análisis de riesgos (BSI-Standard 200-3, cap. 7)."
+  },
+  "riskAnalysis": {
+    "intro": "Los objetos con necesidad de protección alta o muy alta, sin módulo adecuado o con un escenario de uso no cubierto requieren un análisis de riesgos (BSI-Standard 200-3, cap. 3). La necesidad de protección procede de la evaluación CIA del activo: 1–3 normal, 4 alta, 5 muy alta.",
+    "withoutProtectionNeed": "{{count}} objeto(s) sin evaluación de la necesidad de protección: evalúe el activo.",
+    "empty": "No hay objetos en el ámbito de información.",
+    "summary": {
+      "targets": "Objetos",
+      "included": "En el análisis de riesgos",
+      "completed": "Completados",
+      "classified": "Amenazas clasificadas"
+    },
+    "protectionNeed": "Necesidad de protección",
+    "noProtectionNeed": "sin evaluar",
+    "protection": {
+      "normal": "normal",
+      "high": "alta",
+      "very_high": "muy alta"
+    },
+    "reasonsTitle": "Motivos",
+    "reasons": {
+      "high_protection_need": "Necesidad de protección alta",
+      "no_module": "Ningún módulo modelado",
+      "scenario_not_covered": "Escenario de uso no cubierto"
+    },
+    "selected": "Seleccionado",
+    "progress": "Progreso",
+    "statuses": {
+      "open": "abierto",
+      "in_progress": "en curso",
+      "completed": "completado"
+    },
+    "threatsColumn": "Amenazas",
+    "threatCounts": "{{assessed}}/{{total}} evaluadas · {{relevant}} relevantes · {{classified}} clasificadas",
+    "open": "Abrir",
+    "back": "Volver a la vista general",
+    "yes": "sí",
+    "no": "no",
+    "decisionTitle": "Selección y progreso",
+    "decision": "Decisión",
+    "decisions": {
+      "auto": "automática (según criterios)",
+      "include": "incluido manualmente",
+      "exclude": "excluido manualmente"
+    },
+    "decisionReason": "Justificación",
+    "scenarioNote": "Descripción del escenario de uso",
+    "modules": "Módulos modelados",
+    "noModules": "ninguno",
+    "coverageHint": "Los catálogos no asignan amenazas a módulos; por eso, si los módulos modelados cubren una amenaza se evalúa manualmente.",
+    "notIncludedHint": "El objeto no está seleccionado para el análisis de riesgos. Inclúyalo en «Selección y progreso» para editarlo.",
+    "threatOverview": "Vista de amenazas",
+    "onlyRelevant": "Solo relevantes",
+    "addThreat": "Amenaza adicional",
+    "threat": "Amenaza",
+    "relevant": "Relevante",
+    "coverage": "Cobertura",
+    "risk": "Riesgo",
+    "measure": "Medida",
+    "additional": "amenaza adicional",
+    "notAssessed": "sin evaluar",
+    "riskHidden": "Existe un riesgo (sin permiso de lectura)",
+    "coverages": {
+      "unknown": "sin evaluar",
+      "covered": "cubierta",
+      "partially": "parcialmente",
+      "not_covered": "no cubierta"
+    },
+    "assess": "Evaluar",
+    "classify": "Clasificar",
+    "relevanceNote": "Justificación de la relevancia",
+    "coverageNote": "Justificación de la cobertura",
+    "classifyTitle": "Clasificación: {{threat}}",
+    "classifyCreateHint": "La primera clasificación crea un riesgo en el registro de riesgos (escenario: activo del objeto × amenaza).",
+    "classifyUpdateHint": "La clasificación actualiza el riesgo {{ref}}; no se crea un segundo riesgo.",
+    "likelihood": "Frecuencia",
+    "impact": "Impacto",
+    "likelihoodRationale": "Justificación de la frecuencia",
+    "impactRationale": "Justificación del impacto",
+    "riskCreated": "Riesgo {{ref}} creado",
+    "riskUpdated": "Riesgo {{ref}} actualizado",
+    "existingThreat": "Amenaza existente",
+    "newThreat": "– crear una amenaza nueva –",
+    "threatCode": "Código",
+    "threatTitle": "Denominación",
+    "newThreatHint": "Crear una amenaza nueva requiere el permiso threats.create.",
+    "measuresTitle": "Medidas adicionales (consolidación)",
+    "measuresHint": "Medidas de los planes de tratamiento de los riesgos clasificados. Se editan en el plan de tratamiento de riesgos; aquí se incorporan al plan de realización.",
+    "noMeasures": "Todavía no hay medidas en los planes de tratamiento de estos riesgos.",
+    "inPlan": "En el plan de realización",
+    "takeOver": "Incorporar",
+    "itemStatus": {
+      "planned": "planificada",
+      "in_progress": "en ejecución",
+      "implemented": "implementada",
+      "discarded": "descartada"
+    }
+  },
+  "realization": {
+    "priority": "Prioridad",
+    "prioritySuggested": "Propuesta",
+    "suggestedShort": "propuesta",
+    "allPriorities": "Todas las prioridades",
+    "priorities": {
+      "high": "alta",
+      "medium": "media",
+      "low": "baja"
+    },
+    "items": "Entradas",
+    "overdue": "Vencidas",
+    "withoutResponsible": "Sin responsable",
+    "export": "Excel (A.6)",
+    "hint": "Requisitos con estado «no» o «parcialmente» del IT-Grundschutz-Check y las medidas incorporadas desde el análisis de riesgos. Prioridad propuesta: básico alta, estándar media, protección elevada baja; medidas según el nivel de riesgo.",
+    "notChecked": "{{count}} requisito(s) aún no se han evaluado en el IT-Grundschutz-Check y por eso faltan en el plan.",
+    "empty": "No hay requisitos ni medidas abiertos.",
+    "kind": "Tipo",
+    "kinds": {
+      "requirement": "Requisito",
+      "measure": "Medida (análisis de riesgos)"
+    },
+    "ref": "Requisito / medida",
+    "remove": "Quitar del plan de realización"
+  },
+  "reports": {
+    "title": "Documentos de referencia",
+    "hint": "Los documentos de referencia A.1–A.6 según BSI-Standard 200-2 como archivo Word o PDF. Contienen solo lo que usted puede ver; cada descarga queda registrada en el registro de auditoría.",
+    "document": "Documento",
+    "loading": "Generando …",
+    "error": "No se pudo generar el documento.",
+    "docs": {
+      "a1": "A.1 Análisis de estructura",
+      "a2": "A.2 Necesidad de protección",
+      "a3": "A.3 Modelado",
+      "a4": "A.4 IT-Grundschutz-Check",
+      "a5": "A.5 Análisis de riesgos",
+      "a6": "A.6 Plan de realización",
+      "all": "Todos los documentos de referencia (A.1–A.6)"
     }
   }
 }

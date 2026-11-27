@@ -91,12 +91,26 @@ eq('Endpunkte gefunden', endpoints.length >= 12, true);
 eq('jeder Endpunkt mit authenticate + requirePermission(bsi_grundschutz)',
   endpoints.filter(e => !/authenticate, requirePermission\('bsi_grundschutz'/.test(e.tail)).map(e => `${e.method} ${e.path}`), []);
 const writes = endpoints.filter(e => e.method !== 'get');
-// Verbund/Zielobjekte/Modellierung: manage_domain; Check-Status: edit (wie die bisherige Liste).
-eq('schreibende Endpunkte: manage_domain bzw. edit fuer den Check',
-  writes.filter(e => !e.tail.includes(e.path.endsWith('/check') ? "'edit'" : "'manage_domain'")).map(e => `${e.method} ${e.path}`), []);
+// Verbund/Zielobjekte/Modellierung: manage_domain; Check-Status: edit (wie die
+// bisherige Liste); Risikoanalyse und Realisierungsplan (3.10.0): risk_analysis.
+const isAnalysis = (e) => e.path.includes('/risk-analysis') || e.path.includes('/realization-plan');
+const expectedAction = (e) => (e.path.endsWith('/check') ? "'edit'" : isAnalysis(e) ? "'risk_analysis'" : "'manage_domain'");
+eq('schreibende Endpunkte: manage_domain, edit fuer den Check, risk_analysis fuer Risikoanalyse/Realisierungsplan',
+  writes.filter(e => !e.tail.includes(expectedAction(e))).map(e => `${e.method} ${e.path}`), []);
 eq('schreibende Endpunkte: requireWriteAccess', writes.filter(e => !e.tail.includes('requireWriteAccess()')).map(e => `${e.method} ${e.path}`), []);
 eq('lesende Endpunkte: view', endpoints.filter(e => e.method === 'get' && !e.tail.includes("'view'")).map(e => e.path), []);
-eq('jede Aenderung schreibt Audit-Log', (routeSrc.match(/auditFromReq\(/g) || []).length, writes.length);
+// Verbund/Check: auditFromReq in der Route. Risikoanalyse/Realisierungsplan:
+// der Service schreibt das signierte Audit (gleicher Weg fuer REST und MCP).
+const analysisSrc = fs.readFileSync(path.join(SRC, 'services', 'bsiRiskAnalysisService.js'), 'utf8');
+const routeWrites = writes.filter(e => !isAnalysis(e));
+const routeAudits = (routeSrc.match(/auditFromReq\(/g) || []).length
+  - (routeSrc.match(/auditFromReq\(req, 'export'/g) || []).length;
+eq('jede Aenderung schreibt Audit-Log (Route)', routeAudits, routeWrites.length);
+const fnBody = (name) => { const i = analysisSrc.indexOf(`async function ${name}(`); const j = analysisSrc.indexOf('\nasync function ', i + 10); return i < 0 ? '' : analysisSrc.slice(i, j < 0 ? undefined : j); };
+eq('jede Aenderung der Risikoanalyse schreibt Audit-Log (Service)',
+  ['setTargetDecision', 'setThreatAssessment', 'addAdditionalThreat', 'classifyThreat', 'addRealizationMeasure', 'updateRealizationMeasure', 'removeRealizationMeasure']
+    .filter(n => !fnBody(n).includes('auditFromReq(')), []);
+eq('jeder Export/Download schreibt Audit-Log', (routeSrc.match(/auditFromReq\(req, 'export'/g) || []).length, endpoints.filter(e => e.method === 'get' && (e.path.endsWith('/export') || e.path.includes('/reports/'))).length);
 eq('keine direkte Massenzuweisung aus req.body', /\.(create|update)\(\s*req\.body/.test(routeSrc), false);
 
 const indexSrc = fs.readFileSync(path.join(SRC, 'index.js'), 'utf8');

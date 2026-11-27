@@ -118,7 +118,9 @@
   "tabs": {
     "requirements": "Requirements",
     "domain": "Information domain",
-    "check": "IT-Grundschutz check"
+    "check": "IT-Grundschutz check",
+    "riskAnalysis": "Risk analysis (200-3)",
+    "realization": "Realisation plan"
   },
   "domain": {
     "select": "Information domain",
@@ -216,6 +218,145 @@
       "basis": "Basic protection: the basic requirements (B) of the modelled modules are checked.",
       "standard": "Standard protection: basic and standard requirements (B, S) are checked.",
       "kern": "Core protection: basic, standard and high-protection requirements (B, S, H) are checked."
+    },
+    "additionalTitle": "Additional requirements from the risk analysis",
+    "additionalHint": "Measures from the treatment plans of the risks classified for a target object in the risk analysis (BSI-Standard 200-3, ch. 7)."
+  },
+  "riskAnalysis": {
+    "intro": "Target objects with high or very high protection need, without a matching module or with an operating scenario the modules do not cover need a risk analysis (BSI-Standard 200-3, ch. 3). The protection need comes from the CIA assessment of the asset: 1–3 normal, 4 high, 5 very high.",
+    "withoutProtectionNeed": "{{count}} target object(s) without protection need assessment – please assess the asset.",
+    "empty": "No target objects in the information domain.",
+    "summary": {
+      "targets": "Target objects",
+      "included": "In the risk analysis",
+      "completed": "Completed",
+      "classified": "Classified threats"
+    },
+    "protectionNeed": "Protection need",
+    "noProtectionNeed": "not assessed",
+    "protection": {
+      "normal": "normal",
+      "high": "high",
+      "very_high": "very high"
+    },
+    "reasonsTitle": "Reasons",
+    "reasons": {
+      "high_protection_need": "High protection need",
+      "no_module": "No module modelled",
+      "scenario_not_covered": "Operating scenario not covered"
+    },
+    "selected": "Selected",
+    "progress": "Progress",
+    "statuses": {
+      "open": "open",
+      "in_progress": "in progress",
+      "completed": "completed"
+    },
+    "threatsColumn": "Threats",
+    "threatCounts": "{{assessed}}/{{total}} assessed · {{relevant}} relevant · {{classified}} classified",
+    "open": "Open",
+    "back": "Back to overview",
+    "yes": "yes",
+    "no": "no",
+    "decisionTitle": "Selection and progress",
+    "decision": "Decision",
+    "decisions": {
+      "auto": "automatic (by criteria)",
+      "include": "included by hand",
+      "exclude": "excluded by hand"
+    },
+    "decisionReason": "Reason",
+    "scenarioNote": "Description of the operating scenario",
+    "modules": "Modelled modules",
+    "noModules": "none",
+    "coverageHint": "The catalogues do not map threats to modules; whether the modelled modules cover a threat is therefore assessed by hand.",
+    "notIncludedHint": "The target object is not selected for the risk analysis. Include it under \"Selection and progress\" to edit it.",
+    "threatOverview": "Threat overview",
+    "onlyRelevant": "Relevant only",
+    "addThreat": "Additional threat",
+    "threat": "Threat",
+    "relevant": "Relevant",
+    "coverage": "Coverage",
+    "risk": "Risk",
+    "measure": "Measure",
+    "additional": "additional threat",
+    "notAssessed": "not assessed",
+    "riskHidden": "Risk exists (no read permission)",
+    "coverages": {
+      "unknown": "not assessed",
+      "covered": "covered",
+      "partially": "partially",
+      "not_covered": "not covered"
+    },
+    "assess": "Assess",
+    "classify": "Classify",
+    "relevanceNote": "Reason for relevance",
+    "coverageNote": "Reason for coverage",
+    "classifyTitle": "Classification: {{threat}}",
+    "classifyCreateHint": "The first classification creates a risk in the risk register (scenario: asset of the target object × threat).",
+    "classifyUpdateHint": "The classification updates risk {{ref}}; no second risk is created.",
+    "likelihood": "Frequency",
+    "impact": "Impact",
+    "likelihoodRationale": "Rationale for the frequency",
+    "impactRationale": "Rationale for the impact",
+    "riskCreated": "Risk {{ref}} created",
+    "riskUpdated": "Risk {{ref}} updated",
+    "existingThreat": "Existing threat",
+    "newThreat": "– create a new threat –",
+    "threatCode": "Code",
+    "threatTitle": "Title",
+    "newThreatHint": "Creating a new threat requires the permission threats.create.",
+    "measuresTitle": "Additional measures (consolidation)",
+    "measuresHint": "Measures from the treatment plans of the classified risks. They are edited in the risk treatment plan; here they are taken over into the realisation plan.",
+    "noMeasures": "No measures in the treatment plans of these risks yet.",
+    "inPlan": "In realisation plan",
+    "takeOver": "Take over",
+    "itemStatus": {
+      "planned": "planned",
+      "in_progress": "in progress",
+      "implemented": "implemented",
+      "discarded": "discarded"
+    }
+  },
+  "realization": {
+    "priority": "Priority",
+    "prioritySuggested": "Suggestion",
+    "suggestedShort": "suggested",
+    "allPriorities": "All priorities",
+    "priorities": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "items": "Entries",
+    "overdue": "Overdue",
+    "withoutResponsible": "Without responsible",
+    "export": "Excel (A.6)",
+    "hint": "Requirements with status \"no\" or \"partially\" from the IT-Grundschutz-Check and the measures taken over from the risk analysis. Suggested priority: basic high, standard medium, elevated protection need low; measures by risk level.",
+    "notChecked": "{{count}} requirement(s) have not been assessed in the IT-Grundschutz-Check yet and are therefore missing from the plan.",
+    "empty": "No open requirements or measures.",
+    "kind": "Type",
+    "kinds": {
+      "requirement": "Requirement",
+      "measure": "Measure (risk analysis)"
+    },
+    "ref": "Requirement / measure",
+    "remove": "Remove from the realisation plan"
+  },
+  "reports": {
+    "title": "Reference documents",
+    "hint": "Reference documents A.1–A.6 per BSI-Standard 200-2 as Word or PDF file. They contain only what you may see; every download is written to the audit log.",
+    "document": "Document",
+    "loading": "Generating …",
+    "error": "The document could not be generated.",
+    "docs": {
+      "a1": "A.1 Structure analysis",
+      "a2": "A.2 Protection need",
+      "a3": "A.3 Modelling",
+      "a4": "A.4 IT-Grundschutz-Check",
+      "a5": "A.5 Risk analysis",
+      "a6": "A.6 Realisation plan",
+      "all": "All reference documents (A.1–A.6)"
     }
   }
 }

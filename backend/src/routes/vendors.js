@@ -19,7 +19,7 @@ router.get('/', authenticate, requirePermission('vendors','view','admin','owner'
     const staff = await decide(req.user, 'vendors', 'view_details', ['admin', 'assessor', 'it-staff', 'dpo']);
     const vendors = staff
       ? await Vendor.findAll({ include: [{ model: VendorContact, as: 'contacts' }], order: [['name', 'ASC']] })
-      : await Vendor.findAll({ attributes: ['id', 'name', 'type', 'criticality'], order: [['name', 'ASC']] });
+      : await Vendor.findAll({ attributes: ['id', 'name', 'type', 'risk_level'], order: [['name', 'ASC']] });
     res.json(vendors);
   } catch (e) { serverError(res, e, 'vendors'); }
 });

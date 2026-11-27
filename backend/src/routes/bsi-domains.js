@@ -155,6 +155,8 @@ router.get('/:id/check/summary', authenticate, requirePermission('bsi_grundschut
 router.get('/:id/check/export', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const c = await check.getCheck(req.params.id, req.user);
+    // Every export is written to the audit log, like the A.6 export (3.10.0).
+    await auditFromReq(req, 'export', 'bsi_check', c.domain.id, c.domain.name, { format: 'xlsx', entries: c.entries.length });
     res.json({ domain: c.domain, ...check.buildA4Rows(c), summary: check.summarize(c.entries) });
   } catch (e) { fail(res, e); }
 });

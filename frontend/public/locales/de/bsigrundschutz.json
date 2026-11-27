@@ -118,7 +118,9 @@
   "tabs": {
     "requirements": "Anforderungen",
     "domain": "Informationsverbund",
-    "check": "IT-Grundschutz-Check"
+    "check": "IT-Grundschutz-Check",
+    "riskAnalysis": "Risikoanalyse (200-3)",
+    "realization": "Realisierungsplan"
   },
   "domain": {
     "select": "Informationsverbund",
@@ -216,6 +218,145 @@
       "basis": "Basis-Absicherung: geprüft werden die Basis-Anforderungen (B) der modellierten Bausteine.",
       "standard": "Standard-Absicherung: geprüft werden Basis- und Standard-Anforderungen (B, S).",
       "kern": "Kern-Absicherung: geprüft werden Basis-, Standard- und Anforderungen bei erhöhtem Schutzbedarf (B, S, H)."
+    },
+    "additionalTitle": "Zusätzliche Anforderungen aus der Risikoanalyse",
+    "additionalHint": "Maßnahmen aus den Behandlungsplänen der Risiken, die in der Risikoanalyse (BSI-Standard 200-3, Kap. 7) für ein Zielobjekt eingestuft wurden."
+  },
+  "riskAnalysis": {
+    "intro": "Zielobjekte mit hohem oder sehr hohem Schutzbedarf, ohne passenden Baustein oder mit nicht abgedecktem Einsatzszenario brauchen eine Risikoanalyse (BSI-Standard 200-3, Kap. 3). Der Schutzbedarf kommt aus der CIA-Bewertung des Assets: 1–3 normal, 4 hoch, 5 sehr hoch.",
+    "withoutProtectionNeed": "{{count}} Zielobjekt(e) ohne Schutzbedarfsbewertung – bitte das Asset bewerten.",
+    "empty": "Keine Zielobjekte im Informationsverbund.",
+    "summary": {
+      "targets": "Zielobjekte",
+      "included": "In der Risikoanalyse",
+      "completed": "Abgeschlossen",
+      "classified": "Eingestufte Gefährdungen"
+    },
+    "protectionNeed": "Schutzbedarf",
+    "noProtectionNeed": "nicht bewertet",
+    "protection": {
+      "normal": "normal",
+      "high": "hoch",
+      "very_high": "sehr hoch"
+    },
+    "reasonsTitle": "Gründe",
+    "reasons": {
+      "high_protection_need": "Hoher Schutzbedarf",
+      "no_module": "Kein Baustein modelliert",
+      "scenario_not_covered": "Einsatzszenario nicht abgedeckt"
+    },
+    "selected": "Ausgewählt",
+    "progress": "Fortschritt",
+    "statuses": {
+      "open": "offen",
+      "in_progress": "in Bearbeitung",
+      "completed": "abgeschlossen"
+    },
+    "threatsColumn": "Gefährdungen",
+    "threatCounts": "{{assessed}}/{{total}} bewertet · {{relevant}} relevant · {{classified}} eingestuft",
+    "open": "Öffnen",
+    "back": "Zur Übersicht",
+    "yes": "ja",
+    "no": "nein",
+    "decisionTitle": "Auswahl und Fortschritt",
+    "decision": "Entscheidung",
+    "decisions": {
+      "auto": "automatisch (nach Kriterien)",
+      "include": "manuell aufgenommen",
+      "exclude": "manuell ausgenommen"
+    },
+    "decisionReason": "Begründung",
+    "scenarioNote": "Beschreibung des Einsatzszenarios",
+    "modules": "Modellierte Bausteine",
+    "noModules": "keine",
+    "coverageHint": "Die Kataloge enthalten keine Zuordnung von Gefährdungen zu Bausteinen; ob eine Gefährdung durch die modellierten Bausteine abgedeckt ist, wird deshalb manuell bewertet.",
+    "notIncludedHint": "Das Zielobjekt ist nicht für die Risikoanalyse ausgewählt. Zum Bearbeiten über „Auswahl und Fortschritt“ aufnehmen.",
+    "threatOverview": "Gefährdungsübersicht",
+    "onlyRelevant": "Nur relevante",
+    "addThreat": "Zusätzliche Gefährdung",
+    "threat": "Gefährdung",
+    "relevant": "Relevant",
+    "coverage": "Abdeckung",
+    "risk": "Risiko",
+    "measure": "Maßnahme",
+    "additional": "zusätzliche Gefährdung",
+    "notAssessed": "nicht bewertet",
+    "riskHidden": "Risiko vorhanden (keine Leseberechtigung)",
+    "coverages": {
+      "unknown": "nicht bewertet",
+      "covered": "abgedeckt",
+      "partially": "teilweise",
+      "not_covered": "nicht abgedeckt"
+    },
+    "assess": "Bewerten",
+    "classify": "Einstufen",
+    "relevanceNote": "Begründung der Relevanz",
+    "coverageNote": "Begründung der Abdeckung",
+    "classifyTitle": "Einstufung: {{threat}}",
+    "classifyCreateHint": "Die erste Einstufung legt ein Risiko im Risikoregister an (Szenario: Asset des Zielobjekts × Gefährdung).",
+    "classifyUpdateHint": "Die Einstufung aktualisiert das Risiko {{ref}}; es wird kein zweites angelegt.",
+    "likelihood": "Häufigkeit",
+    "impact": "Auswirkung",
+    "likelihoodRationale": "Begründung der Häufigkeit",
+    "impactRationale": "Begründung der Auswirkung",
+    "riskCreated": "Risiko {{ref}} angelegt",
+    "riskUpdated": "Risiko {{ref}} aktualisiert",
+    "existingThreat": "Bestehende Gefährdung",
+    "newThreat": "– neue Gefährdung anlegen –",
+    "threatCode": "Kürzel",
+    "threatTitle": "Bezeichnung",
+    "newThreatHint": "Eine neue Gefährdung anzulegen erfordert die Berechtigung threats.create.",
+    "measuresTitle": "Zusätzliche Maßnahmen (Konsolidierung)",
+    "measuresHint": "Maßnahmen aus den Behandlungsplänen der eingestuften Risiken. Bearbeitet werden sie im Risikobehandlungsplan; hier werden sie in den Realisierungsplan übernommen.",
+    "noMeasures": "Noch keine Maßnahmen in den Behandlungsplänen dieser Risiken.",
+    "inPlan": "Im Realisierungsplan",
+    "takeOver": "Übernehmen",
+    "itemStatus": {
+      "planned": "geplant",
+      "in_progress": "in Umsetzung",
+      "implemented": "umgesetzt",
+      "discarded": "verworfen"
+    }
+  },
+  "realization": {
+    "priority": "Priorität",
+    "prioritySuggested": "Vorschlag",
+    "suggestedShort": "Vorschlag",
+    "allPriorities": "Alle Prioritäten",
+    "priorities": {
+      "high": "hoch",
+      "medium": "mittel",
+      "low": "niedrig"
+    },
+    "items": "Einträge",
+    "overdue": "Überfällig",
+    "withoutResponsible": "Ohne Verantwortliche",
+    "export": "Excel (A.6)",
+    "hint": "Anforderungen mit Status „nein“ oder „teilweise“ aus dem IT-Grundschutz-Check und die aus der Risikoanalyse übernommenen Maßnahmen. Vorschlag der Priorität: Basis hoch, Standard mittel, erhöhter Schutzbedarf niedrig; Maßnahmen nach der Risikostufe.",
+    "notChecked": "{{count}} Anforderung(en) sind im IT-Grundschutz-Check noch nicht bewertet und fehlen deshalb im Plan.",
+    "empty": "Keine offenen Anforderungen oder Maßnahmen.",
+    "kind": "Art",
+    "kinds": {
+      "requirement": "Anforderung",
+      "measure": "Maßnahme (Risikoanalyse)"
+    },
+    "ref": "Anforderung / Maßnahme",
+    "remove": "Aus dem Realisierungsplan entfernen"
+  },
+  "reports": {
+    "title": "Referenzdokumente",
+    "hint": "Die Referenzdokumente A.1–A.6 nach BSI-Standard 200-2 als Word- oder PDF-Datei. Sie enthalten nur, was Sie sehen dürfen; jeder Download wird im Audit-Log festgehalten.",
+    "document": "Dokument",
+    "loading": "Wird erstellt …",
+    "error": "Das Dokument konnte nicht erstellt werden.",
+    "docs": {
+      "a1": "A.1 Strukturanalyse",
+      "a2": "A.2 Schutzbedarfsfeststellung",
+      "a3": "A.3 Modellierung",
+      "a4": "A.4 IT-Grundschutz-Check",
+      "a5": "A.5 Risikoanalyse",
+      "a6": "A.6 Realisierungsplan",
+      "all": "Alle Referenzdokumente (A.1–A.6)"
     }
   }
 }

@@ -23,7 +23,7 @@ import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
-import { exportToCSV, exportToExcel } from '../lib/export';
+import { exportToCSV, exportToExcel, downloadReport, type ReportFormat } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
@@ -172,6 +172,7 @@ export const Risks: React.FC = () => {
   const [origValues, setOrigValues] = useState<{ likelihood: number; impact: number; dims: string } | null>(null);
   const [overrideForm, setOverrideForm] = useState<{ open: boolean; likelihood: number; impact: number; reason: string }>({ open: false, likelihood: 1, impact: 1, reason: '' });
   const toast = useToast();
+  const [reportBusy, setReportBusy] = useState<ReportFormat | null>(null);
   const [risks, setRisks] = useState<Risk[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -468,6 +469,14 @@ export const Risks: React.FC = () => {
     .filter(([v]) => v !== 'accepted' || form.status === 'accepted')
     .map(([v, l]) => ({ value: v, label: l }));
 
+  // Risk report as DOCX/PDF (3.10.0), rendered and audit-logged by the server.
+  const riskReport = async (f: ReportFormat) => {
+    setReportBusy(f);
+    try { await downloadReport('/risks/reports/risk-report', f, 'risikobericht'); }
+    catch { toast.error(t('risks:reports.error')); }
+    finally { setReportBusy(null); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -480,6 +489,11 @@ export const Risks: React.FC = () => {
           <Link to="/risks/monitoring" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700"><Activity size={14} />{t('risks:monitoring.open')}</Link>
           <Button variant="secondary" size="sm" onClick={() => exportToCSV(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`)}><Download size={14} />CSV</Button>
           <Button variant="secondary" size="sm" onClick={() => void exportToExcel(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`, 'Risiken')}><FileSpreadsheet size={14} />Excel</Button>
+          {(['docx', 'pdf'] as const).map(f => (
+            <Button key={f} variant="secondary" size="sm" title={t('risks:reports.hint')} disabled={reportBusy !== null} onClick={() => void riskReport(f)}>
+              <FileText size={14} />{reportBusy === f ? t('risks:reports.loading') : `${t('risks:reports.riskReport')} ${f.toUpperCase()}`}
+            </Button>
+          ))}
           {canWrite && <Button onClick={openNew}><Plus size={16} />{t('risks:new')}</Button>}
         </div>
       </div>

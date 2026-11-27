@@ -74,7 +74,18 @@ const status = async (p) => { try { await (typeof p === 'function' ? p() : p); r
   await hist.ensureBaseline();
   await seedCatalog();
   const kBuf = Buffer.from(kompendiumXml());
-  const mkUser = (name, role, extra = {}) => m.User.create({ name, email: `${name}@test.invalid`, password_hash: 'x', role, ...extra });
+  // Roles reach users only through groups (v3.10.0): every test user joins the
+  // group carrying their role (custom role wins), as the migration would do.
+  const access = require(path.join(SRC, 'services', 'accessService'));
+  const mkUser = async (name, role, extra = {}) => {
+    const u = await m.User.create({ name, email: `${name}@test.invalid`, password_hash: 'x', role, ...extra });
+    const g = extra.custom_role_id
+      ? await access.groupForCustomRole(await m.CustomRole.findByPk(extra.custom_role_id))
+      : await access.groupForSystemRole(role);
+    await m.GroupMember.create({ group_id: g.id, user_id: u.id, source: 'manual' });
+    await access.syncUserRoles([u.id]);
+    return u.reload();
+  };
   const admin = await mkUser('admin', 'admin');
   const assessor = await mkUser('assessor', 'assessor');
   const owner = await mkUser('owner', 'owner');

@@ -1,8 +1,25 @@
-# OpenISMS v3.10.0 — roles and groups
+# OpenISMS v3.10.0 — roles and groups, BSI risk analysis, reports, maintenance
 
-Feature release. Contains database migrations (run automatically on start). Every user keeps exactly the access they had. What changes is how access is granted: **roles are named sets of permissions, and users receive them only through groups**. A user can now hold several roles at once.
+Feature release. It combines three strands that were developed separately:
 
-**Read before upgrading:** new users no longer get a role by default (see [Behaviour changes](#behaviour-changes)). Scripts that set `role` on users through the API still work, but the role now comes from group membership.
+1. **Roles and groups:** roles are named sets of permissions, and users receive them only through groups. A user can hold several roles at once.
+2. **Risk analysis per BSI-Standard 200-3**, the **realisation plan** (reference document A.6) and **reports as DOCX and PDF** (risk report, risk treatment plan, BSI reference documents A.1–A.6).
+3. **Maintenance** that had been prepared as v3.9.1 (CodeQL log injection, catch-up build on `main`, dependency updates). There is no separate 3.9.1 release; everything since v3.9.0 is in this release.
+
+Contains database migrations (run automatically on start).
+
+## Breaking changes and upgrade notes
+
+Read before upgrading.
+
+- **New users without a group get no role.** Since 3.10.0 a user has only the roles of their groups. A user created in the UI, through the API, the import, SSO or MCP auto-provisioning without groups (and without a legacy `role`), and an SSO user that matches no claim mapping while no SSO default group is set, can only see their own account. Before, new users were `viewer` by default. Check **Administration → General → SSO default group** after the upgrade and assign groups when creating users.
+- **Existing users keep their access.** The migration puts every user into the group of their former role (custom role wins, as before). This was verified decision by decision against the v3.9.0 logic (see [Migration](#migration-automatic-first-start)).
+- **Custom roles: `false` no longer takes away.** Roles add up (allow-only). For a migrated user with one role nothing changes. If you later give a user several roles, a `false` in one role's set does not remove what another role allows.
+- **Inconsistent role data:** a user whose `users.role` differed from the base role of their custom role (only possible through direct database edits before 3.10.0) keeps both roles, so nothing is lost. Such users are listed in the start log (`[Access] User #…`) and in the settings key `access_model.inconsistentUsers`; review their groups.
+- **MCP `isms_delete_user` deactivates** the account instead of deleting it, like the web UI.
+- **Exports are audit-logged:** the A.4 export of the IT-Grundschutz-Check now writes an audit entry, like the new A.6 export and every report download.
+- **New permission `bsi_grundschutz.risk_analysis`** (default: `admin`, `assessor`). Custom roles with their own permission set do not list it; for them the base role decides, as for every action a set does not mention.
+- Log lines from `serverError` / `requestError` and the MCP risk error path no longer contain a space where a line break was (CodeQL `js/log-injection`).
 
 ## New: roles as permission sets
 
@@ -31,7 +48,11 @@ Feature release. Contains database migrations (run automatically on start). Ever
 
 ## Migration (automatic, first start)
 
-The migration runs once, in a transaction, and keeps every user's effective access unchanged:
+The migration runs once and keeps every user's effective access unchanged:
+
+- **Atomic:** memberships, mappings, the SSO default group and the state key `access_model` are written in one transaction. A failed start leaves the database as it was; the next start retries.
+- **Idempotent:** a group that already carries a role is reused, never duplicated; a second run changes nothing.
+- **One runner:** an advisory lock serialises concurrent starts (several replicas); the others see the finished state.
 
 - It creates one group per role in use: *Administrators*, *Assessors*, *Data Protection*, *IT Staff*, *Asset Owners*, *Management*, *Employees*, *Viewers*, and *Role: \<name\>* for custom roles. If a name is already taken, a suffix is added, e.g. *Administrators (2)*.
 - Every user joins the group of their former role. A custom role wins over the column role, as before.
@@ -39,7 +60,30 @@ The migration runs once, in a transaction, and keeps every user's effective acce
 - Existing groups are not changed and carry no roles.
 - The log shows `[Access] Migrated to group-based permissions: …`. The state is kept in the settings key `access_model`.
 
+**Verified:** `scripts/test-access-equivalence-db.js` builds v3.9.0 data (all eight roles, custom roles with and without their own set, `true`/`false` entries, entries beyond the base role, unknown modules, matrix overrides, inactive users, SSO mappings, a hand-made role group, an ordinary team) and compares, for every user, every module.action and every fallback role list a route can carry, the v3.9.0 decision with the decision after the migration, plus the role rules (`requireRole`, `isAdmin`, `canViewAllAssets`, write protection). Result on PostgreSQL 18: 30 880 decisions, no right lost, no right gained for consistent users; the active administrators and the `users.role` cache are unchanged. The embedded v3.9.0 reference was checked against the real v3.9.0 code (3 072 decisions, identical). Three concurrent starts migrate once.
+
 **After the upgrade:** review **Administration → Groups**. If you had a team named like a role (e.g. "Administrators"), the role group carries a suffix, and you may want to rename one of them. You can now merge roles into fewer groups, e.g. one "ISMS team" group that carries both `assessor` and `dpo`.
+
+## New: risk analysis per BSI-Standard 200-3
+
+In **BSI IT-Grundschutz → Risk analysis (200-3)**, per information domain:
+
+- **Selection** (ch. 3): a target object needs a risk analysis when its protection need is high or very high, when no module is modelled for it, or when an operating scenario is marked as not covered. A manual decision (include / exclude) needs a reason.
+- **Protection need** from the current CIA assessment of the asset: 1–3 normal, 4 high, 5 very high (an assumption of OpenISMS, documented in `docs/FEATURES.md`); maximum of C, I and A.
+- **Threat overview** (ch. 4): the 47 elementary threats plus additional threats (existing, or new with `threats.create`); relevance and coverage by the modelled modules are assessed by hand, because the catalogues carry no threat mapping.
+- **Classification** (ch. 5): frequency × impact on the scales of the active risk methodology, each with a rationale. The first classification creates one risk in the register (asset × threat, owner = asset owner); later ones update it. Concurrent classifications create one risk.
+- **Consolidation** (ch. 7): the measures from the treatment plans of these risks show up in the IT-Grundschutz-Check as additional requirements and can be taken over into the realisation plan.
+- Every change writes a signed audit entry, through REST and MCP alike. A target object with analysis data stays in its domain.
+
+## New: realisation plan (reference document A.6)
+
+**BSI IT-Grundschutz → Realisation plan**: requirements with status "no" or "partially" from the check plus the measures taken over, with responsible, due date, costs and priority. The priority is set or suggested (basic high, standard medium, elevated protection need low; measures by risk level); the check entry has a new field for it. Excel export in the A.6 layout.
+
+## New: reports as DOCX and PDF
+
+- **Risk register → Risk report** and **Risk treatment plan → Treatment plan**, each as DOCX or PDF.
+- **Realisation plan → Reference documents**: A.1 structure analysis, A.2 protection need, A.3 modelling, A.4 check, A.5 risk analysis, A.6 realisation plan, or all in one document.
+- The reports contain only what the requesting user may see and say "no data" where data is missing. Every download is written to the audit log. Rendered on the server with `docx` 9.16.1 and `pdfmake` 0.3.15 (both MIT).
 
 ## Behaviour changes
 
@@ -62,6 +106,13 @@ The migration runs once, in a transaction, and keeps every user's effective acce
 - `POST /api/admin/oidc-mappings` takes `group_id` (`role` / `custom_role_id` are still accepted and resolved to a group).
 - `PUT /api/admin/settings` and MCP `isms_update_settings` take `ssoDefaultGroupId` (`null` = none). `ssoDefaultRole` is still accepted and sets the default group to the group carrying that role.
 
+## API: risk analysis and reports
+
+- `GET /api/bsi-grundschutz/domains/:id/risk-analysis[/:targetId]`, `PUT /…/risk-analysis/:targetId`, `POST /…/risk-analysis/:targetId/threats`, `PUT /…/threats/:threatId`, `POST /…/threats/:threatId/classify`
+- `GET /api/bsi-grundschutz/domains/:id/realization-plan[/export]`, `POST/PUT/DELETE /…/realization-plan/measures[/:measureId]`
+- `GET /api/bsi-grundschutz/domains/:id/reports/:doc?format=docx|pdf` (`a1`…`a6`, `all`) and `GET /api/risks/reports/risk-report|treatment-plan?format=docx|pdf` (rate limit `heavyLimiter`)
+- `PUT /api/bsi-grundschutz/domains/:id/check` takes `realization_priority`.
+
 ## MCP
 
 - `isms_create_user` / `isms_update_user` take `group_ids`. `role` / `custom_role_id` still work, as above.
@@ -69,6 +120,7 @@ The migration runs once, in a transaction, and keeps every user's effective acce
 - `isms_list_users` filters by role through group membership. `isms_list_custom_roles` reports the carrying groups.
 - `isms_delete_user` deactivates instead of deleting.
 - The tool gate evaluates every role of the caller (allow-only), like the REST API.
+- New tools (251 in total): `isms_get_bsi_risk_analysis`, `isms_set_bsi_risk_analysis_target`, `isms_assess_bsi_threat`, `isms_classify_bsi_threat`, `isms_get_bsi_realization_plan`, `isms_list_reports` (metadata and download paths only, filtered by the caller's permissions). They are bound to the authenticated account like every tool and decide through the caller's groups. `isms_set_bsi_check_status` takes `realization_priority`.
 
 ## Migrations
 
@@ -76,6 +128,8 @@ The migration runs once, in a transaction, and keeps every user's effective acce
 - `group_members` gains `source` (`manual` / `sso`).
 - `oidc_claim_mappings` gains `group_id`.
 - `users.role` gains the value `none`, which is also the new default.
+- New tables `bsi_risk_analysis_targets`, `bsi_risk_analysis_threats`, `bsi_realization_measures`.
+- `bsi_requirements` gains `realization_priority` (`high` / `medium` / `low`, `NULL` = suggested).
 
 ## Outlook: phase 2
 
@@ -85,3 +139,36 @@ Some rules still ask for a role rather than a permission: object visibility (e.g
 
 - New check `scripts/test-group-access.js` in the Security & Quality workflow covers role helpers, allow-only decisions, the last-administrator guard and SSO group sync.
 - The database test `scripts/test-group-access-db.js` covers the migration and the guards on PostgreSQL and runs locally.
+- New database test `scripts/test-access-equivalence-db.js` (see Migration) and `scripts/test-bsi-risk-analysis-db.js` (selection, threat overview, classification, consolidation, realisation plan, reports parsed back from DOCX and PDF); new check `scripts/test-bsi-risk-analysis.js`.
+- The module-load smoke test also loads the MCP server, the report services, `docx` and `pdfmake`.
+- **Catch-up runs on `main` build again:** `main-catchup.yml` starts Security & Quality by `workflow_dispatch` after Dependabot auto-merges. The gate in `security.yml` treated a dispatch like a pull request from a feature branch and skipped `Backend — Install & Smoke Test` and `Frontend — TypeScript & Build`. A dispatch now runs the same sections as a push (#353).
+- `SonarSource/sonarqube-scan-action` 8.5.0 → 8.5.1 (#351).
+
+## Security and code scanning
+
+- **Log injection (CodeQL `js/log-injection`):** the log sanitising in `utils/httpError.js` (`serverError`, `requestError`) and in the MCP risk error path removed line breaks with `replace(/[\r\n]+/g, ' ')`. CodeQL does not accept that form as a sanitiser. Line breaks are now removed with `replace(/\n|\r/g, '')`; the three alerts are closed (#353).
+
+## Dependencies
+
+New: `docx` 9.16.1 and `pdfmake` 0.3.15 (backend, MIT).
+
+Updated since v3.9.0:
+
+| Package | From | To |
+|---|---|---|
+| `@anthropic-ai/sdk` | 1.12.0 | 1.14.0 |
+| `openai` | 7.62.0 | 7.65.0 |
+| `swagger-ui-dist` | 5.35.1 | 5.36.0 |
+| `i18next` | 27.2.3 | 27.2.9 |
+| `i18next-http-backend` | 4.1.0 | 4.1.2 |
+| `lucide-react` | 1.77.0 | 1.82.0 |
+| `react-router` | 8.5.2 | 8.5.3 |
+| `recharts` | 3.11.0 | 3.11.1 |
+| `@types/react` | 19.3.0 | 19.3.3 |
+| `vite` | 8.3.8 | 8.4.0 |
+
+`npm audit` reports no known vulnerabilities in backend and frontend (#349, #350, #352, #353).
+
+## Upgrade
+
+Replace the image or run the updater as usual. The migrations run on the first start. Afterwards review **Administration → Groups**, the **SSO default group** and the start log for `[Access] User #…` lines.

@@ -56,7 +56,11 @@ const status = async (p) => { try { await p; return 'ok'; } catch (e) { return e
     dpo: await mk('dpo', 'dpo'),
     it: await mk('it', 'it-staff'),
     viewer: await mk('viewer', 'viewer'),
-    audit: await mk('audit', 'viewer', { custom_role_id: auditor.id }), // custom role wins
+    // As the application kept it: users.role = base role of the custom role.
+    audit: await mk('audit', 'assessor', { custom_role_id: auditor.id }),
+    // Inconsistent data (only possible by editing the database before v3.10.0):
+    // users.role differs from the custom role's base role -> both are kept.
+    drift: await mk('drift', 'viewer', { custom_role_id: auditor.id }),
   };
   const team = await m.Group.create({ name: 'Administrators', description: 'existing task team' });
   await m.GroupMember.create({ group_id: team.id, user_id: users.viewer.id });
@@ -68,13 +72,14 @@ const status = async (p) => { try { await p; return 'ok'; } catch (e) { return e
   console.log('Migration:');
   const counts = await ensureGroupBasedAccess({ log: { log: () => {} } });
   eq('groups created: 5 roles in use + Auditor + Employees (SSO default)', counts.groups, 7);
-  eq('every user joined one role group', counts.memberships, 7);
+  eq('every user joined their role group (drift: two)', counts.memberships, 9);
+  eq('inconsistent user reported', counts.inconsistent, 1);
   eq('both SSO mappings moved', counts.mappings, 2);
 
   const rolesOf = async (u) => (await access.attachAccess({ id: u.id })).roles;
   access.invalidateAccessCache();
   for (const [k, u] of Object.entries(users)) {
-    const want = k === 'audit' ? ['assessor'] : [rolesBefore[k]];
+    const want = k === 'drift' ? ['assessor', 'viewer'] : [rolesBefore[k]];
     eq(`${k}: roles unchanged`, await rolesOf(u), want);
   }
   const auditGrants = (await access.attachAccess({ id: users.audit.id })).accessGrants;
@@ -95,6 +100,7 @@ const status = async (p) => { try { await p; return 'ok'; } catch (e) { return e
 
   const model = await access.getAccessModel();
   eq('access_model recorded', [model.version, Object.keys(model.roleGroups).sort()], [1, ['admin', 'assessor', 'dpo', 'employee', 'it-staff', 'viewer']]);
+  eq('inconsistent user listed for review', (model.inconsistentUsers || []).map((u) => [u.id, u.role, u.base_role]), [[users.drift.id, 'viewer', 'assessor']]);
 
   const again = await ensureGroupBasedAccess({ log: { log: () => {} } });
   eq('second run does nothing', again, { skipped: true });
@@ -103,7 +109,7 @@ const status = async (p) => { try { await p; return 'ok'; } catch (e) { return e
   console.log('\nGuards on the real SQL:');
   eq('active admins only', await access.findUserIdsWithRole('admin'), [users.admin.id]);
   eq('with inactive', (await access.findUserIdsWithRole('admin', { activeOnly: false })).sort(), [users.admin.id, users.admin2.id].sort());
-  eq('custom role counts through its base role', (await access.findUserIdsWithRole('assessor')).sort(), [users.assessor.id, users.audit.id].sort());
+  eq('custom role counts through its base role', (await access.findUserIdsWithRole('assessor')).sort(), [users.assessor.id, users.audit.id, users.drift.id].sort());
 
   const adminGroup = byName['Administrators (2)'];
   const t = await sequelize.transaction();

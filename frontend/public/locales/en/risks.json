@@ -514,5 +514,12 @@
     "trendNoMoves": "No changes.",
     "cardTitle": "Risk monitoring",
     "cardHint": "{{due}} review(s) due in the next 30 days · {{methodology}} risk(s) under an older methodology version"
+  },
+  "reports": {
+    "riskReport": "Risk report",
+    "treatmentPlan": "Treatment plan",
+    "error": "The report could not be generated.",
+    "loading": "Generating …",
+    "hint": "Report as Word or PDF file; every download is written to the audit log."
   }
 }

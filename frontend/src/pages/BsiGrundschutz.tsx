@@ -20,6 +20,8 @@ import { IconButton } from '../components/ui/IconButton';
 import { BsiCatalogManager } from '../components/bsi/BsiCatalogManager';
 import { BsiDomainPanel, type BsiDomain } from '../components/bsi/BsiDomainPanel';
 import { BsiCheckPanel } from '../components/bsi/BsiCheckPanel';
+import { BsiRiskAnalysisPanel } from '../components/bsi/BsiRiskAnalysisPanel';
+import { BsiRealizationPanel } from '../components/bsi/BsiRealizationPanel';
 
 // not_implemented = "nein" im IT-Grundschutz-Check (bewusst nicht umgesetzt)
 type ImplStatus = 'not_started' | 'in_progress' | 'implemented' | 'not_applicable' | 'not_implemented';
@@ -94,11 +96,13 @@ export const BsiGrundschutz: React.FC = () => {
   const canManageDomain = can('bsi_grundschutz', 'manage_domain', hasRole(user, 'admin') || hasRole(user, 'assessor'));
   const [catalogsOpen, setCatalogsOpen] = useState(false);
   const canEditCheck = can('bsi_grundschutz', 'edit', hasRole(user, ['admin', 'assessor', 'it-staff']));
-  const [tab, setTab] = useState<'requirements' | 'domain' | 'check'>('requirements');
+  // Risikoanalyse nach BSI-Standard 200-3 und Realisierungsplan (3.10.0).
+  const canRiskAnalysis = can('bsi_grundschutz', 'risk_analysis', hasRole(user, ['admin', 'assessor']));
+  const [tab, setTab] = useState<'requirements' | 'domain' | 'check' | 'riskAnalysis' | 'realization'>('requirements');
   const [domainId, setDomainId] = useState<number | null>(null);
   const [checkDomains, setCheckDomains] = useState<BsiDomain[]>([]);
   useEffect(() => {
-    if (tab !== 'check') return;
+    if (tab !== 'check' && tab !== 'riskAnalysis' && tab !== 'realization') return;
     api.get('/bsi-grundschutz/domains').then(r => {
       setCheckDomains(r.data);
       if (r.data.length && (domainId == null || !r.data.some((d: BsiDomain) => d.id === domainId))) setDomainId(r.data[0].id);
@@ -271,7 +275,7 @@ export const BsiGrundschutz: React.FC = () => {
       <BsiCatalogManager open={catalogsOpen} onClose={() => setCatalogsOpen(false)} canManage={canManageCatalog} onActivated={load} />
 
       <div role="tablist" className="flex gap-1 border-b border-gray-200 dark:border-slate-700">
-        {(['requirements', 'domain', 'check'] as const).map(k => (
+        {(['requirements', 'domain', 'check', 'riskAnalysis', 'realization'] as const).map(k => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
             className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${tab === k ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}>
             {t(`tabs.${k}`)}
@@ -281,13 +285,15 @@ export const BsiGrundschutz: React.FC = () => {
 
       {tab === 'domain' && <BsiDomainPanel canManage={canManageDomain} domainId={domainId} onDomainChange={setDomainId} />}
 
-      {tab === 'check' && (
+      {(tab === 'check' || tab === 'riskAnalysis' || tab === 'realization') && (
         <>
           {checkDomains.length > 1 && (
             <Select className="w-72" label={t('domain.select')} value={domainId ? String(domainId) : ''} onChange={e => setDomainId(Number(e.target.value))}
               options={checkDomains.map(d => ({ value: String(d.id), label: d.name }))} />
           )}
-          <BsiCheckPanel domain={checkDomains.find(d => d.id === domainId) || null} canEdit={canEditCheck} />
+          {tab === 'check' && <BsiCheckPanel domain={checkDomains.find(d => d.id === domainId) || null} canEdit={canEditCheck} />}
+          {tab === 'riskAnalysis' && <BsiRiskAnalysisPanel domain={checkDomains.find(d => d.id === domainId) || null} canEdit={canRiskAnalysis} />}
+          {tab === 'realization' && <BsiRealizationPanel domain={checkDomains.find(d => d.id === domainId) || null} canEdit={canRiskAnalysis} />}
         </>
       )}
 

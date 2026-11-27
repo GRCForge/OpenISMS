@@ -514,5 +514,12 @@
     "trendNoMoves": "Sin cambios.",
     "cardTitle": "Seguimiento de riesgos",
     "cardHint": "{{due}} revisión(es) en los próximos 30 días · {{methodology}} riesgo(s) con una versión anterior de la metodología"
+  },
+  "reports": {
+    "riskReport": "Informe de riesgos",
+    "treatmentPlan": "Plan de tratamiento",
+    "error": "No se pudo generar el informe.",
+    "loading": "Generando …",
+    "hint": "Informe como archivo Word o PDF; cada descarga queda registrada en el registro de auditoría."
   }
 }
