@@ -141,6 +141,7 @@ Some rules still ask for a role rather than a permission: object visibility (e.g
 - The database test `scripts/test-group-access-db.js` covers the migration and the guards on PostgreSQL and runs locally.
 - New database test `scripts/test-access-equivalence-db.js` (see Migration) and `scripts/test-bsi-risk-analysis-db.js` (selection, threat overview, classification, consolidation, realisation plan, reports parsed back from DOCX and PDF); new check `scripts/test-bsi-risk-analysis.js`.
 - The module-load smoke test also loads the MCP server, the report services, `docx` and `pdfmake`.
+- New job `Docker — multi-arch build (no push)` in Security & Quality: a manual run on a release branch builds the image for `linux/amd64` and `linux/arm64` like `release.yml`, without pushing.
 - **Catch-up runs on `main` build again:** `main-catchup.yml` starts Security & Quality by `workflow_dispatch` after Dependabot auto-merges. The gate in `security.yml` treated a dispatch like a pull request from a feature branch and skipped `Backend — Install & Smoke Test` and `Frontend — TypeScript & Build`. A dispatch now runs the same sections as a push (#353).
 - `SonarSource/sonarqube-scan-action` 8.5.0 → 8.5.1 (#351).
 
