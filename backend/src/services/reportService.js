@@ -50,7 +50,6 @@ const LEVEL_SHORT = Object.freeze({ basis: 'B', standard: 'S', erhoehter_schutzb
 
 const day = (v) => (v ? String(v instanceof Date ? v.toISOString() : v).slice(0, 10) : '');
 const eur = (v) => (v == null || v === '' ? '' : `${Number(v).toFixed(2)} EUR`);
-const yesNo = (v) => (v === true ? 'ja' : v === false ? 'nein' : '–');
 
 async function header() {
   const { getGeneral } = require('./settingsService');
