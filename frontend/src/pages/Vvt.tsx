@@ -18,6 +18,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { exportToCSV, exportToExcel } from '../lib/export';
 import { format } from 'date-fns';
 import { SearchableSelect } from '../components/ui/SearchableSelect';
+import { hasRole } from '../lib/permissions';
 
 const getEmptyForm = (legalBasisDefault: string) => ({
   name: '', purpose: '', legal_basis: legalBasisDefault, data_categories: '',
@@ -33,7 +34,7 @@ export const Vvt: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('vvt', 'create', user?.role === 'admin' || user?.role === 'assessor' || user?.role === 'dpo');
+  const canWrite = can('vvt', 'create', hasRole(user, 'admin') || hasRole(user, 'assessor') || hasRole(user, 'dpo'));
 
   const statusLabels: Record<string, string> = useMemo(() => ({
     draft: t('statusLabels.draft', 'Entwurf'),

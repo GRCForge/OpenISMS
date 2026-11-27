@@ -13,7 +13,7 @@ import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { Mermaid } from '../components/ui/Mermaid';
 import { mermaidLabel } from '../lib/mermaid';
 import { IconButton } from '../components/ui/IconButton';
@@ -42,10 +42,10 @@ export const DataFlows: React.FC = () => {
   const { t } = useTranslation('dataflows');
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canWrite = can('dataflows', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('dataflows', 'create', hasWriteAccess(user));
   const toast = useToast();
-  const canEdit = can('dataflows', 'edit', ['admin', 'assessor', 'it-staff'].includes(user?.role || ''));
-  const canDelete = can('dataflows', 'delete', user?.role === 'admin');
+  const canEdit = can('dataflows', 'edit', hasRole(user, ['admin', 'assessor', 'it-staff']));
+  const canDelete = can('dataflows', 'delete', hasRole(user, 'admin'));
 
   const mechanismLabels: Record<string, string> = {
     api: t('mechanisms.api'),

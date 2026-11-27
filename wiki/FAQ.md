@@ -61,7 +61,7 @@ volume. Keep `ENCRYPTION_KEY` safe and separate. See
 
 **Can I use my identity provider?**
 Yes, any OIDC provider (Entra ID, Keycloak, Authentik, Google, Okta, Zitadel …),
-with group-to-role mapping. See
+with IdP groups mapped to OpenISMS groups (which carry the roles). See
 [Installation and Configuration](Installation-and-Configuration#single-sign-on-oidc).
 
 **Is SAML supported?**

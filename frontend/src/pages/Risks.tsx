@@ -23,11 +23,11 @@ import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
 import { FilterBar } from '../components/ui/FilterBar';
 import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
-import { exportToCSV, exportToExcel } from '../lib/export';
+import { exportToCSV, exportToExcel, downloadReport, type ReportFormat } from '../lib/export';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 interface ScenarioForm { asset_ids: number[]; threat_id: number | null; vulnerability_id: number | null; description: string; }
@@ -164,14 +164,15 @@ export const Risks: React.FC = () => {
   const { user } = useAuth();
 
   const { can } = usePermissions();
-  const canWrite = can('risks', 'create', hasWriteAccess(user?.role));
-  const canOverride = can('risks', 'override_residual', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('risks', 'create', hasWriteAccess(user));
+  const canOverride = can('risks', 'override_residual', hasRole(user, 'admin') || hasRole(user, 'assessor'));
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [heatBasis, setHeatBasis] = useState<LevelBasis>('gross');
   // Values the risk had when the form opened - a change makes the rationale mandatory.
   const [origValues, setOrigValues] = useState<{ likelihood: number; impact: number; dims: string } | null>(null);
   const [overrideForm, setOverrideForm] = useState<{ open: boolean; likelihood: number; impact: number; reason: string }>({ open: false, likelihood: 1, impact: 1, reason: '' });
   const toast = useToast();
+  const [reportBusy, setReportBusy] = useState<ReportFormat | null>(null);
   const [risks, setRisks] = useState<Risk[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -468,6 +469,14 @@ export const Risks: React.FC = () => {
     .filter(([v]) => v !== 'accepted' || form.status === 'accepted')
     .map(([v, l]) => ({ value: v, label: l }));
 
+  // Risk report as DOCX/PDF (3.10.0), rendered and audit-logged by the server.
+  const riskReport = async (f: ReportFormat) => {
+    setReportBusy(f);
+    try { await downloadReport('/risks/reports/risk-report', f, 'risikobericht'); }
+    catch { toast.error(t('risks:reports.error')); }
+    finally { setReportBusy(null); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -480,6 +489,11 @@ export const Risks: React.FC = () => {
           <Link to="/risks/monitoring" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700"><Activity size={14} />{t('risks:monitoring.open')}</Link>
           <Button variant="secondary" size="sm" onClick={() => exportToCSV(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`)}><Download size={14} />CSV</Button>
           <Button variant="secondary" size="sm" onClick={() => void exportToExcel(flattenForExport(risks), `risks-${format(new Date(), 'yyyyMMdd')}`, 'Risiken')}><FileSpreadsheet size={14} />Excel</Button>
+          {(['docx', 'pdf'] as const).map(f => (
+            <Button key={f} variant="secondary" size="sm" title={t('risks:reports.hint')} disabled={reportBusy !== null} onClick={() => void riskReport(f)}>
+              <FileText size={14} />{reportBusy === f ? t('risks:reports.loading') : `${t('risks:reports.riskReport')} ${f.toUpperCase()}`}
+            </Button>
+          ))}
           {canWrite && <Button onClick={openNew}><Plus size={16} />{t('risks:new')}</Button>}
         </div>
       </div>
@@ -672,7 +686,7 @@ export const Risks: React.FC = () => {
                 <FolderOpen className="text-orange-500 dark:text-orange-400" size={18} />
                 <h2 className="text-sm font-semibold dark:text-white">{t('risks:templates.title')}</h2>
               </div>
-              {user?.role !== 'viewer' && user?.role !== 'management' && ['admin', 'it-staff', 'assessor'].includes(user?.role || '') && (
+              {hasRole(user, ['admin', 'it-staff', 'assessor']) && (
                 <Link to="/policies?tab=templates" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('risks:templates.manage')}</Link>
               )}
             </CardHeader>
@@ -985,13 +999,13 @@ export const Risks: React.FC = () => {
 
             {editId && detail && (
               <AcceptanceWorkflow risk={detail} user={user} rule={acceptanceRule}
-                canRequest={can('risks', 'request_acceptance', hasWriteAccess(user?.role))}
-                canSignOff={can('risks', 'sign_off', ['admin', 'assessor', 'owner', 'management'].includes(user?.role || ''))}
+                canRequest={can('risks', 'request_acceptance', hasWriteAccess(user))}
+                canSignOff={can('risks', 'sign_off', hasRole(user, ['admin', 'assessor', 'owner', 'management']))}
                 levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onRevoke={revokeSignoff} onChanged={reloadDetail} />
             )}
 
             {editId && detail && (
-              <RiskMonitoringPanel risk={detail} canEdit={can('risks', 'edit', hasWriteAccess(user?.role))}
+              <RiskMonitoringPanel risk={detail} canEdit={can('risks', 'edit', hasWriteAccess(user))}
                 levelLabel={(k) => (k ? levelLabels[k as RiskLevel] || k : '–')} onChanged={reloadDetail} />
             )}
           </div>

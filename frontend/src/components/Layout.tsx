@@ -24,6 +24,7 @@ import { IsmsLogo } from './IsmsLogo';
 import api from '../lib/api';
 import { startRegistration, PasskeyCancelledError } from '../lib/webauthn';
 import { IconButton } from './ui/IconButton';
+import { hasRole, onlyRoles } from '../lib/permissions';
 
 interface NavItem {
   path: string;
@@ -121,7 +122,7 @@ export const Layout: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user?.role === 'employee' && location.pathname !== '/my') {
+    if (onlyRoles(user, 'employee') && location.pathname !== '/my') {
       navigate('/my', { replace: true });
     }
   }, [user, location.pathname, navigate]);
@@ -352,14 +353,14 @@ export const Layout: React.FC = () => {
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-2 custom-scrollbar">
           {NAV_GROUPS.map(group => {
             const visibleItems = group.items.filter(i => {
-              if (user?.role === 'employee') {
+              if (onlyRoles(user, 'employee')) {
                 return i.path === '/my';
               }
               // Module toggle first: an entry for a module this installation
               // does not run is not a permission question.
               if (i.module && !isEnabled(i.module)) return false;
-              const roleAllows = (!i.adminOnly || user?.role === 'admin')
-                && (!i.roles || i.roles.includes(user?.role || ''));
+              const roleAllows = (!i.adminOnly || hasRole(user, 'admin'))
+                && (!i.roles || hasRole(user, i.roles));
               if (i.perm) return can(i.perm[0], i.perm[1], roleAllows);
               return roleAllows;
             });
@@ -375,7 +376,7 @@ export const Layout: React.FC = () => {
                   {visibleItems.map(item => {
                     const active = isActive(item.path);
                     const showBadge = item.path === '/reminders' && overdueCount > 0;
-                    const isEmployee = item.path === '/my' && user?.role === 'employee';
+                    const isEmployee = item.path === '/my' && onlyRoles(user, 'employee');
                     const lk = isEmployee ? 'myEmployee' : item.labelKey;
                     const label = t(`nav:items.${lk}.label`);
                     const hint = t(`nav:items.${lk}.hint`);

@@ -29,6 +29,8 @@ const CHECK_LABELS = Object.freeze({
 });
 
 const JUSTIFICATION_REQUIRED = Object.freeze(['not_implemented', 'not_applicable']);
+// Priority in the realisation plan (reference document A.6, 3.10.0).
+const REALIZATION_PRIORITIES = Object.freeze(['high', 'medium', 'low']);
 
 // Welche Anforderungsstufen eine Absicherungsvariante umfasst.
 //
@@ -128,6 +130,13 @@ function validateEntryInput(body, current) {
   if (hasOwn(src, 'last_review_date')) values.last_review_date = parseDate(src.last_review_date, 'Pruefdatum');
   if (hasOwn(src, 'cost_once')) values.cost_once = parseCost(src.cost_once, 'Kosten einmalig');
   if (hasOwn(src, 'cost_recurring')) values.cost_recurring = parseCost(src.cost_recurring, 'Kosten laufend');
+  if (hasOwn(src, 'realization_priority')) {
+    const p = src.realization_priority;
+    if (p !== null && p !== '' && !REALIZATION_PRIORITIES.includes(p)) {
+      throw new CheckError(400, `realization_priority muss einer von ${REALIZATION_PRIORITIES.join(', ')} sein`);
+    }
+    values.realization_priority = p === '' ? null : p;
+  }
 
   const status = hasOwn(values, 'implementation_status') ? values.implementation_status : (current?.implementation_status || 'not_started');
   const justification = hasOwn(values, 'justification') ? values.justification : (current?.justification || null);
@@ -155,7 +164,7 @@ async function checkReferences(values, transaction) {
 /** Nur geaenderte Werte schreiben; liefert { before, changes } fuer das Audit-Log. */
 const ENTRY_FIELDS = Object.freeze([
   'implementation_status', 'justification', 'notes', 'responsible_id', 'responsible_group_id',
-  'due_date', 'last_review_date', 'cost_once', 'cost_recurring',
+  'due_date', 'last_review_date', 'cost_once', 'cost_recurring', 'realization_priority',
 ]);
 
 async function applyEntryValues(row, values, transaction) {
@@ -275,9 +284,8 @@ const CONTROL_VIEW_FALLBACK = ['admin', 'assessor', 'it-staff', 'dpo', 'owner', 
 const CONTROL_EDIT_FALLBACK = ['admin', 'assessor', 'it-staff'];
 
 async function allowed(actor, module, action, fallback) {
-  const { can } = require('./permissionService');
-  const v = await can(actor, module, action);
-  return v === true || (v !== false && fallback.includes(actor?.role));
+  const { decide } = require('./permissionService');
+  return decide(actor, module, action, fallback);
 }
 
 /** Filter fuer Nachweis-Dokumente: Modulrecht documents.view und Sichtbarkeit des Elternobjekts. */
@@ -385,6 +393,7 @@ async function getCheck(domainId, actor, opts = {}) {
         due_date: row?.due_date ?? null,
         cost_once: row?.cost_once == null ? null : Number(row.cost_once),
         cost_recurring: row?.cost_recurring == null ? null : Number(row.cost_recurring),
+        realization_priority: row?.realization_priority ?? null,
         notes: row?.notes ?? null,
         last_review_date: row?.last_review_date ?? null,
         documents: docs,
@@ -410,11 +419,31 @@ async function getCheck(domainId, actor, opts = {}) {
       }));
   }
 
+  // Additional requirements from the risk analysis (BSI-Standard 200-3 ch. 7,
+  // 3.10.0): the measures of the risks classified for a target object, also
+  // for target objects without a modelled module. Same visibility as above
+  // for the target object; the measures follow the treatment plan rules.
+  let additional = [];
+  if (opts.withMeasures !== false && opts.targetObjectId !== 'domain') {
+    const single = opts.targetObjectId != null && opts.targetObjectId !== '' ? domains.toId(opts.targetObjectId) : null;
+    const tos = await BsiTargetObject.findAll({
+      where: { domain_id: domain.id, ...(single ? { id: single } : {}) },
+      include: [{ model: Asset, as: 'asset', attributes: ['id', 'name', 'owner_id', 'assessor_id'] }],
+      order: [['id', 'ASC']],
+    });
+    const vis = tos.filter(t => t.asset && visible(t.asset));
+    const byTarget = await require('./bsiRiskAnalysisService').measuresByTarget(domain.id, actor, new Set(vis.map(t => t.id)));
+    additional = vis.filter(t => byTarget.has(t.id)).map(t => ({
+      target_object_id: t.id, target_name: t.asset.name, target_type: t.target_type, measures: byTarget.get(t.id),
+    }));
+  }
+
   return {
     domain: { id: domain.id, name: domain.name, protection_approach: domain.protection_approach, catalog_id: domain.catalog_id, is_default: domain.is_default },
     levels: LEVELS_BY_APPROACH[domain.protection_approach],
     entries,
     unmodeled,
+    additional_requirements: additional,
   };
 }
 
@@ -553,6 +582,7 @@ module.exports = {
   CheckError,
   CHECK_LABELS,
   JUSTIFICATION_REQUIRED,
+  REALIZATION_PRIORITIES,
   LEVELS_BY_APPROACH,
   A4_COLUMNS,
   isRelevant,

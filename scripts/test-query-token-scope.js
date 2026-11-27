@@ -33,6 +33,11 @@ mock('models/index.js', {
   ApiToken: { findOne: async () => null },
 });
 mock('services/notifyService.js', { notify: async () => {} });
+// Roles come from groups via a database query (attachAccess); not under test here.
+{
+  const realAccess = require(path.join(backendSrc, 'services', 'accessService.js'));
+  mock('services/accessService.js', { ...realAccess, attachAccess: async (u) => u });
+}
 
 const { isEventStreamRequest, getQueryToken } = require(path.join(backendSrc, 'utils', 'queryToken.js'));
 const { authenticate, getTokenFromHeaders } = require(path.join(backendSrc, 'middleware', 'auth.js'));

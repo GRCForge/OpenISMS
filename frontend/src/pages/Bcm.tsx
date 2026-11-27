@@ -15,7 +15,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 
@@ -115,7 +115,7 @@ export const Bcm: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('bcm', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('bcm', 'create', hasWriteAccess(user));
 
   const criticalityLabels = useMemo<Record<BcmCriticality, string>>(() => ({
     critical: t('criticality.critical'),
@@ -142,7 +142,7 @@ export const Bcm: React.FC = () => {
     passed_with_findings: t('exerciseResult.passed_with_findings'),
     failed: t('exerciseResult.failed'),
   }), [t]);
-  const canDelete = can('bcm', 'delete', user?.role === 'admin' || user?.role === 'assessor');
+  const canDelete = can('bcm', 'delete', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const [tab, setTab] = useState<'processes' | 'exercises'>('processes');
   const [items, setItems] = useState<BcmItem[]>([]);

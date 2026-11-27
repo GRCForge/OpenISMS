@@ -9,6 +9,7 @@ const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { Policy, PolicyVersion, Asset, Reminder, Notification, User, Control, PolicyAcknowledgment, sequelize } = require('../models');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { onlyRoles } = require('../services/accessService');
 const { auditFromReq } = require('../services/auditService');
 const { uploadSubdir, POLICIES_SUBDIR } = require('../services/uploadStorage');
 const { requestError } = require('../utils/httpError');
@@ -109,7 +110,7 @@ if (!fs.existsSync(POLICIES_DIR)) fs.mkdirSync(POLICIES_DIR, { recursive: true }
 // List all policies
 router.get('/', authenticate, requirePermission('policies','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
-    const isRestricted = req.user.role === 'it-staff' || req.user.role === 'viewer';
+    const isRestricted = onlyRoles(req.user, 'it-staff', 'viewer');
     const where = {};
     if (isRestricted) {
       where.category = { [Op.ne]: 'contract' };

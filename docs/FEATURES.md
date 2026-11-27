@@ -435,6 +435,43 @@ Administration → Risk methodology defines how risks are assessed:
   `bsi_grundschutz.manage_domain`; every import, activation and change is
   audit-logged
 
+### Risk analysis (BSI Standard 200-3), realisation plan and reference documents (3.10.0)
+- **Selection** (200-3 ch. 3): a target object needs a risk analysis when its
+  protection need is high or very high, when no module is modelled for it, or
+  when an operating scenario is marked as not covered by the modules. A manual
+  decision (include / exclude) needs a reason and wins over the criteria
+- **Protection need** comes from the current CIA assessment of the asset. The
+  assessment uses 1–5 per value; the mapping to the three categories of
+  200-2 ch. 8.2 is an assumption of OpenISMS: **1–3 normal, 4 high, 5 very
+  high**. The overall need is the maximum of C, I and A (maximum principle,
+  200-2 ch. 8.2.2). Target objects without an assessment are flagged
+- **Threat overview** (ch. 4): the 47 elementary threats plus additional
+  threats (existing ones, or new ones with `threats.create`). Relevance and
+  coverage by the modelled modules are assessed by hand — the catalogues carry
+  no mapping of threats to modules
+- **Classification** (ch. 5): frequency × impact on the scales of the active
+  risk methodology, each with a rationale. The first classification creates one
+  risk in the register (scenario: asset of the target object × threat; owner =
+  asset owner); later classifications update that risk, never a second one
+- **Consolidation** (ch. 7): the measures of the treatment plans of these
+  risks appear in the IT-Grundschutz check as additional requirements and can
+  be taken over into the realisation plan
+- **Realisation plan** (reference document A.6): requirements with "no" or
+  "partially" plus the measures taken over, with responsible, due date, costs
+  and priority — set, or suggested (basic high, standard medium, elevated
+  protection need low; measures by risk level). Excel export in the A.6 layout
+- **Reports as DOCX and PDF:** risk report, risk treatment plan (ISO 27001
+  6.1.3 e) and the reference documents A.1–A.6 (structure analysis, protection
+  need, modelling, check, risk analysis, realisation plan) per domain. They
+  contain only what the requesting user may see and say "no data" where data is
+  missing; every download and export is audit-logged
+- Permission `bsi_grundschutz.risk_analysis` (default: admin, assessor) for all
+  changes; creating or changing the risk additionally needs `risks.create` /
+  `risks.edit` and the record rights. MCP: `isms_get_bsi_risk_analysis`,
+  `isms_set_bsi_risk_analysis_target`, `isms_assess_bsi_threat`,
+  `isms_classify_bsi_threat`, `isms_get_bsi_realization_plan`,
+  `isms_list_reports`
+
 ---
 
 ## 8. Incidents
@@ -637,26 +674,31 @@ Under **Administration** (administrators only):
 
 | Tab | Purpose |
 |---|---|
-| Users | Create, assign roles, deactivate (no hard delete), reset passwords |
-| Groups | Teams for task assignment and `@group` mentions |
+| Users | Create, assign groups (and with them roles), deactivate (no hard delete), reset passwords |
+| Groups | Carry roles for their members; also teams for task assignment and `@group` mentions |
 | Modules | Feature toggles |
 | Audit log | Filterable log with retention setting and integrity check |
-| Security | Password policy, account lockout, audit log retention, SSO (OIDC), custom roles, OIDC claim → role mappings |
+| Security | Password policy, account lockout, audit log retention, SSO (OIDC), custom roles, OIDC claim → group mappings |
 | SMTP | Mail server with connection test and test mail |
-| Settings | Application name, review interval |
+| Settings | Application name, review interval, SSO default group and auto-provisioning |
 | Roles & permissions | The permission matrix per module and action; reset to defaults |
 | API | Links to the OpenAPI spec and Swagger UI, authentication guide |
 | Backup | Export, preview and restore |
 | LLM | AI provider and triage profiles |
 
 ### Users and authentication
-- Eight built-in roles plus **custom roles** — see
+- **Roles as permission sets**: eight built-in roles plus **custom roles**, each
+  a named set of permission objects (module × action)
+- **Roles via groups**: groups carry any combination of roles, users receive
+  every role of every group they belong to; permissions add up (allow-only).
+  Assigning roles needs `admin.roles`; the last administrator is protected — see
   [SECURITY-CONFIGURATION.md](SECURITY-CONFIGURATION.md#4-roles-and-permissions)
 - Local login with password policy and account lockout
 - **TOTP** (RFC 6238) and **passkeys** (WebAuthn / FIDO2)
 - **SSO** via any OIDC provider (Authentik, Keycloak, Entra ID, Google,
   Zitadel, Okta, Auth0 …) with auto-provisioning, domain allow-list, claim →
-  role mapping and profile pictures
+  group mapping (several mappings combine), optional strict group sync and
+  profile pictures
 - Personal **API tokens** for scripts and MCP clients
 
 ### Audit log

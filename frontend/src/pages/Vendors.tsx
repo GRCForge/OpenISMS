@@ -16,7 +16,7 @@ import { FilterBar } from '../components/ui/FilterBar';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 const emptyVendor = { name: '', type: 'software', website: '', phone: '', address: '', notes: '' };
@@ -49,7 +49,7 @@ export const Vendors: React.FC = () => {
   const { user } = useAuth();
 
   const { can } = usePermissions();
-  const canWrite = can('vendors', 'create', hasWriteAccess(user?.role));
+  const canWrite = can('vendors', 'create', hasWriteAccess(user));
   const toast = useToast();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -679,7 +679,7 @@ export const Vendors: React.FC = () => {
                           {run.status === 'error' && (
                             <IconButton label={t('vendors:triage.retry')} onClick={() => retryTriage(run.id)}><RefreshCw size={14} /></IconButton>
                           )}
-                          {user?.role === 'admin' && (
+                          {hasRole(user, 'admin') && (
                             <IconButton label={t('common:actions.delete')} variant="danger" onClick={() => deleteTriage(run.id)}><Trash2 size={14} /></IconButton>
                           )}
                         </div>

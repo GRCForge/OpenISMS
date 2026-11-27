@@ -13,7 +13,7 @@ import { Table, Thead, Tbody, Th, Td } from '../components/ui/Table';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
-import { hasWriteAccess } from '../lib/permissions';
+import { hasWriteAccess, hasRole } from '../lib/permissions';
 import { IconButton } from '../components/ui/IconButton';
 
 type DoraStatus = 'active' | 'under_review' | 'terminated';
@@ -149,8 +149,8 @@ export const Dora: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canWrite = can('dora', 'create', hasWriteAccess(user?.role));
-  const canDelete = can('dora', 'delete', user?.role === 'admin' || user?.role === 'assessor');
+  const canWrite = can('dora', 'create', hasWriteAccess(user));
+  const canDelete = can('dora', 'delete', hasRole(user, 'admin') || hasRole(user, 'assessor'));
 
   const [tab, setTab] = useState<'register' | 'tests'>('register');
   const [items, setItems] = useState<DoraItem[]>([]);

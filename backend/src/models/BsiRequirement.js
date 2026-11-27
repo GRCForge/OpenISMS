@@ -47,6 +47,10 @@ const BsiRequirement = sequelize.define('BsiRequirement', {
   // Kosten in EUR: einmalig bzw. laufend pro Jahr
   cost_once: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
   cost_recurring: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
+  // Priority in the realisation plan (reference document A.6, 3.10.0). NULL:
+  // not set - the plan then suggests one from the requirement level
+  // (services/bsiRiskAnalysisService.js suggestRequirementPriority).
+  realization_priority: { type: DataTypes.ENUM('high', 'medium', 'low'), allowNull: true },
   notes: { type: DataTypes.TEXT },
   last_review_date: { type: DataTypes.DATEONLY },
 }, {

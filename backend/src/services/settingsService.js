@@ -67,7 +67,7 @@ const DEFAULT_PERMISSIONS = {
   dataflows:        { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], view_details: ['admin','assessor','dpo'], create: ['admin','assessor'], edit: ['admin','assessor'], delete: ['admin'] },
   subject_requests: { view: ['admin','assessor','dpo'], create: ['admin','dpo'], edit: ['admin','dpo'], delete: ['admin'] },
   iso27001:         { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
-  bsi_grundschutz:  { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'], manage_catalog: ['admin','assessor'], manage_domain: ['admin','assessor'] },
+  bsi_grundschutz:  { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'], manage_catalog: ['admin','assessor'], manage_domain: ['admin','assessor'], risk_analysis: ['admin','assessor'] },
   c5:               { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'] },
   threat_intel:     { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], create: ['admin','assessor','it-staff'], edit: ['admin','assessor','it-staff'], delete: ['admin','assessor'], assess: ['admin','assessor','it-staff'], review: ['admin','assessor','it-staff'], fetch: ['admin','assessor','it-staff'], seed: ['admin','assessor'] },
   nis2:             { view: ['admin','owner','assessor','viewer','it-staff','dpo','employee','management'], seed: ['admin','assessor'], create: ['admin','assessor','dpo'], edit: ['admin','assessor','dpo'], delete: ['admin','assessor'] },
@@ -129,11 +129,17 @@ const DEFAULTS = {
     appName: 'OpenISMS',
     reviewIntervalMonths: 12,
     ssoAutoProvision: true,
+    // Legacy (before v3.10.0): the role new SSO users received. The migration to
+    // group-based access turns it into ssoDefaultGroupId.
     ssoDefaultRole: 'viewer',
+    // The group a new SSO user joins when no claim mapping applies. null = none,
+    // the user then has no access until an administrator adds them to a group.
+    ssoDefaultGroupId: null,
     ssoAllowedDomains: '',
-    // Off by default: switching it on downgrades every SSO user who matches no
-    // claim mapping, including ones an admin assigned manually. Opting in makes
-    // the IdP authoritative for roles, so removing a group there revokes access.
+    // Off by default. When on, the IdP is authoritative for the groups it
+    // grants: memberships an SSO login added ('sso') are removed when no claim
+    // mapping grants them any more. Memberships an administrator added by hand
+    // are never touched.
     ssoStrictRoleSync: false,
     auditLogRetentionMonths: 15,
     passwordPolicy: {

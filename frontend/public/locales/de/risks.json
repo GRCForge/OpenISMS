@@ -514,5 +514,12 @@
     "trendNoMoves": "Keine Veränderungen.",
     "cardTitle": "Risikoüberwachung",
     "cardHint": "{{due}} Prüfung(en) in den nächsten 30 Tagen fällig · {{methodology}} Risiko/Risiken nach älterer Methodik-Version"
+  },
+  "reports": {
+    "riskReport": "Risikobericht",
+    "treatmentPlan": "Behandlungsplan",
+    "error": "Der Bericht konnte nicht erstellt werden.",
+    "loading": "Wird erstellt …",
+    "hint": "Bericht als Word- oder PDF-Datei; jeder Download wird im Audit-Log festgehalten."
   }
 }

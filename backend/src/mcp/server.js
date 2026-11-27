@@ -50,7 +50,9 @@ async function getValidUserId(mcpUser) {
   let userId = mcpUser?.id || null;
   if (!userId || userId === 0) {
     const { User } = getModels();
-    const firstUser = await User.findOne({ where: { role: 'admin' } }) || await User.findOne();
+    const { findUserIdsWithRole } = require('../services/accessService');
+    const [adminId] = await findUserIdsWithRole('admin');
+    const firstUser = (adminId && await User.findByPk(adminId)) || await User.findOne();
     userId = firstUser ? firstUser.id : 1;
   }
   return userId;
@@ -157,6 +159,17 @@ const TOOL_GATES = {
   // IT-Grundschutz-Check: wie GET/PUT /api/bsi-grundschutz/domains/:id/check.
   'isms_get_bsi_check': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
   'isms_set_bsi_check_status': { perm: ['bsi_grundschutz', 'edit'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor', 'it-staff'], needsWrite: true },
+  // Risk analysis per BSI 200-3 and realisation plan (3.10.0): same matrix
+  // entries as the routes in routes/bsi-domains.js; risks.create/edit, record
+  // rights and visibility in services/bsiRiskAnalysisService.js.
+  'isms_get_bsi_risk_analysis': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  'isms_set_bsi_risk_analysis_target': { perm: ['bsi_grundschutz', 'risk_analysis'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_assess_bsi_threat': { perm: ['bsi_grundschutz', 'risk_analysis'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_classify_bsi_threat': { perm: ['bsi_grundschutz', 'risk_analysis'], moduleKey: 'bsi_grundschutz', requiredRoles: ['admin', 'assessor'], needsWrite: true },
+  'isms_get_bsi_realization_plan': { perm: ['bsi_grundschutz', 'view'], moduleKey: 'bsi_grundschutz' },
+  // Report catalogue: metadata and download paths only, no binary data. Each
+  // entry is filtered by the permission of its download endpoint.
+  'isms_list_reports': { perm: ['reports', 'view'] },
   // --- Bedrohungslage / Threat Intelligence ---
   'isms_list_threat_sources': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
   'isms_list_threat_advisories': { perm: ['threat_intel', 'view'], moduleKey: 'threat_intel' },
@@ -359,47 +372,43 @@ async function gateTool(mcpUser, moduleKey = null, requiredRoles = null, needsWr
     }
   }
 
-  const role = mcpUser?.role || 'viewer';
+  const { hasRole, isReadOnly, rolesOf, BUILTIN_ROLES } = require('../services/accessService');
+  const denyWrite = () => ({ content: [{ type: 'text', text: 'Zugriff verweigert: Schreibrechte erforderlich.' }], isError: true });
 
-  // The permission matrix decides where it has something to say about this
-  // tool's module+action — the same contract requirePermission applies to the
-  // REST API, so an admin who edits the matrix (or writes a custom role) sees
-  // the change here too. Until this existed, MCP answered only to the
-  // hardcoded role lists below and quietly ignored both.
+  // Same contract as requirePermission on the REST side: each role of the user
+  // is asked, and one that allows is enough. Its permission set decides where it
+  // defines module+action; where it says nothing, the tool's role list decides
+  // (no list = any role). An admin who edits the matrix or a custom role sees the
+  // change here too.
   if (perm) {
     try {
-      const { can } = require('../services/permissionService');
-      const verdict = await can(mcpUser, perm[0], perm[1]);
-      if (verdict === false) {
-        return { content: [{ type: 'text', text: `Zugriff verweigert: Die Berechtigung '${perm[0]}.${perm[1]}' fehlt für Ihre Rolle.` }], isError: true };
-      }
-      if (verdict === true) {
-        // Matrix grants it. needsWrite still applies: it mirrors requireWriteAccess(),
-        // which sits next to requirePermission on the REST side rather than inside it.
-        if (needsWrite && ['viewer', 'management', 'employee'].includes(role)) {
-          return { content: [{ type: 'text', text: 'Zugriff verweigert: Schreibrechte erforderlich.' }], isError: true };
-        }
-        return null;
+      const { decide } = require('../services/permissionService');
+      if (!(await decide(mcpUser, perm[0], perm[1], requiredRoles || BUILTIN_ROLES))) {
+        return { content: [{ type: 'text', text: `Zugriff verweigert: Die Berechtigung '${perm[0]}.${perm[1]}' fehlt für Ihre Rollen.` }], isError: true };
       }
     } catch (e) {
       // Never fail open — a broken matrix lookup must not hand out access.
       console.error('[MCP] Permission check failed:', e.message);
       return { content: [{ type: 'text', text: 'Berechtigungsprüfung fehlgeschlagen.' }], isError: true };
     }
-  }
-
-  if (requiredRoles && !requiredRoles.includes(role)) {
+  } else if (requiredRoles && !hasRole(mcpUser, requiredRoles)) {
     return { content: [{ type: 'text', text: `Zugriff verweigert: Diese Aktion erfordert eine der folgenden Rollen: ${requiredRoles.join(', ')}.` }], isError: true };
   }
 
-  if (needsWrite && ['viewer', 'management', 'employee'].includes(role)) {
-    return { content: [{ type: 'text', text: 'Zugriff verweigert: Schreibrechte erforderlich.' }], isError: true };
-  }
+  // Mirrors requireWriteAccess(): viewer, management and employee are read-only;
+  // one role that may write is enough.
+  if (needsWrite && isReadOnly(rolesOf(mcpUser))) return denyWrite();
 
   return null;
 }
 
 // ─── MCP Server ──────────────────────────────────────────────────────────────
+
+// Tools that only touch the caller's own account (cf. /api/me, /api/auth/tokens).
+const SELF_SERVICE_TOOLS = new Set([
+  'isms_get_my_overview', 'isms_list_notifications',
+  'isms_list_api_tokens', 'isms_create_api_token', 'isms_revoke_api_token',
+]);
 
 const toolsToRegister = [];
 const server = {
@@ -417,6 +426,12 @@ const server = {
     const wrappedCallback = async (args, context) => {
       const mcpUser = context?.mcpUser || context?._mcpUser || context?.authInfo;
       const ctx = { ...context, mcpUser };
+      // Roles come from groups. Without any role a user has access to their own
+      // account only — the MCP equivalent of the self-service routes.
+      const { rolesOf } = require('../services/accessService');
+      if (rolesOf(mcpUser).length === 0 && !SELF_SERVICE_TOOLS.has(name)) {
+        return { content: [{ type: 'text', text: 'Zugriff verweigert: Ihr Konto gehört zu keiner Gruppe mit einer Rolle.' }], isError: true };
+      }
       const gate = TOOL_GATES[name];
       if (gate) {
         const errorResult = await gateTool(
@@ -809,12 +824,9 @@ server.tool(
     if (touchedCompliance.length > 0) {
       let compliancePermitted;
       try {
-        const { can } = require('../services/permissionService');
-        const verdict = await can(mcpUser, 'assets', 'edit_compliance');
+        const { decide } = require('../services/permissionService');
         // Sagt die Matrix nichts, gilt dieselbe Rollenliste wie im REST-Handler.
-        compliancePermitted = typeof verdict === 'boolean'
-          ? verdict
-          : ['admin', 'assessor', 'dpo'].includes(mcpUser?.role);
+        compliancePermitted = await decide(mcpUser, 'assets', 'edit_compliance', ['admin', 'assessor', 'dpo']);
       } catch (e) {
         // Nie fail-open: eine kaputte Matrix-Abfrage darf keinen Zugriff gewaehren.
         console.error('[MCP] edit_compliance check failed:', e.message);
@@ -838,8 +850,9 @@ server.tool(
     );
     if (touchedSecurity.length > 0) {
       try {
-        const { can } = require('../services/permissionService');
-        const verdict = await can(mcpUser, 'assets', 'edit_security');
+        const { decide } = require('../services/permissionService');
+        const { BUILTIN_ROLES } = require('../services/accessService');
+        const verdict = (await decide(mcpUser, 'assets', 'edit_security', BUILTIN_ROLES)) ? true : false;
         // Im REST-Handler blockiert nur ein ausdrueckliches false — sagt die
         // Matrix nichts, darf jeder ran, der edit_basics passiert hat. Diese
         // Auslegung wird hier bewusst uebernommen, damit beide Pfade dieselbe
@@ -1153,7 +1166,7 @@ server.tool(
 // Antworten tragen die Bewertungsfelder der Methodik: methodology_version,
 // needs_reassessment, effective_level, appetite_max_level, appetite_exceeded.
 
-const mcpReq = (mcpUser) => ({ user: mcpUser ? { id: mcpUser.id, name: mcpUser.name || 'MCP Client', role: mcpUser.role } : null, ip: '127.0.0.1' });
+const mcpReq = (mcpUser) => ({ user: mcpUser ? { id: mcpUser.id, name: mcpUser.name || 'MCP Client', role: mcpUser.role, roles: mcpUser.roles, accessGrants: mcpUser.accessGrants } : null, ip: '127.0.0.1' });
 const mcpRiskError = (e) => {
   if (e && Number.isInteger(e.status) && e.status < 500 && !(typeof e.name === 'string' && e.name.startsWith('Sequelize'))) {
     return { content: [{ type: 'text', text: e.message }], isError: true };
@@ -2311,15 +2324,16 @@ server.tool(
 
 server.tool(
   'isms_list_users',
-  'List all users. Admin operation — returns name, email, role, active status.',
+  'List all users. Admin operation — returns name, email, role (the most privileged role the user holds through groups), active status.',
   {
-    role:   z.string().optional().describe('Filter by role'),
+    role:   z.string().optional().describe('Filter: users who hold this role through a group'),
     active: z.boolean().optional().describe('Filter by active status'),
   },
   async ({ role, active }) => {
     const { User } = getModels();
     const where = {};
-    if (role) where.role = role;
+    // Roles come from groups: filter by who holds the role through a group.
+    if (role) where.id = await require('../services/accessService').findUserIdsWithRole(role, { activeOnly: false });
     if (active !== undefined) where.active = active;
     const users = await User.findAll({
       where,
@@ -2332,15 +2346,12 @@ server.tool(
 
 server.tool(
   'isms_list_groups',
-  'List all groups/teams with their members.',
+  'List all groups/teams with their members and the roles each group carries (roles reach users only through groups).',
   {},
   async () => {
-    const { Group, User } = getModels();
-    const groups = await Group.findAll({
-      include: [{ model: User, as: 'members', attributes: ['id','name','email','role'], through: { attributes: [] } }],
-      order: [['name', 'ASC']],
-    });
-    return { content: [{ type: 'text', text: JSON.stringify(groups, null, 2) }] };
+    const { Group } = getModels();
+    const groups = await Group.findAll({ include: mcpGroupInclude(), order: [['name', 'ASC']] });
+    return { content: [{ type: 'text', text: JSON.stringify(groups.map(mcpGroupJson), null, 2) }] };
   }
 );
 
@@ -2609,11 +2620,8 @@ server.tool(
     // Berechtigungsfeinheit.
     let staff;
     try {
-      const { can } = require('../services/permissionService');
-      const verdict = await can(mcpUser, 'vendors', 'view_details');
-      staff = typeof verdict === 'boolean'
-        ? verdict
-        : ['admin', 'assessor', 'it-staff', 'dpo'].includes(mcpUser?.role);
+      const { decide } = require('../services/permissionService');
+      staff = await decide(mcpUser, 'vendors', 'view_details', ['admin', 'assessor', 'it-staff', 'dpo']);
     } catch (e) {
       // Nie fail-open: im Zweifel die eingeschraenkte Sicht ausliefern.
       console.error('[MCP] vendors.view_details check failed:', e.message);
@@ -3694,211 +3702,353 @@ server.tool(
 
 // ─── User, Group & API Token Management ──────────────────────────────────────
 
+// Since v3.10.0 roles reach users only through groups. The user tools take
+// group_ids; the former role / custom_role_id parameters are still accepted
+// and mean "the group that carries this role" (created on demand).
+const ROLE_ENUM = ['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee'];
+const mcpError = (text) => ({ content: [{ type: 'text', text }], isError: true });
+const mcpAccessError = (e) => {
+  const { AccessError } = require('../services/accessService');
+  if (e instanceof AccessError) return mcpError(e.message);
+  throw e;
+};
+const mcpMayManageRoles = async (mcpUser) => {
+  const { decide } = require('../services/permissionService');
+  return decide(mcpUser, 'admin', 'roles', ['admin']);
+};
+const mcpGroupIds = async (args) => {
+  const { Group, CustomRole } = getModels();
+  const access = require('../services/accessService');
+  if (Array.isArray(args.group_ids)) {
+    const ids = [...new Set(args.group_ids)];
+    const found = ids.length ? await Group.count({ where: { id: ids } }) : 0;
+    if (found !== ids.length) throw new access.AccessError('Unknown group in group_ids');
+    return ids;
+  }
+  if (args.custom_role_id) {
+    const cr = await CustomRole.findByPk(args.custom_role_id);
+    if (!cr) throw new access.AccessError('Custom role not found');
+    return [(await access.groupForCustomRole(cr)).id];
+  }
+  if (args.role) return [(await access.groupForSystemRole(args.role)).id];
+  return undefined;
+};
+const mcpGroupJson = (g) => {
+  const j = g.toJSON();
+  j.roles = (j.groupRoles || []).map((r) => (r.system_role ? { system_role: r.system_role } : { custom_role_id: r.custom_role_id, name: r.customRole?.name || null }));
+  delete j.groupRoles;
+  return j;
+};
+const mcpGroupInclude = () => {
+  const { User, GroupRole, CustomRole } = getModels();
+  return [
+    { model: User, as: 'members', attributes: ['id', 'name', 'email', 'role'], through: { attributes: ['source'] } },
+    { model: GroupRole, as: 'groupRoles', attributes: ['system_role', 'custom_role_id'], include: [{ model: CustomRole, as: 'customRole', attributes: ['id', 'name'] }] },
+  ];
+};
+
 server.tool(
   'isms_create_user',
-  'Create a new user account (admin only).',
+  'Create a new user account (admin only). Roles come from groups: pass group_ids (or, for compatibility, role / custom_role_id, which add the user to the group carrying that role).',
   {
     name: z.string().min(1).describe('User display name'),
     email: z.string().email().describe('User email address'),
     password: z.string().min(8).describe('Initial password'),
-    role: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).default('viewer'),
+    group_ids: z.array(z.number().int()).optional().describe('Groups the user joins; their roles define the user\'s permissions'),
+    role: z.enum(ROLE_ENUM).optional().describe('Deprecated: joins the group carrying this built-in role'),
     department: z.string().optional(),
-    custom_role_id: z.number().int().nullable().optional(),
+    custom_role_id: z.number().int().nullable().optional().describe('Deprecated: joins the group carrying this custom role'),
   },
   async (args, { mcpUser }) => {
-    const { User, CustomRole } = getModels();
+    const { User, GroupMember } = getModels();
+    const access = require('../services/accessService');
     const { validate: validatePassword } = require('../services/passwordPolicy');
     const check = await validatePassword(args.password);
-    if (!check.valid) {
-      return { content: [{ type: 'text', text: `Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}` }], isError: true };
-    }
-    const password_hash = await User.hashPassword(args.password);
-    let effectiveRole = args.role;
-    let customRoleId = null;
-    if (args.custom_role_id) {
-      const cr = await CustomRole.findByPk(args.custom_role_id);
-      if (!cr) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
-      effectiveRole = cr.base_role;
-      customRoleId = cr.id;
-    }
-    const user = await User.create({
-      name: args.name,
-      email: args.email.toLowerCase().trim(),
-      password_hash,
-      role: effectiveRole,
-      department: args.department || null,
-      custom_role_id: customRoleId,
-    });
-    await logAudit('create', 'user', user.id, user.name, { role: user.role, email: user.email }, mcpUser);
-    const userJson = user.toJSON();
-    delete userJson.password_hash;
-    return { content: [{ type: 'text', text: JSON.stringify(userJson, null, 2) }] };
+    if (!check.valid) return mcpError(`Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}`);
+    try {
+      const groupIds = (await mcpGroupIds(args)) || [];
+      if (groupIds.length && !(await mcpMayManageRoles(mcpUser))) return mcpError('Assigning groups requires the permission admin.roles');
+      const user = await User.create({
+        name: args.name,
+        email: args.email.toLowerCase().trim(),
+        password_hash: await User.hashPassword(args.password),
+        role: 'none',
+        department: args.department || null,
+      });
+      for (const gid of groupIds) await GroupMember.findOrCreate({ where: { group_id: gid, user_id: user.id }, defaults: { source: 'manual' } });
+      await access.syncUserRoles([user.id]);
+      await user.reload();
+      await logAudit('create', 'user', user.id, user.name, { role: user.role, group_ids: groupIds, email: user.email, via: 'mcp' }, mcpUser);
+      const userJson = user.toJSON();
+      delete userJson.password_hash;
+      return { content: [{ type: 'text', text: JSON.stringify(userJson, null, 2) }] };
+    } catch (e) { return mcpAccessError(e); }
   }
 );
 
 server.tool(
   'isms_update_user',
-  'Update user details, role, department, or active status (admin only).',
+  'Update user details, group memberships, department, or active status (admin only). group_ids replaces the user\'s groups.',
   {
     id: z.number().int().describe('User ID'),
     name: z.string().optional(),
     email: z.string().email().optional(),
-    role: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).optional(),
+    group_ids: z.array(z.number().int()).optional().describe('Replaces the user\'s group memberships'),
+    role: z.enum(ROLE_ENUM).optional().describe('Deprecated: sets the memberships to the group carrying this built-in role'),
     department: z.string().optional(),
     active: z.boolean().optional(),
     password: z.string().min(8).optional(),
-    custom_role_id: z.number().int().nullable().optional(),
+    custom_role_id: z.number().int().nullable().optional().describe('Deprecated: sets the memberships to the group carrying this custom role'),
   },
   async (args, { mcpUser }) => {
-    const { User, CustomRole } = getModels();
+    const { User, GroupMember } = getModels();
+    const access = require('../services/accessService');
+    const sequelize = require('../config/database');
     const user = await User.findByPk(args.id);
-    if (!user) return { content: [{ type: 'text', text: 'User not found' }], isError: true };
-    const { id, password, custom_role_id, role, ...updates } = args;
-
-    if (custom_role_id) {
-      const cr = await CustomRole.findByPk(custom_role_id);
-      if (!cr) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
-      updates.role = cr.base_role;
-      updates.custom_role_id = cr.id;
-    } else if (custom_role_id === null) {
-      updates.custom_role_id = null;
-      if (role) updates.role = role;
-    } else if (role) {
-      updates.role = role;
-      updates.custom_role_id = null;
-    }
-
-    if (password) {
-      const { validate: validatePassword } = require('../services/passwordPolicy');
-      const check = await validatePassword(password);
-      if (!check.valid) {
-        return { content: [{ type: 'text', text: `Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}` }], isError: true };
+    if (!user) return mcpError('User not found');
+    const { id, password, custom_role_id, role, group_ids, ...updates } = args;
+    if (user.id === mcpUser?.id && updates.active === false) return mcpError('Cannot deactivate own account');
+    try {
+      const groupIds = await mcpGroupIds({ group_ids, custom_role_id, role });
+      if (groupIds !== undefined && !(await mcpMayManageRoles(mcpUser))) return mcpError('Assigning groups requires the permission admin.roles');
+      if (password) {
+        const { validate: validatePassword } = require('../services/passwordPolicy');
+        const check = await validatePassword(password);
+        if (!check.valid) return mcpError(`Passwort entspricht nicht der Richtlinie: ${check.errors.join(', ')}`);
+        updates.password_hash = await User.hashPassword(password);
+        updates.password_changed_at = new Date();
       }
-      updates.password_hash = await User.hashPassword(password);
-    }
-
-    await user.update(updates);
-    await logAudit('update', 'user', user.id, user.name, updates, mcpUser);
-    const userJson = user.toJSON();
-    delete userJson.password_hash;
-    return { content: [{ type: 'text', text: JSON.stringify(userJson, null, 2) }] };
+      await sequelize.transaction(async (t) => {
+        await user.update(updates, { transaction: t });
+        if (groupIds !== undefined) {
+          await GroupMember.destroy({ where: { user_id: user.id }, transaction: t });
+          for (const gid of groupIds) await GroupMember.create({ group_id: gid, user_id: user.id, source: 'manual' }, { transaction: t });
+        }
+        if (groupIds !== undefined || updates.active === false) await access.assertAdminRemains(t);
+        if (groupIds !== undefined && user.id === mcpUser?.id && !(await access.findUserIdsWithRole('admin', { transaction: t })).includes(user.id)
+          && access.hasRole(mcpUser, 'admin')) {
+          throw new access.AccessError('Cannot remove the administrator role from your own account');
+        }
+      });
+      if (groupIds !== undefined) await access.syncUserRoles([user.id]);
+      await user.reload();
+      const logged = { ...updates };
+      delete logged.password_hash;
+      await logAudit('update', 'user', user.id, user.name, { ...logged, ...(groupIds !== undefined ? { group_ids: groupIds } : {}), via: 'mcp' }, mcpUser);
+      const userJson = user.toJSON();
+      delete userJson.password_hash;
+      return { content: [{ type: 'text', text: JSON.stringify(userJson, null, 2) }] };
+    } catch (e) { return mcpAccessError(e); }
   }
 );
 
 server.tool(
   'isms_delete_user',
-  'Deactivate / delete a user account (admin only).',
+  'Deactivate a user account (admin only). Accounts are deactivated, not removed, so their history stays attributable — the same as the web UI.',
   { id: z.number().int().describe('User ID') },
   async ({ id }, { mcpUser }) => {
     const { User } = getModels();
+    const access = require('../services/accessService');
+    const sequelize = require('../config/database');
     const user = await User.findByPk(id);
-    if (!user) return { content: [{ type: 'text', text: 'User not found' }], isError: true };
-    if (user.id === mcpUser?.id) return { content: [{ type: 'text', text: 'Cannot delete own account' }], isError: true };
-    await logAudit('delete', 'user', user.id, user.name, {}, mcpUser);
-    await user.destroy();
-    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
+    if (!user) return mcpError('User not found');
+    if (user.id === mcpUser?.id) return mcpError('Cannot delete own account');
+    try {
+      await sequelize.transaction(async (t) => {
+        await user.update({ active: false }, { transaction: t });
+        await access.assertAdminRemains(t);
+      });
+    } catch (e) { return mcpAccessError(e); }
+    await logAudit('deactivate', 'user', user.id, user.name, { via: 'mcp' }, mcpUser);
+    return { content: [{ type: 'text', text: JSON.stringify({ success: true, deactivatedId: id }) }] };
   }
 );
 
 server.tool(
   'isms_get_group',
-  'Get details of a group / team including its members.',
+  'Get details of a group / team including its members and the roles it carries.',
   { id: z.number().int().describe('Group ID') },
   async ({ id }) => {
-    const { Group, User } = getModels();
-    const group = await Group.findByPk(id, {
-      include: [{ model: User, as: 'members', attributes: ['id', 'name', 'email', 'role'], through: { attributes: [] } }],
-    });
-    if (!group) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
-    return { content: [{ type: 'text', text: JSON.stringify(group, null, 2) }] };
+    const { Group } = getModels();
+    const group = await Group.findByPk(id, { include: mcpGroupInclude() });
+    if (!group) return mcpError('Group not found');
+    return { content: [{ type: 'text', text: JSON.stringify(mcpGroupJson(group), null, 2) }] };
   }
 );
 
+const ROLE_REFS = z.array(z.object({
+  system_role: z.enum(ROLE_ENUM).optional(),
+  custom_role_id: z.number().int().optional(),
+})).describe('Roles the group carries: [{ system_role }] or [{ custom_role_id }]. Members receive all of them.');
+
+const mcpSetGroupRoles = async (groupId, roles, transaction) => {
+  const { GroupRole, CustomRole } = getModels();
+  const access = require('../services/accessService');
+  await GroupRole.destroy({ where: { group_id: groupId }, transaction });
+  const seen = new Set();
+  for (const r of roles) {
+    if (r.system_role && !r.custom_role_id) {
+      if (seen.has(`s:${r.system_role}`)) continue;
+      seen.add(`s:${r.system_role}`);
+      await GroupRole.create({ group_id: groupId, system_role: r.system_role }, { transaction });
+    } else if (r.custom_role_id && !r.system_role) {
+      if (!(await CustomRole.findByPk(r.custom_role_id, { transaction }))) throw new access.AccessError(`Custom role ${r.custom_role_id} not found`);
+      if (seen.has(`c:${r.custom_role_id}`)) continue;
+      seen.add(`c:${r.custom_role_id}`);
+      await GroupRole.create({ group_id: groupId, custom_role_id: r.custom_role_id }, { transaction });
+    } else {
+      throw new access.AccessError('Each role needs exactly one of system_role or custom_role_id');
+    }
+  }
+};
+
 server.tool(
   'isms_create_group',
-  'Create a new team / group for task assignments and notifications (admin only).',
+  'Create a group (admin only). Groups are teams for task assignment and the only way roles reach users: pass roles to make the group grant permissions.',
   {
     name: z.string().min(1).describe('Group name'),
     description: z.string().optional(),
     color: z.string().default('#3b82f6').describe('Hex color code'),
+    roles: ROLE_REFS.optional(),
   },
   async (args, { mcpUser }) => {
     const { Group } = getModels();
-    const userId = await getValidUserId(mcpUser);
-    const item = await Group.create({ ...args, created_by_id: userId });
-    await logAudit('create', 'group', item.id, item.name, args, mcpUser);
-    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+    const access = require('../services/accessService');
+    const sequelize = require('../config/database');
+    const { roles, ...fields } = args;
+    if (roles?.length && !(await mcpMayManageRoles(mcpUser))) return mcpError('Assigning roles requires the permission admin.roles');
+    try {
+      const userId = await getValidUserId(mcpUser);
+      const item = await sequelize.transaction(async (t) => {
+        const g = await Group.create({ ...fields, created_by_id: userId }, { transaction: t });
+        if (roles?.length) await mcpSetGroupRoles(g.id, roles, t);
+        return g;
+      });
+      access.invalidateAccessCache();
+      await logAudit('create', 'group', item.id, item.name, { ...fields, roles: roles || [], via: 'mcp' }, mcpUser);
+      const full = await Group.findByPk(item.id, { include: mcpGroupInclude() });
+      return { content: [{ type: 'text', text: JSON.stringify(mcpGroupJson(full), null, 2) }] };
+    } catch (e) { return mcpAccessError(e); }
   }
 );
 
 server.tool(
   'isms_update_group',
-  'Update group name, description, or color (admin only).',
+  'Update group name, description, color, or the roles it carries (admin only). roles replaces the group\'s roles.',
   {
     id: z.number().int().describe('Group ID'),
     name: z.string().optional(),
     description: z.string().optional(),
     color: z.string().optional(),
+    roles: ROLE_REFS.optional(),
   },
   async (args, { mcpUser }) => {
-    const { Group } = getModels();
+    const { Group, GroupMember } = getModels();
+    const access = require('../services/accessService');
+    const sequelize = require('../config/database');
     const item = await Group.findByPk(args.id);
-    if (!item) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
-    const { id, ...updates } = args;
-    await item.update(updates);
-    await logAudit('update', 'group', item.id, item.name, updates, mcpUser);
-    return { content: [{ type: 'text', text: JSON.stringify(item, null, 2) }] };
+    if (!item) return mcpError('Group not found');
+    const { id, roles, ...updates } = args;
+    if (roles !== undefined && !(await mcpMayManageRoles(mcpUser))) return mcpError('Assigning roles requires the permission admin.roles');
+    try {
+      await sequelize.transaction(async (t) => {
+        await item.update(updates, { transaction: t });
+        if (roles !== undefined) {
+          await mcpSetGroupRoles(item.id, roles, t);
+          await access.assertAdminRemains(t);
+        }
+      });
+      if (roles !== undefined) {
+        const members = await GroupMember.findAll({ where: { group_id: item.id }, attributes: ['user_id'] });
+        await access.syncUserRoles(members.map((m) => m.user_id));
+      }
+      await logAudit('update', 'group', item.id, item.name, { ...updates, ...(roles !== undefined ? { roles } : {}), via: 'mcp' }, mcpUser);
+      const full = await Group.findByPk(item.id, { include: mcpGroupInclude() });
+      return { content: [{ type: 'text', text: JSON.stringify(mcpGroupJson(full), null, 2) }] };
+    } catch (e) { return mcpAccessError(e); }
   }
 );
 
 server.tool(
   'isms_delete_group',
-  'Delete a group (admin only).',
+  'Delete a group (admin only). Its members lose the roles the group carried.',
   { id: z.number().int().describe('Group ID') },
   async ({ id }, { mcpUser }) => {
-    const { Group } = getModels();
+    const { Group, GroupMember, GroupRole } = getModels();
+    const access = require('../services/accessService');
+    const sequelize = require('../config/database');
     const item = await Group.findByPk(id);
-    if (!item) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
-    await logAudit('delete', 'group', item.id, item.name, {}, mcpUser);
-    await item.destroy();
+    if (!item) return mcpError('Group not found');
+    if ((await GroupRole.count({ where: { group_id: id } })) && !(await mcpMayManageRoles(mcpUser))) {
+      return mcpError('Deleting a group that carries roles requires the permission admin.roles');
+    }
+    const members = await GroupMember.findAll({ where: { group_id: id }, attributes: ['user_id'] });
+    try {
+      await sequelize.transaction(async (t) => {
+        await GroupRole.destroy({ where: { group_id: id }, transaction: t });
+        await GroupMember.destroy({ where: { group_id: id }, transaction: t });
+        await item.destroy({ transaction: t });
+        await access.assertAdminRemains(t);
+      });
+    } catch (e) { return mcpAccessError(e); }
+    await access.syncUserRoles(members.map((m) => m.user_id));
+    await logAudit('delete', 'group', item.id, item.name, { via: 'mcp' }, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };
   }
 );
 
 server.tool(
   'isms_add_group_member',
-  'Add a user as member to a group (admin only).',
+  'Add a user as member to a group (admin only). The user receives the roles the group carries.',
   {
     group_id: z.number().int().describe('Group ID'),
     user_id: z.number().int().describe('User ID to add'),
   },
   async ({ group_id, user_id }, { mcpUser }) => {
-    const { Group, User, GroupMember } = getModels();
+    const { Group, User, GroupMember, GroupRole } = getModels();
+    const access = require('../services/accessService');
     const group = await Group.findByPk(group_id);
-    if (!group) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
+    if (!group) return mcpError('Group not found');
     const user = await User.findByPk(user_id);
-    if (!user) return { content: [{ type: 'text', text: 'User not found' }], isError: true };
-    const [, created] = await GroupMember.findOrCreate({ where: { group_id, user_id } });
-    if (!created) return { content: [{ type: 'text', text: 'User is already a member of this group' }], isError: true };
-    await logAudit('update', 'group', group.id, group.name, { action: 'add_member', user_name: user.name }, mcpUser);
+    if (!user) return mcpError('User not found');
+    if ((await GroupRole.count({ where: { group_id } })) && !(await mcpMayManageRoles(mcpUser))) {
+      return mcpError('This group carries roles; changing its members requires the permission admin.roles');
+    }
+    const [, created] = await GroupMember.findOrCreate({ where: { group_id, user_id }, defaults: { source: 'manual' } });
+    if (!created) return mcpError('User is already a member of this group');
+    await access.syncUserRoles([user_id]);
+    await logAudit('update', 'group', group.id, group.name, { action: 'add_member', user_name: user.name, via: 'mcp' }, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify({ success: true, group_id, user_id }) }] };
   }
 );
 
 server.tool(
   'isms_remove_group_member',
-  'Remove a user from a group (admin only).',
+  'Remove a user from a group (admin only). The user loses the roles the group carried.',
   {
     group_id: z.number().int().describe('Group ID'),
     user_id: z.number().int().describe('User ID to remove'),
   },
   async ({ group_id, user_id }, { mcpUser }) => {
-    const { Group, GroupMember } = getModels();
+    const { Group, GroupMember, GroupRole } = getModels();
+    const access = require('../services/accessService');
+    const sequelize = require('../config/database');
     const group = await Group.findByPk(group_id);
-    if (!group) return { content: [{ type: 'text', text: 'Group not found' }], isError: true };
-    const deleted = await GroupMember.destroy({ where: { group_id, user_id } });
-    if (!deleted) return { content: [{ type: 'text', text: 'User is not a member of this group' }], isError: true };
-    await logAudit('update', 'group', group.id, group.name, { action: 'remove_member', user_id }, mcpUser);
+    if (!group) return mcpError('Group not found');
+    if ((await GroupRole.count({ where: { group_id } })) && !(await mcpMayManageRoles(mcpUser))) {
+      return mcpError('This group carries roles; changing its members requires the permission admin.roles');
+    }
+    let deleted = 0;
+    try {
+      deleted = await sequelize.transaction(async (t) => {
+        const n = await GroupMember.destroy({ where: { group_id, user_id }, transaction: t });
+        if (n) await access.assertAdminRemains(t);
+        return n;
+      });
+    } catch (e) { return mcpAccessError(e); }
+    if (!deleted) return mcpError('User is not a member of this group');
+    await access.syncUserRoles([user_id]);
+    await logAudit('update', 'group', group.id, group.name, { action: 'remove_member', user_id, via: 'mcp' }, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify({ success: true, group_id, user_id }) }] };
   }
 );
@@ -3964,7 +4114,7 @@ server.tool(
     const { ApiToken } = getModels();
     const userId = mcpUser?.id;
     const where = { id };
-    if (mcpUser?.role !== 'admin' && userId) where.user_id = userId;
+    if (!require('../services/accessService').hasRole(mcpUser, 'admin') && userId) where.user_id = userId;
     const token = await ApiToken.findOne({ where });
     if (!token) return { content: [{ type: 'text', text: 'API token not found' }], isError: true };
     await logAudit('delete', 'api_token', token.id, token.name, {}, mcpUser);
@@ -4929,6 +5079,7 @@ server.tool(
     last_review_date: z.string().nullable().optional().describe('YYYY-MM-DD'),
     document_ids: z.array(z.number().int().positive()).max(200).optional().describe('Evidence document IDs (replaces the list)'),
     control_ids: z.array(z.number().int().positive()).max(200).optional().describe('Control IDs (replaces the list)'),
+    realization_priority: z.enum(['high', 'medium', 'low']).nullable().optional().describe('Priority in the realisation plan (A.6); null = suggested from the requirement level'),
   },
   async ({ domain_id, ...body }, { mcpUser }) => bsiDomainResult(async () => {
     if (body.implementation_status !== undefined) body.implementation_status = normalizeBsiStatus(body.implementation_status);
@@ -4944,6 +5095,143 @@ server.tool(
     }
     return r.row;
   })
+);
+
+// ─── BSI 200-3 risk analysis, realisation plan, reports (3.10.0) ────────────
+// Same service functions as routes/bsi-domains.js; the service writes the
+// signed audit entries (auditFromReq with the MCP user).
+const bsiRiskAnalysis = require('../services/bsiRiskAnalysisService');
+const bsiAnalysisResult = async (fn) => {
+  try {
+    return { content: [{ type: 'text', text: JSON.stringify(await fn(), null, 2) }] };
+  } catch (e) {
+    if (e instanceof bsiDomains.DomainError || e instanceof bsiCheck.CheckError || e instanceof bsiRiskAnalysis.RiskAnalysisError) {
+      return { content: [{ type: 'text', text: e.message }], isError: true };
+    }
+    return mcpRiskError(e);
+  }
+};
+
+server.tool(
+  'isms_get_bsi_risk_analysis',
+  'Read the risk analysis per BSI-Standard 200-3 of an information domain. Without target_object_id: every target object with protection need (from the CIA assessment of its asset: 1-3 normal, 4 high, 5 very high), the reasons why a risk analysis is needed (high_protection_need, no_module, scenario_not_covered), manual decision and progress. With target_object_id: the threat overview (47 elementary threats plus additional threats) with relevance, coverage by the modelled modules (always manual - the catalogues carry no threat mapping), the risk created from each classification and the additional measures from the treatment plans.',
+  {
+    domain_id: z.number().int().positive().describe('Information domain ID (see isms_list_bsi_domains)'),
+    target_object_id: z.number().int().positive().optional().describe('Target object ID for the threat overview'),
+    only_relevant: z.boolean().default(false).describe('Threat overview: only threats assessed as relevant or with a risk'),
+  },
+  async ({ domain_id, target_object_id, only_relevant }, { mcpUser }) => bsiAnalysisResult(async () => {
+    if (!target_object_id) return bsiRiskAnalysis.getAnalysis(domain_id, mcpUser);
+    const a = await bsiRiskAnalysis.getTargetAnalysis(domain_id, target_object_id, mcpUser);
+    return only_relevant ? { ...a, threats: a.threats.filter(t => t.relevant === true || t.has_risk) } : a;
+  })
+);
+
+server.tool(
+  'isms_set_bsi_risk_analysis_target',
+  'Add a target object to the BSI 200-3 risk analysis or remove it by hand (decision include/exclude with decision_reason; auto = the computed criteria decide), mark an operating scenario the modules do not cover (scenario_not_covered with scenario_note), or set the progress (open/in_progress/completed).',
+  {
+    domain_id: z.number().int().positive(),
+    target_object_id: z.number().int().positive(),
+    decision: z.enum(['auto', 'include', 'exclude']).optional(),
+    decision_reason: z.string().max(10000).nullable().optional().describe('Mandatory for include/exclude'),
+    scenario_not_covered: z.boolean().optional(),
+    scenario_note: z.string().max(10000).nullable().optional().describe('Mandatory when scenario_not_covered is true'),
+    status: z.enum(['open', 'in_progress', 'completed']).optional(),
+  },
+  async ({ domain_id, target_object_id, ...body }, { mcpUser }) => bsiAnalysisResult(() => bsiRiskAnalysis.setTargetDecision(domain_id, target_object_id, body, mcpUser, mcpReq(mcpUser)))
+);
+
+server.tool(
+  'isms_assess_bsi_threat',
+  'Assess a threat in the threat overview of a target object (BSI 200-3 ch. 4): relevant (true/false), coverage by the modelled modules (unknown/covered/partially/not_covered) with notes. To add an additional threat: threat_id of an existing non-elementary threat with add_additional=true, or new_threat (creating a threat needs threats.create). The target object must be selected for the risk analysis.',
+  {
+    domain_id: z.number().int().positive(),
+    target_object_id: z.number().int().positive(),
+    threat_id: z.number().int().positive().optional().describe('Threat ID (elementary threats: source bsi_elementar)'),
+    add_additional: z.boolean().default(false).describe('Add threat_id as an additional threat to the overview'),
+    new_threat: z.object({ title: z.string().min(1).max(255), code: z.string().max(20).optional(), description: z.string().max(10000).optional() }).optional(),
+    relevant: z.boolean().nullable().optional(),
+    relevance_note: z.string().max(10000).nullable().optional(),
+    coverage: z.enum(['unknown', 'covered', 'partially', 'not_covered']).optional(),
+    coverage_note: z.string().max(10000).nullable().optional(),
+  },
+  async ({ domain_id, target_object_id, threat_id, add_additional, new_threat, ...assessment }, { mcpUser }) => bsiAnalysisResult(async () => {
+    const req = mcpReq(mcpUser);
+    let id = threat_id;
+    const adding = !!(new_threat || add_additional);
+    if (adding) {
+      if (!new_threat && !threat_id) throw new bsiRiskAnalysis.RiskAnalysisError(400, 'threat_id oder new_threat angeben');
+      const row = await bsiRiskAnalysis.addAdditionalThreat(domain_id, target_object_id, new_threat ? { ...new_threat, relevance_note: assessment.relevance_note } : { threat_id, relevance_note: assessment.relevance_note }, mcpUser, req);
+      id = row.threat_id;
+    }
+    if (!id) throw new bsiRiskAnalysis.RiskAnalysisError(400, 'threat_id angeben');
+    const fields = Object.fromEntries(Object.entries(assessment).filter(([, v]) => v !== undefined));
+    if (Object.keys(fields).length) await bsiRiskAnalysis.setThreatAssessment(domain_id, target_object_id, id, fields, mcpUser, req);
+    else if (!adding) throw new bsiRiskAnalysis.RiskAnalysisError(400, 'Keine Aenderung angegeben');
+    const a = await bsiRiskAnalysis.getTargetAnalysis(domain_id, target_object_id, mcpUser);
+    return a.threats.find(t => t.threat.id === id) || null;
+  })
+);
+
+server.tool(
+  'isms_classify_bsi_threat',
+  'Classify a relevant threat of a target object (BSI 200-3 ch. 5): frequency (likelihood) x impact on the scales of the active risk methodology, both with a rationale. The first classification creates a risk in the register (scenario: asset of the target object x threat; owner defaults to the asset owner); later classifications update that risk - never a second one. Treat the risk via its treatment plan (isms_create_risk_treatment_item).',
+  {
+    domain_id: z.number().int().positive(),
+    target_object_id: z.number().int().positive(),
+    threat_id: z.number().int().positive(),
+    likelihood: z.number().int().min(1).max(6).describe('Frequency on the likelihood scale of the active methodology'),
+    impact: z.number().int().min(1).max(6),
+    likelihood_rationale: z.string().min(1).max(4000),
+    impact_rationale: z.string().min(1).max(4000),
+    impact_dimensions: z.record(z.string(), z.number().int().min(1).max(6).nullable()).optional(),
+    owner_id: z.number().int().positive().optional().describe('Risk owner (default: owner of the asset)'),
+    category: z.string().optional().describe('Risk category key (isms_list_risk_categories)'),
+  },
+  async ({ domain_id, target_object_id, threat_id, ...body }, { mcpUser }) => bsiAnalysisResult(() => bsiRiskAnalysis.classifyThreat(domain_id, target_object_id, threat_id, body, mcpUser, mcpReq(mcpUser)))
+);
+
+server.tool(
+  'isms_get_bsi_realization_plan',
+  'Realisation plan of an information domain (BSI reference document A.6): every requirement of the IT-Grundschutz-Check with status nein or teilweise, plus the additional measures from the risk analysis taken over into the plan - with responsible, due date, costs and priority (set, or suggested: B high / S medium / H low; measures from the risk level). Sorted by priority and due date, with a summary.',
+  {
+    domain_id: z.number().int().positive(),
+    priority: z.enum(['high', 'medium', 'low']).optional(),
+    limit: z.number().int().min(1).max(2000).default(500),
+  },
+  async ({ domain_id, priority, limit }, { mcpUser }) => bsiAnalysisResult(async () => {
+    const plan = await bsiRiskAnalysis.getRealizationPlan(domain_id, mcpUser);
+    const items = priority ? plan.items.filter(i => i.priority === priority) : plan.items;
+    return { domain: plan.domain, generated_at: plan.generated_at, summary: plan.summary, total_items: items.length, items: items.slice(0, limit) };
+  })
+);
+
+server.tool(
+  'isms_list_reports',
+  'List the reports that can be downloaded as DOCX or PDF: risk report, risk treatment plan (ISO 27001 6.1.3 e) and, per information domain, the BSI reference documents A.1-A.6. Returns metadata and download paths only (no file content); download with GET <path>?format=docx|pdf using the same authentication as the REST API. Only reports the caller may download are listed.',
+  {},
+  async (_args, { mcpUser }) => {
+    try {
+      // Same decision as requirePermission on the download routes: role by
+      // role through the user's groups (v3.10.0), fallback roles where the
+      // matrix says nothing.
+      const { decide } = require('../services/permissionService');
+      const { getModules } = require('../middleware/modules');
+      const ok = (module, action, fallback) => decide(mcpUser, module, action, fallback);
+      const viewers = ['admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'];
+      const reportsSvc = require('../services/reportService');
+      const bsiOn = !!(await getModules()).bsi_grundschutz && await ok('bsi_grundschutz', 'view', viewers);
+      const catalog = reportsSvc.reportCatalog(bsiOn ? await bsiDomains.listDomains() : []);
+      if (!(await ok('risks', 'view', viewers))) catalog.risk_reports = [];
+      const base = (process.env.APP_URL || '').replace(/\/+$/, '');
+      if (/^https?:\/\/[^\s/]+$/.test(base)) {
+        for (const r of catalog.risk_reports) r.url = `${base}${r.path}`;
+        for (const d of catalog.bsi_reference_documents) for (const r of d.documents) r.url = `${base}${r.path}`;
+      }
+      return mcpJson(catalog);
+    } catch (e) { return mcpRiskError(e); }
+  }
 );
 
 server.tool(
@@ -6184,15 +6472,21 @@ server.tool(
     appName: z.string().optional(),
     reviewIntervalMonths: z.number().int().min(1).max(60).optional(),
     ssoAutoProvision: z.boolean().optional(),
-    ssoDefaultRole: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).optional(),
+    ssoDefaultGroupId: z.number().int().nullable().optional().describe('Group new SSO users join when no claim mapping matches (null = none)'),
+    ssoDefaultRole: z.enum(['admin', 'assessor', 'it-staff', 'dpo', 'owner', 'management', 'viewer', 'employee']).optional().describe('Deprecated: sets the SSO default group to the group carrying this role'),
     ssoAllowedDomains: z.string().optional(),
     ssoStrictRoleSync: z.boolean().optional(),
     auditLogRetentionMonths: z.number().int().min(3).max(120).optional(),
   },
   async (args, { mcpUser }) => {
     const { getGeneral, setGeneral } = require('../services/settingsService');
+    const { ssoDefaultGroupPatch } = require('../services/ssoGroupSync');
+    const { ssoDefaultGroupId, ssoDefaultRole, ...rest } = args;
+    let groupPatch;
+    try { groupPatch = await ssoDefaultGroupPatch({ ssoDefaultGroupId, ssoDefaultRole }); }
+    catch (e) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
     const before = await getGeneral();
-    const saved = await setGeneral(args);
+    const saved = await setGeneral({ ...rest, ...groupPatch });
     await logAudit('update', 'settings', null, 'Allgemeine Einstellungen', { before, after: saved }, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify(saved, null, 2) }] };
   }
@@ -6226,19 +6520,20 @@ server.tool(
 
 server.tool(
   'isms_list_custom_roles',
-  'List custom user roles and their assigned permission matrices.',
+  'List custom roles (named permission sets) with their permission matrices, the groups that carry them and how many users hold them through those groups.',
   {},
   async () => {
-    const { CustomRole, User } = getModels();
+    const { CustomRole, GroupRole, Group, GroupMember } = getModels();
     const roles = await CustomRole.findAll({ order: [['name', 'ASC']] });
-    const counts = await User.findAll({
-      attributes: ['custom_role_id', [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'cnt']],
+    const links = await GroupRole.findAll({
       where: { custom_role_id: { [Op.ne]: null } },
-      group: ['custom_role_id'],
-      raw: true,
+      include: [{ model: Group, attributes: ['id', 'name'], include: [{ model: GroupMember, as: 'groupMembers', attributes: ['user_id'] }] }],
     });
-    const countMap = Object.fromEntries(counts.map(c => [c.custom_role_id, parseInt(c.cnt)]));
-    const result = roles.map(r => ({ ...r.toJSON(), users_count: countMap[r.id] || 0 }));
+    const result = roles.map(r => {
+      const mine = links.filter(l => l.custom_role_id === r.id && l.Group);
+      const users = new Set(mine.flatMap(l => l.Group.groupMembers.map(m => m.user_id)));
+      return { ...r.toJSON(), users_count: users.size, groups: mine.map(l => ({ id: l.Group.id, name: l.Group.name })) };
+    });
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }
 );
@@ -6278,7 +6573,7 @@ server.tool(
     permissions: z.record(z.any()).optional(),
   },
   async (args, { mcpUser }) => {
-    const { CustomRole, User } = getModels();
+    const { CustomRole } = getModels();
     const { sanitizeMatrix, invalidatePermissionCache } = require('../services/permissionService');
     const role = await CustomRole.findByPk(args.id);
     if (!role) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
@@ -6287,7 +6582,13 @@ server.tool(
     const beforeBaseRole = role.base_role;
     await role.update(updates);
     if (updates.base_role && updates.base_role !== beforeBaseRole) {
-      await User.update({ role: updates.base_role }, { where: { custom_role_id: role.id } });
+      const access = require('../services/accessService');
+      await access.syncUserRoles();
+      if ((await access.findUserIdsWithRole('admin')).length === 0) {
+        await role.update({ base_role: beforeBaseRole });
+        await access.syncUserRoles();
+        return mcpError('This change would leave the installation without an active administrator.');
+      }
     }
     invalidatePermissionCache();
     await logAudit('update', 'custom_role', role.id, role.name, updates, mcpUser);
@@ -6300,13 +6601,22 @@ server.tool(
   'Delete a custom role (admin only).',
   { id: z.number().int().describe('Custom role ID') },
   async ({ id }, { mcpUser }) => {
-    const { CustomRole, User } = getModels();
+    const { CustomRole, User, GroupRole } = getModels();
     const { invalidatePermissionCache } = require('../services/permissionService');
+    const access = require('../services/accessService');
+    const sequelize = require('../config/database');
     const role = await CustomRole.findByPk(id);
-    if (!role) return { content: [{ type: 'text', text: 'Custom role not found' }], isError: true };
+    if (!role) return mcpError('Custom role not found');
     const name = role.name;
-    await User.update({ custom_role_id: null }, { where: { custom_role_id: role.id } });
-    await role.destroy();
+    try {
+      await sequelize.transaction(async (t) => {
+        await GroupRole.destroy({ where: { custom_role_id: role.id }, transaction: t });
+        await User.update({ custom_role_id: null }, { where: { custom_role_id: role.id }, transaction: t });
+        await role.destroy({ transaction: t });
+        await access.assertAdminRemains(t);
+      });
+    } catch (e) { return mcpAccessError(e); }
+    await access.syncUserRoles();
     invalidatePermissionCache();
     await logAudit('delete', 'custom_role', id, name, {}, mcpUser);
     return { content: [{ type: 'text', text: JSON.stringify({ success: true, deletedId: id }) }] };

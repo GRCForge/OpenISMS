@@ -15,6 +15,7 @@ import { useToast } from '../contexts/ToastContext';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
+import { onlyRoles } from '../lib/permissions';
 
 interface OverviewItem {
   id: number;
@@ -84,7 +85,7 @@ export const MyArea: React.FC = () => {
   const [submittingContest, setSubmittingContest] = useState(false);
 
   const loadOverview = useCallback(() => {
-    if (user?.role === 'employee') {
+    if (onlyRoles(user, 'employee')) {
       setLoading(false);
       return;
     }
@@ -92,7 +93,7 @@ export const MyArea: React.FC = () => {
   }, [user]);
 
   const loadTrainings = useCallback(() => {
-    if (user?.role !== 'employee') return;
+    if (!onlyRoles(user, 'employee')) return;
     setLoadingTrainings(true);
     api.get('/compliance/trainings')
       .then(r => setTrainings(r.data))
@@ -126,7 +127,7 @@ export const MyArea: React.FC = () => {
 
   if (loading) return <div className="flex justify-center pt-20"><Loader2 className="animate-spin text-blue-600" size={28} /></div>;
 
-  if (user?.role === 'employee') {
+  if (onlyRoles(user, 'employee')) {
     return (
       <div className="space-y-6">
         <div>

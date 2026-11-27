@@ -26,7 +26,12 @@ const User = sequelize.define('User', {
     },
   },
   password_hash: { type: DataTypes.STRING(255), allowNull: false },
-  role: { type: DataTypes.ENUM('admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management'), allowNull: false, defaultValue: 'assessor' },
+  // Since v3.10.0 roles come from groups (models/GroupRole.js). This column is a
+  // derived cache of the user's most privileged role — kept in sync by
+  // services/accessService.js — for display, queries and the remaining
+  // role-based rules. 'none' = the user belongs to no group carrying a role and
+  // has no access beyond their own account.
+  role: { type: DataTypes.ENUM('admin', 'owner', 'assessor', 'viewer', 'it-staff', 'dpo', 'employee', 'management', 'none'), allowNull: false, defaultValue: 'none' },
   department: { type: DataTypes.STRING(100) },
   active: { type: DataTypes.BOOLEAN, defaultValue: true },
   last_seen_at: { type: DataTypes.DATE },

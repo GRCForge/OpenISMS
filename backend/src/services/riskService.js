@@ -77,11 +77,12 @@ const includeAll = () => {
 };
 
 // Datensatzrechte (wie GET /api/risks/:id): admin und assessor alle, sonst nur eigene.
-const canWriteRisk = (user, risk) => !!user && (user.role === 'admin' || user.role === 'assessor' || risk.owner_id === user.id);
+const { hasRole } = require('./accessService');
+const canWriteRisk = (user, risk) => !!user && (hasRole(user, 'admin', 'assessor') || risk.owner_id === user.id);
 const canViewRisk = canWriteRisk;
 // Freigabe: zusaetzlich die Geschaeftsleitung fuer jedes Risiko. Ob die Rolle die
 // Stufe akzeptieren darf, entscheidet danach die Akzeptanzbefugnis der Methodik.
-const canSignoffRecord = (user, risk) => !!user && (['admin', 'assessor', 'management'].includes(user.role) || risk.owner_id === user.id);
+const canSignoffRecord = (user, risk) => !!user && (hasRole(user, 'admin', 'assessor', 'management') || risk.owner_id === user.id);
 
 // Risk scenarios (asset(s) x threat x vulnerability) - only in the detail view
 // (GET /api/risks/:id, isms_get_risk), which checks the record rights. The
@@ -564,11 +565,11 @@ const signoffRisk = async (risk, user, validUntil, auditReq, { requestId = null,
 const revokeRisk = async (risk, user, auditReq) => {
   if (!user?.id) throw httpError(403, 'Forbidden');
   if (!canSignoffRecord(user, risk) && risk.accepted_by_id !== user.id) throw httpError(403, 'Forbidden');
-  if (user.role !== 'admin' && risk.accepted_by_id !== user.id) {
+  if (!hasRole(user, 'admin') && risk.accepted_by_id !== user.id) {
     const active = (await rm.getActiveProfile()) || rm.DEFAULT_PROFILE;
     const level = await levelOf(risk);
     const rule = (active.acceptance || []).find(a => a.level === level);
-    if (!rule || !rule.roles.includes(user.role)) throw httpError(403, 'Die Freigabe darf nur zurücknehmen, wer sie erteilt hat oder diese Stufe akzeptieren darf.');
+    if (!rule || !hasRole(user, rule.roles)) throw httpError(403, 'Die Freigabe darf nur zurücknehmen, wer sie erteilt hat oder diese Stufe akzeptieren darf.');
   }
   const prev = { accepted_by_id: risk.accepted_by_id, accepted_at: risk.accepted_at, accepted_until: risk.accepted_until, acceptance_request_id: risk.acceptance_request_id ?? null };
   await endAcceptanceRequest(risk, 'revoked');

@@ -71,9 +71,12 @@
     "review_interval": "Default Review Interval (months)",
     "sso_default_role": "Default Role for New SSO Users",
     "sso_autoprovision": "Automatically create new SSO users (Auto-Provisioning)",
-    "sso_strict_role_sync": "Strictly sync roles from the identity provider",
-    "sso_strict_role_sync_hint": "Users matching no claim mapping are reset to the SSO default role on login, so removing a group in the identity provider also revokes access here. This affects manually assigned roles too; the last active administrator is never downgraded.",
-    "saved": " Saved"
+    "sso_strict_role_sync": "Strictly sync SSO groups from the identity provider",
+    "sso_strict_role_sync_hint": "On login, group memberships that were assigned by SSO and are no longer granted by any claim mapping are removed. Memberships added manually are kept; the last active administrator is never removed.",
+    "saved": " Saved",
+    "sso_default_group": "Default group for SSO users",
+    "sso_default_group_none": "— None (no access until assigned) —",
+    "sso_default_group_hint": "SSO users matching no claim mapping join this group and receive its roles."
   },
   "roles": {
     "admin": "Administrator",
@@ -115,7 +118,7 @@
   },
   "custom_roles": {
     "title": "Custom Roles",
-    "description": "Define custom role names that you can assign directly to users in user management or use for OIDC group mapping. Each role inherits the permissions of a base role.",
+    "description": "Custom roles are named sets of permissions. Assign them to groups — members of the group receive the role. Each role starts from a base role and can define its own permissions.",
     "no_roles": "No custom roles defined yet.",
     "name_header": "Name",
     "base_role_header": "Base Role",
@@ -130,12 +133,14 @@
     "error": "Error",
     "own_permissions": "Define dedicated permissions for this role",
     "own_permissions_hint": "Without dedicated permissions the base role applies. Actions not listed here keep following the base role.",
-    "edit_title": "Edit role: {{name}}"
+    "edit_title": "Edit role: {{name}}",
+    "carried_by": "Granted through: {{groups}}",
+    "no_groups": "Not assigned to any group"
   },
   "oidc_mappings": {
     "title": "OIDC Claim Mappings",
-    "description": "During SSO login, OIDC claims (e.g., groups, roles) are checked against these mappings. The first match (highest priority) sets the user's role.",
-    "no_mappings": "No mappings configured — SSO users receive the default SSO role.",
+    "description": "During SSO login, OIDC claims (e.g. groups, roles) are checked against these mappings. Every matching mapping adds the user to its group; the user receives the roles of all those groups.",
+    "no_mappings": "No mappings configured — SSO users join the default SSO group.",
     "claim_path": "Claim Path",
     "claim_value": "Claim Value",
     "role": "→ Role",
@@ -154,7 +159,11 @@
     "env_managed_notice": "These mappings come from {{variable}}. While that variable is set, this list is the only one that applies — mappings stored here are not read.",
     "env_managed_row": "Set through the environment",
     "env_error_title": "The mappings from the environment are unusable.",
-    "env_error_effect": "NO mapping currently applies — not even the ones in the database. Anyone signing in receives the default SSO role."
+    "env_error_effect": "NO mapping currently applies — not even the ones in the database. Anyone signing in joins the default SSO group.",
+    "group": "→ Group",
+    "group_label": "Group",
+    "group_missing": "Group missing",
+    "group_without_roles": "no roles"
   },
   "rbac": {
     "title": "Adjust Permissions",
@@ -320,6 +329,7 @@
     "manage": "Manage",
     "manage_catalog": "Manage catalogues",
     "manage_domain": "Manage information domains",
+    "risk_analysis": "Edit risk analysis (BSI 200-3)",
     "measure": "Record measurements",
     "permissions": "Permissions",
     "restore": "Restore",

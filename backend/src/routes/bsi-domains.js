@@ -10,12 +10,15 @@
  */
 
 const router = require('express').Router();
-const { apiLimiter } = require('../middleware/rateLimiter');
+const { apiLimiter, heavyLimiter } = require('../middleware/rateLimiter');
 const { authenticate, requirePermission, requireWriteAccess } = require('../middleware/auth');
-const { serverError } = require('../utils/httpError');
+const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
 const svc = require('../services/bsiDomainService');
 const check = require('../services/bsiCheckService');
+const analysis = require('../services/bsiRiskAnalysisService');
+const reports = require('../services/reportService');
+const render = require('../services/reportRender');
 
 router.use(apiLimiter);
 
@@ -152,6 +155,8 @@ router.get('/:id/check/summary', authenticate, requirePermission('bsi_grundschut
 router.get('/:id/check/export', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
     const c = await check.getCheck(req.params.id, req.user);
+    // Every export is written to the audit log, like the A.6 export (3.10.0).
+    await auditFromReq(req, 'export', 'bsi_check', c.domain.id, c.domain.name, { format: 'xlsx', entries: c.entries.length });
     res.json({ domain: c.domain, ...check.buildA4Rows(c), summary: check.summarize(c.entries) });
   } catch (e) { fail(res, e); }
 });
@@ -174,6 +179,92 @@ router.put('/:id/check', authenticate, requirePermission('bsi_grundschutz','edit
     }
     res.json(r.row);
   } catch (e) { fail(res, e); }
+});
+
+// ── Risk analysis per BSI-Standard 200-3 (3.10.0) ───────────────────────────
+// Reading: bsi_grundschutz.view (risks additionally need risks.view, treatment
+// items follow the treatment plan rules - checked in the service). Writing:
+// bsi_grundschutz.risk_analysis; creating or changing the risk additionally
+// risks.create / risks.edit and the record rights. The service writes the
+// signed audit entries (same as the MCP tools).
+
+router.get('/:id/risk-analysis', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try { res.json(await analysis.getAnalysis(req.params.id, req.user)); } catch (e) { requestError(res, e, 'bsi-risk-analysis'); }
+});
+
+router.get('/:id/risk-analysis/:targetId', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try { res.json(await analysis.getTargetAnalysis(req.params.id, req.params.targetId, req.user)); } catch (e) { requestError(res, e, 'bsi-risk-analysis'); }
+});
+
+// Manual decision (include/exclude with reason), scenario not covered, progress.
+router.put('/:id/risk-analysis/:targetId', authenticate, requirePermission('bsi_grundschutz','risk_analysis','admin','assessor'), requireWriteAccess(), async (req, res) => {
+  try { res.json(await analysis.setTargetDecision(req.params.id, req.params.targetId, req.body, req.user, req)); } catch (e) { requestError(res, e, 'bsi-risk-analysis'); }
+});
+
+// Add an additional threat (existing threat_id, or a new one: threats.create).
+router.post('/:id/risk-analysis/:targetId/threats', authenticate, requirePermission('bsi_grundschutz','risk_analysis','admin','assessor'), requireWriteAccess(), async (req, res) => {
+  try { res.status(201).json(await analysis.addAdditionalThreat(req.params.id, req.params.targetId, req.body, req.user, req)); } catch (e) { requestError(res, e, 'bsi-risk-analysis'); }
+});
+
+// Relevance and coverage of a threat.
+router.put('/:id/risk-analysis/:targetId/threats/:threatId', authenticate, requirePermission('bsi_grundschutz','risk_analysis','admin','assessor'), requireWriteAccess(), async (req, res) => {
+  try { res.json(await analysis.setThreatAssessment(req.params.id, req.params.targetId, req.params.threatId, req.body, req.user, req)); } catch (e) { requestError(res, e, 'bsi-risk-analysis'); }
+});
+
+// Classification (frequency x impact) -> risk in the register, created once.
+router.post('/:id/risk-analysis/:targetId/threats/:threatId/classify', authenticate, requirePermission('bsi_grundschutz','risk_analysis','admin','assessor'), requireWriteAccess(), async (req, res) => {
+  try {
+    const r = await analysis.classifyThreat(req.params.id, req.params.targetId, req.params.threatId, req.body, req.user, req);
+    res.status(r.created ? 201 : 200).json(r);
+  } catch (e) { requestError(res, e, 'bsi-risk-analysis'); }
+});
+
+// ── Realisation plan (reference document A.6) ───────────────────────────────
+
+router.get('/:id/realization-plan', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try { res.json(await analysis.getRealizationPlan(req.params.id, req.user)); } catch (e) { requestError(res, e, 'bsi-realization-plan'); }
+});
+
+// Rows for the Excel export (the browser builds the file, like A.4);
+// formula-neutralised. Every export is written to the audit log.
+router.get('/:id/realization-plan/export', authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try {
+    const plan = await analysis.getRealizationPlan(req.params.id, req.user);
+    await auditFromReq(req, 'export', 'bsi_realization_plan', plan.domain.id, plan.domain.name, { format: 'xlsx', items: plan.items.length });
+    res.json({ domain: plan.domain, generated_at: plan.generated_at, summary: plan.summary, ...analysis.buildA6Rows(plan) });
+  } catch (e) { requestError(res, e, 'bsi-realization-plan'); }
+});
+
+router.post('/:id/realization-plan/measures', authenticate, requirePermission('bsi_grundschutz','risk_analysis','admin','assessor'), requireWriteAccess(), async (req, res) => {
+  try { res.status(201).json(await analysis.addRealizationMeasure(req.params.id, req.body, req.user, req)); } catch (e) { requestError(res, e, 'bsi-realization-plan'); }
+});
+
+router.put('/:id/realization-plan/measures/:measureId', authenticate, requirePermission('bsi_grundschutz','risk_analysis','admin','assessor'), requireWriteAccess(), async (req, res) => {
+  try { res.json(await analysis.updateRealizationMeasure(req.params.id, req.params.measureId, req.body, req.user, req)); } catch (e) { requestError(res, e, 'bsi-realization-plan'); }
+});
+
+router.delete('/:id/realization-plan/measures/:measureId', authenticate, requirePermission('bsi_grundschutz','risk_analysis','admin','assessor'), requireWriteAccess(), async (req, res) => {
+  try { res.json(await analysis.removeRealizationMeasure(req.params.id, req.params.measureId, req.user, req)); } catch (e) { requestError(res, e, 'bsi-realization-plan'); }
+});
+
+// ── Reference documents A.1 - A.6 as DOCX / PDF ─────────────────────────────
+// :doc is a1..a6 or all; ?format=docx|pdf. Same visibility as the lists the
+// documents are built from; every download is written to the audit log.
+
+router.get('/:id/reports/:doc', heavyLimiter, authenticate, requirePermission('bsi_grundschutz','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
+  try {
+    const format = req.query.format === 'pdf' ? 'pdf' : req.query.format === 'docx' || req.query.format === undefined ? 'docx' : null;
+    if (!format) return res.status(400).json({ error: 'format muss docx oder pdf sein' });
+    // The key used further on is the allowlist entry, not the request value.
+    const wanted = typeof req.params.doc === 'string' ? req.params.doc.toLowerCase() : '';
+    const docKey = reports.BSI_DOC_KEYS.find(k => k === wanted);
+    if (!docKey) return res.status(400).json({ error: `Dokument muss eines von ${reports.BSI_DOC_KEYS.join(', ')} sein` });
+    const { doc, domain, keys } = await reports.buildBsiReport(req.params.id, docKey, req.user);
+    const buffer = await render.render(doc, format);
+    const filename = render.safeFilename(docKey === 'all' ? 'bsi-referenzdokumente' : `bsi-${docKey}`, domain.name, format);
+    await auditFromReq(req, 'export', 'bsi_report', domain.id, domain.name, { document: docKey, sections: keys, format, filename, bytes: buffer.length });
+    render.sendDocument(res, buffer, format, filename);
+  } catch (e) { requestError(res, e, 'bsi-reports'); }
 });
 
 module.exports = router;

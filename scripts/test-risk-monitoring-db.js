@@ -72,6 +72,9 @@ const daysFromToday = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate()
   const owner = await mkUser('owner', 'owner');
   const other = await mkUser('other', 'owner');
   const mgmt = await mkUser('mgmt', 'management');
+  // Since 3.10.0 roles come from groups; the startup migration puts these
+  // users into the groups of their roles, as it would on an upgrade.
+  await require(path.join(SRC, 'services', 'accessMigration')).ensureGroupBasedAccess({ log: { log: () => {} } });
   const req = (u) => ({ user: { id: u.id, name: u.name, role: u.role } });
   const R = { likelihood_rationale: 'Observed twice.', impact_rationale: 'Customer data.' };
   const upd = (risk, body, u = admin) => svc.updateRisk(risk, body, u, req(u), { partial: true });
@@ -162,7 +165,7 @@ const daysFromToday = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate()
   const run2 = await mon.runDailyMonitoring();
   const rvFlags = await m.RiskReviewFlag.findAll({ where: { risk_id: rv.id } });
   const rvTask = await m.Task.findByPk(rvFlags[0]?.task_id);
-  eq('daily run: overdue → flag review_overdue + task for the owner; second run adds nothing', [rvFlags.length, rvFlags[0]?.trigger_type, rvTask?.assigned_to_id, rvTask?.related_type, rvTask?.related_id, run2.flagged, await m.Task.count({ where: { related_type: 'risk', related_id: rv.id } })], [1, 'review_overdue', owner.id, 'risk', rv.id, 0, 1]);
+  eq('daily run: overdue → flag review_overdue + task for the owner; second run adds nothing', [rvFlags.length, rvFlags[0]?.trigger_type, rvTask?.assigned_to_id, rvTask?.related_type, rvTask?.related_id, run1.flagged >= 1, run2.flagged, await m.Task.count({ where: { related_type: 'risk', related_id: rv.id } })], [1, 'review_overdue', owner.id, 'risk', rv.id, true, 0, 1]);
   eq('owner notified once', await m.Notification.count({ where: { user_id: owner.id, title: 'Risiko neu bewerten', content: { [Op.like]: `${rv.ref}%` } } }), 1);
   eq('flag raise audit-logged', (await m.AuditLog.findOne({ where: { entity_type: 'risk', entity_id: rv.id }, order: [['id', 'DESC']] })).details.action, 'review_flag_raised');
   eq('review without note → 400; other owner → 403', [await status(mon.reviewRisk(await reload(rv.id), {}, owner, req(owner))), await status(mon.reviewRisk(await reload(rv.id), { note: 'x' }, other, req(other)))], [400, 403]);

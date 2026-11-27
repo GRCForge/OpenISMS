@@ -1,6 +1,7 @@
 import writeXlsxFile, { type Cell, type SheetData } from 'write-excel-file/browser';
 // Formel-Neutralisierung fuer CSV-Exporte (CWE-1236) — siehe lib/csv.ts.
 import { neutralizeFormula } from './csv';
+import api from './api';
 
 export { neutralizeFormula, csvCell } from './csv';
 
@@ -13,6 +14,24 @@ const downloadBlob = (blob: Blob, filename: string) => {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+};
+
+// File name from a Content-Disposition header (RFC 6266: filename* wins).
+const filenameFrom = (header: unknown, fallback: string) => {
+  const h = typeof header === 'string' ? header : '';
+  const star = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(h);
+  if (star) { try { return decodeURIComponent(star[1].trim()); } catch { /* fall through */ } }
+  const plain = /filename\s*=\s*"?([^";]+)"?/i.exec(h);
+  return plain ? plain[1].trim() : fallback;
+};
+
+export type ReportFormat = 'docx' | 'pdf';
+
+// Server-rendered reports (DOCX / PDF, 3.10.0). The server writes the audit
+// entry and names the file; the browser only saves the bytes.
+export const downloadReport = async (path: string, format: ReportFormat, fallbackName: string) => {
+  const r = await api.get(path, { params: { format }, responseType: 'blob' });
+  downloadBlob(r.data as Blob, filenameFrom(r.headers?.['content-disposition'], `${fallbackName}.${format}`));
 };
 
 export const exportToCSV = (data: Row[], filename: string) => {

@@ -265,6 +265,8 @@ jobs:
           node scripts/test-risk-assessment.js
           node scripts/test-risk-treatment.js
           node scripts/test-risk-monitoring.js
+          node scripts/test-group-access.js
+          node scripts/test-bsi-risk-analysis.js
         working-directory: .
         env:
           JWT_SECRET: ci-dummy-secret-for-checks-only
@@ -291,6 +293,14 @@ jobs:
             require('./src/routes/bsi-grundschutz');
             require('./src/routes/bsi-domains');
             require('./src/services/bsiCheckService');
+            require('./src/services/bsiRiskAnalysisService');
+            require('./src/services/reportService');
+            require('./src/services/reportRender');
+            require('docx'); require('pdfmake');
+            require('./src/services/accessService');
+            require('./src/services/accessMigration');
+            require('./src/routes/risks');
+            require('./src/mcp/server');
             require('./src/middleware/auth');
             require('helmet'); require('express-rate-limit'); require('express-session');
             console.log('Backend modules loaded successfully');
@@ -300,6 +310,38 @@ jobs:
         env:
           JWT_SECRET: ci-dummy-secret-for-module-load-only
           ENCRYPTION_KEY: ci-dummy-encryption-key-for-ci-only
+
+  # ── Docker: multi-arch build without push ─────────────────────────────────
+  # Release branches are checked before the merge: a manual run (workflow_
+  # dispatch) on a dev-/vX.Y.Z branch builds the All-in-One image for
+  # linux/amd64 and linux/arm64 exactly like release.yml, but pushes nothing
+  # and needs no registry login. On main, release.yml builds and publishes.
+  docker-build:
+    name: Docker — multi-arch build (no push)
+    needs: gate
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Build (linux/amd64, linux/arm64), no push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          push: false
+          platforms: linux/amd64,linux/arm64
+          tags: openisms-app:ci-${{ github.sha }}
 
   # ── npm audit: vulnerability check on every push ──────────────────────────
   npm-audit:

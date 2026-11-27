@@ -2,10 +2,10 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Vendor, VendorContact, User, Incident, VvtEntry } = require('../models');
-const { authenticate, isItStaff, isDpo, requirePermission } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const { serverError, requestError } = require('../utils/httpError');
 const { auditFromReq } = require('../services/auditService');
-const { can } = require('../services/permissionService');
+const { decide } = require('../services/permissionService');
 
 router.get('/', authenticate, requirePermission('vendors','view','admin','owner','assessor','viewer','it-staff','dpo','employee','management'), async (req, res) => {
   try {
@@ -16,11 +16,10 @@ router.get('/', authenticate, requirePermission('vendors','view','admin','owner'
     // Which fields come back is the same decision as who may open the detail
     // view, so it reads the same matrix entry instead of a second role list that
     // could drift away from it.
-    const detailVerdict = await can(req.user, 'vendors', 'view_details');
-    const staff = typeof detailVerdict === 'boolean' ? detailVerdict : (isItStaff(req) || isDpo(req));
+    const staff = await decide(req.user, 'vendors', 'view_details', ['admin', 'assessor', 'it-staff', 'dpo']);
     const vendors = staff
       ? await Vendor.findAll({ include: [{ model: VendorContact, as: 'contacts' }], order: [['name', 'ASC']] })
-      : await Vendor.findAll({ attributes: ['id', 'name', 'type', 'criticality'], order: [['name', 'ASC']] });
+      : await Vendor.findAll({ attributes: ['id', 'name', 'type', 'risk_level'], order: [['name', 'ASC']] });
     res.json(vendors);
   } catch (e) { serverError(res, e, 'vendors'); }
 });

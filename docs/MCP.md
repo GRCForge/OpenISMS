@@ -23,7 +23,7 @@ REST API. MCP is not a side door.
 8. [Working with the tools](#8-working-with-the-tools)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Configuration reference](#10-configuration-reference)
-11. [Tool reference (245 tools)](#11-tool-reference-245-tools)
+11. [Tool reference (251 tools)](#11-tool-reference-251-tools)
 
 ---
 
@@ -320,7 +320,7 @@ Other IdPs need the equivalent: an access token whose `aud` contains
 - An MCP login never changes the account.
 - Unknown users are **not** created unless `MCP_OAUTH_AUTO_PROVISION=true`
   **and** SSO auto-provisioning is on **and** the token says
-  `email_verified=true`. They then get the SSO default role.
+  `email_verified=true`. They then join the SSO default group (if one is set) and get its roles.
 
 In Keycloak the `email` client scope puts `email_verified` into the access
 token; the user's e-mail must be marked as verified there.
@@ -334,11 +334,23 @@ Each tool is mapped to a module and action of the permission matrix (for
 example `risks.create`). On every call OpenISMS checks, in this order:
 
 1. **Module switch** — a tool of a disabled module answers with an error.
-2. **Permission matrix** — where the matrix defines the action, it decides.
-   Where it says nothing, the role list the REST endpoint uses decides. A
-   failed lookup denies.
-3. **Write protection** — the roles `viewer`, `management` and `employee` stay
-   read-only, whatever the matrix says.
+2. **Permission matrix** — evaluated for each of the user's roles (they come
+   from the user's groups, see
+   [SECURITY-CONFIGURATION.md](SECURITY-CONFIGURATION.md#4-roles-and-permissions)).
+   The call is allowed if any role allows it: where a role's permission set
+   defines the action, it decides for that role; where it says nothing, the role
+   list the REST endpoint uses decides. A failed lookup denies.
+3. **Write protection** — a user whose roles are all read-only (`viewer`,
+   `management`, `employee`) stays read-only, whatever the matrix says.
+
+A user without any role (in no role-carrying group) can only use the
+self-service tools: `isms_get_my_overview`, `isms_list_notifications` and their
+own API tokens.
+
+User administration follows the web UI: `isms_delete_user` deactivates an
+account instead of removing it, roles are granted by group membership
+(`group_ids` on the user tools, `roles` on the group tools), and the last active
+administrator can never be removed.
 
 Administrative tools (users, permissions, settings, custom roles, automation)
 require the matching admin permissions. Some field-level rules apply inside a
@@ -449,7 +461,7 @@ The server log lists the active authentication modes at startup
 
 ---
 
-## 11. Tool reference (245 tools)
+## 11. Tool reference (251 tools)
 
 Type: **R** read · **W** create or change · **D** delete or revoke.
 79 tools read, 95 write, 35 delete. Tools of an optional module only work while
@@ -573,7 +585,7 @@ that module is enabled.
 | `isms_get_framework_mapping_stats` | R | Get statistics on cross-framework control mappings between ISO 27001, NIS-2, BSI IT-Grundschutz, and C5. |
 | `isms_get_framework_mapping_overview` | R | Get a complete overview table matrix of cross-framework control mappings. |
 
-### Framework catalogues (ISO 27001, BSI, NIS-2, C5, TISAX) (24)
+### Framework catalogues (ISO 27001, BSI, NIS-2, C5, TISAX) (29)
 
 | Tool | Type | Description |
 |---|---|---|
@@ -587,7 +599,12 @@ that module is enabled.
 | `isms_assign_bsi_target_object` | W | Assign an asset from the asset register to a BSI information domain as target object; the target type is suggested from the asset type when omitted. |
 | `isms_model_bsi_module` | W | Model a module or practice of the domain's active catalogue on a target object or on the whole domain. |
 | `isms_get_bsi_check` | R | Read the IT-Grundschutz-Check of an information domain: requirements of the modelled modules relevant for the protection approach, per target object or domain-wide, with status, justification, responsible, due date, costs, evidence and controls; optional fulfilment/cost summary. |
-| `isms_set_bsi_check_status` | W | Set the check result (ja/teilweise/nein/entbehrlich/offen) of one requirement for a target object or the whole domain, with the same mandatory fields and permissions as the UI. |
+| `isms_set_bsi_check_status` | W | Set the check result (ja/teilweise/nein/entbehrlich/offen) of one requirement for a target object or the whole domain, with the same mandatory fields and permissions as the UI; optionally the priority in the realisation plan. |
+| `isms_get_bsi_risk_analysis` | R | Risk analysis per BSI-Standard 200-3: target objects with protection need, selection reasons and decision; with `target_object_id` the threat overview (47 elementary plus additional threats) with relevance, coverage, the classified risk and the additional measures. |
+| `isms_set_bsi_risk_analysis_target` | W | Add a target object to the risk analysis or remove it by hand (reason mandatory), mark an operating scenario not covered by the modules, set the progress. |
+| `isms_assess_bsi_threat` | W | Relevance and coverage of a threat for a target object; add an additional threat (existing, or new with `threats.create`). |
+| `isms_classify_bsi_threat` | W | Frequency x impact on the active methodology scales with rationales; creates the risk (asset x threat) once and updates it on later classifications. |
+| `isms_get_bsi_realization_plan` | R | Realisation plan (reference document A.6): open check requirements (nein/teilweise) and additional measures taken over, with responsible, due date, costs and priority. |
 | `isms_list_nis2_measures` | R | List NIS-2 criteria: the measures of Art. 20, 21 and 23 NIS-2 (§ 30 Abs. 2 Nr. 1-10 BSIG) with their sub-requirements, plus the BSIG duties without a counterpart in the directive (§§ 31, 33, 34, 35, 39). |
 | `isms_update_nis2_measure` | W | Update implementation status, responsible person, deadline, or evidence of a NIS-2 criterion. |
 | `isms_list_nis2_self_check` | R | List the NIS2 self-check questions with their two answers (implementation and evidence), the article each maps to, and the recommendation attached to it. |
@@ -757,7 +774,7 @@ that module is enabled.
 | `isms_list_notifications` | R | List pending notifications, overdue reminders, and assets requiring review. |
 | `isms_get_my_overview` | R | Get personalized user dashboard summary (assigned assets, open tasks, unread notifications, pending policy acknowledgments, training statuses). |
 
-### Reporting and management review (6)
+### Reporting and management review (7)
 
 | Tool | Type | Description |
 |---|---|---|
@@ -767,19 +784,20 @@ that module is enabled.
 | `isms_get_review_signoffs` | R | List historical Management Review sign-offs (ISO 27001 Kap. 9.3). |
 | `isms_create_review_signoff` | W | Submit a new Management Review digital sign-off and approval (ISO 27001 Kap. 9.3). |
 | `isms_search` | R | Cross-entity search across assets, risks, incidents, and tasks. |
+| `isms_list_reports` | R | Downloadable DOCX/PDF reports (risk report, risk treatment plan, BSI reference documents A.1–A.6 per domain) as metadata and download paths; no file content over MCP. |
 
 ### Users, groups and API tokens (14)
 
 | Tool | Type | Description |
 |---|---|---|
 | `isms_list_users` | R | List all users. |
-| `isms_list_groups` | R | List all groups/teams with their members. |
+| `isms_list_groups` | R | List all groups/teams with their members and the roles each group carries (roles reach users only through groups). |
 | `isms_create_user` | W | Create a new user account (admin only). |
-| `isms_update_user` | W | Update user details, role, department, or active status (admin only). |
-| `isms_delete_user` | D | Deactivate / delete a user account (admin only). |
-| `isms_get_group` | R | Get details of a group / team including its members. |
-| `isms_create_group` | W | Create a new team / group for task assignments and notifications (admin only). |
-| `isms_update_group` | W | Update group name, description, or color (admin only). |
+| `isms_update_user` | W | Update user details, group memberships, department, or active status (admin only). group_ids replaces the user's groups. |
+| `isms_delete_user` | D | Deactivate a user account (admin only). |
+| `isms_get_group` | R | Get details of a group / team including its members and the roles it carries. |
+| `isms_create_group` | W | Create a group (admin only). |
+| `isms_update_group` | W | Update group name, description, color, or the roles it carries (admin only). roles replaces the group's roles. |
 | `isms_delete_group` | D | Delete a group (admin only). |
 | `isms_add_group_member` | W | Add a user as member to a group (admin only). |
 | `isms_remove_group_member` | D | Remove a user from a group (admin only). |
@@ -804,7 +822,7 @@ that module is enabled.
 | `isms_update_settings` | W | Update general system settings (admin only). |
 | `isms_get_permissions` | R | Get the role permissions matrix mapping system actions to roles. |
 | `isms_update_permissions` | W | Update the role permissions matrix (admin only). |
-| `isms_list_custom_roles` | R | List custom user roles and their assigned permission matrices. |
+| `isms_list_custom_roles` | R | List custom roles (named permission sets) with their permission matrices, the groups that carry them and how many users hold them through those groups. |
 | `isms_create_custom_role` | W | Create a custom user role with specific permissions (admin only). |
 | `isms_update_custom_role` | W | Update a custom user role (admin only). |
 | `isms_delete_custom_role` | D | Delete a custom role (admin only). |

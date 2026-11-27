@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { apiLimiter } = require('../middleware/rateLimiter');
 router.use(apiLimiter);
 const { Op } = require('sequelize');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, hasRole } = require('../middleware/auth');
 const { serverError } = require('../utils/httpError');
 const { Asset, Assessment, Risk, VvtEntry, Vendor, Incident, Task, PasskeyCredential, User } = require('../models');
 
@@ -14,7 +14,7 @@ router.use(authenticate);
 router.get('/permissions', async (req, res) => {
   try {
     const { resolvePermissions } = require('../services/permissionService');
-    res.json({ permissions: await resolvePermissions(req.user), role: req.user.role, custom_role_id: req.user.custom_role_id });
+    res.json({ permissions: await resolvePermissions(req.user), role: req.user.role, roles: req.user.roles || [], group_ids: req.user.groupIds || [] });
   } catch (e) { serverError(res, e, 'me'); }
 });
 
@@ -37,7 +37,7 @@ router.get('/overview', async (req, res) => {
           status: { [Op.notIn]: ['done', 'cancelled'] },
           [Op.or]: [
             { assigned_to_id: user.id },
-            { assigned_role: user.role }
+            { assigned_role: { [Op.in]: user.roles || [] } }
           ]
         },
         order: [['due_date', 'ASC'], ['priority', 'DESC']],
@@ -54,7 +54,7 @@ router.get('/overview', async (req, res) => {
     await Promise.all([
 
       // ── ASSESSOR / ADMIN ────────────────────────────────────────────────────
-      ['admin', 'assessor'].includes(user.role) && (async () => {
+      hasRole(user, 'admin', 'assessor') && (async () => {
         const [assessedAssetIds, overdueAssessments, unownedRisks] = await Promise.all([
           Assessment.findAll({
             where: { is_current: true },
@@ -94,7 +94,7 @@ router.get('/overview', async (req, res) => {
       })(),
 
       // ── DPO / ADMIN ─────────────────────────────────────────────────────────
-      ['admin', 'dpo'].includes(user.role) && (async () => {
+      hasRole(user, 'admin', 'dpo') && (async () => {
         const [draftVvt, vendorsNoDpa, assetsVvtPending] = await Promise.all([
           VvtEntry.findAll({ where: { status: 'draft' }, attributes: ['id', 'name', 'legal_basis'], order: [['name', 'ASC']], limit: 20 }),
           Vendor.findAll({
@@ -111,7 +111,7 @@ router.get('/overview', async (req, res) => {
       })(),
 
       // ── IT-STAFF / ADMIN ─────────────────────────────────────────────────────
-      ['admin', 'it-staff'].includes(user.role) && (async () => {
+      hasRole(user, 'admin', 'it-staff') && (async () => {
         const [criticalPatch, eolAssets, criticalCve] = await Promise.all([
           Asset.findAll({ where: { patch_status: 'critical', status: 'active' }, attributes: ['id', 'name', 'type', 'patch_status'], order: [['name', 'ASC']], limit: 20 }),
           Asset.findAll({ where: { eol_date: { [Op.between]: [today, in90] }, status: 'active' }, attributes: ['id', 'name', 'type', 'eol_date'], order: [['eol_date', 'ASC']], limit: 20 }),
@@ -124,14 +124,14 @@ router.get('/overview', async (req, res) => {
       })(),
 
       // ── OWNER ───────────────────────────────────────────────────────────────
-      user.role === 'owner' && (async () => {
+      hasRole(user, 'owner') && (async () => {
         const myAssets = await Asset.findAll({ where: { owner_id: user.id, status: 'active' }, attributes: ['id', 'name', 'type', 'patch_status', 'eol_date'], order: [['name', 'ASC']], limit: 30 });
         const needsAttention = myAssets.filter(a => a.patch_status === 'critical' || (a.eol_date && a.eol_date <= in90));
         addSection('Meine Assets mit Handlungsbedarf', 'Deine verantworteten Assets mit kritischem Status oder nahendem EOL', needsAttention.map(a => ({ id: a.id, name: a.name, sub: `${a.patch_status === 'critical' ? '⚠ Patch kritisch' : ''}${a.eol_date && a.eol_date <= in90 ? ` EOL ${a.eol_date}` : ''}`.trim(), link: `/assets/${a.id}` })), '/assets', 'Asset öffnen');
       })(),
 
       // ── ADMIN only ───────────────────────────────────────────────────────────
-      user.role === 'admin' && (async () => {
+      hasRole(user, 'admin') && (async () => {
         const [allUsers, passkeyRows, openIncidents] = await Promise.all([
           User.findAll({ where: { active: true }, attributes: ['id', 'name', 'email', 'totp_enabled', 'role', 'sso_user'] }),
           PasskeyCredential.findAll({ attributes: ['user_id'] }),

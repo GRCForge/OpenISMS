@@ -14,6 +14,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useToast } from '../contexts/ToastContext';
+import { hasRole } from '../lib/permissions';
 
 const SEVERITIES: VulnerabilitySeverity[] = ['critical', 'high', 'medium', 'low', 'none'];
 const STATUSES: VulnerabilityStatus[] = ['open', 'mitigated', 'closed'];
@@ -34,8 +35,8 @@ export const Vulnerabilities: React.FC = () => {
   const { user } = useAuth();
   const { can } = usePermissions();
   const toast = useToast();
-  const canManage = can('vulnerabilities', 'manage', ['admin', 'assessor', 'it-staff'].includes(user?.role || ''));
-  const canDelete = can('vulnerabilities', 'delete', ['admin', 'assessor'].includes(user?.role || ''));
+  const canManage = can('vulnerabilities', 'manage', hasRole(user, ['admin', 'assessor', 'it-staff']));
+  const canDelete = can('vulnerabilities', 'delete', hasRole(user, ['admin', 'assessor']));
 
   const [rows, setRows] = useState<Vulnerability[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
